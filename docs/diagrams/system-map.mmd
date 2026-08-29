@@ -1,0 +1,44 @@
+flowchart TB
+    subgraph SOURCES["Lead Sources"]
+      TATA["Tata"]
+      IM["IndiaMART"]
+      JD["Justdial"]
+      META["Meta Ads"]
+      GOOGLE["Google Ads"]
+      WEB["Website"]
+    end
+
+    subgraph PLATFORM["Aivoryx Platform"]
+      INGEST["Lead Ingestion"]
+      NORMALIZE["Normalize + Validate"]
+      DEDUPE["Deduplicate"]
+      ASSIGN["Assignment Engine"]
+      CRM["CRM"]
+      TELE["Telecalling"]
+      FIELD["Field Sales PWA"]
+      SURVEY["Site Survey"]
+      SALES["Design / BOQ / Quotation"]
+      BOOK["Booking"]
+      HR["HR"]
+      PROJECT["Projects / EPC"]
+      INV["Procurement / Inventory"]
+      FIN["Finance"]
+      SERVICE["Service / AMC"]
+    end
+
+    TATA --> INGEST
+    IM --> INGEST
+    JD --> INGEST
+    META --> INGEST
+    GOOGLE --> INGEST
+    WEB --> INGEST
+
+    INGEST --> NORMALIZE --> DEDUPE --> CRM --> ASSIGN --> TELE
+    TELE --> CRM
+    TELE --> FIELD --> SURVEY --> SALES --> BOOK
+    BOOK --> PROJECT --> INV
+    BOOK --> FIN
+    PROJECT --> FIN
+    HR -. shared platform identity .- CRM
+    PROJECT --> SERVICE
+    SERVICE --> CRM

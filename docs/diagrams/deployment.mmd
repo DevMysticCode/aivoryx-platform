@@ -1,0 +1,15 @@
+flowchart TB
+    DEV["Developer Machines"] --> GH["GitHub"]
+    GH --> CI["CI"]
+    CI --> STG["Railway Staging"]
+    CI --> PROD["Railway Production"]
+
+    STG --> DB1["PostgreSQL"]
+    STG --> REDIS1["Redis"]
+    STG --> OBJ1["Object Storage"]
+
+    PROD --> DB2["PostgreSQL"]
+    PROD --> REDIS2["Redis"]
+    PROD --> OBJ2["Object Storage"]
+
+    PROD --> EXT["External APIs / Providers"]

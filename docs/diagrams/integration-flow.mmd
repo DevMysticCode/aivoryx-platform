@@ -1,0 +1,43 @@
+flowchart LR
+    subgraph EXT["External Systems"]
+      P["Pabbly"]
+      M["Meta"]
+      G["Google"]
+      I["IndiaMART"]
+      J["Justdial"]
+      T["Tata"]
+      B["Bonvoice"]
+      W["Website"]
+    end
+
+    subgraph INT["Aivoryx Integration Engine"]
+      WH["Webhook / API Gateway"]
+      RAW["Raw Event Store"]
+      MAP["Normalize + Map"]
+      IDEM["Idempotency"]
+      RULE["Conditions / Actions"]
+      RETRY["Retry / Dead Letter"]
+      LOG["Integration Log"]
+    end
+
+    subgraph CORE["Aivoryx"]
+      CRM["CRM"]
+      COMM["Communication / Telephony"]
+    end
+
+    P --> WH
+    M --> WH
+    G --> WH
+    I --> WH
+    J --> WH
+    T --> WH
+    W --> WH
+    B <--> WH
+
+    WH --> RAW --> MAP --> IDEM --> RULE
+    RULE --> CRM
+    RULE --> COMM
+    RULE --> RETRY
+    WH --> LOG
+    MAP --> LOG
+    RULE --> LOG

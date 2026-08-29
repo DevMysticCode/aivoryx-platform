@@ -1,0 +1,35 @@
+flowchart TB
+    CORE["Platform Core
+    Identity / Tenant / RBAC / Audit / Docs / Notifications / Workflow"]
+
+    CRM["CRM"]
+    HR["HR"]
+    SALES["Sales"]
+    FIELD["Field"]
+    PROJECT["Projects"]
+    PROCUREMENT["Procurement"]
+    INVENTORY["Inventory"]
+    FINANCE["Finance"]
+    SERVICE["Service"]
+    SOLAR["Solar EPC"]
+
+    CORE --> CRM
+    CORE --> HR
+    CORE --> SALES
+    CORE --> FIELD
+    CORE --> PROJECT
+    CORE --> PROCUREMENT
+    CORE --> INVENTORY
+    CORE --> FINANCE
+    CORE --> SERVICE
+    SALES --> SOLAR
+    PROJECT --> SOLAR
+
+    CRM -. events/contracts .-> FIELD
+    FIELD -. survey completed .-> SALES
+    SALES -. booking created .-> PROJECT
+    PROJECT -. material demand .-> PROCUREMENT
+    PROCUREMENT -. receipt/stock .-> INVENTORY
+    PROJECT -. financial events .-> FINANCE
+    PROJECT -. handover .-> SERVICE
+    HR -. employee/role context .-> FIELD

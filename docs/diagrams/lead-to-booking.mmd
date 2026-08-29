@@ -1,0 +1,27 @@
+flowchart TD
+    A["Lead Source"] --> B["Lead Ingestion"]
+    B --> C["Validate / Normalize"]
+    C --> D{"Duplicate?"}
+    D -- Yes --> E["Merge / Link Existing Lead"]
+    D -- No --> F["Create Lead"]
+    E --> G["Assignment Engine"]
+    F --> G
+    G --> H["Telecaller"]
+    H --> I["Bonvoice Call"]
+    I --> J["Call Activity + Disposition"]
+    J --> K{"Qualified?"}
+    K -- No --> L["Nurture / Lost / Follow-up"]
+    K -- Yes --> M["Assign Field Agent"]
+    M --> N["Schedule Visit"]
+    N --> O["Field PWA"]
+    O --> P["GPS + Check-in"]
+    P --> Q["Site Survey"]
+    Q --> R["Photos / Documents / Notes"]
+    R --> S["Survey Complete"]
+    S --> T["Design / DYO"]
+    T --> U["BOQ"]
+    U --> V["Quotation"]
+    V --> W["Approval"]
+    W --> X["Customer Acceptance"]
+    X --> Y["Booking"]
+    Y --> Z["Project Workflow"]
