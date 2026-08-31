@@ -1,0 +1,51 @@
+flowchart TB
+    subgraph SHARED["Shared PostgreSQL (single schema, RLS + app guards)"]
+      direction TB
+
+      subgraph CORE["Platform core tables"]
+        T1["tenants / organizations / branches / departments"]
+        T2["users / roles / permissions / user_roles / sessions"]
+        T3["audit_logs"]
+        T4["outbox_events / job_runs"]
+        T5["workflow_definitions / workflow_runs"]
+        T6["custom_field_definitions / custom_field_values"]
+      end
+
+      subgraph INGEST["Lead ingestion tables"]
+        I1["sources / connectors_config"]
+        I2["lead_mapping_profiles / lead_mapping_rules"]
+        I3["raw_events / canonical_lead_events"]
+        I4["integration_event_log / dead_letter_events"]
+        I5["email_ingest_rules"]
+      end
+
+      subgraph CRM["CRM tables"]
+        C1["leads / customers / lead_assignments"]
+        C2["activities / tasks / follow_ups / calls"]
+      end
+
+      subgraph HR["HR tables"]
+        H1["employees / employee_documents"]
+        H2["attendance / leave / expenses / approvals"]
+      end
+
+      subgraph FIELD["Field / Sales tables"]
+        F1["field_visits / site_surveys / survey_attachments"]
+        F2["quotations / quotation_versions / bookings"]
+      end
+    end
+
+    CORE --> INGEST
+    CORE --> CRM
+    CORE --> HR
+    CORE --> FIELD
+    INGEST -->|"LeadCreated / LeadUpdated via outbox"| CRM
+    CRM -->|"events / app services"| FIELD
+    HR -->|"employee / role context"| FIELD
+
+    R2[("Cloudflare R2<br/>raw bodies, MIME, photos, HR docs")]
+    INGEST -.-> R2
+    FIELD -.-> R2
+    HR -.-> R2
+
+    note1["Rule: no module reads another module's tables directly.<br/>Cross-module = application services + domain events (ADR 0013, 0024).<br/>Every tenant-owned table: tenant_id + forced RLS + registered guard (ADR 0009)."]

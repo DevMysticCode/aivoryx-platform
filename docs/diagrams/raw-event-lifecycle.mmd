@@ -1,0 +1,28 @@
+stateDiagram-v2
+    [*] --> RECEIVED
+    RECEIVED --> STORED: raw_events written
+    STORED --> ADAPTING
+    ADAPTING --> MAPPING: ProviderDraft ok
+    ADAPTING --> ADAPTER_FAILED: unparseable
+    MAPPING --> VALIDATING: canonical draft ok
+    MAPPING --> MAPPING_FAILED: no/failed profile
+    VALIDATING --> DEDUPING: schema + rules ok
+    VALIDATING --> INVALID: failed rules
+    DEDUPING --> LEAD_UPSERT: new / merge / link
+    DEDUPING --> NEEDS_REVIEW: ambiguous
+    LEAD_UPSERT --> LEAD_UPSERT_RETRY: transient error
+    LEAD_UPSERT_RETRY --> LEAD_UPSERT: backoff
+    LEAD_UPSERT_RETRY --> DEAD_LETTER: attempts exhausted
+    LEAD_UPSERT --> EMITTED: outbox LeadCreated/Updated
+    EMITTED --> DONE
+
+    ADAPTER_FAILED --> DEAD_LETTER
+    MAPPING_FAILED --> DEAD_LETTER
+    INVALID --> DEAD_LETTER
+
+    NEEDS_REVIEW --> DEDUPING: manual resolve
+    DEAD_LETTER --> STORED: replay from raw
+    DEAD_LETTER --> DISCARDED: discard (audited)
+
+    DONE --> [*]
+    DISCARDED --> [*]

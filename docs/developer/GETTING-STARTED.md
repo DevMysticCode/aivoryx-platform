@@ -14,16 +14,25 @@
 ## Local environment
 
 Required:
-- Node.js LTS
-- pnpm
-- Docker if local PostgreSQL/Redis are used
+- Node.js LTS (pinned via `.nvmrc` / `packageManager`)
+- pnpm (workspace: pnpm workspaces + Turborepo)
+- Docker for local PostgreSQL + Redis
+- Drizzle CLI (via package scripts) for migrations
+- an S3-compatible target for local object storage (Cloudflare R2 dev bucket or MinIO)
 - Git
 - Claude Code
 - Playwright browsers
 
+## Deployment targets
+
+- Web app → Vercel. API, workers, PostgreSQL, Redis → Railway (private network).
+- Object storage → Cloudflare R2. See `docs/architecture/DEPLOYMENT.md`.
+
 ## Workflow
 
-Branch → implement vertical slice → test → review → PR → CI → merge.
+Branch off `develop` → implement vertical slice → Vitest + (for critical paths)
+Playwright → review → PR into `develop` → CI → merge. Releases promote `develop`
+to the protected `main` branch. One ticket = one bounded outcome.
 
 ## Communication
 

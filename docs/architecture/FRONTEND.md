@@ -4,6 +4,19 @@
 
 Next.js, React, TypeScript, Tailwind, shadcn/ui, TanStack Query, React Hook Form, Zod, Lucide, PWA.
 
+## Deployment & API access
+
+- Deployed on **Vercel** (ADR 0006). Preview deployments target the **staging**
+  API only.
+- Talks to the NestJS API over public HTTPS at `/api/v1`; base URL from
+  `NEXT_PUBLIC_API_BASE_URL`. `NEXT_PUBLIC_*` carries only non-sensitive values.
+- Auth is the API's HTTP-only session cookie (ADR 0010). The browser never sees
+  a token; requests are sent with credentials and a CSRF token on mutations.
+- The API client is generated from the code-first OpenAPI document (ADR 0005);
+  do not hand-write request types.
+- Permission checks in `lib/permissions` drive show/hide/disable only; the server
+  re-checks every action.
+
 ## Structure
 
 `apps/web/app` contains routes.
