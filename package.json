@@ -19,6 +19,7 @@
     "clean": "turbo run clean && rimraf node_modules",
     "db:generate": "pnpm --filter @aivoryx/db db:generate",
     "db:migrate": "pnpm --filter @aivoryx/db db:migrate",
+    "db:seed": "pnpm --filter @aivoryx/db db:seed",
     "contracts:generate": "pnpm --filter @aivoryx/api openapi:extract && pnpm --filter @aivoryx/contracts generate",
     "prepare": "husky || true"
   },

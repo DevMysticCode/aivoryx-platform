@@ -28,6 +28,16 @@ export const serverEnvSchema = z
 
     DATABASE_URL: z.string().url().startsWith('postgres'),
     DATABASE_POOL_MAX: z.coerce.number().int().positive().max(100).default(10),
+    /**
+     * Non-privileged PostgreSQL role the API runs its queries as (ADR 0027).
+     * The connection `SET ROLE`s to this after connecting so Row Level Security
+     * always applies. Created by migration `0003`. Must NOT be a superuser and
+     * must NOT have BYPASSRLS.
+     */
+    DATABASE_APP_ROLE: z
+      .string()
+      .regex(/^[a-z_][a-z0-9_]*$/i, 'DATABASE_APP_ROLE must be a plain SQL identifier')
+      .default('aivoryx_app'),
 
     REDIS_URL: z.string().url().startsWith('redis'),
 
@@ -35,6 +45,35 @@ export const serverEnvSchema = z
       .string()
       .min(32, 'SESSION_SECRET must be at least 32 characters of random data'),
     SESSION_COOKIE_NAME: z.string().min(1).default('aivoryx_session'),
+    /** Absolute session lifetime — enforced server-side against `sessions.expires_at`. */
+    SESSION_ABSOLUTE_TTL_HOURS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(24 * 365)
+      .default(720),
+    /** Idle timeout — a session unused for this long is rejected (`last_seen_at`). */
+    SESSION_IDLE_TTL_HOURS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(24 * 90)
+      .default(168),
+    /**
+     * Cookie `Secure` flag. Defaults to off only in `development`. Never send the
+     * session cookie over plain HTTP outside local dev.
+     */
+    SESSION_COOKIE_SECURE: z
+      .enum(['true', 'false'])
+      .optional()
+      .transform((v) => (v === undefined ? undefined : v === 'true')),
+    SESSION_COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+
+    // Argon2id parameters (ADR 0010 / 0028). OWASP-aligned defaults; a change
+    // triggers transparent rehash-on-login.
+    ARGON2_MEMORY_KIB: z.coerce.number().int().min(8192).max(1_048_576).default(19_456),
+    ARGON2_TIME_COST: z.coerce.number().int().min(1).max(10).default(2),
+    ARGON2_PARALLELISM: z.coerce.number().int().min(1).max(16).default(1),
 
     // Object storage is optional in Phase 1 (local storage deferred).
     OBJECT_STORAGE_ENDPOINT: z

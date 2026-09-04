@@ -11,3 +11,4 @@ allowBuilds:
   nestjs-pino: true
   msgpackr-extract: true
   '@scarf/scarf': false
+  '@swc/core': true

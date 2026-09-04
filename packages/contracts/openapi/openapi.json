@@ -44,6 +44,269 @@
           "health"
         ]
       }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "AUTH_INVALID_CREDENTIALS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Exchange email + password for a session cookie.",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Revoke the current session.",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The current user, their memberships and active tenant.",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/switch-tenant": {
+      "post": {
+        "operationId": "switchTenant",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchTenantRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwitchTenantResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUTH_MEMBERSHIP_INVALID / AUTH_MEMBERSHIP_SUSPENDED / TENANT_SUSPENDED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Set the active tenant for this session to one of the user’s own memberships.",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/admin/memberships": {
+      "get": {
+        "operationId": "listMemberships",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminMembershipDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Memberships in the active workspace.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/roles": {
+      "get": {
+        "operationId": "listRoles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRoleDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Roles in the active workspace.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/permissions": {
+      "get": {
+        "operationId": "listCataloguePermissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CataloguePermissionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The global permission catalogue.",
+        "tags": [
+          "admin"
+        ]
+      }
     }
   },
   "info": {
@@ -148,6 +411,366 @@
           "status",
           "correlationId",
           "checks"
+        ]
+      },
+      "LoginRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@acme.test"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200,
+            "example": "correct horse battery staple"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AuthUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "disabled"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "status"
+        ]
+      },
+      "MembershipSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tenantSlug": {
+            "type": "string",
+            "example": "acme"
+          },
+          "tenantName": {
+            "type": "string",
+            "example": "Acme Inc."
+          },
+          "tenantStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenantId",
+          "tenantSlug",
+          "tenantName",
+          "tenantStatus",
+          "status"
+        ]
+      },
+      "ActiveContextDto": {
+        "type": "object",
+        "properties": {
+          "membership": {
+            "$ref": "#/components/schemas/MembershipSummaryDto"
+          },
+          "permissions": {
+            "description": "Permission keys granted in this tenant.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "roles": {
+            "description": "Role keys held in this tenant.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "membership",
+          "permissions",
+          "roles"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AuthUserDto"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipSummaryDto"
+            }
+          },
+          "active": {
+            "nullable": true,
+            "description": "Null until the session has a usable active tenant.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActiveContextDto"
+              }
+            ]
+          },
+          "sessionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tenantAutoSelected": {
+            "type": "boolean",
+            "description": "True when the single-membership user was auto-selected into a tenant."
+          }
+        },
+        "required": [
+          "user",
+          "memberships",
+          "active",
+          "sessionExpiresAt",
+          "tenantAutoSelected"
+        ]
+      },
+      "ApiErrorDetailDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string",
+            "example": "AIV-01J9Z8ABCDEF0123456789"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "correlationId"
+        ]
+      },
+      "ApiErrorDto": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiErrorDetailDto"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "LogoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "MeResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AuthUserDto"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipSummaryDto"
+            }
+          },
+          "active": {
+            "nullable": true,
+            "description": "Null until the session has a usable active tenant.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActiveContextDto"
+              }
+            ]
+          },
+          "sessionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "user",
+          "memberships",
+          "active",
+          "sessionExpiresAt"
+        ]
+      },
+      "SwitchTenantRequestDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "A membership id belonging to the current user."
+          }
+        },
+        "required": [
+          "membershipId"
+        ]
+      },
+      "SwitchTenantResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AuthUserDto"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipSummaryDto"
+            }
+          },
+          "active": {
+            "nullable": true,
+            "description": "Null until the session has a usable active tenant.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActiveContextDto"
+              }
+            ]
+          },
+          "sessionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "user",
+          "memberships",
+          "active",
+          "sessionExpiresAt"
+        ]
+      },
+      "AdminMembershipDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ]
+          },
+          "roleKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "userEmail",
+          "status",
+          "roleKeys"
+        ]
+      },
+      "AdminRoleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string",
+            "example": "TENANT_ADMIN"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "permissionKeys"
+        ]
+      },
+      "CataloguePermissionDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "users.read"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "description"
         ]
       }
     }

@@ -41,4 +41,21 @@ describe('error infrastructure', () => {
     expect(isErrorCode('NOT_FOUND')).toBe(true);
     expect(isErrorCode('NOPE')).toBe(false);
   });
+
+  it('carries the Phase 2 auth/tenancy codes with the right statuses', () => {
+    expect(errorCodeMeta('AUTH_UNAUTHENTICATED').httpStatus).toBe(401);
+    expect(errorCodeMeta('AUTH_INVALID_CREDENTIALS').httpStatus).toBe(401);
+    expect(errorCodeMeta('AUTH_SESSION_EXPIRED').httpStatus).toBe(401);
+    expect(errorCodeMeta('AUTH_SESSION_REVOKED').httpStatus).toBe(401);
+    expect(errorCodeMeta('AUTH_FORBIDDEN').httpStatus).toBe(403);
+    expect(errorCodeMeta('AUTH_NO_ACTIVE_TENANT').httpStatus).toBe(403);
+    expect(errorCodeMeta('AUTH_MEMBERSHIP_INVALID').httpStatus).toBe(403);
+    expect(errorCodeMeta('AUTH_MEMBERSHIP_SUSPENDED').httpStatus).toBe(403);
+    expect(errorCodeMeta('TENANT_SUSPENDED').httpStatus).toBe(403);
+  });
+
+  it('gives the same response for unknown user and wrong password (no enumeration)', () => {
+    // one code, one message — the login flow uses it for both cases
+    expect(errorCodeMeta('AUTH_INVALID_CREDENTIALS').message).not.toMatch(/user|account|exist/i);
+  });
 });

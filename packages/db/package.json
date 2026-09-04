@@ -27,6 +27,7 @@
     "test": "vitest run",
     "db:generate": "pnpm run build && drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=../../.env src/migrate.ts",
+    "db:seed": "tsx --env-file-if-exists=../../.env src/seed.ts",
     "db:studio": "pnpm run build && drizzle-kit studio",
     "clean": "rimraf dist .turbo *.tsbuildinfo"
   },

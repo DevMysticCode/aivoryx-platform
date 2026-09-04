@@ -1,6 +1,7 @@
 # Multi-Tenancy Architecture
 
-Status: Approved architecture. No application code exists yet.
+Status: **Implemented for the identity model** in Phase 2 Task 2 (ADR 0027).
+Later tenant-owned tables must follow the same pattern.
 
 Covers decision 7: PostgreSQL Row Level Security **plus** application-level
 tenant guards; tenant identity always from authenticated server context; never
@@ -11,47 +12,51 @@ trust a client-supplied `tenant_id`.
 Single database, single schema, shared tables. Every tenant-owned row carries
 `tenant_id uuid` (UUIDv7). Isolation is enforced twice, independently.
 
-## Layer 1 - PostgreSQL Row Level Security (last line of defence)
+## Layer 1 - PostgreSQL Row Level Security (ADR 0027)
 
-- Every tenant-owned table: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` +
-  `FORCE ROW LEVEL SECURITY`.
-- Policy shape (illustrative, not code):
-  `USING (tenant_id = current_setting('app.tenant_id')::uuid)` and the same as
-  `WITH CHECK` for writes.
-- The application sets `app.tenant_id` (and `app.user_id`, `app.role_scope`) via
-  `SET LOCAL` at the start of every request/job transaction, from authenticated
-  context only.
-- The application's runtime DB role is **not** a superuser and does **not** have
-  `BYPASSRLS`.
-- A separate migration/admin role (used only by Drizzle migrations and operator
-  tooling) may bypass RLS; it is never used to serve requests.
-- Background jobs (BullMQ workers) run the same `SET LOCAL` from the job's
-  persisted tenant context before touching tenant data.
+- Tenant-owned identity tables with `ENABLE` + `FORCE ROW LEVEL SECURITY`:
+  `user_tenant_memberships`, `roles`, `role_permissions`, `membership_roles`,
+  `tenants`. `users`, `sessions`, global `permissions` have no RLS.
+- Policy predicate:
+  `tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid`, mirrored
+  in `WITH CHECK`. `nullif(…, '')` because a touched custom GUC reverts to `''`
+  on a pooled connection — an unset context must resolve to NULL (no rows), not
+  raise. `user_tenant_memberships` also has a SELECT-only self-read policy
+  (`user_id = app.user_id`) so a user can read their own memberships before a
+  tenant is active.
+- The API runs every query as the non-privileged role **`aivoryx_app`**
+  (`NOSUPERUSER`, `NOBYPASSRLS`, owns nothing) — the pool `SET ROLE`s to it on
+  connect. `app.tenant_id` / `app.user_id` are set per transaction with
+  `SET LOCAL` (`set_config(…, true)`) and revert at COMMIT/ROLLBACK; a pooled
+  connection never carries one request's tenant into the next.
+- Migrations + seed run as the `DATABASE_URL` owner (a separate handle, no
+  `SET ROLE`), never to serve requests. **Migrations must run before the API
+  starts** — `0003` creates `aivoryx_app`.
+- Background jobs (BullMQ workers) will run the same `set_config` from the job's
+  persisted tenant context before touching tenant data _(planned)_.
 
-## Layer 2 - Application tenant guards (primary, explicit)
+## Layer 2 - Application tenant guards (ADR 0028 / 0029)
 
-- Tenant context is resolved by a NestJS middleware/guard from the session
+- `SecurityGuard` (global `APP_GUARD`) resolves tenant context from the session
   cookie -> server-side session -> `sessions.active_membership_id` ->
-  `user_tenant_memberships` (`tenant_id`, and `user_id` verified against the
-  session) (ADR 0026; the endpoint that sets/switches `active_membership_id` is
-  a later Phase 2 task). Any `tenant_id` in a body, query or header — including
-  an `X-Tenant-Id` header — is ignored for authorization (a client-supplied
-  value may only be used by platform-admin endpoints that are separately
-  guarded).
-- A request-scoped `TenantContext` is the single source of truth for the rest of
-  the request.
-- The Drizzle data-access layer is wrapped so every query for a tenant-owned
-  table requires an explicit `tenant_id` filter derived from `TenantContext`;
-  a query without it fails fast in development and is blocked in production.
-- Cross-tenant access is only possible through explicit, separately-authorized
-  "platform admin" services that opt out deliberately and are audit-logged.
+  `user_tenant_memberships` (`tenant_id`; `user_id` verified against the
+  session). Any `tenant_id` in a body, query or header — including an
+  `X-Tenant-Id` header — is ignored.
+- The resolved `SecurityContext` (`user`, `session`, `membership`, `tenantId`,
+  `permissions`) is attached to `req` and bound to an AsyncLocalStorage; it is
+  the single source of truth for the request.
+- Every tenant-scoped DB access goes through `withTenantContext({ tenantId,
+userId }, fn)` in `@aivoryx/db`. Explicit `tenant_id` filters in queries are
+  belt-and-braces on top of RLS.
+- Cross-tenant access would require an explicit, separately-authorized
+  platform-admin path (none exists yet).
 
 ## Why both
 
-RLS alone: easy to forget `SET LOCAL`, and an ORM misconfiguration or a raw
-query on the admin role silently leaks. Guards alone: one missing `where` clause
-leaks. Together, a leak requires **two** independent mistakes plus a
-misconfigured DB role.
+RLS alone: easy to forget `SET LOCAL`. Guards alone: one missing `where` clause
+leaks. Together — plus a non-privileged serving role — a leak needs a missing
+app filter **and** a missing/blank `app.tenant_id` **and** the role gaining
+`BYPASSRLS`/superuser.
 
 ## Tenant resolution for ingestion
 
@@ -59,14 +64,18 @@ Inbound integration events have no session. The tenant is taken from the
 `source` configuration row (itself tenant-scoped) that the connector endpoint or
 mailbox rule resolved. Payload contents never determine tenant.
 
-## Testing (required)
+## Testing
 
-- A standing integration test attempts cross-tenant reads/writes on every
-  tenant-owned repository and must fail to retrieve or mutate foreign rows.
-- RLS policy presence is asserted by a schema test (every tenant table has RLS
-  enabled + forced).
-- CI blocks merge if a new tenant-owned table lacks an RLS policy or a guard
-  registration.
+- `apps/api/test/rls.int.spec.ts` — cross-tenant read/write/insert attempts run
+  as `aivoryx_app` directly against PostgreSQL and must return 0 rows / raise
+  `42501`; proves RLS, not an app `WHERE`, is the boundary.
+- `packages/db/src/schema/rls.test.ts` — asserts ENABLE+FORCE+policy presence on
+  every tenant-owned table and that `aivoryx_app` is non-privileged.
+- `apps/api/test/tenant-context.int.spec.ts` — the `SET LOCAL` context does not
+  leak between transactions or concurrent requests.
+- All gated on `RUN_DB_IT=1` (real PostgreSQL). A CI job with a Postgres service
+  container to run them always-on is a follow-up; likewise a CI check that every
+  new tenant-owned table has an RLS policy + `rls.test.ts` coverage.
 
 ## Out of scope for V1
 

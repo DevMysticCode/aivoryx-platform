@@ -50,3 +50,8 @@ this decision. Detail in `docs/architecture/AUTH.md`.
   **SHA-256 hash** of the opaque cookie token (`token_hash`), never the token;
   a session references a **user only** — no `tenant_id` / active-tenant column
   yet (added when tenant switching is designed).
+- Phase 2 Task 2 (ADR 0028) — **implemented**: `login` / `logout` / `me` /
+  `switch-tenant`; `SessionService` (256-bit token, SHA-256 hash, server-enforced
+  absolute + idle expiry, immediate revocation, throttled `last_seen_at`);
+  Argon2id via `@node-rs/argon2` with rehash-on-params-change; login
+  auto-selects the active membership only for a single-usable-membership user.

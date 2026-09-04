@@ -1,7 +1,7 @@
 import { loadServerEnv } from '@aivoryx/config';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import type { Pool, PoolConfig } from 'pg';
+import type { Pool, PoolClient, PoolConfig } from 'pg';
 import * as schema from './schema/index.js';
 
 // `pg` is CommonJS; take the constructor off the default export for reliable
@@ -20,8 +20,33 @@ export interface DbHandle {
 export interface CreateDbOptions {
   connectionString?: string;
   poolMax?: number;
+  /**
+   * If set, every physical connection issues `SET ROLE "<appRole>"` right after
+   * connecting, so all queries run as that non-privileged role and Row Level
+   * Security is always enforced (ADR 0027). Omit for the migration/owner handle.
+   * `''` is treated as "no SET ROLE".
+   */
+  appRole?: string;
   /** Extra pg pool options (e.g. ssl in production). */
   pool?: Omit<PoolConfig, 'connectionString' | 'max'>;
+}
+
+const SQL_IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+function attachSetRole(pool: Pool, appRole: string): void {
+  if (!SQL_IDENT.test(appRole)) {
+    throw new Error(
+      `Invalid DATABASE_APP_ROLE ${JSON.stringify(appRole)} — must be a plain identifier`,
+    );
+  }
+  pool.on('connect', (client: PoolClient) => {
+    // Fire-and-forget on the fresh connection. If the role is missing (e.g. the
+    // security migration has not run yet) the connection errors loudly — run
+    // `pnpm db:migrate` before starting the API.
+    client.query(`SET ROLE "${appRole}"`).catch((err: unknown) => {
+      client.emit('error', err instanceof Error ? err : new Error(String(err)));
+    });
+  });
 }
 
 /**
@@ -36,6 +61,9 @@ export function createDb(options: CreateDbOptions = {}): DbHandle {
     max: options.poolMax ?? env.DATABASE_POOL_MAX,
     ...options.pool,
   });
+  if (options.appRole) {
+    attachSetRole(pool, options.appRole);
+  }
   const db = drizzle(pool, { schema });
   return {
     db,
@@ -48,9 +76,12 @@ export function createDb(options: CreateDbOptions = {}): DbHandle {
 
 let singleton: DbHandle | undefined;
 
-/** Process-wide database handle for the running app. */
+/**
+ * Process-wide database handle for the running app. Runs every query as the
+ * non-privileged `DATABASE_APP_ROLE` so RLS is always enforced.
+ */
 export function getDb(): DbHandle {
-  singleton ??= createDb();
+  singleton ??= createDb({ appRole: loadServerEnv().DATABASE_APP_ROLE });
   return singleton;
 }
 

@@ -31,3 +31,12 @@ A leak requires two independent code mistakes plus a misconfigured DB role. CI
 blocks any new tenant-owned table lacking an RLS policy or a guard registration.
 A standing test suite attempts cross-tenant reads/writes and must fail. Detail in
 `docs/architecture/TENANCY.md`.
+
+## Implementation (ADR 0027)
+
+Phase 2 Task 2 implements this for the identity model: the non-privileged
+`aivoryx_app` role, `ENABLE`+`FORCE` RLS + policies on
+`user_tenant_memberships` / `roles` / `role_permissions` / `membership_roles` /
+`tenants`, and per-transaction `SET LOCAL app.tenant_id` / `app.user_id` via
+`@aivoryx/db` helpers. Cross-tenant isolation is proven directly against
+PostgreSQL in `apps/api/test/rls.int.spec.ts`.
