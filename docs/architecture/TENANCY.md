@@ -31,9 +31,13 @@ Single database, single schema, shared tables. Every tenant-owned row carries
 ## Layer 2 - Application tenant guards (primary, explicit)
 
 - Tenant context is resolved by a NestJS middleware/guard from the session
-  cookie -> server-side session -> `tenant_id`. Any `tenant_id` in a body, query
-  or header is ignored for authorization (may only be used by platform-admin
-  endpoints that are separately guarded).
+  cookie -> server-side session -> `sessions.active_membership_id` ->
+  `user_tenant_memberships` (`tenant_id`, and `user_id` verified against the
+  session) (ADR 0026; the endpoint that sets/switches `active_membership_id` is
+  a later Phase 2 task). Any `tenant_id` in a body, query or header — including
+  an `X-Tenant-Id` header — is ignored for authorization (a client-supplied
+  value may only be used by platform-admin endpoints that are separately
+  guarded).
 - A request-scoped `TenantContext` is the single source of truth for the rest of
   the request.
 - The Drizzle data-access layer is wrapped so every query for a tenant-owned

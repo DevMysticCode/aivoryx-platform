@@ -16,13 +16,25 @@ security boundary.
 ## Initial foundation entities
 
 tenants
+users
+user_tenant_memberships
+roles
+permissions
+role_permissions
+membership_roles
 organizations
 branches
 departments
-users
-roles
-permissions
 employees
+
+Identity model (ADR 0026): a user is global (no `tenant_id` on `users`); the
+user↔tenant link is always an explicit `user_tenant_memberships` row. Roles are
+per-tenant and attach to a membership via `membership_roles`; `permissions` are
+a global catalogue linked to roles via `role_permissions`. A `sessions` row
+references its user and, optionally, one `active_membership_id` (composite FK
+guarantees it is that user's own membership) — the authoritative active-tenant
+selector. `organizations` / `branches` / `departments` / `employees` are later
+tasks.
 
 ## CRM entities
 

@@ -46,3 +46,7 @@ this decision. Detail in `docs/architecture/AUTH.md`.
 - Phase 1 gate — clarified by the technical lead: PostgreSQL is authoritative;
   Redis is explicitly **not** a session store and correctness must never depend
   on it.
+- Phase 2 Task 1 (ADR 0026) — session table shape settled: the row stores a
+  **SHA-256 hash** of the opaque cookie token (`token_hash`), never the token;
+  a session references a **user only** — no `tenant_id` / active-tenant column
+  yet (added when tenant switching is designed).
