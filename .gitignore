@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# turbo
+.turbo/
+
+# test / coverage
+coverage/
+playwright-report/
+blob-report/
+test-results/
+.playwright/
+
+# env — never commit real secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# editor / OS
+.DS_Store
+.idea/
+*.swp
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Claude Code local session/config (opt in per-file if you want it tracked)
+.claude/
+
+# drizzle local artifacts
+packages/db/drizzle/meta/_journal.bak

@@ -8,6 +8,7 @@ reconciliation, replay and idempotency.
 ## Records
 
 ### raw_events
+
 The untouched inbound payload. Written **before** any parsing, in its own
 transaction, so nothing downstream can lose the original.
 
@@ -32,6 +33,7 @@ Retention: configurable per tenant (default 180 days), then body moved to cold
 storage / purged while a metadata stub is kept for reconciliation counts.
 
 ### canonical_lead_events
+
 Output of adapter + mapping; the working record for validation/dedup/lead.
 
 ```
@@ -52,6 +54,7 @@ created_at / updated_at
 ```
 
 ### integration_event_log
+
 Append-only stage transitions for one inbound event (observability + support).
 
 ```
@@ -61,6 +64,7 @@ duration_ms, actor (system|user id), created_at
 ```
 
 ### dead_letter_events
+
 Pointer + reason for events parked for human action.
 
 ```
@@ -113,6 +117,7 @@ No state ever silently drops an event.
 ## Replay
 
 Replay re-runs the pipeline from a stored `raw_events` row. Options:
+
 - **from raw** (default): re-adapt + re-map + validate + dedup + lead.
 - **pinned profile**: replay against the mapping-profile version that was active
   at `received_at` (default) or against the current active version (for testing

@@ -16,6 +16,7 @@ Three layers.
 ### 1. Definition
 
 `custom_field_definitions`
+
 ```
 id                uuid v7 (pk)
 tenant_id         uuid  (RLS)
@@ -61,6 +62,7 @@ unique (tenant_id, entity, entity_id, definition_id)
 ```
 
 Indexes:
+
 - `(tenant_id, entity, field_key, value_string)` partial where `value_string` not null
 - `(tenant_id, entity, field_key, value_number)` partial where `value_number` not null
 - `(tenant_id, entity, field_key, value_datetime)` partial where `value_datetime` not null
@@ -78,11 +80,11 @@ Not required for V1; the typed-value indexes cover operational filtering.
 
 ## Why not alternatives
 
-| Option | Rejected because |
-|--------|------------------|
-| One `custom_fields jsonb` blob | not reliably filterable/reportable; no typing; decision 25 forbids it |
-| Column-per-field via runtime DDL | migration risk, lock contention, unbounded schema, hard multi-tenant |
-| Fully generic EAV (single `value text`) | loses types; every filter is a cast; poor aggregation |
+| Option                                  | Rejected because                                                      |
+| --------------------------------------- | --------------------------------------------------------------------- |
+| One `custom_fields jsonb` blob          | not reliably filterable/reportable; no typing; decision 25 forbids it |
+| Column-per-field via runtime DDL        | migration risk, lock contention, unbounded schema, hard multi-tenant  |
+| Fully generic EAV (single `value text`) | loses types; every filter is a cast; poor aggregation                 |
 
 ## Interaction with mapping
 

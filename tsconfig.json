@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "noEmit": true,
+    "paths": {
+      "@aivoryx/shared": ["packages/shared/src/index.ts"],
+      "@aivoryx/shared/*": ["packages/shared/src/*"],
+      "@aivoryx/config": ["packages/config/src/index.ts"],
+      "@aivoryx/config/*": ["packages/config/src/*"],
+      "@aivoryx/db": ["packages/db/src/index.ts"],
+      "@aivoryx/db/*": ["packages/db/src/*"],
+      "@aivoryx/contracts": ["packages/contracts/src/index.ts"],
+      "@aivoryx/contracts/*": ["packages/contracts/src/*"],
+      "@aivoryx/ui": ["packages/ui/src/index.ts"],
+      "@aivoryx/ui/*": ["packages/ui/src/*"]
+    }
+  },
+  "files": [],
+  "include": []
+}

@@ -10,3 +10,4 @@
 8. Never assume external API behavior; verify docs/sample payloads.
 9. Critical user journeys require automated regression tests.
 10. If a requirement is ambiguous, raise it before coding rather than inventing a business rule.
+11. Branch from `main` as `feature/*`, keep it short-lived, and merge back via PR with CI green. No `develop` or long-lived branches (ADR 0025).

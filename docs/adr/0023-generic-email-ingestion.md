@@ -3,10 +3,12 @@
 Status: Accepted
 
 ## Context
+
 "Tata via email" must not hard-code Tata business rules into the CRM core
 (decision 28). Other providers will also send leads by email.
 
 ## Decision
+
 A **generic email connector** plus **provider/template parsing configuration**:
 
 - The connector consumes a mailbox (IMAP/API poll or inbound-email webhook),
@@ -26,5 +28,6 @@ A **generic email connector** plus **provider/template parsing configuration**:
   HTML bodies, parse as data only.
 
 ## Consequences
+
 Any email-delivered lead source is onboarded without core code changes. Detail
 in `docs/architecture/EMAIL-INGESTION.md`.

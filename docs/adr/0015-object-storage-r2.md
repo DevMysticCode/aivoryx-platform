@@ -3,10 +3,12 @@
 Status: Accepted
 
 ## Context
+
 Raw integration payload bodies, email MIME, survey photos and HR documents need
 durable blob storage. Railway has no native object store.
 
 ## Decision
+
 Use **S3-compatible** object storage, **Cloudflare R2** initially (revisit by a
 later ADR if needed).
 
@@ -20,5 +22,6 @@ later ADR if needed).
   provider can change without touching callers.
 
 ## Consequences
+
 No egress lock-in beyond the S3 API. A storage abstraction is required from day
 one. Separate buckets per environment.

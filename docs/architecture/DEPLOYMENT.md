@@ -6,14 +6,14 @@ Covers decisions 14, 15 and 16.
 
 ## Topology
 
-| Component | Host | Exposure |
-|-----------|------|----------|
-| Next.js web app (SSR + PWA) | **Vercel** | Public HTTPS (app domain) |
-| NestJS API (`/api/v1`) | **Railway** service | Public HTTPS (api domain), behind rate limiting |
-| BullMQ worker(s) | **Railway** service (no public port) | Private only |
-| PostgreSQL | **Railway** managed | **Private networking only** |
-| Redis | **Railway** managed | **Private networking only** |
-| Object storage | **Cloudflare R2** (S3-compatible) | Private buckets; presigned URLs |
+| Component                   | Host                                 | Exposure                                        |
+| --------------------------- | ------------------------------------ | ----------------------------------------------- |
+| Next.js web app (SSR + PWA) | **Vercel**                           | Public HTTPS (app domain)                       |
+| NestJS API (`/api/v1`)      | **Railway** service                  | Public HTTPS (api domain), behind rate limiting |
+| BullMQ worker(s)            | **Railway** service (no public port) | Private only                                    |
+| PostgreSQL                  | **Railway** managed                  | **Private networking only**                     |
+| Redis                       | **Railway** managed                  | **Private networking only**                     |
+| Object storage              | **Cloudflare R2** (S3-compatible)    | Private buckets; presigned URLs                 |
 
 ## Networking rules (decision 16)
 
@@ -62,9 +62,11 @@ Covers decisions 14, 15 and 16.
 
 - GitHub -> CI (typecheck, lint, unit/integration via Vitest, Playwright on
   golden journeys, migration validation, secret scan).
-- On merge to the release branch: Vercel deploys web; Railway deploys API +
-  worker; Drizzle migrations run as a release step with the migration role
-  before the new API version takes traffic.
+- On merge to `main` (the single release branch — ADR 0025): Vercel deploys web;
+  Railway deploys API + worker; Drizzle migrations run as a release step with the
+  migration role before the new API version takes traffic. `staging` and
+  `production` are separate deployment environments off the same `main`, not
+  separate branches.
 - Rollback: Vercel instant rollback for web; Railway redeploy previous image for
   API/worker; migrations are forward-only and written to be
   backward-compatible for one release.

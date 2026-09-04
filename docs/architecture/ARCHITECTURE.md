@@ -6,25 +6,25 @@ Deliver the first client's business system quickly while preserving reusable mod
 
 ## Technology baseline (approved)
 
-| Area | Decision | ADR |
-|------|----------|-----|
-| Architecture | Modular monolith | 0001 |
-| Frontend | Next.js + React + TypeScript, PWA-first | 0002 |
-| Backend | NestJS + TypeScript | 0001 |
-| Database | PostgreSQL | 0001 |
-| ORM / migrations | Drizzle ORM | 0007 |
-| Identifiers | UUIDv7 for all primary keys / external ids | 0008 |
-| Multi-tenancy | PostgreSQL RLS + application tenant guards | 0009 |
-| Authentication | HTTP-only cookie sessions, Argon2id | 0010 |
-| Authorization | Scope-aware RBAC | 0011 |
-| API | REST, code-first OpenAPI, `/api/v1` | 0005 |
-| Background work | Redis + BullMQ workers | 0012 |
-| Reliability | Transactional outbox for important events | 0013 |
-| Observability | Pino structured logs, correlation ids, stable error codes | 0014 |
-| Object storage | S3-compatible, Cloudflare R2 initially | 0015 |
-| Deployment | Vercel (web) + Railway (API, PostgreSQL, Redis, workers) | 0006 |
-| Testing | Vitest + Playwright | 0016 |
-| Lead ingestion | Generic Lead Ingestion Engine | 0017 |
+| Area             | Decision                                                  | ADR  |
+| ---------------- | --------------------------------------------------------- | ---- |
+| Architecture     | Modular monolith                                          | 0001 |
+| Frontend         | Next.js + React + TypeScript, PWA-first                   | 0002 |
+| Backend          | NestJS + TypeScript                                       | 0001 |
+| Database         | PostgreSQL                                                | 0001 |
+| ORM / migrations | Drizzle ORM                                               | 0007 |
+| Identifiers      | UUIDv7 for all primary keys / external ids                | 0008 |
+| Multi-tenancy    | PostgreSQL RLS + application tenant guards                | 0009 |
+| Authentication   | HTTP-only cookie sessions, Argon2id                       | 0010 |
+| Authorization    | Scope-aware RBAC                                          | 0011 |
+| API              | REST, code-first OpenAPI, `/api/v1`                       | 0005 |
+| Background work  | Redis + BullMQ workers                                    | 0012 |
+| Reliability      | Transactional outbox for important events                 | 0013 |
+| Observability    | Pino structured logs, correlation ids, stable error codes | 0014 |
+| Object storage   | S3-compatible, Cloudflare R2 initially                    | 0015 |
+| Deployment       | Vercel (web) + Railway (API, PostgreSQL, Redis, workers)  | 0006 |
+| Testing          | Vitest + Playwright                                       | 0016 |
+| Lead ingestion   | Generic Lead Ingestion Engine                             | 0017 |
 
 ## Architecture style
 
@@ -93,6 +93,7 @@ The client is the first implementation. Generic capabilities should be configura
 ## Document map
 
 Cross-cutting:
+
 - `TENANCY.md` — RLS + application tenant guards
 - `AUTH.md` — cookie sessions, Argon2id, scope-aware RBAC
 - `DEPLOYMENT.md` — Vercel + Railway topology and private networking
@@ -100,6 +101,7 @@ Cross-cutting:
 - `QUALITY-GATES.md` — PR and pre-pilot gates
 
 Lead ingestion / integrations:
+
 - `LEAD-INGESTION.md` — the engine and its canonical pipeline
 - `CONNECTORS-AND-ADAPTERS.md` — transport vs provider-shape separation
 - `FIELD-MAPPING.md` — provider → canonical + custom field mapping

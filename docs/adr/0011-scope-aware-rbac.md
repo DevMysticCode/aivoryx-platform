@@ -3,11 +3,13 @@
 Status: Accepted
 
 ## Context
+
 Roles alone (telecaller, field agent, manager) are not enough: a telecaller must
 see only their leads, a branch manager only their branch. Row visibility is part
 of authorization, not an afterthought.
 
 ## Decision
+
 RBAC with an explicit **scope** dimension.
 
 - **Permission**: stable string `<module>.<resource>.<action>`.
@@ -24,5 +26,6 @@ RBAC with an explicit **scope** dimension.
   constants, not literals.
 
 ## Consequences
+
 One decision function, uniformly enforced. Adding a permission is a reviewed
 change. Detail in `docs/architecture/AUTH.md`.

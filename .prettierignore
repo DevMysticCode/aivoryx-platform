@@ -1,0 +1,15 @@
+# The engineering constitution is owned by the technical lead — never reformat it.
+CLAUDE.md
+
+node_modules
+dist
+.next
+out
+coverage
+.turbo
+pnpm-lock.yaml
+packages/contracts/src/generated
+packages/contracts/openapi
+packages/db/drizzle
+playwright-report
+test-results

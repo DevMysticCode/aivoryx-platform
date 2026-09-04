@@ -25,6 +25,7 @@ user-facing error messages as the support reference.
 ## User-facing failure
 
 Always show:
+
 - concise failure statement
 - safe reason
 - next action
@@ -48,6 +49,7 @@ Example:
 - external_event_id
 
 Never log:
+
 - passwords
 - tokens
 - secrets

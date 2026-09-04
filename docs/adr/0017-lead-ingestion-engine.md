@@ -3,11 +3,13 @@
 Status: Accepted
 
 ## Context
+
 Leads arrive from many sources over different transports. Building per-source
 code paths would scatter provider and client logic through the CRM core and
 violate the reusable-platform direction (ADR 0024).
 
 ## Decision
+
 Build one **generic Lead Ingestion Engine** with a fixed canonical pipeline:
 
 ```
@@ -29,5 +31,6 @@ engines, and raw-event/replay/DLQ. V1 does **not** build Meta, Google, IndiaMART
 Justdial, Tata or Bonvoice adapters, or any provider-specific payload schema.
 
 ## Consequences
+
 New providers become "add an adapter + mapping profile + source config". Detail
 in `docs/architecture/LEAD-INGESTION.md`.

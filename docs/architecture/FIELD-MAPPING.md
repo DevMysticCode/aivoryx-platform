@@ -11,6 +11,7 @@ per source.
 ## Mapping profile
 
 `lead_mapping_profiles`
+
 ```
 id            uuid v7 (pk)
 tenant_id     uuid  (RLS)
@@ -22,6 +23,7 @@ created_at / updated_at
 ```
 
 `lead_mapping_rules` (ordered, belongs to a profile)
+
 ```
 id              uuid v7 (pk)
 profile_id      uuid  (fk)
@@ -50,6 +52,7 @@ System (engine-managed, not mapping targets):
 created_at, updated_at`.
 
 Standard CRM (valid `canonical:` targets):
+
 ```
 full_name, first_name, last_name,
 primary_phone, alt_phone, primary_email,
@@ -74,11 +77,11 @@ or retained untouched in the `RawEvent`.
    b. if absent -> apply `on_missing` (`skip` / `default` / `fail`);
    c. apply `transform` with `transform_args`;
    d. resolve `target`:
-      - `canonical:<f>` -> must be in the canonical set; coerce to that
-        field's type;
-      - `custom:<k>` -> look up `custom_field_definitions`; coerce to its
-        `data_type`; validate;
-   e. write into the `CanonicalLeadEvent` draft (canonical map + custom map).
+   - `canonical:<f>` -> must be in the canonical set; coerce to that
+     field's type;
+   - `custom:<k>` -> look up `custom_field_definitions`; coerce to its
+     `data_type`; validate;
+     e. write into the `CanonicalLeadEvent` draft (canonical map + custom map).
 3. Collect unmapped provider fields into `draft.unmapped` (kept for review, not
    persisted onto the lead).
 4. If any `required` rule failed or any `fail` fired -> stage result

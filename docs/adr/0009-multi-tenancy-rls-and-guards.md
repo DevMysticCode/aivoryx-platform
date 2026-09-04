@@ -3,11 +3,13 @@
 Status: Accepted
 
 ## Context
+
 `CLAUDE.md §5` requires cross-tenant access to be impossible by default. A single
 mechanism is a single point of failure: a forgotten `SET LOCAL` defeats RLS
 alone; a missing `where tenant_id = ?` defeats guards alone.
 
 ## Decision
+
 Enforce tenant isolation **twice, independently**:
 
 1. **PostgreSQL RLS** — every tenant-owned table has RLS enabled and forced,
@@ -24,6 +26,7 @@ Cross-tenant access is only possible via explicit, separately-authorized
 platform-admin services that are audit-logged.
 
 ## Consequences
+
 A leak requires two independent code mistakes plus a misconfigured DB role. CI
 blocks any new tenant-owned table lacking an RLS policy or a guard registration.
 A standing test suite attempts cross-tenant reads/writes and must fail. Detail in

@@ -58,6 +58,7 @@ a guard registration.
 ## Errors
 
 Use stable error codes such as:
+
 - CRM_LEAD_NOT_FOUND
 - CRM_LEAD_ASSIGNMENT_UNAVAILABLE
 - CRM_DUPLICATE_LEAD
@@ -75,6 +76,7 @@ Inbound webhooks and retryable external operations must tolerate duplicate deliv
 Use an outbox pattern for important domain/integration events so database state and emitted events remain reliable.
 
 Examples:
+
 - LeadCreated
 - LeadAssigned
 - LeadQualified
@@ -87,6 +89,7 @@ Examples:
 ## Jobs
 
 Use Redis + BullMQ workers (ADR 0012) for:
+
 - external API calls
 - notifications
 - document processing

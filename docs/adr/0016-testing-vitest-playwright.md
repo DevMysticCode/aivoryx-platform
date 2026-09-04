@@ -3,11 +3,13 @@
 Status: Accepted
 
 ## Context
+
 `CLAUDE.md §15` requires typecheck, lint, unit tests for business logic,
 integration/API tests, and Playwright for critical journeys. The earlier draft
 left the unit runner as "Vitest/Jest as appropriate".
 
 ## Decision
+
 - **Vitest** for all unit and integration tests, across `apps/*` and
   `packages/*` (one runner, one config style).
 - **Playwright** for browser and end-to-end tests, covering the golden journeys
@@ -18,5 +20,6 @@ left the unit runner as "Vitest/Jest as appropriate".
 - Mapping profiles and adapters are tested offline from stored `raw_events`.
 
 ## Consequences
+
 Consistent tooling and mental model. CI gates: typecheck, lint, Vitest,
 Playwright (critical paths), Drizzle migration validation, secret scan.

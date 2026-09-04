@@ -38,6 +38,7 @@ Next.js, React, TypeScript, Tailwind, shadcn/ui, TanStack Query, React Hook Form
 ## Screen states
 
 Every data screen must handle:
+
 1. loading
 2. success
 3. empty

@@ -37,6 +37,7 @@ Payroll is not part of the first CRM pilot but must be architecturally compatibl
 ## Failure paths
 
 Every major workflow needs explicit:
+
 - retry
 - manual intervention
 - rejected/lost
@@ -44,4 +45,4 @@ Every major workflow needs explicit:
 - duplicate
 - unavailable assignee
 - invalid external event
-states.
+  states.

@@ -30,7 +30,7 @@ A constrained specialisation of the `webhook` connector:
   IP allow-list if Pabbly publishes stable egress ranges. HMAC signature if/when
   available.
 - **Envelope metadata:** records that `transport = pabbly_bridge`, the Pabbly
-  workflow identifier if provided, and the *claimed* origin provider key from
+  workflow identifier if provided, and the _claimed_ origin provider key from
   configuration (never trusted from the body for routing).
 - **Body:** stored verbatim in `raw_events`. Pabbly-shaped bodies are handled by
   a `generic_json` adapter plus a per-source mapping profile - **no
@@ -49,11 +49,11 @@ A constrained specialisation of the `webhook` connector:
 
 ## Migration path (three stages)
 
-| Stage | State | Action |
-|-------|-------|--------|
-| 1 | Now | All IndiaMART/Justdial (and any other bridged) leads enter via `pabbly_bridge`. Capture real `raw_events`. |
-| 2 | After provider API verification | Build a direct connector (`webhook` or `rest_pull`) + provider adapter + mapping profile. Run **both** paths in parallel, dedup by idempotency key, compare counts via reconciliation. |
-| 3 | After parallel run is clean | Disable the Pabbly source, delete the Pabbly workflow. The `pabbly_bridge` connector code remains available for any future bridged provider but has no active source. |
+| Stage | State                           | Action                                                                                                                                                                                 |
+| ----- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Now                             | All IndiaMART/Justdial (and any other bridged) leads enter via `pabbly_bridge`. Capture real `raw_events`.                                                                             |
+| 2     | After provider API verification | Build a direct connector (`webhook` or `rest_pull`) + provider adapter + mapping profile. Run **both** paths in parallel, dedup by idempotency key, compare counts via reconciliation. |
+| 3     | After parallel run is clean     | Disable the Pabbly source, delete the Pabbly workflow. The `pabbly_bridge` connector code remains available for any future bridged provider but has no active source.                  |
 
 Each stage transition is an operational change to `source` configuration, not a
 code migration.

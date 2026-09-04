@@ -3,6 +3,7 @@
 ## Step 1 — Freeze scope
 
 Write down the first two pilot journeys:
+
 - CRM: Lead → Telecaller → Field → Survey → Quotation → Booking
 - HR: Employee → Attendance → Leave → Expense
 
@@ -15,6 +16,7 @@ Do not build integrations from assumptions. Collect sanitized examples and curre
 ## Step 3 — Create architecture baseline
 
 Review and approve:
+
 - system-map.mmd
 - module-boundaries.mmd
 - lead-to-booking.mmd
@@ -24,7 +26,7 @@ Review and approve:
 
 ## Step 4 — Establish repository
 
-Create GitHub repo, protect main, create develop, set up CI, create `.env.example`, and add this documentation before business coding.
+Create GitHub repo, protect `main`, set up CI, create `.env.example`, and add this documentation before business coding. Work happens on short-lived `feature/*` branches merged into `main` via PR — no `develop` branch (ADR 0025).
 
 ## Step 5 — Establish environments
 
@@ -54,6 +56,7 @@ Then begin CRM and HR in parallel.
 ## Step 10 — Weekly review
 
 Every week review:
+
 - completed client journeys
 - blockers
 - architecture changes

@@ -1,4 +1,5 @@
 # Aivoryx Business Operating Platform
+
 ## Initial Implementation Scope
 
 ### Purpose
@@ -269,6 +270,7 @@ The new platform will be introduced progressively alongside the company's existi
 Existing data and integrations will be assessed before migration.
 
 The transition approach will prioritize:
+
 - active business data
 - verified mappings
 - test imports

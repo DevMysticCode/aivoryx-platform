@@ -3,11 +3,13 @@
 Status: Accepted
 
 ## Context
+
 Provider payloads are the only ground truth for debugging a bad lead, and
 providers re-deliver. We must never lose an inbound payload or silently drop an
 event.
 
 ## Decision
+
 - **Persist the raw payload first.** `raw_events` is written verbatim (body in
   R2 by reference for large bodies, small inline), in its own transaction,
   before any parsing.
@@ -28,6 +30,7 @@ event.
   dead_letter) vs provider-reported totals where available.
 
 ## Consequences
+
 Every failure is recoverable and inspectable. Storage cost for raw bodies is
 managed by per-tenant retention + lifecycle rules. Detail in
 `docs/architecture/RAW-EVENTS-AND-REPLAY.md`.

@@ -14,9 +14,14 @@ Covers decisions 8 and 9.
   `HttpOnly`, `Secure`, `SameSite=Lax` (or `Strict` for the admin surface),
   `Path=/`, host-only, short idle lifetime + absolute lifetime, rotating id on
   privilege change.
-- Session store: Postgres table `sessions` (id, user_id, tenant_id,
-  created_at, last_seen_at, expires_at, ip, user_agent, revoked_at). A Redis
-  cache may front it for read latency; Postgres is source of truth.
+- Session store: **PostgreSQL is authoritative.** Table `sessions` (id, user_id,
+  tenant_id, created_at, last_seen_at, expires_at, ip, user_agent, revoked_at)
+  is the single source of truth for session existence, expiry and revocation.
+- **Redis is not a session store.** Correctness must not depend on Redis: an
+  optional read-through cache for session lookups may be added later, but it
+  must always fall back to Postgres and a Redis outage must not affect
+  authentication, authorization or revocation. Not implemented in the initial
+  Phase 2 build (see open decisions).
 - No JWT for browser auth. No token in `localStorage`. Logout and admin
   "revoke session" delete the server record immediately.
 - CSRF: `SameSite` cookie + a double-submit CSRF token on state-changing
@@ -48,6 +53,7 @@ Covers decisions 8 and 9.
 ### Decision function
 
 `can(user, permission, target) =>`
+
 1. collect the user's roles whose permission set includes `permission`;
 2. for each, check the grant's scope contains `target` (self ⊂ team ⊂
    department ⊂ branch ⊂ tenant);
@@ -75,7 +81,7 @@ reference catalogue constants, not literals.
 ## Relationship to tenancy
 
 Authorization runs **after** tenant resolution (`TENANCY.md`). Tenant isolation
-is not a permission - it is always enforced. RBAC scopes narrow access *within*
+is not a permission - it is always enforced. RBAC scopes narrow access _within_
 the already-tenant-scoped set.
 
 ## Audit

@@ -3,11 +3,13 @@
 Status: Accepted
 
 ## Context
+
 The backend needs typed database access and versioned migrations on PostgreSQL.
 Tenant isolation will rely on PostgreSQL Row Level Security (ADR 0009), which
 needs predictable, inspectable SQL and per-transaction session settings.
 
 ## Decision
+
 Use **Drizzle ORM** for schema definition, queries and migrations.
 
 - Migrations are Drizzle-generated, versioned, forward-only, and
@@ -18,6 +20,7 @@ Use **Drizzle ORM** for schema definition, queries and migrations.
   an explicit `tenant_id` from `TenantContext`.
 
 ## Consequences
+
 Thin, SQL-transparent access that co-operates with RLS and `SET LOCAL`. Less
 "magic" than a heavier ORM; some conveniences (e.g. rich lazy relations) must be
 written explicitly. UUIDv7 keys (ADR 0008) are generated in the application or

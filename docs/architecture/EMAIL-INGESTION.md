@@ -35,6 +35,7 @@ Mailbox / inbound-email webhook
 ### 2. Template matcher (configuration)
 
 `email_ingest_rules`
+
 ```
 id            uuid v7
 tenant_id     uuid  (RLS)
@@ -77,6 +78,7 @@ fields, then validation, dedup, lead, assignment.
 ## Configuration lives in data, not code
 
 For "Tata via email" the setup is entirely configuration:
+
 1. a `source` (provider key `tata`, connector `email`);
 2. an `email_ingest_rule` matching Tata's sender/subject;
 3. a `parser_key` pointing at a `generic_email_*` strategy + its capture config;

@@ -1,6 +1,7 @@
 # Backend Checklist
 
 Before coding:
+
 - identify tenant boundary
 - identify permission
 - identify business invariant
@@ -8,6 +9,7 @@ Before coding:
 - check existing repository/service patterns
 
 During coding:
+
 - DTO validation
 - authorization
 - tenant filtering
@@ -18,6 +20,7 @@ During coding:
 - tests
 
 Before PR:
+
 - Drizzle migration included; forward-only, backward-compatible for one release
 - new tenant-owned tables have forced RLS + a registered application tenant guard
 - code-first OpenAPI regenerated and committed

@@ -5,6 +5,7 @@ This is your checklist before the first production code is written.
 ## A. Commercial / ownership
 
 Confirm in writing with the client:
+
 - Aivoryx/development company owns reusable platform IP, subject to the agreed contract.
 - Client owns its business data and client-specific content.
 - Client controls production cloud/domain/integration accounts where agreed.
@@ -16,6 +17,7 @@ Do not rely on verbal agreement for IP ownership.
 ## B. Client discovery
 
 Collect:
+
 - organization structure
 - branches
 - departments
@@ -37,6 +39,7 @@ Collect:
 ## C. Existing-system discovery
 
 Obtain exports/API documentation/sample payloads for:
+
 - Zoho Bigin
 - Zoho People
 - Zoho Inventory
@@ -46,6 +49,7 @@ Obtain exports/API documentation/sample payloads for:
 - Bonvoice
 
 For each integration, document:
+
 - input
 - output
 - authentication
@@ -59,6 +63,7 @@ For each integration, document:
 ## D. Lead-source samples
 
 Get at least 3–5 real/sanitized examples from:
+
 - Tata
 - IndiaMART
 - Justdial
@@ -71,6 +76,7 @@ Record what fields arrive and how duplicates are currently detected.
 ## E. Telephony discovery
 
 Confirm with Bonvoice:
+
 - API/webhook documentation
 - click-to-call
 - call event webhooks
@@ -86,6 +92,7 @@ Do not implement against assumptions.
 ## F. Field discovery
 
 Get the current FieldSense process:
+
 - assignment
 - visit scheduling
 - GPS
@@ -100,6 +107,7 @@ Get the current FieldSense process:
 ## G. HR discovery
 
 Get current Zoho People rules:
+
 - employee fields
 - attendance
 - geo-fence
@@ -115,6 +123,7 @@ Payroll can be deferred, but the data model must preserve required inputs.
 ## H. UX discovery
 
 Ask for:
+
 - screenshots of current Zoho workflows
 - current quotation
 - current field survey form
@@ -129,6 +138,7 @@ Do not copy Zoho's UX blindly. Use it only to understand current behavior.
 ## I. Architecture decisions to freeze
 
 Before business coding, confirm:
+
 - modular monolith
 - PostgreSQL
 - tenant isolation strategy
@@ -145,6 +155,7 @@ Before business coding, confirm:
 ## J. Repository setup
 
 Create:
+
 - GitHub repository
 - branch protection
 - issue/project board
@@ -174,6 +185,7 @@ You remain the final authority.
 
 Claude may implement and recommend.
 Claude may not silently decide:
+
 - architecture
 - data ownership
 - security exceptions
