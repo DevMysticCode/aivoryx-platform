@@ -2,10 +2,15 @@
 
 ## Lead to Booking
 
-1. Lead arrives from source.
-2. Normalize and validate.
-3. Deduplicate.
-4. Assign to telecaller using configured rules.
+1. Lead arrives from a source through the Lead Ingestion Engine:
+   Connector → Adapter → Mapping → Canonical Event (`raw_events` +
+   `canonical_lead_events` persisted).
+2. Validate (schema + tenant rules); invalid events are dead-lettered, not
+   dropped.
+3. Deduplicate against existing leads/customers by the source's match policy.
+4. Create or merge the lead; `LeadCreated`/`LeadUpdated` is emitted on the
+   transactional outbox and consumed by the CRM assignment engine, which
+   assigns a telecaller using configured rules.
 5. Create SLA/call task.
 6. Telecaller calls through Bonvoice.
 7. Store call metadata/disposition/follow-up.
@@ -32,6 +37,7 @@ Payroll is not part of the first CRM pilot but must be architecturally compatibl
 ## Failure paths
 
 Every major workflow needs explicit:
+
 - retry
 - manual intervention
 - rejected/lost
@@ -39,4 +45,4 @@ Every major workflow needs explicit:
 - duplicate
 - unavailable assignee
 - invalid external event
-states.
+  states.

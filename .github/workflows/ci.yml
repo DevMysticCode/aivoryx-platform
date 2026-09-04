@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Phase 1 verification does not need a live DB/Redis (unit tests are isolated,
+  # the e2e smoke tolerates the API being down). Integration tests in later
+  # phases will add service containers.
+  APP_ENV: test
+  NODE_ENV: test
+  DATABASE_URL: postgres://postgres:postgres@localhost:5432/aivoryx
+  REDIS_URL: redis://localhost:6379
+  SESSION_SECRET: ci-placeholder-session-secret-000000000000
+  NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+  NEXT_PUBLIC_APP_ENV: test
+
+jobs:
+  verify:
+    name: install · lint · typecheck · test · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit / integration tests
+        run: pnpm test
+
+      - name: Install Playwright browser
+        run: pnpm --filter @aivoryx/web exec playwright install --with-deps chromium
+
+      - name: E2E smoke tests
+        run: pnpm --filter @aivoryx/web test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
+
+  secret-scan:
+    name: secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_CONFIG: .gitleaks.toml

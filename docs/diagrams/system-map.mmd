@@ -1,20 +1,29 @@
 flowchart TB
     subgraph SOURCES["Lead Sources"]
-      TATA["Tata"]
-      IM["IndiaMART"]
-      JD["Justdial"]
-      META["Meta Ads"]
-      GOOGLE["Google Ads"]
-      WEB["Website"]
+      WEB["Website forms"]
+      TATA["Tata (email)"]
+      IM["IndiaMART (via Pabbly)"]
+      JD["Justdial (via Pabbly)"]
+      META["Meta Ads (adapter later)"]
+      GOOGLE["Google Ads (adapter later)"]
     end
 
-    subgraph PLATFORM["Aivoryx Platform"]
-      INGEST["Lead Ingestion"]
-      NORMALIZE["Normalize + Validate"]
-      DEDUPE["Deduplicate"]
-      ASSIGN["Assignment Engine"]
+    subgraph EDGE["Aivoryx edge"]
+      WEBAPP["Next.js web app (Vercel)<br/>PWA"]
+      API["NestJS API (Railway)<br/>/api/v1"]
+    end
+
+    subgraph ENGINE["Lead Ingestion Engine"]
+      CONN["Connectors: webhook / email / rest_pull / pabbly_bridge"]
+      ADAPT["Adapters (generic only in V1)"]
+      MAPPING["Mapping + custom fields"]
+      RAWSTORE["raw_events / replay / DLQ"]
+      DEDUPE["Validate + Deduplicate"]
+    end
+
+    subgraph PLATFORM["Aivoryx Platform (modular monolith)"]
       CRM["CRM"]
-      TELE["Telecalling"]
+      TELE["Telecalling (after Bonvoice verification)"]
       FIELD["Field Sales PWA"]
       SURVEY["Site Survey"]
       SALES["Design / BOQ / Quotation"]
@@ -24,18 +33,23 @@ flowchart TB
       INV["Procurement / Inventory"]
       FIN["Finance"]
       SERVICE["Service / AMC"]
+      WORKER["BullMQ workers (Railway)"]
+      OUTBOX["Transactional outbox"]
     end
 
-    TATA --> INGEST
-    IM --> INGEST
-    JD --> INGEST
-    META --> INGEST
-    GOOGLE --> INGEST
-    WEB --> INGEST
+    WEB --> API
+    TATA --> CONN
+    IM --> CONN
+    JD --> CONN
+    META --> CONN
+    GOOGLE --> CONN
+    WEBAPP --> API
+    API --> CONN
 
-    INGEST --> NORMALIZE --> DEDUPE --> CRM --> ASSIGN --> TELE
-    TELE --> CRM
-    TELE --> FIELD --> SURVEY --> SALES --> BOOK
+    CONN --> ADAPT --> MAPPING --> RAWSTORE --> DEDUPE --> CRM
+    CRM --> OUTBOX --> WORKER
+    CRM --> TELE
+    CRM --> FIELD --> SURVEY --> SALES --> BOOK
     BOOK --> PROJECT --> INV
     BOOK --> FIN
     PROJECT --> FIN

@@ -1,6 +1,7 @@
 # Frontend Checklist
 
 Every screen:
+
 - loading state
 - empty state
 - success state
@@ -10,6 +11,7 @@ Every screen:
 - accessible controls
 
 Forms:
+
 - client validation
 - server validation handling
 - disabled/submitting state
@@ -17,6 +19,7 @@ Forms:
 - actionable errors
 
 Tables:
+
 - pagination
 - search/filter only where useful
 - stable loading
@@ -25,6 +28,7 @@ Tables:
 - mobile strategy
 
 Performance:
+
 - no unnecessary client component
 - no huge bundle import
 - heavy libraries lazy-loaded

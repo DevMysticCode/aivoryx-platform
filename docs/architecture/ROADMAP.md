@@ -3,36 +3,50 @@
 ## Stream A — Foundation
 
 - repository
-- monorepo
-- CI/CD
-- environments
-- authentication
-- tenancy
-- RBAC
+- monorepo (pnpm workspaces + Turborepo)
+- CI/CD (Vitest, Playwright, Drizzle migration validation, secret scan)
+- environments (Vercel + Railway, private networking)
+- authentication (cookie sessions, Argon2id)
+- tenancy (PostgreSQL RLS + application guards)
+- RBAC (scope-aware permissions)
 - audit
-- error handling
-- OpenAPI
+- error handling (stable error-code catalogue)
+- OpenAPI (code-first)
+- observability (Pino, correlation ids)
+- outbox + BullMQ workers
 - design system
 - PWA shell
-- observability
+
+## Stream A2 — Lead Ingestion Engine (shared platform capability)
+
+Built before provider work; provider-neutral.
+
+- source configuration model
+- connector framework (webhook, email; rest_pull + pabbly_bridge interfaces)
+- generic adapters (`generic_json`, `generic_form`, `generic_email_*`)
+- field-mapping engine + mapping profiles
+- typed custom-field engine
+- raw-event store, idempotency, retry, replay, dead-letter, reconciliation
+- manual review UI (`NEEDS_REVIEW`, DLQ)
 
 ## Stream B — CRM (primary)
 
-- lead sources
-- lead ingestion
+- lead sources (config) — starting with Website forms, then Tata email, then Pabbly-bridged IndiaMART/Justdial
 - lead
 - customer
-- deduplication
+- deduplication policy
 - assignment
 - SLA
 - activities
 - tasks
 - follow-up
-- telecalling
-- Bonvoice
+- telecalling (after Bonvoice capability verification — NOT in V1)
 - qualification
 - sales pipeline
 - performance
+
+Meta, Google, IndiaMART, Justdial, Tata and Bonvoice **direct adapters** are
+deferred until their real API/payload capabilities are verified.
 
 ## Stream C — HR (parallel)
 

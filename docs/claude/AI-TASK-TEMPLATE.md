@@ -1,6 +1,7 @@
 # Claude Task Template
 
 Read first:
+
 - CLAUDE.md
 - [relevant architecture docs]
 - [relevant workflow]
@@ -36,6 +37,7 @@ Read first:
 ## Before coding
 
 Report:
+
 - understanding
 - files likely to change
 - dependencies
@@ -44,6 +46,7 @@ Report:
 ## After coding
 
 Report:
+
 - files changed
 - tests/checks run
 - results

@@ -55,13 +55,19 @@ Use a modular monolith initially.
 - Forms: React Hook Form + Zod
 - Backend: NestJS + TypeScript
 - Database: PostgreSQL
-- Cache/queues: Redis
-- API contract: OpenAPI
-- Testing: Vitest/Jest as appropriate + Playwright
-- Initial hosting: Railway
-- Object storage: S3-compatible storage
+- ORM / migrations: Drizzle ORM (ADR 0007)
+- Identifiers: UUIDv7 (ADR 0008)
+- Cache/queues: Redis + BullMQ
+- API: REST, code-first OpenAPI, `/api/v1` (ADR 0005)
+- Testing: Vitest (unit/integration) + Playwright (E2E) (ADR 0016)
+- Hosting: Vercel (web) + Railway (API, PostgreSQL, Redis, workers), Railway
+  private networking; datastores not publicly exposed (ADR 0006, `DEPLOYMENT.md`)
+- Object storage: S3-compatible, Cloudflare R2 initially (ADR 0015)
 
 Do not introduce microservices unless explicitly approved.
+
+See `docs/architecture/ARCHITECTURE.md` for the full technology baseline table
+and ADR references.
 
 ## 5. Multi-tenancy
 

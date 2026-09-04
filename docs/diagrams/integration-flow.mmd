@@ -1,43 +1,51 @@
 flowchart LR
-    subgraph EXT["External Systems"]
-      P["Pabbly"]
-      M["Meta"]
-      G["Google"]
-      I["IndiaMART"]
-      J["Justdial"]
-      T["Tata"]
-      B["Bonvoice"]
-      W["Website"]
+    subgraph EXT["External Sources"]
+      WEB["Website forms"]
+      TATA["Tata (email)"]
+      PABBLY["Pabbly bridge<br/>(IndiaMART, Justdial)"]
+      META["Meta Ads forms<br/>(adapter not built)"]
+      GOOGLE["Google Ads forms<br/>(adapter not built)"]
     end
 
-    subgraph INT["Aivoryx Integration Engine"]
-      WH["Webhook / API Gateway"]
-      RAW["Raw Event Store"]
-      MAP["Normalize + Map"]
-      IDEM["Idempotency"]
-      RULE["Conditions / Actions"]
-      RETRY["Retry / Dead Letter"]
-      LOG["Integration Log"]
+    subgraph CONN["Connectors (transport)"]
+      WH["webhook"]
+      EM["email"]
+      PB["pabbly_bridge"]
+      RP["rest_pull (iface)"]
     end
 
-    subgraph CORE["Aivoryx"]
-      CRM["CRM"]
-      COMM["Communication / Telephony"]
+    subgraph ENGINE["Lead Ingestion Engine"]
+      ADAPT["Adapter<br/>generic_json / generic_form / generic_email_*"]
+      MAP["Mapping<br/>profile -> canonical + custom"]
+      RAW["raw_events + canonical_lead_events<br/>(persist, idempotency key)"]
+      VAL["Validation"]
+      DEDUP["Deduplication"]
+      LEAD["Lead create / merge"]
+      DLQ["dead_letter_events"]
+      LOG["integration_event_log"]
     end
 
-    P --> WH
-    M --> WH
-    G --> WH
-    I --> WH
-    J --> WH
-    T --> WH
-    W --> WH
-    B <--> WH
+    subgraph CRM["CRM"]
+      OUT["outbox: LeadCreated / LeadUpdated"]
+      ASSIGN["Assignment engine"]
+    end
 
-    WH --> RAW --> MAP --> IDEM --> RULE
-    RULE --> CRM
-    RULE --> COMM
-    RULE --> RETRY
-    WH --> LOG
-    MAP --> LOG
-    RULE --> LOG
+    WEB --> WH
+    TATA --> EM
+    PABBLY --> PB
+    META --> WH
+    GOOGLE --> WH
+
+    WH --> ADAPT
+    EM --> ADAPT
+    PB --> ADAPT
+    RP --> ADAPT
+
+    ADAPT --> MAP --> RAW --> VAL --> DEDUP --> LEAD --> OUT --> ASSIGN
+
+    VAL -->|invalid| DLQ
+    MAP -->|"mapping failed"| DLQ
+    ADAPT -->|"parse failed"| DLQ
+    DEDUP -->|ambiguous| LOG
+    RAW --> LOG
+    DLQ -->|"edit and replay"| RAW

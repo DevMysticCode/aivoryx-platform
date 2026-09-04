@@ -1,0 +1,155 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health/live": {
+      "get": {
+        "operationId": "getLiveness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Process is alive.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessReportDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Liveness probe. No dependency checks.",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Readiness report.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Readiness health check (database + redis).",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Aivoryx Platform API",
+    "description": "Code-first OpenAPI contract. Regenerate with `pnpm contracts:generate`.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "aivoryx_session",
+        "description": "HTTP-only session cookie (ADR 0010). Set by the auth endpoints in Phase 2."
+      }
+    },
+    "schemas": {
+      "LivenessReportDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "uptimeSeconds": {
+            "type": "number",
+            "example": 1234
+          }
+        },
+        "required": [
+          "status",
+          "uptimeSeconds"
+        ]
+      },
+      "DependencyHealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "latencyMs": {
+            "type": "number",
+            "example": 12
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "latencyMs"
+        ]
+      },
+      "HealthChecksDto": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "$ref": "#/components/schemas/DependencyHealthDto"
+          },
+          "redis": {
+            "$ref": "#/components/schemas/DependencyHealthDto"
+          }
+        },
+        "required": [
+          "database",
+          "redis"
+        ]
+      },
+      "HealthReportDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "correlationId": {
+            "type": "string",
+            "example": "AIV-01J9Z8ABCDEF0123456789"
+          },
+          "checks": {
+            "$ref": "#/components/schemas/HealthChecksDto"
+          }
+        },
+        "required": [
+          "status",
+          "correlationId",
+          "checks"
+        ]
+      }
+    }
+  }
+}

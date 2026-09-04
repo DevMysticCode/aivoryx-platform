@@ -3,6 +3,7 @@
 ## Before every task
 
 Claude must:
+
 1. Read CLAUDE.md.
 2. Read the relevant architecture docs.
 3. Inspect existing code before proposing new code.
@@ -25,6 +26,7 @@ Claude must:
 ## After implementation
 
 Run:
+
 - formatter
 - lint
 - typecheck
@@ -32,6 +34,7 @@ Run:
 - Playwright for critical UI paths
 
 Then:
+
 - review git diff
 - check for accidental secrets
 - update docs if behavior/architecture changed
@@ -45,6 +48,7 @@ Record the blocker and ask the technical lead.
 ## Task sizing
 
 Prefer tasks that can be completed and reviewed independently:
+
 - employee create
 - employee list
 - lead create

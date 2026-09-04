@@ -4,6 +4,28 @@
 
 Deliver the first client's business system quickly while preserving reusable module boundaries for later Aivoryx SaaS expansion.
 
+## Technology baseline (approved)
+
+| Area             | Decision                                                  | ADR  |
+| ---------------- | --------------------------------------------------------- | ---- |
+| Architecture     | Modular monolith                                          | 0001 |
+| Frontend         | Next.js + React + TypeScript, PWA-first                   | 0002 |
+| Backend          | NestJS + TypeScript                                       | 0001 |
+| Database         | PostgreSQL                                                | 0001 |
+| ORM / migrations | Drizzle ORM                                               | 0007 |
+| Identifiers      | UUIDv7 for all primary keys / external ids                | 0008 |
+| Multi-tenancy    | PostgreSQL RLS + application tenant guards                | 0009 |
+| Authentication   | HTTP-only cookie sessions, Argon2id                       | 0010 |
+| Authorization    | Scope-aware RBAC                                          | 0011 |
+| API              | REST, code-first OpenAPI, `/api/v1`                       | 0005 |
+| Background work  | Redis + BullMQ workers                                    | 0012 |
+| Reliability      | Transactional outbox for important events                 | 0013 |
+| Observability    | Pino structured logs, correlation ids, stable error codes | 0014 |
+| Object storage   | S3-compatible, Cloudflare R2 initially                    | 0015 |
+| Deployment       | Vercel (web) + Railway (API, PostgreSQL, Redis, workers)  | 0006 |
+| Testing          | Vitest + Playwright                                       | 0016 |
+| Lead ingestion   | Generic Lead Ingestion Engine                             | 0017 |
+
 ## Architecture style
 
 **Modular monolith + event-driven internal integration + external integration adapters.**
@@ -55,7 +77,10 @@ Business modules must not depend on another module's database tables directly. U
 
 ## First business path
 
-Lead Source → Lead Ingestion → Normalize → Deduplicate → Assign → Telecalling → Qualification → Field → Survey → Design/BOQ → Quotation → Approval → Booking.
+Lead Source → Connector → Adapter → Mapping → Canonical Event → Validation → Deduplicate → Lead → Assign → Telecalling → Qualification → Field → Survey → Design/BOQ → Quotation → Approval → Booking.
+
+The ingestion portion (Source … Lead) is a reusable engine; see the integration
+document map below.
 
 ## HR parallel path
 
@@ -63,4 +88,26 @@ Tenant → Employee → Role/Manager → Attendance → Leave → Expenses.
 
 ## Future productization
 
-The client is the first implementation. Generic capabilities should be configurable, not tenant-hard-coded. Client-specific behavior belongs in configuration or a clearly isolated vertical extension.
+The client is the first implementation. Generic capabilities should be configurable, not tenant-hard-coded. Client-specific behavior belongs in configuration or a clearly isolated vertical extension. No client-specific or provider-specific logic may leak into a reusable core module (ADR 0024).
+
+## Document map
+
+Cross-cutting:
+
+- `TENANCY.md` — RLS + application tenant guards
+- `AUTH.md` — cookie sessions, Argon2id, scope-aware RBAC
+- `DEPLOYMENT.md` — Vercel + Railway topology and private networking
+- `OBSERVABILITY.md` — correlation ids, log fields, error codes
+- `QUALITY-GATES.md` — PR and pre-pilot gates
+
+Lead ingestion / integrations:
+
+- `LEAD-INGESTION.md` — the engine and its canonical pipeline
+- `CONNECTORS-AND-ADAPTERS.md` — transport vs provider-shape separation
+- `FIELD-MAPPING.md` — provider → canonical + custom field mapping
+- `CUSTOM-FIELDS.md` — typed tenant-configurable custom fields
+- `RAW-EVENTS-AND-REPLAY.md` — raw events, idempotency, retry, replay, dead-letter
+- `EMAIL-INGESTION.md` — generic email connector + parsing configuration
+- `PABBLY-BRIDGE.md` — Pabbly as a temporary transport, not a dependency
+
+Diagrams: `docs/diagrams/`.

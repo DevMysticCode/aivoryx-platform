@@ -1,0 +1,49 @@
+# Local development infrastructure only.
+# Not used in staging/production (Railway provides managed Postgres + Redis).
+#
+#   docker compose up -d
+#   docker compose down            # stop
+#   docker compose down -v         # stop + wipe data
+#
+# Ports bind to 127.0.0.1 so nothing is exposed on the network.
+
+name: aivoryx-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aivoryx
+    # Non-standard host port to avoid clashing with a local Postgres on 5432.
+    ports:
+      - '127.0.0.1:55432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d aivoryx']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # BullMQ requires persistence so queued jobs survive a restart (ADR 0012).
+    command: ['redis-server', '--appendonly', 'yes']
+    # Non-standard host port to avoid clashing with a local Redis on 6379.
+    ports:
+      - '127.0.0.1:56379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:

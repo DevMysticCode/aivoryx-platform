@@ -1,0 +1,23 @@
+# gitleaks configuration for the Aivoryx monorepo.
+# Run locally:  gitleaks detect --no-banner --redact
+# CI runs the gitleaks GitHub Action on every push / PR.
+
+title = "Aivoryx gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-secret placeholders and generated artifacts"
+paths = [
+  '''\.env\.example$''',
+  '''pnpm-lock\.yaml$''',
+  '''packages/contracts/openapi/.*''',
+  '''packages/contracts/src/generated/.*''',
+]
+regexes = [
+  # obvious placeholder values used in .env.example / docs
+  '''(?i)(change[-_]?me|placeholder|example|dummy|your[-_]?.*[-_]?here|xxxx+)''',
+  '''postgres://postgres:postgres@localhost''',
+  '''redis://localhost:6379''',
+]

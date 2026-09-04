@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+pnpm-lock.yaml -diff linguist-generated
+packages/contracts/src/generated/** linguist-generated
+packages/db/drizzle/** linguist-generated

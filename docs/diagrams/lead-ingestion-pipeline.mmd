@@ -1,0 +1,27 @@
+flowchart TD
+    SRC["Source config<br/>(tenant-scoped: provider key, connector,<br/>adapter_key, mapping profile, dedupe policy)"]
+
+    SRC --> CONN["Connector (transport)<br/>webhook | email | rest_pull | pabbly_bridge | manual_csv"]
+    CONN -->|"InboundEnvelope"| ADPT["Adapter (pure)<br/>provider shape -> ProviderDraft"]
+    ADPT -->|"ProviderDraft"| MAP["Mapping<br/>rules -> canonical: / custom: fields"]
+    MAP --> CE["Canonical Event<br/>persist raw_events + canonical_lead_events<br/>set idempotency_key"]
+    CE --> VAL{"Valid?"}
+    VAL -->|No| DL["dead_letter_events<br/>(edit and replay)"]
+    VAL -->|Yes| DDP{"Dedupe outcome"}
+    DDP -->|new| NEW["Create lead"]
+    DDP -->|"duplicate_merge / link"| MRG["Merge / link existing lead"]
+    DDP -->|ambiguous| REV["NEEDS_REVIEW queue"]
+    NEW --> EMIT["outbox: LeadCreated"]
+    MRG --> EMIT2["outbox: LeadUpdated"]
+    EMIT --> ASG["CRM Assignment engine"]
+    EMIT2 --> ASG
+
+    CE -.-> LOG["integration_event_log<br/>(stage transitions, correlation id)"]
+    VAL -.-> LOG
+    DDP -.-> LOG
+    NEW -.-> LOG
+    DL -.->|replay from raw| CONN
+    REV -.->|resolve| DDP
+
+    classDef store fill:#eef,stroke:#88a;
+    class CE,LOG,DL store;

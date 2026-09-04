@@ -1,0 +1,13 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# pnpm 11 interactive build-approval map. Native-binary/critical steps are
+# allowed; analytics + notice-only scripts are declined.
+allowBuilds:
+  esbuild: true
+  sharp: true
+  '@nestjs/core': true
+  nestjs-pino: true
+  msgpackr-extract: true
+  '@scarf/scarf': false

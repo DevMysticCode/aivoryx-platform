@@ -1,0 +1,31 @@
+sequenceDiagram
+    autonumber
+    actor U as User (browser)
+    participant W as Next.js (Vercel)
+    participant A as NestJS API (Railway)
+    participant S as sessions (PostgreSQL)
+    participant R as RBAC guard
+    participant DB as Tenant data (RLS)
+
+    U->>W: enter credentials
+    W->>A: POST /api/v1/auth/login (email, password)
+    A->>S: verify user, Argon2id check
+    A->>S: create session row
+    A-->>W: Set-Cookie (HttpOnly, Secure, SameSite) + CSRF token
+    W-->>U: authenticated shell
+
+    Note over U,DB: subsequent request
+    U->>W: action
+    W->>A: GET/POST /api/v1/... (cookie + CSRF on mutations)
+    A->>S: load session -> user_id, tenant_id
+    A->>A: resolve TenantContext (never from body)
+    A->>R: @RequirePermission(module.resource.action)
+    R->>R: roles x scope (tenant/branch/dept/team/self)
+    alt permitted
+        A->>DB: BEGIN; SET LOCAL app.tenant_id/app.user_id/app.role_scope
+        A->>DB: query with tenant_id + scope filter (RLS also enforces)
+        DB-->>A: rows
+        A-->>W: 200 + correlation id
+    else denied
+        A-->>W: 403 AUTH_FORBIDDEN + correlation id
+    end

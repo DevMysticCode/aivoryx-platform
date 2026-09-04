@@ -1,0 +1,56 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "globalEnv": ["NODE_ENV", "CI"],
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "REDIS_URL",
+    "SESSION_SECRET",
+    "APP_ENV",
+    "API_PORT",
+    "WEB_PORT",
+    "API_BASE_URL",
+    "NEXT_PUBLIC_API_BASE_URL",
+    "NEXT_PUBLIC_APP_ENV",
+    "CORS_ALLOWED_ORIGINS",
+    "LOG_LEVEL",
+    "OBJECT_STORAGE_ENDPOINT",
+    "OBJECT_STORAGE_BUCKET",
+    "OBJECT_STORAGE_ACCESS_KEY_ID",
+    "OBJECT_STORAGE_SECRET_ACCESS_KEY",
+    "OBJECT_STORAGE_REGION"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "storybook-static/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "openapi:extract": {
+      "dependsOn": ["^build"],
+      "outputs": ["../../packages/contracts/openapi/**"]
+    },
+    "generate": {
+      "outputs": ["src/generated/**"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}
