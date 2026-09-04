@@ -13,10 +13,20 @@ Covers decisions 8 and 9.
   session cookie:
   `HttpOnly`, `Secure`, `SameSite=Lax` (or `Strict` for the admin surface),
   `Path=/`, host-only, short idle lifetime + absolute lifetime, rotating id on
-  privilege change.
+  privilege change. The cookie carries an opaque random token; the database
+  stores only its **SHA-256 hash** (`sessions.token_hash`).
 - Session store: **PostgreSQL is authoritative.** Table `sessions` (id, user_id,
-  tenant_id, created_at, last_seen_at, expires_at, ip, user_agent, revoked_at)
-  is the single source of truth for session existence, expiry and revocation.
+  token_hash, active_membership_id, created_at, last_seen_at, expires_at,
+  revoked_at, ip, user_agent) is the single source of truth for session
+  existence, expiry and revocation.
+- **Active tenant:** a session operates against at most one tenant at a time,
+  held in `sessions.active_membership_id` → `user_tenant_memberships.id`
+  (nullable — none selected yet). A composite FK
+  `sessions(user_id, active_membership_id) → user_tenant_memberships(user_id, id)`
+  guarantees the membership belongs to the session's own user. This column,
+  resolved server-side, is the authoritative tenant selector — **never** an
+  `X-Tenant-Id` header or a body/query field. The endpoint that sets/switches it
+  is a later task (ADR 0026).
 - **Redis is not a session store.** Correctness must not depend on Redis: an
   optional read-through cache for session lookups may be added later, but it
   must always fall back to Postgres and a Redis outage must not affect
@@ -46,9 +56,13 @@ Covers decisions 8 and 9.
   `owner`, `admin`, `sales_manager`, `telecaller`, `field_agent`, `hr_manager`,
   `employee`).
 - **Scope**: the data boundary a grant applies within -
-  `tenant` | `branch` | `department` | `team` | `self`.
-- **Assignment**: `user_roles(user_id, role_id, scope_type, scope_id)` - a user
-  can hold a role at a specific scope (e.g. `sales_manager` for `branch:X`).
+  `tenant` | `branch` | `department` | `team` | `self`. **Deferred** (ADR 0026):
+  the current model has no scope column and every assignment is `tenant`-scoped
+  until `branch` / `department` / `team` entities exist.
+- **Assignment**: `membership_roles(membership_id, role_id)` - a role is attached
+  to a `user_tenant_memberships` row, i.e. held by a user within one tenant
+  (ADR 0026, replacing the earlier `user_roles`). `roles` are per-tenant;
+  `permissions` are a global catalogue.
 
 ### Decision function
 

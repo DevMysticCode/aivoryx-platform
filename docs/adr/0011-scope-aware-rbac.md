@@ -29,3 +29,13 @@ RBAC with an explicit **scope** dimension.
 
 One decision function, uniformly enforced. Adding a permission is a reviewed
 change. Detail in `docs/architecture/AUTH.md`.
+
+## Refinement (ADR 0026)
+
+The persistent model in Phase 2 Task 1 replaces `user_roles(user_id, role_id,
+…)` with **`membership_roles(membership_id, role_id)`** — roles attach to a
+`user_tenant_memberships` row, i.e. per `(user, tenant)`. `roles` are per-tenant
+(`tenant_id NOT NULL`); `permissions` are a global catalogue. The `scope_type` /
+`scope_id` dimension is **deferred** until `branch` / `department` / `team`
+entities exist; every assignment is currently at `tenant` scope and scope
+columns are added later by migration.
