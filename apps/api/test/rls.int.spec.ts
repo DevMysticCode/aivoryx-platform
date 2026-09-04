@@ -19,6 +19,8 @@ const RLS_TABLES = [
   'role_permissions',
   'membership_roles',
   'tenants',
+  'tenant_invitations',
+  'outbox_events',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -26,6 +28,8 @@ const TENANT_TID_TABLES = [
   'roles',
   'role_permissions',
   'membership_roles',
+  'tenant_invitations',
+  'outbox_events',
 ];
 
 describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
@@ -128,8 +132,8 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
       tenants: await count(c, 'tenants'),
     }));
 
-    // Tenant A memberships: admin + limited + suspended = 3
-    expect(counts.memberships).toBe(3);
+    // Tenant A memberships: admin + secondAdmin + plainMember + limited + suspended = 5
+    expect(counts.memberships).toBe(5);
     // Tenant A roles: TENANT_ADMIN + MEMBERS_ONLY = 2
     expect(counts.roles).toBe(2);
     // only the current tenant is visible
@@ -262,6 +266,101 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
           ).rowCount,
         ).toBe(0);
       });
+    });
+  });
+
+  describe('tenant_invitations + outbox_events (ADR 0030)', () => {
+    let invA: string;
+    let invB: string;
+
+    beforeAll(async () => {
+      const { randomUUID } = await import('node:crypto');
+      invA = randomUUID();
+      invB = randomUUID();
+      // seed one pending invitation + one outbox event per tenant (superuser connection)
+      for (const [id, tenantId, membershipId, userId, hash] of [
+        [invA, fx.tenantA, fx.suspended.membershipId, fx.admin.userId, `hash-a-${invA}`],
+        [invB, fx.tenantB, fx.adminB.membershipId, fx.adminB.userId, `hash-b-${invB}`],
+      ] as const) {
+        await pool.query(
+          `insert into tenant_invitations
+             (id, tenant_id, membership_id, email, token_hash, status, expires_at, invited_by_user_id)
+           values ($1,$2,$3,$4,$5,'pending', now() + interval '1 day', $6)`,
+          [id, tenantId, membershipId, `invitee-${id.slice(0, 8)}@example.test`, hash, userId],
+        );
+        await pool.query(
+          `insert into outbox_events (id, tenant_id, type, payload)
+           values ($1, $2, 'user.invitation.created', '{}'::jsonb)`,
+          [randomUUID(), tenantId],
+        );
+      }
+    });
+
+    it('tenant A cannot READ tenant B invitations or outbox events', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'tenant_invitations', `where tenant_id = '${fx.tenantB}'`)).toBe(0);
+        expect(await count(c, 'tenant_invitations', `where id = '${invB}'`)).toBe(0);
+        expect(await count(c, 'outbox_events', `where tenant_id = '${fx.tenantB}'`)).toBe(0);
+        // its own tenant's rows ARE visible
+        expect(await count(c, 'tenant_invitations', `where id = '${invA}'`)).toBe(1);
+        expect(
+          await count(c, 'outbox_events', `where tenant_id = '${fx.tenantA}'`),
+        ).toBeGreaterThan(0);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B invitations (update/delete affect 0, insert rejected)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (
+            await c.query("update tenant_invitations set status='revoked' where tenant_id=$1", [
+              fx.tenantB,
+            ])
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from tenant_invitations where tenant_id=$1', [fx.tenantB]))
+            .rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into tenant_invitations
+               (id, tenant_id, membership_id, email, token_hash, status, expires_at, invited_by_user_id)
+             values (gen_random_uuid(), $1, $2, 'x@x.test', 'x', 'pending', now() + interval '1 day', $3)`,
+            [fx.tenantB, fx.adminB.membershipId, fx.adminB.userId],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      // tenant B invitation genuinely untouched
+      const { rows } = await pool.query<{ status: string }>(
+        'select status from tenant_invitations where id = $1',
+        [invB],
+      );
+      expect(rows[0]?.status).toBe('pending');
+    });
+
+    it('the by-token policy exposes exactly one invitation and nothing else', async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('set role aivoryx_app');
+        await c.query('begin');
+        await c.query("select set_config('app.invitation_token_hash', $1, true)", [
+          `hash-b-${invB}`,
+        ]);
+        // only the row whose token_hash matches — even without any tenant context
+        expect(await count(c, 'tenant_invitations')).toBe(1);
+        expect(await count(c, 'tenant_invitations', `where id = '${invB}'`)).toBe(1);
+        expect(await count(c, 'tenant_invitations', `where id = '${invA}'`)).toBe(0);
+        // the token policy does not open any other tenant-owned table
+        expect(await count(c, 'outbox_events')).toBe(0);
+        expect(await count(c, 'user_tenant_memberships')).toBe(0);
+      } finally {
+        await c.query('rollback').catch(() => undefined);
+        await c.query('reset role').catch(() => undefined);
+        c.release();
+      }
     });
   });
 

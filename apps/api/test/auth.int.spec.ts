@@ -204,7 +204,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('security boundary — HTTP integration', 
       const me = await http.get('/api/v1/auth/me').set('Cookie', cookie);
       expect(me.status).toBe(200);
       expect(me.body.memberships).toEqual([]);
-      const tenantRoute = await http.get('/api/v1/admin/memberships').set('Cookie', cookie);
+      const tenantRoute = await http.get('/api/v1/admin/members').set('Cookie', cookie);
       expect(tenantRoute.status).toBe(403);
       expect(tenantRoute.body.error.code).toBe('AUTH_NO_ACTIVE_TENANT');
     });
@@ -234,7 +234,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('security boundary — HTTP integration', 
       const res = await login(fx.limited.email, fx.limited.password);
       const cookie = sessionCookie(res); // single active membership -> auto tenant
 
-      const ok = await http.get('/api/v1/admin/memberships').set('Cookie', cookie);
+      const ok = await http.get('/api/v1/admin/members').set('Cookie', cookie);
       expect(ok.status).toBe(200);
 
       const denied = await http.get('/api/v1/admin/roles').set('Cookie', cookie);
@@ -309,7 +309,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('security boundary — HTTP integration', 
 
       const me = await http.get('/api/v1/auth/me').set('Cookie', cookie);
       expect(me.status).toBe(200);
-      const adminList = await http.get('/api/v1/admin/memberships').set('Cookie', cookie);
+      const adminList = await http.get('/api/v1/admin/members').set('Cookie', cookie);
       expect(adminList.status).toBe(200);
     });
   });

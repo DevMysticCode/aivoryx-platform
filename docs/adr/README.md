@@ -34,6 +34,7 @@ One decision per file. Status is `Accepted` unless noted. A later ADR may
 | 0027 | RLS runtime role & per-transaction tenant context             | implements 0009                      |
 | 0028 | Session lifecycle & login tenant auto-selection               | implements 0010                      |
 | 0029 | RBAC enforcement & permission catalogue                       | implements 0011                      |
+| 0030 | Tenant administration & user lifecycle                        | builds on 0026–0029, 0013            |
 
 ## Open decisions
 

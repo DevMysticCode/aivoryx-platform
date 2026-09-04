@@ -36,7 +36,9 @@ import { newUuidV7 } from '../id.js';
 
 export const tenantStatus = pgEnum('tenant_status', ['active', 'suspended']);
 export const userStatus = pgEnum('user_status', ['active', 'disabled']);
-export const membershipStatus = pgEnum('membership_status', ['active', 'suspended']);
+// `invited` (Phase 2 Task 3): a membership created by an admin invitation that
+// the user has not accepted yet. It is not a usable membership until accepted.
+export const membershipStatus = pgEnum('membership_status', ['active', 'suspended', 'invited']);
 
 // --- shared column groups ------------------------------------------------
 
@@ -92,6 +94,8 @@ export const users = pgTable(
       .primaryKey()
       .$defaultFn(() => newUuidV7()),
     email: text('email').notNull(),
+    /** display name; nullable — set on invitation acceptance or by the user later */
+    name: text('name'),
     emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
     passwordHash: text('password_hash'),
     passwordUpdatedAt: timestamp('password_updated_at', { withTimezone: true }),

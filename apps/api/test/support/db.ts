@@ -49,6 +49,10 @@ export interface Fixtures {
   tenantB: string;
   /** TENANT_ADMIN in A; also a role-less member of B */
   admin: UserFixture & { membershipIdInB: string };
+  /** a SECOND TENANT_ADMIN in A — lets last-admin tests suspend/remove `admin` safely */
+  secondAdmin: UserFixture;
+  /** a member of A with no roles — safe target for suspend/remove/role tests */
+  plainMember: UserFixture;
   /** only `memberships.read` in A */
   limited: UserFixture;
   /** TENANT_ADMIN in B */
@@ -60,6 +64,7 @@ export interface Fixtures {
   /** membership in a suspended tenant */
   inSuspendedTenant: UserFixture;
   tenantAdminRoleA: string;
+  tenantAdminRoleB: string;
   membersOnlyRoleA: string;
 }
 
@@ -123,6 +128,12 @@ export async function makeFixtures(): Promise<Fixtures> {
     const adminMembershipA = await addMembership(adminU.userId, tenantA);
     const adminMembershipB = await addMembership(adminU.userId, tenantB);
 
+    const secondAdminU = await mk();
+    const secondAdminMembershipA = await addMembership(secondAdminU.userId, tenantA);
+
+    const plainMemberU = await mk();
+    const plainMemberMembershipA = await addMembership(plainMemberU.userId, tenantA);
+
     const limitedU = await mk();
     const limitedMembershipA = await addMembership(limitedU.userId, tenantA);
 
@@ -143,12 +154,17 @@ export async function makeFixtures(): Promise<Fixtures> {
       actingUserId: adminU.userId,
       membershipId: adminMembershipA,
     });
+    // second TENANT_ADMIN in A (idempotent role create, extra assignment)
+    await db.provisionTenantAdmin(handle, {
+      tenantId: tenantA,
+      actingUserId: adminU.userId,
+      membershipId: secondAdminMembershipA,
+    });
     const adminInB = await db.provisionTenantAdmin(handle, {
       tenantId: tenantB,
       actingUserId: adminBU.userId,
       membershipId: adminBMembershipB,
     });
-    void adminInB;
 
     const membersOnlyRoleA = uuid();
     await c.query('insert into roles (id, tenant_id, key, name) values ($1,$2,$3,$4)', [
@@ -177,6 +193,18 @@ export async function makeFixtures(): Promise<Fixtures> {
         membershipId: adminMembershipA,
         membershipIdInB: adminMembershipB,
       },
+      secondAdmin: {
+        userId: secondAdminU.userId,
+        email: secondAdminU.email,
+        password: secondAdminU.plain,
+        membershipId: secondAdminMembershipA,
+      },
+      plainMember: {
+        userId: plainMemberU.userId,
+        email: plainMemberU.email,
+        password: plainMemberU.plain,
+        membershipId: plainMemberMembershipA,
+      },
       limited: {
         userId: limitedU.userId,
         email: limitedU.email,
@@ -203,6 +231,7 @@ export async function makeFixtures(): Promise<Fixtures> {
         membershipId: inSuspTenantMembership,
       },
       tenantAdminRoleA: admin.roleId,
+      tenantAdminRoleB: adminInB.roleId,
       membersOnlyRoleA,
     };
   } finally {

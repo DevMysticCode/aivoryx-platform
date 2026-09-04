@@ -17,6 +17,8 @@ const TENANT_OWNED_TABLES = [
   'role_permissions',
   'membership_roles',
   'tenants',
+  'tenant_invitations',
+  'outbox_events',
 ];
 
 const NON_TENANT_TABLES = ['users', 'sessions', 'permissions'];

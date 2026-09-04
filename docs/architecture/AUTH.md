@@ -28,6 +28,28 @@ Detail: **ADR 0027** (RLS runtime role + tenant transactions), **ADR 0028**
 (session lifecycle + login tenant auto-selection), **ADR 0029** (RBAC
 enforcement + permission catalogue).
 
+## Implemented in Phase 2 Task 3 (ADR 0030)
+
+- Tenant administration under `/api/v1/admin`: `GET/PATCH /admin/tenant`,
+  `GET/POST /admin/members`, `GET/PATCH/DELETE /admin/members/:membershipId`,
+  `POST/DELETE /admin/members/:membershipId/roles[/:roleKey]`, `GET /admin/roles`,
+  `GET /admin/permissions`. Each gated by one existing catalogue permission and
+  RLS-scoped to the active tenant. (`GET /admin/memberships` from Task 2 is
+  renamed `GET /admin/members`.)
+- **Invitations** (`tenant_invitations`): provider-neutral, single-use, tenant-
+  and membership-bound. `token_hash` stores only a SHA-256 of a 256-bit token;
+  the plaintext is returned once at creation and never again. Acceptance is
+  `POST /api/v1/auth/accept-invitation` (`@Public()`), which sets the first
+  password for a passwordless account and activates the membership — it is the
+  first-password-set path of the existing model, **not** a second auth system.
+  New error codes: `INVITATION_INVALID` / `INVITATION_EXPIRED` /
+  `INVITATION_REVOKED` / `INVITATION_ALREADY_USED` / `INVITATION_PASSWORD_REQUIRED`,
+  plus `MEMBER_*`, `ROLE_NOT_FOUND`, `TENANT_LAST_ADMIN`.
+- Creating an invitation emits one `user.invitation.created` transactional-outbox
+  event (ADR 0013) in the same transaction. No email/SMS provider is built.
+- The last usable `TENANT_ADMIN` in a tenant cannot be suspended, removed, or
+  de-roled (`TENANT_LAST_ADMIN`).
+
 ## Authentication - cookie-based server sessions
 
 - Login: email + password. Passwords hashed with **Argon2id**

@@ -64,6 +64,42 @@ export function withTenantContext<T>(
   });
 }
 
+/** The RLS context keys a transaction can carry. */
+export interface RlsContext {
+  userId?: string;
+  tenantId?: string;
+  /** for the public invitation-acceptance flow (`tenant_invitations_by_token` policy) */
+  invitationTokenHash?: string;
+}
+
+/** Issue `SET LOCAL` for whichever RLS context keys are provided. */
+export async function applyRlsContext(tx: Tx, ctx: RlsContext): Promise<void> {
+  if (ctx.userId !== undefined) {
+    await tx.execute(sql`select set_config('app.user_id', ${ctx.userId}, true)`);
+  }
+  if (ctx.tenantId !== undefined) {
+    await tx.execute(sql`select set_config('app.tenant_id', ${ctx.tenantId}, true)`);
+  }
+  if (ctx.invitationTokenHash !== undefined) {
+    await tx.execute(
+      sql`select set_config('app.invitation_token_hash', ${ctx.invitationTokenHash}, true)`,
+    );
+  }
+}
+
+/**
+ * Transaction whose RLS context is set **progressively** by the callback — for
+ * flows that must read a row under one context and then widen it (e.g. the
+ * public invitation accept: bind the token hash, read the invitation, then bind
+ * that invitation's tenant/user to activate the membership — all atomically).
+ */
+export function withProgressiveContext<T>(
+  handle: DbHandle,
+  fn: (tx: Tx, setContext: (ctx: RlsContext) => Promise<void>) => Promise<T>,
+): Promise<T> {
+  return handle.db.transaction((tx) => fn(tx, (ctx) => applyRlsContext(tx, ctx)));
+}
+
 /** Read back the current transaction's tenant context (diagnostics / tests). */
 export async function currentTenantContext(
   tx: Tx,

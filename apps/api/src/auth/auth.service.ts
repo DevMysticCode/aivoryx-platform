@@ -21,7 +21,7 @@ export interface MembershipView {
   tenantSlug: string;
   tenantName: string;
   tenantStatus: 'active' | 'suspended';
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'invited';
 }
 
 export interface LoginResult {

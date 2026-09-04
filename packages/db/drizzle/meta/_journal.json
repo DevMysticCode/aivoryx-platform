@@ -29,6 +29,13 @@
       "when": 1788498580789,
       "tag": "0003_security_boundary",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788504290688,
+      "tag": "0004_colorful_bloodaxe",
+      "breakpoints": true
     }
   ]
 }

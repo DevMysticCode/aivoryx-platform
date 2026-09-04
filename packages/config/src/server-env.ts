@@ -75,6 +75,14 @@ export const serverEnvSchema = z
     ARGON2_TIME_COST: z.coerce.number().int().min(1).max(10).default(2),
     ARGON2_PARALLELISM: z.coerce.number().int().min(1).max(16).default(1),
 
+    /** How long a tenant invitation stays acceptable (ADR 0030). */
+    INVITATION_TTL_HOURS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(24 * 30)
+      .default(168),
+
     // Object storage is optional in Phase 1 (local storage deferred).
     OBJECT_STORAGE_ENDPOINT: z
       .string()
