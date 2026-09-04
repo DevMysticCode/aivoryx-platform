@@ -38,6 +38,125 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/auth/login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Exchange email + password for a session cookie. */
+    post: operations['login'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/logout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Revoke the current session. */
+    post: operations['logout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The current user, their memberships and active tenant. */
+    get: operations['me'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/switch-tenant': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Set the active tenant for this session to one of the user’s own memberships. */
+    post: operations['switchTenant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/memberships': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Memberships in the active workspace. */
+    get: operations['listMemberships'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/roles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Roles in the active workspace. */
+    get: operations['listRoles'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/permissions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The global permission catalogue. */
+    get: operations['listCataloguePermissions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -65,6 +184,117 @@ export interface components {
       /** @example AIV-01J9Z8ABCDEF0123456789 */
       correlationId: string;
       checks: components['schemas']['HealthChecksDto'];
+    };
+    LoginRequestDto: {
+      /**
+       * Format: email
+       * @example admin@acme.test
+       */
+      email: string;
+      /** @example correct horse battery staple */
+      password: string;
+    };
+    AuthUserDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: email */
+      email: string;
+      /** @enum {string} */
+      status: 'active' | 'disabled';
+    };
+    MembershipSummaryDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      tenantId: string;
+      /** @example acme */
+      tenantSlug: string;
+      /** @example Acme Inc. */
+      tenantName: string;
+      /** @enum {string} */
+      tenantStatus: 'active' | 'suspended';
+      /** @enum {string} */
+      status: 'active' | 'suspended';
+    };
+    ActiveContextDto: {
+      membership: components['schemas']['MembershipSummaryDto'];
+      /** @description Permission keys granted in this tenant. */
+      permissions: string[];
+      /** @description Role keys held in this tenant. */
+      roles: string[];
+    };
+    LoginResponseDto: {
+      user: components['schemas']['AuthUserDto'];
+      memberships: components['schemas']['MembershipSummaryDto'][];
+      /** @description Null until the session has a usable active tenant. */
+      active: components['schemas']['ActiveContextDto'] | null;
+      /** Format: date-time */
+      sessionExpiresAt: string;
+      /** @description True when the single-membership user was auto-selected into a tenant. */
+      tenantAutoSelected: boolean;
+    };
+    ApiErrorDetailDto: {
+      code: string;
+      message: string;
+      /** @example AIV-01J9Z8ABCDEF0123456789 */
+      correlationId: string;
+      details?: {
+        [key: string]: unknown;
+      };
+    };
+    ApiErrorDto: {
+      error: components['schemas']['ApiErrorDetailDto'];
+    };
+    LogoutResponseDto: {
+      /** @example true */
+      ok: boolean;
+    };
+    MeResponseDto: {
+      user: components['schemas']['AuthUserDto'];
+      memberships: components['schemas']['MembershipSummaryDto'][];
+      /** @description Null until the session has a usable active tenant. */
+      active: components['schemas']['ActiveContextDto'] | null;
+      /** Format: date-time */
+      sessionExpiresAt: string;
+    };
+    SwitchTenantRequestDto: {
+      /**
+       * Format: uuid
+       * @description A membership id belonging to the current user.
+       */
+      membershipId: string;
+    };
+    SwitchTenantResponseDto: {
+      user: components['schemas']['AuthUserDto'];
+      memberships: components['schemas']['MembershipSummaryDto'][];
+      /** @description Null until the session has a usable active tenant. */
+      active: components['schemas']['ActiveContextDto'] | null;
+      /** Format: date-time */
+      sessionExpiresAt: string;
+    };
+    AdminMembershipDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      userId: string;
+      /** Format: email */
+      userEmail: string;
+      /** @enum {string} */
+      status: 'active' | 'suspended';
+      roleKeys: string[];
+    };
+    AdminRoleDto: {
+      /** Format: uuid */
+      id: string;
+      /** @example TENANT_ADMIN */
+      key: string;
+      name: string;
+      permissionKeys: string[];
+    };
+    CataloguePermissionDto: {
+      /** @example users.read */
+      key: string;
+      description: string;
     };
   };
   responses: never;
@@ -111,6 +341,189 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HealthReportDto'];
+        };
+      };
+    };
+  };
+  login: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LoginRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LoginResponseDto'];
+        };
+      };
+      /** @description AUTH_INVALID_CREDENTIALS */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  logout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LogoutResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  me: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MeResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  switchTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SwitchTenantRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SwitchTenantResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      /** @description AUTH_MEMBERSHIP_INVALID / AUTH_MEMBERSHIP_SUSPENDED / TENANT_SUSPENDED */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listMemberships: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminMembershipDto'][];
+        };
+      };
+    };
+  };
+  listRoles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminRoleDto'][];
+        };
+      };
+    };
+  };
+  listCataloguePermissions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CataloguePermissionDto'][];
         };
       };
     };

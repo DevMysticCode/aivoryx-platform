@@ -7,6 +7,21 @@ export {
   type DbHandle,
   type CreateDbOptions,
 } from './client.js';
+export {
+  withAppTransaction,
+  withUserContext,
+  withTenantContext,
+  currentTenantContext,
+  type Tx,
+  type TenantContextInput,
+} from './tx.js';
+export {
+  seedPermissions,
+  provisionTenantAdmin,
+  revokePermissionFromRole,
+  type ProvisionTenantAdminInput,
+  type ProvisionTenantAdminResult,
+} from './seed.js';
 export { checkDatabaseHealth, type DbHealthResult } from './health.js';
 export { runMigrations } from './migrate.js';
 export { newUuidV7, isUuid, isUuidV7 } from './id.js';

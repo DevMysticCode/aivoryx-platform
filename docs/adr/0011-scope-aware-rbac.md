@@ -39,3 +39,11 @@ The persistent model in Phase 2 Task 1 replaces `user_roles(user_id, role_id,
 `scope_id` dimension is **deferred** until `branch` / `department` / `team`
 entities exist; every assignment is currently at `tenant` scope and scope
 columns are added later by migration.
+
+## Implementation (ADR 0029)
+
+Phase 2 Task 2 implements enforcement: the `PERMISSION_DEFINITIONS` catalogue in
+`@aivoryx/shared` (identity/admin keys only), the generic `TENANT_ADMIN` role
+(seeded per tenant), `@RequirePermission(key)` + the global `SecurityGuard`
+(401 vs 403 kept distinct), and permission resolution per **active membership**
+inside `withTenantContext` so a grant from another tenant cannot authorize.

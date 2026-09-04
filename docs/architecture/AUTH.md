@@ -1,8 +1,32 @@
 # Authentication and Authorization Architecture
 
-Status: Approved architecture. No application code exists yet.
+Status: **Implemented** in Phase 2 Task 2 (ADR 0027 / 0028 / 0029). Sections
+marked _(planned)_ below are not yet built.
 
 Covers decisions 8 and 9.
+
+## Implemented in Phase 2 Task 2
+
+- Endpoints: `POST /api/v1/auth/login` (public), `POST /api/v1/auth/logout`,
+  `GET /api/v1/auth/me`, `POST /api/v1/auth/switch-tenant` (all session-auth).
+- `SessionService` (create / resolve / revoke / touch `last_seen_at` /
+  `setActiveMembership`), `PasswordService` (Argon2id via `@node-rs/argon2`,
+  `needsRehash`), `RbacService` (permissions per active membership).
+- Global `SecurityGuard` (`APP_GUARD`): `@Public()` / `@AuthOnly()` /
+  `@RequirePermission(key)`; `@Security()` etc. param decorators;
+  `SecurityContext` in `req` + AsyncLocalStorage.
+- Tenant context via `@aivoryx/db` `withTenantContext` + PostgreSQL RLS
+  (ADR 0027) — the `aivoryx_app` role, `SET LOCAL app.tenant_id` / `app.user_id`.
+- Permission catalogue + `TENANT_ADMIN` role: `@aivoryx/shared`
+  `PERMISSION_DEFINITIONS`, seeded by `pnpm db:seed` / `provisionTenantAdmin`.
+- Error codes: `AUTH_UNAUTHENTICATED`, `AUTH_INVALID_CREDENTIALS`,
+  `AUTH_SESSION_EXPIRED`, `AUTH_SESSION_REVOKED`, `AUTH_FORBIDDEN`,
+  `AUTH_NO_ACTIVE_TENANT`, `AUTH_MEMBERSHIP_INVALID`,
+  `AUTH_MEMBERSHIP_SUSPENDED`, `TENANT_SUSPENDED`.
+
+Detail: **ADR 0027** (RLS runtime role + tenant transactions), **ADR 0028**
+(session lifecycle + login tenant auto-selection), **ADR 0029** (RBAC
+enforcement + permission catalogue).
 
 ## Authentication - cookie-based server sessions
 
@@ -10,11 +34,11 @@ Covers decisions 8 and 9.
   (per-hash salt; tuned memory/time/parallelism recorded in config; rehash on
   login when parameters change).
 - On success the API creates a **server-side session** record and sets a
-  session cookie:
-  `HttpOnly`, `Secure`, `SameSite=Lax` (or `Strict` for the admin surface),
-  `Path=/`, host-only, short idle lifetime + absolute lifetime, rotating id on
-  privilege change. The cookie carries an opaque random token; the database
-  stores only its **SHA-256 hash** (`sessions.token_hash`).
+  session cookie: `HttpOnly`, `Path=/`, `SameSite` from config (default `Lax`),
+  `Secure` (on outside `development`), `Max-Age` = absolute TTL. The cookie
+  carries a 256-bit opaque random token; the database stores only its
+  **SHA-256 hash** (`sessions.token_hash`). Absolute + idle expiry and revocation
+  are enforced server-side on every request (`SessionService.resolve`).
 - Session store: **PostgreSQL is authoritative.** Table `sessions` (id, user_id,
   token_hash, active_membership_id, created_at, last_seen_at, expires_at,
   revoked_at, ip, user_agent) is the single source of truth for session
@@ -25,72 +49,71 @@ Covers decisions 8 and 9.
   `sessions(user_id, active_membership_id) → user_tenant_memberships(user_id, id)`
   guarantees the membership belongs to the session's own user. This column,
   resolved server-side, is the authoritative tenant selector — **never** an
-  `X-Tenant-Id` header or a body/query field. The endpoint that sets/switches it
-  is a later task (ADR 0026).
+  `X-Tenant-Id` header or a body/query field. Set on `login` (auto-selected iff
+  the user has exactly one usable membership) and changed via
+  `POST /auth/switch-tenant` (ADR 0026 / 0028).
 - **Redis is not a session store.** Correctness must not depend on Redis: an
   optional read-through cache for session lookups may be added later, but it
   must always fall back to Postgres and a Redis outage must not affect
   authentication, authorization or revocation. Not implemented in the initial
   Phase 2 build (see open decisions).
-- No JWT for browser auth. No token in `localStorage`. Logout and admin
-  "revoke session" delete the server record immediately.
-- CSRF: `SameSite` cookie + a double-submit CSRF token on state-changing
-  requests; `/api/v1` rejects cross-origin credentialed requests not on the
-  allow-list.
-- Brute force: per-account + per-IP rate limiting and lockout with backoff;
-  auth events (success, failure, lockout, reset) are audit-logged.
-- Password reset: single-use, short-TTL token delivered by email; reset revokes
-  all existing sessions.
-- MFA (TOTP) is **not** in V1 but the `users` / `sessions` model reserves room
-  for it (see open decisions).
-- Service-to-service (worker -> API, if ever needed) uses a separate signed
-  service credential, never a user session.
+- No JWT for browser auth. No token in `localStorage`. `logout` sets
+  `revoked_at`; a revoked or expired session is rejected on the next request.
+- Unknown user and wrong password return the **same** 401
+  `AUTH_INVALID_CREDENTIALS` (no account enumeration); `login` always runs an
+  Argon2id verify (against a dummy hash when the email is unknown) to flatten
+  timing.
+- CSRF _(baseline implemented, token planned)_: `SameSite` cookie + CORS
+  allow-list + credentials. A double-submit CSRF token on state-changing
+  requests is a follow-up.
+- Brute force _(planned)_: per-account + per-IP rate limiting and lockout.
+- Password reset _(planned)_: single-use, short-TTL email token; reset revokes
+  all sessions (`SessionService.revokeAllForUser` exists).
+- MFA (TOTP) _(planned)_ — the `users` / `sessions` model reserves room.
+- Service-to-service auth _(planned)_ uses a separate signed credential, never a
+  user session.
 
 ## Authorization - scope-aware RBAC
 
 ### Concepts
 
-- **Permission**: a stable string, `<module>.<resource>.<action>`
-  (e.g. `crm.lead.read`, `crm.lead.assign`, `hr.leave.approve`).
-- **Role**: a named bundle of permissions, tenant-defined (seeded defaults:
-  `owner`, `admin`, `sales_manager`, `telecaller`, `field_agent`, `hr_manager`,
-  `employee`).
-- **Scope**: the data boundary a grant applies within -
-  `tenant` | `branch` | `department` | `team` | `self`. **Deferred** (ADR 0026):
-  the current model has no scope column and every assignment is `tenant`-scoped
-  until `branch` / `department` / `team` entities exist.
-- **Assignment**: `membership_roles(membership_id, role_id)` - a role is attached
-  to a `user_tenant_memberships` row, i.e. held by a user within one tenant
-  (ADR 0026, replacing the earlier `user_roles`). `roles` are per-tenant;
-  `permissions` are a global catalogue.
+- **Permission**: a stable string `<resource>.<action>` from the catalogue in
+  `@aivoryx/shared` (`PERMISSION_DEFINITIONS`). Initial set is identity/admin
+  only (`users.*`, `memberships.*`, `roles.*`, `permissions.read`, `tenants.*`);
+  CRM/HR permissions are added by their modules later.
+- **Role**: a tenant-scoped bundle of permissions. The only generic platform
+  role is **`TENANT_ADMIN`** (the full catalogue), seeded per tenant by
+  `provisionTenantAdmin`. No business roles in the platform core.
+- **Scope**: `tenant | branch | department | team | self`. **Deferred**
+  (ADR 0026): no scope column yet; every assignment is `tenant`-scoped.
+- **Assignment**: `membership_roles(membership_id, role_id)` (ADR 0026).
+  `roles` per tenant, `permissions` global; `role_permissions` links them.
 
 ### Decision function
 
-`can(user, permission, target) =>`
-
-1. collect the user's roles whose permission set includes `permission`;
-2. for each, check the grant's scope contains `target` (self ⊂ team ⊂
-   department ⊂ branch ⊂ tenant);
-3. allow if any grant matches; otherwise deny with `AUTH_FORBIDDEN` +
-   correlation id.
+Per request the guard resolves the permission set for the session's **active
+membership** (`membership_roles ⋈ role_permissions ⋈ permissions`, read inside
+`withTenantContext` so RLS scopes it to the active tenant). `can =
+permissions.has(key)`. A role or grant from another tenant is invisible and
+cannot authorize. Deny → `AUTH_FORBIDDEN` (403) + correlation id + the missing
+permission key in `details`.
 
 ### Enforcement points
 
-- **API**: a `@RequirePermission('crm.lead.read')` guard on every controller
-  action; the guard also injects a **scope filter** (e.g. `branch_id IN (...)`,
-  `assigned_user_id = self`) that the data layer must apply in addition to
-  `tenant_id`.
-- **Data layer**: scope filter + tenant filter are both mandatory for
-  scoped resources; missing either is a hard error.
-- **Frontend**: `lib/permissions` mirrors the permission catalogue for
-  show/hide/disable only - never as the security boundary. All checks are
-  re-evaluated server-side.
+- **API**: `@RequirePermission('roles.read')` on a controller action;
+  `SecurityGuard` (global `APP_GUARD`) checks it after resolving the tenant. It
+  distinguishes **401** (unauthenticated) from **403** (authenticated, not
+  authorized). Scope filter injection is _(planned)_ with the scope model.
+- **Data layer**: tenant filter is enforced by RLS (ADR 0027); an explicit
+  `tenant_id` filter in queries is belt-and-braces.
+- **Frontend** _(planned)_: `lib/permissions` mirrors the catalogue for
+  show/hide only; the server re-checks every call.
 
 ### Catalogue governance
 
-The permission string catalogue lives in `packages/shared` (planned) and is the
-single source of truth. Adding a permission is a reviewed change; controllers
-reference catalogue constants, not literals.
+`PERMISSION_DEFINITIONS` in `@aivoryx/shared` is the single source of truth.
+`permissions` rows are seeded from it (`pnpm db:seed`). Adding a permission is a
+reviewed change; controllers reference `PermissionKey`, not literals.
 
 ## Relationship to tenancy
 
@@ -98,7 +121,9 @@ Authorization runs **after** tenant resolution (`TENANCY.md`). Tenant isolation
 is not a permission - it is always enforced. RBAC scopes narrow access _within_
 the already-tenant-scoped set.
 
-## Audit
+## Audit _(planned)_
 
 Login/logout, session revoke, role grant/revoke, permission-denied on sensitive
-actions, and all privileged operations write to `audit_logs` (append-only).
+actions, and all privileged operations will write to `audit_logs` (append-only).
+For now these events are structured-logged with the correlation id, user id and
+tenant id (ADR 0014). The `audit_logs` table lands with the audit module.

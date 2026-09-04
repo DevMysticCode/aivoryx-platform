@@ -35,14 +35,44 @@ export const ERROR_CODES = {
     message: 'A dependency is temporarily unavailable. Please try again shortly.',
   },
 
-  // auth (infrastructure only in Phase 1 — full flow lands in Phase 2)
+  // auth & tenancy (Phase 2 Task 2 — security boundary)
   AUTH_UNAUTHENTICATED: {
     httpStatus: 401,
     message: 'You need to sign in to continue.',
   },
+  AUTH_INVALID_CREDENTIALS: {
+    // Same code + message for "unknown user" and "wrong password" — no account enumeration.
+    httpStatus: 401,
+    message: 'The email or password is incorrect.',
+  },
+  AUTH_SESSION_EXPIRED: {
+    httpStatus: 401,
+    message: 'Your session has expired. Please sign in again.',
+  },
+  AUTH_SESSION_REVOKED: {
+    httpStatus: 401,
+    message: 'Your session is no longer valid. Please sign in again.',
+  },
   AUTH_FORBIDDEN: {
     httpStatus: 403,
     message: 'You do not have permission to perform this action.',
+  },
+  AUTH_NO_ACTIVE_TENANT: {
+    httpStatus: 403,
+    message: 'Select a workspace to continue.',
+  },
+  AUTH_MEMBERSHIP_INVALID: {
+    // "not found" and "belongs to another user" collapse to one response — no id probing.
+    httpStatus: 403,
+    message: 'That workspace is not available to you.',
+  },
+  AUTH_MEMBERSHIP_SUSPENDED: {
+    httpStatus: 403,
+    message: 'Your access to that workspace is suspended.',
+  },
+  TENANT_SUSPENDED: {
+    httpStatus: 403,
+    message: 'This workspace is suspended.',
   },
 
   // health / infra

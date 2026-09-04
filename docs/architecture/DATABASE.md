@@ -104,9 +104,24 @@ superseded by the lead-ingestion entities above.
   fields, and the typed custom-field value indexes in `CUSTOM-FIELDS.md`.
 - Never expose raw internal DB IDs as a security boundary.
 
+## Row Level Security (ADR 0027 — implemented for the identity model)
+
+- Migration `0003` (hand-authored — drizzle-kit does not model roles/RLS)
+  creates the non-privileged role **`aivoryx_app`** and enables **+ forces** RLS
+  on `user_tenant_memberships`, `roles`, `role_permissions`, `membership_roles`,
+  `tenants`. Policy: `tenant_id = nullif(current_setting('app.tenant_id', true),
+'')::uuid` (USING + WITH CHECK); `user_tenant_memberships` also has a
+  self-read policy on `app.user_id`.
+- The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
+  `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
+  / seed run as the DB owner. Migrations run before the API starts.
+- `users`, `sessions`, global `permissions` are deliberately not RLS-scoped.
+
 ## Migration
 
 Schema changes must use versioned **Drizzle** migrations, run by the dedicated
 migration role as a release step before the new API version takes traffic.
+A migration that only changes roles/grants/RLS is hand-authored with a snapshot
+identical to its predecessor so `db:generate` reports no drift (`0003`).
 Migrations are forward-only and backward-compatible for one release.
 Never manually edit production schema.

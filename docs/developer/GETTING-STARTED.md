@@ -35,8 +35,16 @@ cp .env.example .env          # edit; generate SESSION_SECRET with:
 #   node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
 docker compose up -d
 pnpm --filter @aivoryx/db db:generate
-pnpm --filter @aivoryx/db db:migrate
+pnpm --filter @aivoryx/db db:migrate   # must run before the API — migration 0003 creates the aivoryx_app role
+pnpm --filter @aivoryx/db db:seed      # upserts the permission catalogue
 pnpm dev
+```
+
+Integration/RLS tests need the DB up and run only when opted in:
+
+```bash
+RUN_DB_IT=1 pnpm --filter @aivoryx/api test
+RUN_DB_IT=1 pnpm --filter @aivoryx/db test
 ```
 
 Verify:

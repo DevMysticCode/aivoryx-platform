@@ -7,17 +7,36 @@ import { DbModule } from './db/db.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { QueueModule } from './queue/queue.module.js';
 import { HealthModule } from './health/health.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import { SecurityModule } from './security/security.module.js';
+import { AdminModule } from './admin/admin.module.js';
 
 /**
- * Composition root. Phase 1 wires only cross-cutting platform infrastructure.
- * Business/domain modules (CRM, HR, ...) are added under `src/modules/` in
- * later phases — see `src/modules/README.md`.
+ * Composition root.
+ *
+ * Cross-cutting platform infrastructure + the Phase 2 security boundary
+ * (authentication, session lifecycle, tenant context, RLS, RBAC). Business
+ * modules (CRM, HR, ...) are added under `src/modules/` in later phases — see
+ * `src/modules/README.md`.
+ *
+ * `SecurityModule` registers the global `APP_GUARD`, so every route is protected
+ * unless it opts out with `@Public()` / `@AuthOnly()`.
  *
  * The correlation-id handler is registered as a global Express middleware in
  * `bootstrap/configure-app.ts` (runs before the exception filter).
  */
 @Module({
-  imports: [AppConfigModule, AppLoggerModule, DbModule, RedisModule, QueueModule, HealthModule],
+  imports: [
+    AppConfigModule,
+    AppLoggerModule,
+    DbModule,
+    RedisModule,
+    QueueModule,
+    HealthModule,
+    AuthModule,
+    SecurityModule,
+    AdminModule,
+  ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })
 export class AppModule {}
