@@ -21,7 +21,7 @@ export const crmKeys = {
   activities: (id: string) => ['crm', 'lead', id, 'activities'] as const,
   notes: (id: string) => ['crm', 'lead', id, 'notes'] as const,
   followups: (id: string) => ['crm', 'lead', id, 'followups'] as const,
-  customFields: ['crm', 'customFields'] as const,
+  customFields: (entity: 'lead' | 'visit' = 'lead') => ['crm', 'customFields', entity] as const,
 };
 
 export function useLeads(params: ListLeadsParams) {
@@ -50,8 +50,11 @@ export function useFollowups(leadId: string) {
   });
 }
 
-export function useCustomFields() {
-  return useQuery({ queryKey: crmKeys.customFields, queryFn: api.listCustomFields });
+export function useCustomFields(entity: 'lead' | 'visit' = 'lead') {
+  return useQuery({
+    queryKey: crmKeys.customFields(entity),
+    queryFn: () => api.listCustomFields(entity),
+  });
 }
 
 function useInvalidateLead(leadId: string) {
@@ -180,6 +183,9 @@ export function useCreateCustomField() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: CreateCustomFieldRequest) => api.createCustomField(body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: crmKeys.customFields }),
+    onSuccess: (definition) =>
+      qc.invalidateQueries({
+        queryKey: crmKeys.customFields(definition.entity as 'lead' | 'visit'),
+      }),
   });
 }

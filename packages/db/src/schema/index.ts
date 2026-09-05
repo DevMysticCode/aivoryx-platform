@@ -50,6 +50,7 @@ export {
   leadStatus,
   leadActivityType,
   followupStatus,
+  leadOrigin,
   customFieldEntity,
   customFieldDataType,
   customFieldStatus,
@@ -93,6 +94,28 @@ export {
   type NewIntegrationEventLogRow,
 } from './integrations.js';
 
+// Phase 4 — field operations (ADR 0033).
+export {
+  fieldAgentStatus,
+  visitStatus,
+  visitActivityType,
+  fieldAgents,
+  visits,
+  visitActivities,
+  visitNotes,
+  visitAttachments,
+  type FieldAgentRow,
+  type NewFieldAgentRow,
+  type VisitRow,
+  type NewVisitRow,
+  type VisitActivityRow,
+  type NewVisitActivityRow,
+  type VisitNoteRow,
+  type NewVisitNoteRow,
+  type VisitAttachmentRow,
+  type NewVisitAttachmentRow,
+} from './field.js';
+
 export {
   usersRelations,
   tenantsRelations,
@@ -114,4 +137,9 @@ export {
   rawEventsRelations,
   canonicalLeadEventsRelations,
   integrationEventLogRelations,
+  fieldAgentsRelations,
+  visitsRelations,
+  visitActivitiesRelations,
+  visitNotesRelations,
+  visitAttachmentsRelations,
 } from './relations.js';

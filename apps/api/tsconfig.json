@@ -5,7 +5,7 @@
     "moduleResolution": "NodeNext",
     "target": "ES2022",
     "lib": ["ES2023"],
-    "types": ["node"],
+    "types": ["node", "multer"],
     "outDir": "dist",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,

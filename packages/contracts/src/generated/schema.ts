@@ -462,10 +462,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Lead custom field definitions. */
+    /** Custom field definitions for an entity. */
     get: operations['listCustomFields'];
     put?: never;
-    /** Define a new lead custom field. */
+    /** Define a new custom field. */
     post: operations['createCustomField'];
     delete?: never;
     options?: never;
@@ -622,6 +622,283 @@ export interface paths {
     /** Re-run the pipeline for a failed inbound event. */
     post: operations['replayInboundEvent'];
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/field-agents': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Field agents in the workspace. */
+    get: operations['listFieldAgents'];
+    put?: never;
+    /** Designate a member as a field agent. */
+    post: operations['designateFieldAgent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/field-agents/{membershipId}/deactivate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Deactivate a field agent. */
+    post: operations['deactivateFieldAgent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search and filter visits. */
+    get: operations['listVisits'];
+    put?: never;
+    /** Schedule a site visit for a lead. */
+    post: operations['scheduleVisit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A single visit. */
+    get: operations['getVisit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/assign': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Assign or reassign the visit. */
+    post: operations['assignVisit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/reschedule': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Move a visit to a new date/time. */
+    post: operations['rescheduleVisit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel a visit. */
+    post: operations['cancelVisit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/check-in': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** GPS check-in to an assigned visit. */
+    post: operations['checkInVisit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/check-out': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** GPS check-out from a visit. */
+    post: operations['checkOutVisit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark an assigned visit complete. */
+    post: operations['completeVisit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/survey': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Current survey field values for a visit. */
+    get: operations['getVisitSurvey'];
+    put?: never;
+    /** Submit or update site survey answers. */
+    post: operations['submitVisitSurvey'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/activities': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The chronological visit timeline. */
+    get: operations['listVisitActivities'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/notes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Notes on a visit. */
+    get: operations['listVisitNotes'];
+    put?: never;
+    /** Add a note to a visit. */
+    post: operations['createVisitNote'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/attachments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Photos/attachments on a visit. */
+    get: operations['listVisitAttachments'];
+    put?: never;
+    /** Upload a visit photo/attachment. */
+    post: operations['uploadVisitAttachment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/attachments/{attachmentId}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download a visit attachment. */
+    get: operations['downloadVisitAttachment'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/visits/{visitId}/attachments/{attachmentId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a visit attachment. */
+    delete: operations['deleteVisitAttachment'];
     options?: never;
     head?: never;
     patch?: never;
@@ -871,6 +1148,8 @@ export interface components {
       status: 'NEW' | 'ASSIGNED' | 'CONTACTED' | 'QUALIFIED' | 'DISQUALIFIED' | 'CONVERTED';
       assignee: components['schemas']['LeadAssigneeDto'] | null;
       qualificationNote: string | null;
+      /** @enum {string} */
+      origin: 'manual' | 'inbound' | 'field_agent';
       customFields: {
         [key: string]: unknown;
       };
@@ -898,6 +1177,11 @@ export interface components {
       customFields?: {
         [key: string]: unknown;
       };
+      /**
+       * @description Provenance. The field app sets "field_agent"; omit for a normal CRM-created lead.
+       * @enum {string}
+       */
+      origin?: 'manual' | 'field_agent';
     };
     AssignLeadRequestDto: {
       /** Format: uuid */
@@ -993,6 +1277,8 @@ export interface components {
       options: string[] | null;
       /** @enum {string} */
       status: 'active' | 'deprecated';
+      /** @enum {string} */
+      entity: 'lead' | 'visit';
     };
     CreateCustomFieldRequestDto: {
       /** @example roof_type */
@@ -1003,6 +1289,12 @@ export interface components {
       isRequired?: boolean;
       /** @description Required for `select` fields. */
       options?: string[];
+      /**
+       * @description Which entity this field belongs to — "visit" defines a site-survey question (ADR 0033).
+       * @default lead
+       * @enum {string}
+       */
+      entity: 'lead' | 'visit';
     };
     IngestAcceptedResponseDto: {
       accepted: boolean;
@@ -1065,6 +1357,179 @@ export interface components {
       processingAttempts: number;
       lastErrorCode: string | null;
       lastErrorMessage: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    FieldAgentDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      membershipId: string;
+      userName: string | null;
+      /** Format: email */
+      userEmail: string;
+      /** @enum {string} */
+      status: 'active' | 'inactive';
+      /** Format: date-time */
+      createdAt: string;
+    };
+    DesignateFieldAgentRequestDto: {
+      /** Format: uuid */
+      membershipId: string;
+    };
+    VisitAssigneeDto: {
+      /** Format: uuid */
+      membershipId: string;
+      name: string | null;
+      /** Format: email */
+      email: string;
+    };
+    VisitDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      leadId: string;
+      leadName: string | null;
+      leadPhone: string | null;
+      /** @enum {string} */
+      status: 'SCHEDULED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+      /** Format: date-time */
+      scheduledAt: string;
+      addressLine: string | null;
+      city: string | null;
+      state: string | null;
+      postalCode: string | null;
+      country: string | null;
+      siteLat: number | null;
+      siteLng: number | null;
+      assignee: components['schemas']['VisitAssigneeDto'] | null;
+      /** Format: date-time */
+      checkInAt: string | null;
+      checkInLat: number | null;
+      checkInLng: number | null;
+      checkInAccuracyM: number | null;
+      /** Format: date-time */
+      checkOutAt: string | null;
+      checkOutLat: number | null;
+      checkOutLng: number | null;
+      checkOutAccuracyM: number | null;
+      /** @description Straight-line metres, not road distance. */
+      gpsDistanceMeters: number | null;
+      travelKm: number | null;
+      travelNotes: string | null;
+      /** Format: date-time */
+      surveyCompletedAt: string | null;
+      /** Format: uuid */
+      createdByMembershipId: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    VisitListResponseDto: {
+      items: components['schemas']['VisitDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    ScheduleVisitRequestDto: {
+      /** Format: uuid */
+      leadId: string;
+      /** Format: date-time */
+      scheduledAt: string;
+      /** Format: uuid */
+      assignedMembershipId?: string;
+      addressLine?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+      /** @description Known site latitude — no geocoding is performed. */
+      siteLat?: number;
+      /** @description Known site longitude — no geocoding is performed. */
+      siteLng?: number;
+    };
+    AssignVisitRequestDto: {
+      /** Format: uuid */
+      membershipId: string;
+    };
+    RescheduleVisitRequestDto: {
+      /** Format: date-time */
+      scheduledAt: string;
+    };
+    CancelVisitRequestDto: {
+      reason?: string;
+    };
+    GeoPointRequestDto: {
+      lat: number;
+      lng: number;
+      /** @description Device-reported accuracy in metres. */
+      accuracyM?: number;
+    };
+    CheckOutRequestDto: {
+      lat: number;
+      lng: number;
+      /** @description Device-reported accuracy in metres. */
+      accuracyM?: number;
+      /** @description Operator-entered travel distance, in km. */
+      travelKm?: number;
+      travelNotes?: string;
+    };
+    SurveyFieldValueDto: {
+      key: string;
+      label: string;
+      /** @enum {string} */
+      dataType: 'text' | 'number' | 'boolean' | 'date' | 'select';
+      isRequired: boolean;
+      /** @description Required for `select` fields. */
+      options: string[] | null;
+      value: (string | number | boolean) | null;
+    };
+    SubmitSurveyRequestDto: {
+      /** @description Survey field values, keyed by the visit custom-field key. */
+      values: {
+        [key: string]: unknown;
+      };
+    };
+    VisitActivityDto: {
+      /** Format: uuid */
+      id: string;
+      type: string;
+      /** Format: uuid */
+      actorMembershipId: string | null;
+      actorName: string | null;
+      actorEmail: string | null;
+      payload: {
+        [key: string]: unknown;
+      };
+      /** Format: date-time */
+      createdAt: string;
+    };
+    VisitNoteDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      visitId: string;
+      /** Format: uuid */
+      authorMembershipId: string | null;
+      authorName: string | null;
+      body: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreateVisitNoteRequestDto: {
+      body: string;
+    };
+    VisitAttachmentDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      visitId: string;
+      originalFilename: string | null;
+      contentType: string;
+      fileSize: number;
+      /** Format: uuid */
+      uploadedByMembershipId: string | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -2365,7 +2830,9 @@ export interface operations {
   };
   listCustomFields: {
     parameters: {
-      query?: never;
+      query?: {
+        entity?: 'lead' | 'visit';
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -2762,6 +3229,817 @@ export interface operations {
     requestBody?: never;
     responses: {
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listFieldAgents: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FieldAgentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  designateFieldAgent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DesignateFieldAgentRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FieldAgentDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deactivateFieldAgent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FieldAgentDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listVisits: {
+    parameters: {
+      query?: {
+        status?: string;
+        leadId?: string;
+        assignedMembershipId?: string;
+        /** @description Only visits scheduled today. */
+        today?: boolean;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitListResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  scheduleVisit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ScheduleVisitRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getVisit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  assignVisit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignVisitRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  rescheduleVisit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RescheduleVisitRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  cancelVisit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelVisitRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  checkInVisit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GeoPointRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  checkOutVisit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckOutRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  completeVisit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getVisitSurvey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SurveyFieldValueDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  submitVisitSurvey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubmitSurveyRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listVisitActivities: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitActivityDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listVisitNotes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitNoteDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createVisitNote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateVisitNoteRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitNoteDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listVisitAttachments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitAttachmentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadVisitAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitAttachmentDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadVisitAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+        attachmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deleteVisitAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+        attachmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
         headers: {
           [name: string]: unknown;
         };

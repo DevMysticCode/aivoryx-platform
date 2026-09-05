@@ -12,6 +12,7 @@ import { SecurityModule } from './security/security.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { CrmModule } from './crm/crm.module.js';
 import { IntegrationsModule } from './integrations/integrations.module.js';
+import { FieldModule } from './field/field.module.js';
 
 /**
  * Composition root.
@@ -40,6 +41,7 @@ import { IntegrationsModule } from './integrations/integrations.module.js';
     AdminModule,
     CrmModule,
     IntegrationsModule,
+    FieldModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

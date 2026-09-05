@@ -32,6 +32,7 @@ export interface LeadView {
   status: string;
   assignee: LeadAssigneeView | null;
   qualificationNote: string | null;
+  origin: string;
   customFields: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -68,6 +69,7 @@ const leadSelect = {
   country: leads.country,
   status: leads.status,
   qualificationNote: leads.qualificationNote,
+  origin: leads.origin,
   assignedMembershipId: leads.assignedMembershipId,
   assigneeUserId: users.id,
   assigneeName: users.name,
@@ -90,6 +92,7 @@ function toLeadView(row: {
   country: string | null;
   status: string;
   qualificationNote: string | null;
+  origin: string;
   assignedMembershipId: string | null;
   assigneeUserId: string | null;
   assigneeName: string | null;
@@ -111,6 +114,7 @@ function toLeadView(row: {
     country: row.country,
     status: row.status,
     qualificationNote: row.qualificationNote,
+    origin: row.origin,
     assignee:
       row.assignedMembershipId && row.assigneeEmail
         ? {

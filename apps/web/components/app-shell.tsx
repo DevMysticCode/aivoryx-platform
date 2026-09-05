@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { Activity, LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
 import { webEnv } from '@/lib/env';
@@ -14,8 +17,17 @@ const NAV = [
  * Production-quality application shell: a fixed sidebar on desktop, a top bar on
  * mobile, and a constrained content column. Domain navigation is added per
  * module in later phases.
+ *
+ * `/field/*` is a genuinely mobile-first PWA surface for field agents (Phase 4,
+ * ADR 0033) with its own bottom-nav chrome (`app/field/layout.tsx`) — it opts
+ * out of this desktop-oriented shell entirely rather than being squeezed into it.
  */
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/field')) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
       <header className="flex items-center justify-between border-b px-4 py-3 md:hidden">

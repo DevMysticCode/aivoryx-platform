@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import { useMembers } from '@/lib/admin/use-admin';
+import { useVisits } from '@/lib/field/use-field';
 import {
   useActivities,
   useAssignLead,
@@ -37,6 +39,7 @@ export default function LeadDetailPage() {
   const activities = useActivities(id);
   const notes = useNotes(id);
   const followups = useFollowups(id);
+  const visits = useVisits({ leadId: id, pageSize: 10 });
   const members = useMembers();
 
   const assign = useAssignLead(id);
@@ -202,6 +205,39 @@ export default function LeadDetailPage() {
               </Button>
             </div>
             <ErrorNote error={logCall.error} />
+          </Card>
+
+          <Card className="space-y-3">
+            <h2 className="text-sm font-semibold">Site visits</h2>
+            {visits.isLoading ? (
+              <Skeleton rows={2} />
+            ) : visits.error ? (
+              <ErrorNote error={visits.error} />
+            ) : visits.data && visits.data.items.length > 0 ? (
+              <ul className="space-y-2 text-sm">
+                {visits.data.items.map((v) => (
+                  <li
+                    key={v.id}
+                    className="flex items-center justify-between border-b pb-2 last:border-b-0"
+                  >
+                    <div>
+                      <Link
+                        href={`/crm/visits/${v.id}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {new Date(v.scheduledAt).toLocaleString()}
+                      </Link>
+                      <div className="text-xs text-muted-foreground">
+                        {v.assignee ? (v.assignee.name ?? v.assignee.email) : 'Unassigned'}
+                      </div>
+                    </div>
+                    <StatusBadge status={v.status} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No site visits scheduled yet.</p>
+            )}
           </Card>
 
           <Card className="space-y-3">

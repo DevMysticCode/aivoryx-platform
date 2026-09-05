@@ -7,6 +7,13 @@ indexes beyond an entity-id lookup index — added if/when custom-field
 filtering in the CRM UI is actually needed. The typed-column value storage
 below is exactly as designed.
 
+**Phase 4 (ADR 0033)** extended the `entity` enum with `visit`, generalizing
+every coercion/validation/persistence function in
+`apps/api/src/crm/custom-fields.service.ts` to take an explicit `entity`
+parameter (defaulting to `'lead'`, so no existing call site changed). A
+tenant's site-survey questions are `visit` custom fields — the same engine,
+not a second one. See `FIELD-OPERATIONS.md`.
+
 ## Requirement
 
 Tenants must be able to define their own lead/customer fields. Those fields must

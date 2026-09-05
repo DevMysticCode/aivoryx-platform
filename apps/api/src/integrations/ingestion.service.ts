@@ -309,6 +309,7 @@ export class IngestionService {
             state: mapped.canonical.state ?? null,
             postalCode: mapped.canonical.postalCode ?? null,
             country: mapped.canonical.country ?? null,
+            origin: 'inbound',
           })
           .returning({ id: leads.id });
         leadId = row!.id;

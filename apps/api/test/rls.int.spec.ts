@@ -32,6 +32,11 @@ const RLS_TABLES = [
   'raw_events',
   'canonical_lead_events',
   'integration_event_log',
+  'field_agents',
+  'visits',
+  'visit_activities',
+  'visit_notes',
+  'visit_attachments',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -575,6 +580,120 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         await c.query('reset role').catch(() => undefined);
         c.release();
       }
+    });
+  });
+
+  describe('Field operations (Phase 4, ADR 0033)', () => {
+    let leadA: string;
+    let leadB: string;
+    let visitA: string;
+    let visitB: string;
+
+    beforeAll(async () => {
+      leadA = randomUUID();
+      leadB = randomUUID();
+      visitA = randomUUID();
+      visitB = randomUUID();
+
+      for (const [tenantId, leadId, visitId, membershipId] of [
+        [fx.tenantA, leadA, visitA, fx.admin.membershipId],
+        [fx.tenantB, leadB, visitB, fx.adminB.membershipId],
+      ] as const) {
+        await pool.query(
+          `insert into leads (id, tenant_id, name, phone, normalized_phone)
+           values ($1,$2,'Field RLS Lead','9991110000','9991110000')`,
+          [leadId, tenantId],
+        );
+        await pool.query(
+          `insert into field_agents (id, tenant_id, membership_id, status)
+           values ($1,$2,$3,'active')`,
+          [randomUUID(), tenantId, membershipId],
+        );
+        await pool.query(
+          `insert into visits (id, tenant_id, lead_id, assigned_membership_id, status, scheduled_at, created_by_membership_id)
+           values ($1,$2,$3,$4,'ASSIGNED', now() + interval '1 day', $4)`,
+          [visitId, tenantId, leadId, membershipId],
+        );
+        await pool.query(
+          `insert into visit_activities (id, tenant_id, visit_id, type, actor_membership_id, payload)
+           values ($1,$2,$3,'created',$4,'{}'::jsonb)`,
+          [randomUUID(), tenantId, visitId, membershipId],
+        );
+        await pool.query(
+          `insert into visit_notes (id, tenant_id, visit_id, author_membership_id, body)
+           values ($1,$2,$3,$4,'a visit note')`,
+          [randomUUID(), tenantId, visitId, membershipId],
+        );
+        await pool.query(
+          `insert into visit_attachments (id, tenant_id, visit_id, object_key, content_type, file_size, uploaded_by_membership_id)
+           values ($1,$2,$3,$4,'image/jpeg',1024,$5)`,
+          [
+            randomUUID(),
+            tenantId,
+            visitId,
+            `tenants/${tenantId}/visits/${visitId}/${randomUUID()}.jpg`,
+            membershipId,
+          ],
+        );
+      }
+    });
+
+    const FIELD_TABLES = [
+      'field_agents',
+      'visits',
+      'visit_activities',
+      'visit_notes',
+      'visit_attachments',
+    ];
+
+    it('tenant A cannot READ any tenant B row across all five field tables', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        for (const table of FIELD_TABLES) {
+          expect(await count(c, table, `where tenant_id = '${fx.tenantB}'`), `read ${table}`).toBe(
+            0,
+          );
+        }
+      });
+    });
+
+    it('tenant A sees exactly its own rows in each field table', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'visits', `where id = '${visitA}'`)).toBe(1);
+        expect(await count(c, 'visits', `where id = '${visitB}'`)).toBe(0);
+        expect(
+          await count(c, 'field_agents', `where membership_id = '${fx.admin.membershipId}'`),
+        ).toBe(1);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B visits (update/delete affect 0, insert rejected)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (await c.query("update visits set status='CANCELLED' where id=$1", [visitB])).rowCount,
+        ).toBe(0);
+        expect((await c.query('delete from visits where id=$1', [visitB])).rowCount).toBe(0);
+
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into visits (id, tenant_id, lead_id, status, scheduled_at, created_by_membership_id)
+             values (gen_random_uuid(), $1, $2, 'SCHEDULED', now(), $3)`,
+            [fx.tenantB, leadB, fx.adminB.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+
+      const { rows } = await pool.query('select status from visits where id = $1', [visitB]);
+      expect(rows[0]?.status).toBe('ASSIGNED');
+    });
+
+    it('tenant A cannot read tenant B visit activities, notes, or attachment metadata', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'visit_activities', `where visit_id = '${visitB}'`)).toBe(0);
+        expect(await count(c, 'visit_notes', `where visit_id = '${visitB}'`)).toBe(0);
+        expect(await count(c, 'visit_attachments', `where visit_id = '${visitB}'`)).toBe(0);
+      });
     });
   });
 

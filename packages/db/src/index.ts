@@ -21,9 +21,13 @@ export {
 export {
   seedPermissions,
   provisionTenantAdmin,
+  provisionFieldAgentRole,
+  provisionFieldAgentRoleTx,
   revokePermissionFromRole,
   type ProvisionTenantAdminInput,
   type ProvisionTenantAdminResult,
+  type ProvisionFieldAgentRoleInput,
+  type ProvisionFieldAgentRoleResult,
 } from './seed.js';
 export { checkDatabaseHealth, type DbHealthResult } from './health.js';
 export { runMigrations } from './migrate.js';

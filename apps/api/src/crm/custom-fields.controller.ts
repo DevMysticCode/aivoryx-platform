@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -11,12 +11,17 @@ import { RequirePermission, Security } from '../security/security.decorators.js'
 import type { SecurityContext } from '../security/security-context.js';
 import { ApiErrorDto } from '../auth/auth.dto.js';
 import { CustomFieldsService } from './custom-fields.service.js';
-import { CreateCustomFieldRequestDto, CustomFieldDefinitionDto } from './crm.dto.js';
+import {
+  CreateCustomFieldRequestDto,
+  CustomFieldDefinitionDto,
+  ListCustomFieldsQueryDto,
+} from './crm.dto.js';
 
 /**
- * Generic tenant custom fields for the `lead` entity (ADR 0031). Definition
- * management reuses `crm.leads.update` — there is deliberately no dedicated
- * "manage custom fields" permission for this small a surface.
+ * Generic tenant custom fields (ADR 0031), generalized in Phase 4 (ADR 0033)
+ * to also define the `visit` entity's site-survey questions — the SAME
+ * engine, not a second one. Definition management reuses `crm.leads.update`
+ * — there is deliberately no dedicated "manage custom fields" permission.
  */
 @ApiTags('crm')
 @ApiUnauthorizedResponse({ type: ApiErrorDto })
@@ -27,19 +32,22 @@ export class CustomFieldsController {
 
   @Get()
   @RequirePermission('crm.leads.read')
-  @ApiOperation({ operationId: 'listCustomFields', summary: 'Lead custom field definitions.' })
+  @ApiOperation({
+    operationId: 'listCustomFields',
+    summary: 'Custom field definitions for an entity.',
+  })
   @ApiOkResponse({ type: [CustomFieldDefinitionDto] })
-  list(@Security() ctx: SecurityContext) {
-    return this.customFields.list(scope(ctx));
+  list(@Security() ctx: SecurityContext, @Query() query: ListCustomFieldsQueryDto) {
+    return this.customFields.list(scope(ctx), query.entity ?? 'lead');
   }
 
   @Post()
   @HttpCode(200)
   @RequirePermission('crm.leads.update')
-  @ApiOperation({ operationId: 'createCustomField', summary: 'Define a new lead custom field.' })
+  @ApiOperation({ operationId: 'createCustomField', summary: 'Define a new custom field.' })
   @ApiOkResponse({ type: CustomFieldDefinitionDto })
   create(@Security() ctx: SecurityContext, @Body() body: CreateCustomFieldRequestDto) {
-    return this.customFields.create(scope(ctx), body);
+    return this.customFields.create(scope(ctx), body, body.entity ?? 'lead');
   }
 
   @Patch(':definitionId/deprecate')

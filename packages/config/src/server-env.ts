@@ -102,6 +102,11 @@ export const serverEnvSchema = z
       .string()
       .optional()
       .or(z.literal('').transform(() => undefined)),
+
+    /** Local-filesystem object storage adapter (Phase 4, ADR 0033/ADR 0015). Used
+     *  whenever OBJECT_STORAGE_ENDPOINT is unset — an S3/R2 adapter can be swapped
+     *  in later behind the same `ObjectStorageService` interface. */
+    OBJECT_STORAGE_LOCAL_DIR: z.string().default('.data/object-storage'),
   })
   .superRefine((env, ctx) => {
     if (env.APP_ENV === 'production' && env.SESSION_SECRET.includes('change-me')) {

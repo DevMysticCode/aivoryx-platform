@@ -8,6 +8,7 @@ import {
   leadNotes,
   leads,
 } from './crm.js';
+import { fieldAgents, visitActivities, visitAttachments, visitNotes, visits } from './field.js';
 import { sessions, tenants, users, userTenantMemberships } from './identity.js';
 import {
   canonicalLeadEvents,
@@ -160,4 +161,38 @@ export const integrationEventLogRelations = relations(integrationEventLog, ({ on
     fields: [integrationEventLog.canonicalLeadEventId],
     references: [canonicalLeadEvents.id],
   }),
+}));
+
+// --- Field operations (Phase 4, ADR 0033) ---------------------------------
+
+export const fieldAgentsRelations = relations(fieldAgents, ({ one }) => ({
+  tenant: one(tenants, { fields: [fieldAgents.tenantId], references: [tenants.id] }),
+  membership: one(userTenantMemberships, {
+    fields: [fieldAgents.membershipId],
+    references: [userTenantMemberships.id],
+  }),
+}));
+
+export const visitsRelations = relations(visits, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [visits.tenantId], references: [tenants.id] }),
+  lead: one(leads, { fields: [visits.leadId], references: [leads.id] }),
+  assignee: one(userTenantMemberships, {
+    fields: [visits.assignedMembershipId],
+    references: [userTenantMemberships.id],
+  }),
+  activities: many(visitActivities),
+  notes: many(visitNotes),
+  attachments: many(visitAttachments),
+}));
+
+export const visitActivitiesRelations = relations(visitActivities, ({ one }) => ({
+  visit: one(visits, { fields: [visitActivities.visitId], references: [visits.id] }),
+}));
+
+export const visitNotesRelations = relations(visitNotes, ({ one }) => ({
+  visit: one(visits, { fields: [visitNotes.visitId], references: [visits.id] }),
+}));
+
+export const visitAttachmentsRelations = relations(visitAttachments, ({ one }) => ({
+  visit: one(visits, { fields: [visitAttachments.visitId], references: [visits.id] }),
 }));

@@ -6,6 +6,7 @@ import { AppError } from '@aivoryx/shared';
 const { customFieldDefinitions, customFieldValues } = schema;
 
 export type CustomFieldInputValue = string | number | boolean | null;
+export type CustomFieldEntity = (typeof customFieldDefinitions.entity.enumValues)[number];
 
 export interface TenantScope {
   tenantId: string;
@@ -20,6 +21,7 @@ export interface CustomFieldDefinitionView {
   isRequired: boolean;
   options: string[] | null;
   status: string;
+  entity: string;
 }
 
 export interface CreateCustomFieldInput {
@@ -32,7 +34,10 @@ export interface CreateCustomFieldInput {
 
 @Injectable()
 export class CustomFieldsService {
-  list(scope: TenantScope): Promise<CustomFieldDefinitionView[]> {
+  list(
+    scope: TenantScope,
+    entity: CustomFieldEntity = 'lead',
+  ): Promise<CustomFieldDefinitionView[]> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const rows = await tx
         .select()
@@ -40,7 +45,7 @@ export class CustomFieldsService {
         .where(
           and(
             eq(customFieldDefinitions.tenantId, scope.tenantId),
-            eq(customFieldDefinitions.entity, 'lead'),
+            eq(customFieldDefinitions.entity, entity),
           ),
         );
       return rows.map(toView);
@@ -50,6 +55,7 @@ export class CustomFieldsService {
   async create(
     scope: TenantScope,
     input: CreateCustomFieldInput,
+    entity: CustomFieldEntity = 'lead',
   ): Promise<CustomFieldDefinitionView> {
     if (input.dataType === 'select' && (!input.options || input.options.length === 0)) {
       throw new AppError('VALIDATION_ERROR', {
@@ -61,7 +67,7 @@ export class CustomFieldsService {
         .insert(customFieldDefinitions)
         .values({
           tenantId: scope.tenantId,
-          entity: 'lead',
+          entity,
           key: input.key,
           label: input.label,
           dataType: input.dataType,
@@ -100,6 +106,7 @@ function toView(row: typeof customFieldDefinitions.$inferSelect): CustomFieldDef
     isRequired: row.isRequired,
     options: (row.options as string[] | null) ?? null,
     status: row.status,
+    entity: row.entity,
   };
 }
 
@@ -113,6 +120,7 @@ export interface ActiveCustomFieldDef {
 export async function loadActiveCustomFieldDefs(
   tx: Tx,
   tenantId: string,
+  entity: CustomFieldEntity = 'lead',
 ): Promise<ActiveCustomFieldDef[]> {
   const rows = await tx
     .select({
@@ -125,7 +133,37 @@ export async function loadActiveCustomFieldDefs(
     .where(
       and(
         eq(customFieldDefinitions.tenantId, tenantId),
-        eq(customFieldDefinitions.entity, 'lead'),
+        eq(customFieldDefinitions.entity, entity),
+        eq(customFieldDefinitions.status, 'active'),
+      ),
+    );
+  return rows.map((r) => ({ ...r, options: r.options as string[] | null }));
+}
+
+export interface ActiveCustomFieldDefWithMeta extends ActiveCustomFieldDef {
+  isRequired: boolean;
+}
+
+/** Same as {@link loadActiveCustomFieldDefs} but also returns `isRequired` — needed to
+ *  decide whether a visit's survey is complete. */
+export async function loadActiveCustomFieldDefsWithMeta(
+  tx: Tx,
+  tenantId: string,
+  entity: CustomFieldEntity,
+): Promise<ActiveCustomFieldDefWithMeta[]> {
+  const rows = await tx
+    .select({
+      id: customFieldDefinitions.id,
+      key: customFieldDefinitions.key,
+      dataType: customFieldDefinitions.dataType,
+      options: customFieldDefinitions.options,
+      isRequired: customFieldDefinitions.isRequired,
+    })
+    .from(customFieldDefinitions)
+    .where(
+      and(
+        eq(customFieldDefinitions.tenantId, tenantId),
+        eq(customFieldDefinitions.entity, entity),
         eq(customFieldDefinitions.status, 'active'),
       ),
     );
@@ -169,13 +207,14 @@ export async function persistCoercedCustomFieldValues(
   tenantId: string,
   entityId: string,
   rows: CoercedCustomFieldRow[],
+  entity: CustomFieldEntity = 'lead',
 ): Promise<void> {
   for (const row of rows) {
     await tx
       .insert(customFieldValues)
       .values({
         tenantId,
-        entity: 'lead',
+        entity,
         entityId,
         definitionId: row.definitionId,
         valueText: row.value.text,
@@ -209,11 +248,12 @@ export async function persistCoercedCustomFieldValues(
 export async function writeCustomFieldValues(
   tx: Tx,
   tenantId: string,
-  leadId: string,
+  entityId: string,
   values: Record<string, CustomFieldInputValue>,
+  entity: CustomFieldEntity = 'lead',
 ): Promise<void> {
   if (Object.keys(values).length === 0) return;
-  const defs = await loadActiveCustomFieldDefs(tx, tenantId);
+  const defs = await loadActiveCustomFieldDefs(tx, tenantId, entity);
   const result = validateCustomFieldValues(defs, values);
   if (!result.ok) {
     throw new AppError(
@@ -221,7 +261,72 @@ export async function writeCustomFieldValues(
       { details: { key: result.key } },
     );
   }
-  await persistCoercedCustomFieldValues(tx, tenantId, leadId, result.rows);
+  await persistCoercedCustomFieldValues(tx, tenantId, entityId, result.rows, entity);
+}
+
+export interface CustomFieldValueView {
+  key: string;
+  label: string;
+  dataType: string;
+  isRequired: boolean;
+  options: string[] | null;
+  value: string | number | boolean | null;
+}
+
+/** Read back the current values for one entity instance, joined against its
+ *  active definitions — used to render a visit's survey responses. */
+export async function loadCustomFieldValuesForEntity(
+  tx: Tx,
+  tenantId: string,
+  entity: CustomFieldEntity,
+  entityId: string,
+): Promise<CustomFieldValueView[]> {
+  const rows = await tx
+    .select({
+      key: customFieldDefinitions.key,
+      label: customFieldDefinitions.label,
+      dataType: customFieldDefinitions.dataType,
+      isRequired: customFieldDefinitions.isRequired,
+      options: customFieldDefinitions.options,
+      valueText: customFieldValues.valueText,
+      valueNumber: customFieldValues.valueNumber,
+      valueBoolean: customFieldValues.valueBoolean,
+      valueDate: customFieldValues.valueDate,
+    })
+    .from(customFieldDefinitions)
+    .leftJoin(
+      customFieldValues,
+      and(
+        eq(customFieldValues.definitionId, customFieldDefinitions.id),
+        eq(customFieldValues.entity, entity),
+        eq(customFieldValues.entityId, entityId),
+      ),
+    )
+    .where(
+      and(
+        eq(customFieldDefinitions.tenantId, tenantId),
+        eq(customFieldDefinitions.entity, entity),
+        eq(customFieldDefinitions.status, 'active'),
+      ),
+    );
+
+  return rows.map((r) => ({
+    key: r.key,
+    label: r.label,
+    dataType: r.dataType,
+    isRequired: r.isRequired,
+    options: (r.options as string[] | null) ?? null,
+    value:
+      r.dataType === 'number'
+        ? r.valueNumber !== null
+          ? Number(r.valueNumber)
+          : null
+        : r.dataType === 'boolean'
+          ? r.valueBoolean
+          : r.dataType === 'date'
+            ? r.valueDate
+            : r.valueText,
+  }));
 }
 
 export interface CoercedValue {

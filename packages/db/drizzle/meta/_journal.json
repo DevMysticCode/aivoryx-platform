@@ -43,6 +43,13 @@
       "when": 1788578124680,
       "tag": "0005_true_lady_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788585185476,
+      "tag": "0006_left_sharon_carter",
+      "breakpoints": true
     }
   ]
 }

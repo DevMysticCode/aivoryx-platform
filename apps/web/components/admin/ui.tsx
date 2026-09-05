@@ -47,14 +47,27 @@ const STATUS_STYLES: Record<string, string> = {
   active: 'bg-primary/10 text-primary',
   invited: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   suspended: 'bg-destructive/10 text-destructive',
+  // CRM lead lifecycle (ADR 0031)
+  new: 'bg-secondary text-secondary-foreground',
+  assigned: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  contacted: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  qualified: 'bg-primary/10 text-primary',
+  disqualified: 'bg-destructive/10 text-destructive',
+  converted: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  // visit lifecycle (ADR 0033)
+  scheduled: 'bg-secondary text-secondary-foreground',
+  in_progress: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  cancelled: 'bg-destructive/10 text-destructive',
 };
 
 export function StatusBadge({ status }: { status: string }) {
+  const key = status.toLowerCase();
   return (
     <span
       className={cn(
         'inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize',
-        STATUS_STYLES[status] ?? 'bg-secondary text-secondary-foreground',
+        STATUS_STYLES[key] ?? 'bg-secondary text-secondary-foreground',
       )}
     >
       {status}
