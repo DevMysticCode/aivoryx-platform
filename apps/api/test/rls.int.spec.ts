@@ -362,6 +362,22 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         c.release();
       }
     });
+
+    it('a token hash that matches nothing exposes zero rows (no context, no error)', async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('set role aivoryx_app');
+        await c.query('begin');
+        await c.query("select set_config('app.invitation_token_hash', $1, true)", [
+          'this-hash-matches-no-row-at-all',
+        ]);
+        expect(await count(c, 'tenant_invitations')).toBe(0);
+      } finally {
+        await c.query('rollback').catch(() => undefined);
+        await c.query('reset role').catch(() => undefined);
+        c.release();
+      }
+    });
   });
 
   it('with no tenant context set, every RLS table returns nothing (fail closed, no error)', async () => {
