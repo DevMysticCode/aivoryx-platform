@@ -78,11 +78,17 @@ deferred until their real API/payload capabilities are verified.
 
 ## Stream E — EPC
 
+Phase 5 delivered the provider-neutral operational spine — projects (CRM→ops
+bridge), procurement, inventory (movement-ledger source of truth), and
+logistics (dispatch/delivery). See ADR 0034 and
+`docs/architecture/SUPPLY-CHAIN.md`. Installation/QC/commissioning/handover
+remain for a later EPC phase.
+
 - onboarding
-- projects
-- procurement
-- inventory
-- logistics
+- projects ✅ (Phase 5)
+- procurement ✅ (Phase 5)
+- inventory ✅ (Phase 5)
+- logistics ✅ (Phase 5)
 - installation
 - QC
 - documentation

@@ -22,7 +22,9 @@ import {
   useRescheduleFollowup,
   useUpdateNote,
 } from '@/lib/crm/use-crm';
+import { useProject, useProjects } from '@/lib/supply/use-supply';
 import { Card, ErrorNote, Field, PageHeader, Skeleton, StatusBadge } from '@/components/admin/ui';
+import { fmtQty, SupplyStatusBadge } from '@/components/supply/ui';
 
 const NEXT_STATUSES: Record<string, string[]> = {
   NEW: ['ASSIGNED', 'CONTACTED', 'QUALIFIED', 'DISQUALIFIED'],
@@ -275,6 +277,8 @@ export default function LeadDetailPage() {
         </div>
 
         <div className="space-y-6">
+          <LeadProjectCard leadId={id} />
+
           <Card className="space-y-3">
             <h2 className="text-sm font-semibold">Notes</h2>
             <form
@@ -424,5 +428,72 @@ export default function LeadDetailPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Operational readiness for this lead — the linked Phase 5 project (ADR 0034),
+ * its lifecycle status, and how far its materials have progressed from required
+ * through delivered. Hidden entirely when the member cannot see projects or no
+ * project exists yet.
+ */
+function LeadProjectCard({ leadId }: { leadId: string }) {
+  const projects = useProjects({ leadId, pageSize: 1 });
+  const first = projects.data?.items[0];
+  const detail = useProject(first?.id ?? '');
+
+  // 403 (no projects.read) or no project yet → render nothing.
+  if (projects.error || (projects.data && projects.data.items.length === 0)) return null;
+  if (projects.isLoading || !first) {
+    return (
+      <Card className="space-y-3">
+        <h2 className="text-sm font-semibold">Project / operations</h2>
+        <Skeleton rows={2} />
+      </Card>
+    );
+  }
+
+  const materials = detail.data?.materials ?? [];
+  const sum = (key: 'requiredQty' | 'allocatedQty' | 'dispatchedQty' | 'deliveredQty') =>
+    materials.reduce((acc, m) => acc + Number(m[key] || 0), 0);
+  const required = sum('requiredQty');
+  const readiness = required > 0 ? Math.round((sum('deliveredQty') / required) * 100) : 0;
+
+  return (
+    <Card className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Project / operations</h2>
+        <SupplyStatusBadge status={first.status} />
+      </div>
+      <Link
+        href={`/projects/${first.id}`}
+        className="block font-medium text-primary hover:underline"
+      >
+        {first.number}
+      </Link>
+      {materials.length > 0 ? (
+        <dl className="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <dt className="text-xs text-muted-foreground">Required</dt>
+            <dd>{fmtQty(String(sum('requiredQty')))}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Allocated</dt>
+            <dd>{fmtQty(String(sum('allocatedQty')))}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Dispatched</dt>
+            <dd>{fmtQty(String(sum('dispatchedQty')))}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Delivered</dt>
+            <dd>{fmtQty(String(sum('deliveredQty')))}</dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="text-sm text-muted-foreground">No material requirements captured yet.</p>
+      )}
+      <p className="text-xs text-muted-foreground">Material readiness: {readiness}%</p>
+    </Card>
   );
 }

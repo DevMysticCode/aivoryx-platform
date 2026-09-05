@@ -904,6 +904,650 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/projects': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search and filter projects. */
+    get: operations['listProjects'];
+    put?: never;
+    /** Create a project from a CRM lead. */
+    post: operations['createProject'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A project with its material requirements. */
+    get: operations['getProject'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{id}/activities': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The project timeline. */
+    get: operations['listProjectActivities'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{id}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve a draft project. */
+    post: operations['approveProject'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{id}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Move a project to a new status. */
+    post: operations['setProjectStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{id}/materials': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Add or update a material requirement. */
+    post: operations['addProjectMaterial'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{id}/materials/{materialId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove an unallocated material. */
+    delete: operations['removeProjectMaterial'];
+    options?: never;
+    head?: never;
+    /** Edit a material requirement. */
+    patch: operations['updateProjectMaterial'];
+    trace?: never;
+  };
+  '/projects/{id}/materials/allocate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Allocate warehouse stock to the project. */
+    post: operations['allocateMaterial'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{id}/materials/release': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Release a previous allocation. */
+    post: operations['releaseMaterial'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/units': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Units of measure. */
+    get: operations['listUnits'];
+    put?: never;
+    /** Create or update a unit of measure. */
+    post: operations['upsertUnit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/categories': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Product categories. */
+    get: operations['listCategories'];
+    put?: never;
+    /** Create or update a product category. */
+    post: operations['upsertCategory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/products': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search the product catalogue. */
+    get: operations['listProducts'];
+    put?: never;
+    /** Add a product. */
+    post: operations['createProduct'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/products/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A single product. */
+    get: operations['getProduct'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a product. */
+    patch: operations['updateProduct'];
+    trace?: never;
+  };
+  '/inventory/suppliers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Suppliers/vendors. */
+    get: operations['listSuppliers'];
+    put?: never;
+    /** Add a supplier. */
+    post: operations['createSupplier'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/suppliers/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A single supplier. */
+    get: operations['getSupplier'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a supplier. */
+    patch: operations['updateSupplier'];
+    trace?: never;
+  };
+  '/inventory/warehouses': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Warehouses / stock locations. */
+    get: operations['listWarehouses'];
+    put?: never;
+    /** Add a warehouse. */
+    post: operations['createWarehouse'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/warehouses/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A single warehouse. */
+    get: operations['getWarehouse'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a warehouse. */
+    patch: operations['updateWarehouse'];
+    trace?: never;
+  };
+  '/inventory/stock': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Current stock levels across warehouses. */
+    get: operations['listStock'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/movements': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The stock movement ledger. */
+    get: operations['listStockMovements'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/adjustments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Post a manual stock adjustment. */
+    post: operations['adjustStock'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/transfers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Transfer stock between warehouses. */
+    post: operations['transferStock'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/inventory/warehouses/{id}/stock': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Stock held in one warehouse. */
+    get: operations['listWarehouseStock'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/procurement/purchase-orders': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search purchase orders. */
+    get: operations['listPurchaseOrders'];
+    put?: never;
+    /** Create a draft purchase order. */
+    post: operations['createPurchaseOrder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/procurement/purchase-orders/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A purchase order with lines and receipts. */
+    get: operations['getPurchaseOrder'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a draft purchase order. */
+    patch: operations['updatePurchaseOrder'];
+    trace?: never;
+  };
+  '/procurement/purchase-orders/{id}/submit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Submit a draft PO for approval. */
+    post: operations['submitPurchaseOrder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/procurement/purchase-orders/{id}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve a submitted PO. */
+    post: operations['approvePurchaseOrder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/procurement/purchase-orders/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel a PO before it is received. */
+    post: operations['cancelPurchaseOrder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/procurement/purchase-orders/{id}/close': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Close a received PO. */
+    post: operations['closePurchaseOrder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/procurement/purchase-orders/{id}/receive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Record goods received against a PO. */
+    post: operations['receivePurchaseOrder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logistics/dispatches': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search dispatches. */
+    get: operations['listDispatches'];
+    put?: never;
+    /** Create a draft dispatch for a project. */
+    post: operations['createDispatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logistics/dispatches/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A dispatch with its lines. */
+    get: operations['getDispatch'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a draft dispatch. */
+    patch: operations['updateDispatch'];
+    trace?: never;
+  };
+  '/logistics/dispatches/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel a draft dispatch. */
+    post: operations['cancelDispatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logistics/dispatches/{id}/dispatch': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Send a dispatch out from the warehouse. */
+    post: operations['sendDispatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logistics/dispatches/{id}/deliver': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirm delivery at the project site. */
+    post: operations['deliverDispatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logistics/dispatches/{id}/attachments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Delivery photos/documents. */
+    get: operations['listDispatchAttachments'];
+    put?: never;
+    /** Attach a delivery photo/document. */
+    post: operations['uploadDispatchAttachment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logistics/dispatches/{id}/attachments/{attachmentId}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download a delivery attachment. */
+    get: operations['downloadDispatchAttachment'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/logistics/dispatches/{id}/attachments/{attachmentId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a delivery attachment. */
+    delete: operations['deleteDispatchAttachment'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1532,6 +2176,634 @@ export interface components {
       uploadedByMembershipId: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    ProjectDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      leadId: string;
+      leadName: string | null;
+      customerName: string | null;
+      /** @enum {string} */
+      status:
+        | 'DRAFT'
+        | 'APPROVED'
+        | 'PROCUREMENT'
+        | 'READY_FOR_DISPATCH'
+        | 'IN_PROGRESS'
+        | 'COMPLETED'
+        | 'ON_HOLD'
+        | 'CANCELLED';
+      siteAddressLine: string | null;
+      siteCity: string | null;
+      siteState: string | null;
+      /** Format: date-time */
+      approvedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    ProjectListDto: {
+      items: components['schemas']['ProjectDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    ProjectMaterialDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      productId: string;
+      productSku: string;
+      productName: string;
+      unitCode: string;
+      requiredQty: string;
+      allocatedQty: string;
+      dispatchedQty: string;
+      deliveredQty: string;
+      /** @description required - allocated */
+      remainingQty: string;
+      notes: string | null;
+    };
+    ProjectDetailDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      leadId: string;
+      leadName: string | null;
+      customerName: string | null;
+      /** @enum {string} */
+      status:
+        | 'DRAFT'
+        | 'APPROVED'
+        | 'PROCUREMENT'
+        | 'READY_FOR_DISPATCH'
+        | 'IN_PROGRESS'
+        | 'COMPLETED'
+        | 'ON_HOLD'
+        | 'CANCELLED';
+      siteAddressLine: string | null;
+      siteCity: string | null;
+      siteState: string | null;
+      /** Format: date-time */
+      approvedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      materials: components['schemas']['ProjectMaterialDto'][];
+    };
+    ProjectActivityDto: {
+      /** Format: uuid */
+      id: string;
+      type: string;
+      actorName: string | null;
+      payload: {
+        [key: string]: unknown;
+      };
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreateProjectDto: {
+      /** Format: uuid */
+      leadId: string;
+      /** @description Auto-generated if omitted. */
+      number?: string;
+      customerName?: string;
+    };
+    SetProjectStatusDto: {
+      /** @enum {string} */
+      status:
+        | 'DRAFT'
+        | 'APPROVED'
+        | 'PROCUREMENT'
+        | 'READY_FOR_DISPATCH'
+        | 'IN_PROGRESS'
+        | 'COMPLETED'
+        | 'ON_HOLD'
+        | 'CANCELLED';
+    };
+    UpsertMaterialDto: {
+      /** Format: uuid */
+      productId: string;
+      /** @description Decimal string. */
+      requiredQty: string;
+      notes?: string;
+    };
+    UpdateMaterialDto: {
+      /** @description Decimal string. */
+      requiredQty?: string;
+      notes?: string;
+    };
+    AllocateMaterialDto: {
+      /** Format: uuid */
+      productId: string;
+      /** Format: uuid */
+      warehouseId: string;
+      /** @description Decimal string, > 0. */
+      quantity: string;
+      /** @description Retry key — a repeated call with the same key is a no-op. */
+      idempotencyKey?: string;
+    };
+    UnitDto: {
+      /** Format: uuid */
+      id: string;
+      code: string;
+      name: string;
+      isActive: boolean;
+    };
+    UpsertUnitDto: {
+      /** @example PCS */
+      code: string;
+      name: string;
+      isActive?: boolean;
+    };
+    CategoryDto: {
+      /** Format: uuid */
+      id: string;
+      code: string;
+      name: string;
+      isActive: boolean;
+    };
+    UpsertCategoryDto: {
+      /** @example PANELS */
+      code: string;
+      name: string;
+      isActive?: boolean;
+    };
+    ProductDto: {
+      /** Format: uuid */
+      id: string;
+      sku: string;
+      name: string;
+      description: string | null;
+      /** Format: uuid */
+      unitId: string;
+      unitCode: string;
+      /** Format: uuid */
+      categoryId: string | null;
+      categoryName: string | null;
+      brand: string | null;
+      model: string | null;
+      reorderLevel: string | null;
+      isActive: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ProductListDto: {
+      items: components['schemas']['ProductDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    CreateProductDto: {
+      /** @example PANEL-550 */
+      sku: string;
+      name: string;
+      description?: string;
+      /** Format: uuid */
+      unitId: string;
+      /** Format: uuid */
+      categoryId?: string;
+      brand?: string;
+      model?: string;
+      /** @description Decimal string; low-stock threshold. */
+      reorderLevel?: string;
+      isActive?: boolean;
+    };
+    UpdateProductDto: {
+      name?: string;
+      description?: string;
+      /** Format: uuid */
+      unitId?: string;
+      /** Format: uuid */
+      categoryId?: Record<string, never> | null;
+      brand?: string;
+      model?: string;
+      reorderLevel?: string;
+      isActive?: boolean;
+    };
+    SupplierDto: {
+      /** Format: uuid */
+      id: string;
+      code: string;
+      name: string;
+      contactName: string | null;
+      contactEmail: string | null;
+      contactPhone: string | null;
+      addressLine: string | null;
+      city: string | null;
+      state: string | null;
+      postalCode: string | null;
+      country: string | null;
+      taxReference: string | null;
+      notes: string | null;
+      isActive: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreateSupplierDto: {
+      code: string;
+      name: string;
+      contactName?: string;
+      contactEmail?: string;
+      contactPhone?: string;
+      addressLine?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+      taxReference?: string;
+      notes?: string;
+      isActive?: boolean;
+    };
+    UpdateSupplierDto: {
+      code?: string;
+      name?: string;
+      contactName?: string;
+      contactEmail?: string;
+      contactPhone?: string;
+      addressLine?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+      taxReference?: string;
+      notes?: string;
+      isActive?: boolean;
+    };
+    WarehouseDto: {
+      /** Format: uuid */
+      id: string;
+      code: string;
+      name: string;
+      /** @enum {string} */
+      type: 'main' | 'regional' | 'transit' | 'site';
+      addressLine: string | null;
+      city: string | null;
+      state: string | null;
+      postalCode: string | null;
+      country: string | null;
+      isActive: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreateWarehouseDto: {
+      code: string;
+      name: string;
+      /** @enum {string} */
+      type: 'main' | 'regional' | 'transit' | 'site';
+      addressLine?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+      isActive?: boolean;
+    };
+    UpdateWarehouseDto: {
+      code?: string;
+      name?: string;
+      /** @enum {string} */
+      type?: 'main' | 'regional' | 'transit' | 'site';
+      addressLine?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+      isActive?: boolean;
+    };
+    StockLevelDto: {
+      /** Format: uuid */
+      warehouseId: string;
+      warehouseCode: string;
+      warehouseName: string;
+      /** Format: uuid */
+      productId: string;
+      productSku: string;
+      productName: string;
+      unitCode: string;
+      onHand: string;
+      reserved: string;
+      /** @description onHand - reserved */
+      available: string;
+      reorderLevel: string | null;
+      /** @description onHand <= reorderLevel */
+      lowStock: boolean;
+    };
+    StockLevelListDto: {
+      items: components['schemas']['StockLevelDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    StockMovementDto: {
+      /** Format: uuid */
+      id: string;
+      type: string;
+      /** Format: uuid */
+      warehouseId: string;
+      warehouseCode: string;
+      /** Format: uuid */
+      productId: string;
+      productSku: string;
+      quantity: string;
+      onHandDelta: string;
+      reservedDelta: string;
+      /** Format: uuid */
+      projectId: string | null;
+      referenceType: string | null;
+      notes: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    StockMovementListDto: {
+      items: components['schemas']['StockMovementDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    AdjustStockDto: {
+      /** Format: uuid */
+      warehouseId: string;
+      /** Format: uuid */
+      productId: string;
+      /** @description Signed decimal string — the on-hand delta. */
+      delta: string;
+      reason: string;
+      idempotencyKey?: string;
+    };
+    TransferStockDto: {
+      /** Format: uuid */
+      sourceWarehouseId: string;
+      /** Format: uuid */
+      destinationWarehouseId: string;
+      /** Format: uuid */
+      productId: string;
+      /** @description Decimal string, > 0. */
+      quantity: string;
+      notes?: string;
+      idempotencyKey?: string;
+    };
+    PurchaseOrderDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      supplierId: string;
+      supplierName: string;
+      /** Format: uuid */
+      projectId: string | null;
+      projectNumber: string | null;
+      /** @enum {string} */
+      status:
+        | 'DRAFT'
+        | 'SUBMITTED'
+        | 'APPROVED'
+        | 'PARTIALLY_RECEIVED'
+        | 'RECEIVED'
+        | 'CLOSED'
+        | 'CANCELLED';
+      /** Format: date-time */
+      orderDate: string | null;
+      /** Format: date-time */
+      expectedDate: string | null;
+      notes: string | null;
+      subtotal: string;
+      taxTotal: string;
+      discountTotal: string;
+      total: string;
+      /** Format: date-time */
+      approvedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    PurchaseOrderListDto: {
+      items: components['schemas']['PurchaseOrderDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    PoLineDto: {
+      /** Format: uuid */
+      id: string;
+      lineNo: number;
+      /** Format: uuid */
+      productId: string;
+      productSku: string;
+      productName: string;
+      orderedQty: string;
+      receivedQty: string;
+      unitPrice: string;
+      taxRate: string;
+      discount: string;
+      lineTotal: string;
+    };
+    GoodsReceiptDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      warehouseId: string;
+      warehouseName: string;
+      notes: string | null;
+      /** Format: date-time */
+      receivedAt: string;
+      lines: {
+        [key: string]: unknown;
+      };
+    };
+    PurchaseOrderDetailDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      supplierId: string;
+      supplierName: string;
+      /** Format: uuid */
+      projectId: string | null;
+      projectNumber: string | null;
+      /** @enum {string} */
+      status:
+        | 'DRAFT'
+        | 'SUBMITTED'
+        | 'APPROVED'
+        | 'PARTIALLY_RECEIVED'
+        | 'RECEIVED'
+        | 'CLOSED'
+        | 'CANCELLED';
+      /** Format: date-time */
+      orderDate: string | null;
+      /** Format: date-time */
+      expectedDate: string | null;
+      notes: string | null;
+      subtotal: string;
+      taxTotal: string;
+      discountTotal: string;
+      total: string;
+      /** Format: date-time */
+      approvedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      lines: components['schemas']['PoLineDto'][];
+      receipts: components['schemas']['GoodsReceiptDto'][];
+    };
+    PoLineInputDto: {
+      /** Format: uuid */
+      productId: string;
+      /** @description Decimal string, > 0. */
+      orderedQty: string;
+      /** @description Decimal money string. */
+      unitPrice?: string;
+      /** @description Rate e.g. 0.18 for 18%. */
+      taxRate?: string;
+      /** @description Decimal money string. */
+      discount?: string;
+    };
+    CreatePurchaseOrderDto: {
+      /** Format: uuid */
+      supplierId: string;
+      /** Format: uuid */
+      projectId?: string;
+      /** @description Auto-generated if omitted. */
+      number?: string;
+      /** Format: date-time */
+      orderDate?: string;
+      /** Format: date-time */
+      expectedDate?: string;
+      notes?: string;
+      lines: components['schemas']['PoLineInputDto'][];
+    };
+    UpdatePurchaseOrderDto: {
+      /** Format: uuid */
+      projectId?: Record<string, never>;
+      /** Format: date-time */
+      orderDate?: string;
+      /** Format: date-time */
+      expectedDate?: string;
+      notes?: string;
+      lines?: components['schemas']['PoLineInputDto'][];
+    };
+    ReceiptLineInputDto: {
+      /** Format: uuid */
+      purchaseOrderLineId: string;
+      /** @description Decimal string, > 0. */
+      receivedQty: string;
+    };
+    ReceivePurchaseOrderDto: {
+      /** Format: uuid */
+      warehouseId: string;
+      notes?: string;
+      /** @description Retry key — a repeated call with the same key returns the same receipt. */
+      idempotencyKey?: string;
+      lines: components['schemas']['ReceiptLineInputDto'][];
+    };
+    DispatchDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      projectId: string;
+      projectNumber: string;
+      /** Format: uuid */
+      warehouseId: string;
+      warehouseName: string;
+      /** @enum {string} */
+      status: 'DRAFT' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED';
+      destinationAddress: string | null;
+      notes: string | null;
+      deliveryNotes: string | null;
+      /** Format: date-time */
+      dispatchedAt: string | null;
+      /** Format: date-time */
+      deliveredAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    DispatchListDto: {
+      items: components['schemas']['DispatchDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    DispatchLineDto: {
+      /** Format: uuid */
+      id: string;
+      lineNo: number;
+      /** Format: uuid */
+      productId: string;
+      productSku: string;
+      productName: string;
+      quantity: string;
+      deliveredQty: string;
+    };
+    DispatchAttachmentDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      dispatchId: string;
+      originalFilename: string | null;
+      contentType: string;
+      fileSize: number;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    DispatchDetailDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      projectId: string;
+      projectNumber: string;
+      /** Format: uuid */
+      warehouseId: string;
+      warehouseName: string;
+      /** @enum {string} */
+      status: 'DRAFT' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED';
+      destinationAddress: string | null;
+      notes: string | null;
+      deliveryNotes: string | null;
+      /** Format: date-time */
+      dispatchedAt: string | null;
+      /** Format: date-time */
+      deliveredAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      lines: components['schemas']['DispatchLineDto'][];
+      attachments: components['schemas']['DispatchAttachmentDto'][];
+    };
+    DispatchLineInputDto: {
+      /** Format: uuid */
+      productId: string;
+      /** @description Decimal string, > 0. */
+      quantity: string;
+    };
+    CreateDispatchDto: {
+      /** Format: uuid */
+      projectId: string;
+      /** Format: uuid */
+      warehouseId: string;
+      destinationAddress?: string;
+      notes?: string;
+      lines: components['schemas']['DispatchLineInputDto'][];
+    };
+    UpdateDispatchDto: {
+      destinationAddress?: string;
+      notes?: string;
+      lines?: components['schemas']['DispatchLineInputDto'][];
+    };
+    DeliveryLineInputDto: {
+      /** Format: uuid */
+      dispatchLineId: string;
+      /** @description Decimal string. */
+      deliveredQty: string;
+    };
+    DeliverDispatchDto: {
+      deliveryNotes?: string;
+      /** @description Per-line delivered quantities; omit to accept every line in full. */
+      lines?: components['schemas']['DeliveryLineInputDto'][];
     };
   };
   responses: never;
@@ -4033,6 +5305,2017 @@ export interface operations {
       header?: never;
       path: {
         visitId: string;
+        attachmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listProjects: {
+    parameters: {
+      query?: {
+        status?: string;
+        q?: string;
+        leadId?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createProject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateProjectDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getProject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listProjectActivities: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectActivityDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  approveProject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  setProjectStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetProjectStatusDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  addProjectMaterial: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertMaterialDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectMaterialDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeProjectMaterial: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        materialId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectMaterialDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateProjectMaterial: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        materialId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateMaterialDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectMaterialDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  allocateMaterial: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AllocateMaterialDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  releaseMaterial: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AllocateMaterialDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listUnits: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnitDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  upsertUnit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertUnitDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listCategories: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CategoryDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  upsertCategory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertCategoryDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CategoryDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listProducts: {
+    parameters: {
+      query?: {
+        q?: string;
+        categoryId?: string;
+        isActive?: boolean;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateProductDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateProductDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listSuppliers: {
+    parameters: {
+      query: {
+        q: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createSupplier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateSupplierDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getSupplier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateSupplier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSupplierDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listWarehouses: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WarehouseDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createWarehouse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateWarehouseDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WarehouseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getWarehouse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WarehouseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateWarehouse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateWarehouseDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WarehouseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listStock: {
+    parameters: {
+      query?: {
+        warehouseId?: string;
+        productId?: string;
+        lowStock?: boolean;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StockLevelListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listStockMovements: {
+    parameters: {
+      query?: {
+        warehouseId?: string;
+        productId?: string;
+        projectId?: string;
+        type?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StockMovementListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  adjustStock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdjustStockDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StockLevelDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  transferStock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TransferStockDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StockLevelDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listWarehouseStock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StockLevelDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listPurchaseOrders: {
+    parameters: {
+      query?: {
+        status?: string;
+        supplierId?: string;
+        projectId?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createPurchaseOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreatePurchaseOrderDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPurchaseOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updatePurchaseOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePurchaseOrderDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  submitPurchaseOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  approvePurchaseOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  cancelPurchaseOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  closePurchaseOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  receivePurchaseOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReceivePurchaseOrderDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PurchaseOrderDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listDispatches: {
+    parameters: {
+      query?: {
+        status?: string;
+        projectId?: string;
+        warehouseId?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createDispatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateDispatchDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getDispatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateDispatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateDispatchDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  cancelDispatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  sendDispatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deliverDispatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeliverDispatchDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listDispatchAttachments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchAttachmentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadDispatchAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DispatchAttachmentDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadDispatchAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        attachmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deleteDispatchAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
         attachmentId: string;
       };
       cookie?: never;

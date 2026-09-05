@@ -38,6 +38,7 @@ One decision per file. Status is `Accepted` unless noted. A later ADR may
 | 0031 | CRM core & lead domain                                        | implements 0009 for the lead entity               |
 | 0032 | Inbound integration engine & connector security               | implements 0004/0017–0023; refines their V1 scope |
 | 0033 | Field operations: visits, field agents, GPS & site survey     | builds on 0015, 0026–0027, 0029, 0031–0032        |
+| 0034 | Projects, procurement, inventory & logistics                  | builds on 0013–0015, 0026–0027, 0029, 0031, 0033  |
 
 ## Open decisions
 

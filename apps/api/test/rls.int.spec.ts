@@ -37,6 +37,23 @@ const RLS_TABLES = [
   'visit_activities',
   'visit_notes',
   'visit_attachments',
+  'units',
+  'product_categories',
+  'products',
+  'suppliers',
+  'warehouses',
+  'projects',
+  'project_activities',
+  'project_materials',
+  'stock_levels',
+  'stock_movements',
+  'purchase_orders',
+  'purchase_order_lines',
+  'goods_receipts',
+  'goods_receipt_lines',
+  'dispatches',
+  'dispatch_lines',
+  'dispatch_attachments',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -693,6 +710,217 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         expect(await count(c, 'visit_activities', `where visit_id = '${visitB}'`)).toBe(0);
         expect(await count(c, 'visit_notes', `where visit_id = '${visitB}'`)).toBe(0);
         expect(await count(c, 'visit_attachments', `where visit_id = '${visitB}'`)).toBe(0);
+      });
+    });
+  });
+
+  describe('Procurement / inventory / logistics (Phase 5, ADR 0034)', () => {
+    const SUPPLY_TABLES = [
+      'units',
+      'product_categories',
+      'products',
+      'suppliers',
+      'warehouses',
+      'projects',
+      'project_activities',
+      'project_materials',
+      'stock_levels',
+      'stock_movements',
+      'purchase_orders',
+      'purchase_order_lines',
+      'goods_receipts',
+      'goods_receipt_lines',
+      'dispatches',
+      'dispatch_lines',
+      'dispatch_attachments',
+    ];
+    const ids: Record<'A' | 'B', Record<string, string>> = { A: {}, B: {} };
+
+    beforeAll(async () => {
+      for (const [key, tenantId, leadId, membershipId] of [
+        ['A', fx.tenantA, randomUUID(), fx.admin.membershipId],
+        ['B', fx.tenantB, randomUUID(), fx.adminB.membershipId],
+      ] as const) {
+        const g = ids[key];
+        g.lead = leadId;
+        g.unit = randomUUID();
+        g.category = randomUUID();
+        g.product = randomUUID();
+        g.supplier = randomUUID();
+        g.warehouse = randomUUID();
+        g.project = randomUUID();
+        g.material = randomUUID();
+        g.po = randomUUID();
+        g.poLine = randomUUID();
+        g.gr = randomUUID();
+        g.dispatch = randomUUID();
+
+        await pool.query(
+          `insert into leads (id, tenant_id, name, phone, normalized_phone) values ($1,$2,'Supply RLS Lead','9993330000','9993330000')`,
+          [leadId, tenantId],
+        );
+        await pool.query(
+          `insert into units (id,tenant_id,code,name) values ($1,$2,'PCS','Pieces')`,
+          [g.unit, tenantId],
+        );
+        await pool.query(
+          `insert into product_categories (id,tenant_id,code,name) values ($1,$2,'GEN','Generation')`,
+          [g.category, tenantId],
+        );
+        await pool.query(
+          `insert into products (id,tenant_id,sku,name,unit_id,category_id) values ($1,$2,'SKU-1','Panel',$3,$4)`,
+          [g.product, tenantId, g.unit, g.category],
+        );
+        await pool.query(
+          `insert into suppliers (id,tenant_id,code,name) values ($1,$2,'SUP-1','Supplier')`,
+          [g.supplier, tenantId],
+        );
+        await pool.query(
+          `insert into warehouses (id,tenant_id,code,name,type) values ($1,$2,'WH-1','Main','main')`,
+          [g.warehouse, tenantId],
+        );
+        await pool.query(
+          `insert into projects (id,tenant_id,lead_id,number,status,created_by_membership_id)
+           values ($1,$2,$3,'PRJ-1','APPROVED',$4)`,
+          [g.project, tenantId, leadId, membershipId],
+        );
+        await pool.query(
+          `insert into project_activities (id,tenant_id,project_id,type,actor_membership_id,payload)
+           values ($1,$2,$3,'created',$4,'{}'::jsonb)`,
+          [randomUUID(), tenantId, g.project, membershipId],
+        );
+        await pool.query(
+          `insert into project_materials (id,tenant_id,project_id,product_id,required_qty,allocated_qty)
+           values ($1,$2,$3,$4,'10','0')`,
+          [g.material, tenantId, g.project, g.product],
+        );
+        await pool.query(
+          `insert into stock_levels (id,tenant_id,warehouse_id,product_id,on_hand,reserved)
+           values ($1,$2,$3,$4,'100','0')`,
+          [randomUUID(), tenantId, g.warehouse, g.product],
+        );
+        await pool.query(
+          `insert into stock_movements (id,tenant_id,warehouse_id,product_id,type,on_hand_delta,reserved_delta,quantity)
+           values ($1,$2,$3,$4,'RECEIPT','100','0','100')`,
+          [randomUUID(), tenantId, g.warehouse, g.product],
+        );
+        await pool.query(
+          `insert into purchase_orders (id,tenant_id,number,supplier_id,status,created_by_membership_id)
+           values ($1,$2,'PO-1',$3,'APPROVED',$4)`,
+          [g.po, tenantId, g.supplier, membershipId],
+        );
+        await pool.query(
+          `insert into purchase_order_lines (id,tenant_id,purchase_order_id,product_id,line_no,ordered_qty,unit_price,line_total)
+           values ($1,$2,$3,$4,1,'10','100.00','1000.00')`,
+          [g.poLine, tenantId, g.po, g.product],
+        );
+        await pool.query(
+          `insert into goods_receipts (id,tenant_id,number,purchase_order_id,warehouse_id) values ($1,$2,'GRN-1',$3,$4)`,
+          [g.gr, tenantId, g.po, g.warehouse],
+        );
+        await pool.query(
+          `insert into goods_receipt_lines (id,tenant_id,goods_receipt_id,purchase_order_line_id,product_id,received_qty)
+           values ($1,$2,$3,$4,$5,'5')`,
+          [randomUUID(), tenantId, g.gr, g.poLine, g.product],
+        );
+        await pool.query(
+          `insert into dispatches (id,tenant_id,number,project_id,warehouse_id,status,created_by_membership_id)
+           values ($1,$2,'DSP-1',$3,$4,'DRAFT',$5)`,
+          [g.dispatch, tenantId, g.project, g.warehouse, membershipId],
+        );
+        await pool.query(
+          `insert into dispatch_lines (id,tenant_id,dispatch_id,product_id,project_material_id,line_no,quantity)
+           values ($1,$2,$3,$4,$5,1,'2')`,
+          [randomUUID(), tenantId, g.dispatch, g.product, g.material],
+        );
+        await pool.query(
+          `insert into dispatch_attachments (id,tenant_id,dispatch_id,object_key,content_type,file_size)
+           values ($1,$2,$3,$4,'image/jpeg',1024)`,
+          [
+            randomUUID(),
+            tenantId,
+            g.dispatch,
+            `tenants/${tenantId}/dispatches/${g.dispatch}/${randomUUID()}.jpg`,
+          ],
+        );
+      }
+    });
+
+    it('every Phase 5 tenant-owned table has RLS ENABLED and FORCED', async () => {
+      const { rows } = await pool.query<{ relname: string; a: boolean; f: boolean }>(
+        `select relname, relrowsecurity as a, relforcerowsecurity as f
+           from pg_class where relnamespace='public'::regnamespace and relname = any($1)`,
+        [SUPPLY_TABLES],
+      );
+      expect(rows.length).toBe(SUPPLY_TABLES.length);
+      for (const r of rows) {
+        expect(r.a, `${r.relname} ENABLE`).toBe(true);
+        expect(r.f, `${r.relname} FORCE`).toBe(true);
+      }
+    });
+
+    it('tenant A cannot READ any tenant B row across all 17 supply tables', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        for (const table of SUPPLY_TABLES) {
+          expect(await count(c, table, `where tenant_id = '${fx.tenantB}'`), `read ${table}`).toBe(
+            0,
+          );
+        }
+      });
+    });
+
+    it('tenant A sees exactly its own supply rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'projects', `where id = '${ids.A.project}'`)).toBe(1);
+        expect(await count(c, 'projects', `where id = '${ids.B.project}'`)).toBe(0);
+        expect(await count(c, 'stock_levels', `where warehouse_id = '${ids.A.warehouse}'`)).toBe(1);
+        expect(await count(c, 'purchase_orders', `where id = '${ids.B.po}'`)).toBe(0);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B supply rows (update/delete affect 0, insert rejected)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (await c.query("update projects set status='CANCELLED' where id=$1", [ids.B.project]))
+            .rowCount,
+        ).toBe(0);
+        expect(
+          (
+            await c.query("update stock_levels set on_hand='0' where warehouse_id=$1", [
+              ids.B.warehouse,
+            ])
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from purchase_order_lines where purchase_order_id=$1', [ids.B.po]))
+            .rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into stock_movements (id,tenant_id,warehouse_id,product_id,type,quantity)
+             values (gen_random_uuid(),$1,$2,$3,'RECEIPT','1')`,
+            [fx.tenantB, ids.B.warehouse, ids.B.product],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query('select status from projects where id=$1', [ids.B.project]);
+      expect(rows[0]?.status).toBe('APPROVED');
+    });
+
+    it('a cross-tenant composite FK is rejected by the database', async () => {
+      // tenant A project referencing a tenant B lead must fail the composite FK
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into projects (id,tenant_id,lead_id,number,status,created_by_membership_id)
+             values (gen_random_uuid(),$1,$2,'PRJ-X','DRAFT',$3)`,
+            [fx.tenantA, ids.B.lead, fx.admin.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: expect.stringMatching(/23503|42501/) });
+        await c.query('rollback to savepoint sp');
       });
     });
   });

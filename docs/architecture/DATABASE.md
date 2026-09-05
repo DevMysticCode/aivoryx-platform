@@ -65,6 +65,34 @@ visit-scoped photo, not survey-specific). `quotations` / `quotation_versions`
 / `bookings` remain not built — later phase (CLAUDE.md §28). See
 `FIELD-OPERATIONS.md`.
 
+## Supply-chain entities
+
+**Implemented (Phase 5, ADR 0034):**
+
+projects
+project_materials
+project_activities
+units
+product_categories
+products
+suppliers
+warehouses
+stock_movements -- append-only ledger, the source of truth
+stock_levels -- derived projection, maintained in the same tx
+purchase_orders
+purchase_order_lines
+goods_receipts
+goods_receipt_lines
+dispatches
+dispatch_lines
+dispatch_attachments
+
+`projects` is a thin CRM→operations bridge, not an EPC module. Inventory has
+no "set quantity" table — `stock_levels` is only ever moved by a
+`stock_movements` row. Quantities are `NUMERIC(18,4)`, money `NUMERIC(18,2)`;
+no floats. Delivery proof reuses the Phase 4 object-storage adapter
+(`dispatch_attachments` mirrors `visit_attachments`). See `SUPPLY-CHAIN.md`.
+
 ## Lead ingestion entities
 
 **Implemented (Phase 3, ADR 0032):**
@@ -145,6 +173,15 @@ superseded by the lead-ingestion entities above.
   `visit_activities`, `visit_notes`, `visit_attachments` — all `ENABLE` +
   `FORCE` RLS with the same hand-appended-block pattern, plus `leads.origin`
   and the `visit` member on `custom_field_entity`/`lead_activity_type`.
+- Migration `0007` (Phase 5, ADR 0034) adds the 17 supply-chain tables
+  (`projects`, `project_materials`, `project_activities`, `units`,
+  `product_categories`, `products`, `suppliers`, `warehouses`,
+  `stock_movements`, `stock_levels`, `purchase_orders`,
+  `purchase_order_lines`, `goods_receipts`, `goods_receipt_lines`,
+  `dispatches`, `dispatch_lines`, `dispatch_attachments`) — all `ENABLE` +
+  `FORCE` RLS with the same hand-appended-block pattern, composite
+  `(id, tenant_id)` FKs, a `stock_levels` non-negative `CHECK`, and a partial
+  unique index on `stock_movements (tenant_id, idempotency_key)`.
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

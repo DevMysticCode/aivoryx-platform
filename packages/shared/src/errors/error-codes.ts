@@ -227,6 +227,113 @@ export const ERROR_CODES = {
     message: 'That file could not be uploaded.',
   },
 
+  // procurement, inventory & logistics (Phase 5, ADR 0034)
+  PROJECT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That project was not found in this workspace.',
+  },
+  PROJECT_INVALID_TRANSITION: {
+    httpStatus: 409,
+    message: 'That status change is not allowed from the project’s current status.',
+  },
+  PROJECT_MATERIAL_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That material line was not found on this project.',
+  },
+  PRODUCT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That product was not found in this workspace.',
+  },
+  PRODUCT_IN_USE: {
+    httpStatus: 409,
+    message: 'That product is referenced elsewhere and cannot be removed.',
+  },
+  SUPPLIER_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That supplier was not found in this workspace.',
+  },
+  WAREHOUSE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That warehouse was not found in this workspace.',
+  },
+  UNIT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That unit of measure was not found in this workspace.',
+  },
+  CATEGORY_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That product category was not found in this workspace.',
+  },
+  DUPLICATE_CODE: {
+    httpStatus: 409,
+    message: 'That code is already in use in this workspace.',
+  },
+  INSUFFICIENT_STOCK: {
+    httpStatus: 409,
+    message: 'There is not enough available stock for this operation.',
+  },
+  NEGATIVE_STOCK_NOT_ALLOWED: {
+    httpStatus: 409,
+    message: 'This operation would drive stock negative, which is not permitted.',
+  },
+  TRANSFER_SAME_WAREHOUSE: {
+    httpStatus: 400,
+    message: 'A stock transfer needs a different source and destination warehouse.',
+  },
+  PO_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That purchase order was not found in this workspace.',
+  },
+  PO_INVALID_TRANSITION: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the purchase order’s current status.',
+  },
+  PO_OVER_RECEIPT: {
+    httpStatus: 409,
+    message: 'The received quantity exceeds what was ordered on this line.',
+  },
+  PO_NOT_APPROVED: {
+    httpStatus: 409,
+    message: 'The purchase order must be approved before goods can be received.',
+  },
+  GOODS_RECEIPT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That goods receipt was not found in this workspace.',
+  },
+  ALLOCATION_EXCEEDS_REQUIREMENT: {
+    httpStatus: 409,
+    message: 'The allocation exceeds the remaining requirement for this project material.',
+  },
+  ALLOCATION_EXCEEDS_AVAILABLE_STOCK: {
+    httpStatus: 409,
+    message: 'The allocation exceeds the available stock in that warehouse.',
+  },
+  RELEASE_EXCEEDS_ALLOCATED: {
+    httpStatus: 409,
+    message: 'The release exceeds the quantity currently allocated.',
+  },
+  DISPATCH_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That dispatch was not found in this workspace.',
+  },
+  DISPATCH_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the dispatch’s current status.',
+  },
+  DISPATCH_EXCEEDS_ALLOCATED: {
+    httpStatus: 409,
+    message: 'The dispatch quantity exceeds the allocated-and-not-yet-dispatched quantity.',
+  },
+  DELIVERY_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'Delivery can only be confirmed for a dispatch that has been sent out.',
+  },
+  DELIVERY_EXCEEDS_DISPATCHED: {
+    httpStatus: 409,
+    message: 'The delivered quantity exceeds the quantity dispatched.',
+  },
+  // `ATTACHMENT_NOT_FOUND` / `ATTACHMENT_INVALID` are shared with Phase 4 (above).
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

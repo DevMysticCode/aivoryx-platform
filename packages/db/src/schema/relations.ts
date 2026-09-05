@@ -11,6 +11,25 @@ import {
 import { fieldAgents, visitActivities, visitAttachments, visitNotes, visits } from './field.js';
 import { sessions, tenants, users, userTenantMemberships } from './identity.js';
 import {
+  dispatchAttachments,
+  dispatchLines,
+  dispatches,
+  goodsReceiptLines,
+  goodsReceipts,
+  productCategories,
+  products,
+  projectActivities,
+  projectMaterials,
+  projects,
+  purchaseOrderLines,
+  purchaseOrders,
+  stockLevels,
+  stockMovements,
+  suppliers,
+  units,
+  warehouses,
+} from './supply.js';
+import {
   canonicalLeadEvents,
   integrationEventLog,
   leadSources,
@@ -195,4 +214,117 @@ export const visitNotesRelations = relations(visitNotes, ({ one }) => ({
 
 export const visitAttachmentsRelations = relations(visitAttachments, ({ one }) => ({
   visit: one(visits, { fields: [visitAttachments.visitId], references: [visits.id] }),
+}));
+
+// --- Procurement, inventory & logistics (Phase 5, ADR 0034) --------------
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [products.tenantId], references: [tenants.id] }),
+  category: one(productCategories, {
+    fields: [products.categoryId],
+    references: [productCategories.id],
+  }),
+  unit: one(units, { fields: [products.unitId], references: [units.id] }),
+  stockLevels: many(stockLevels),
+}));
+
+export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [suppliers.tenantId], references: [tenants.id] }),
+  purchaseOrders: many(purchaseOrders),
+}));
+
+export const warehousesRelations = relations(warehouses, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [warehouses.tenantId], references: [tenants.id] }),
+  stockLevels: many(stockLevels),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [projects.tenantId], references: [tenants.id] }),
+  lead: one(leads, { fields: [projects.leadId], references: [leads.id] }),
+  materials: many(projectMaterials),
+  activities: many(projectActivities),
+  purchaseOrders: many(purchaseOrders),
+  dispatches: many(dispatches),
+}));
+
+export const projectMaterialsRelations = relations(projectMaterials, ({ one }) => ({
+  project: one(projects, { fields: [projectMaterials.projectId], references: [projects.id] }),
+  product: one(products, { fields: [projectMaterials.productId], references: [products.id] }),
+}));
+
+export const projectActivitiesRelations = relations(projectActivities, ({ one }) => ({
+  project: one(projects, { fields: [projectActivities.projectId], references: [projects.id] }),
+}));
+
+export const stockLevelsRelations = relations(stockLevels, ({ one }) => ({
+  tenant: one(tenants, { fields: [stockLevels.tenantId], references: [tenants.id] }),
+  warehouse: one(warehouses, { fields: [stockLevels.warehouseId], references: [warehouses.id] }),
+  product: one(products, { fields: [stockLevels.productId], references: [products.id] }),
+}));
+
+export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
+  tenant: one(tenants, { fields: [stockMovements.tenantId], references: [tenants.id] }),
+  warehouse: one(warehouses, { fields: [stockMovements.warehouseId], references: [warehouses.id] }),
+  product: one(products, { fields: [stockMovements.productId], references: [products.id] }),
+  project: one(projects, { fields: [stockMovements.projectId], references: [projects.id] }),
+}));
+
+export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [purchaseOrders.tenantId], references: [tenants.id] }),
+  supplier: one(suppliers, { fields: [purchaseOrders.supplierId], references: [suppliers.id] }),
+  project: one(projects, { fields: [purchaseOrders.projectId], references: [projects.id] }),
+  lines: many(purchaseOrderLines),
+  receipts: many(goodsReceipts),
+}));
+
+export const purchaseOrderLinesRelations = relations(purchaseOrderLines, ({ one }) => ({
+  purchaseOrder: one(purchaseOrders, {
+    fields: [purchaseOrderLines.purchaseOrderId],
+    references: [purchaseOrders.id],
+  }),
+  product: one(products, { fields: [purchaseOrderLines.productId], references: [products.id] }),
+}));
+
+export const goodsReceiptsRelations = relations(goodsReceipts, ({ one, many }) => ({
+  purchaseOrder: one(purchaseOrders, {
+    fields: [goodsReceipts.purchaseOrderId],
+    references: [purchaseOrders.id],
+  }),
+  warehouse: one(warehouses, { fields: [goodsReceipts.warehouseId], references: [warehouses.id] }),
+  lines: many(goodsReceiptLines),
+}));
+
+export const goodsReceiptLinesRelations = relations(goodsReceiptLines, ({ one }) => ({
+  goodsReceipt: one(goodsReceipts, {
+    fields: [goodsReceiptLines.goodsReceiptId],
+    references: [goodsReceipts.id],
+  }),
+  purchaseOrderLine: one(purchaseOrderLines, {
+    fields: [goodsReceiptLines.purchaseOrderLineId],
+    references: [purchaseOrderLines.id],
+  }),
+}));
+
+export const dispatchesRelations = relations(dispatches, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [dispatches.tenantId], references: [tenants.id] }),
+  project: one(projects, { fields: [dispatches.projectId], references: [projects.id] }),
+  warehouse: one(warehouses, { fields: [dispatches.warehouseId], references: [warehouses.id] }),
+  lines: many(dispatchLines),
+  attachments: many(dispatchAttachments),
+}));
+
+export const dispatchLinesRelations = relations(dispatchLines, ({ one }) => ({
+  dispatch: one(dispatches, { fields: [dispatchLines.dispatchId], references: [dispatches.id] }),
+  product: one(products, { fields: [dispatchLines.productId], references: [products.id] }),
+  projectMaterial: one(projectMaterials, {
+    fields: [dispatchLines.projectMaterialId],
+    references: [projectMaterials.id],
+  }),
+}));
+
+export const dispatchAttachmentsRelations = relations(dispatchAttachments, ({ one }) => ({
+  dispatch: one(dispatches, {
+    fields: [dispatchAttachments.dispatchId],
+    references: [dispatches.id],
+  }),
 }));

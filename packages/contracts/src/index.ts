@@ -78,6 +78,58 @@ export type CreateVisitNoteRequest = components['schemas']['CreateVisitNoteReque
 export type VisitNote = components['schemas']['VisitNoteDto'];
 export type VisitAttachment = components['schemas']['VisitAttachmentDto'];
 
+// Phase 5 — procurement, inventory & logistics (ADR 0034).
+export type Unit = components['schemas']['UnitDto'];
+export type UpsertUnitRequest = components['schemas']['UpsertUnitDto'];
+export type Category = components['schemas']['CategoryDto'];
+export type UpsertCategoryRequest = components['schemas']['UpsertCategoryDto'];
+export type Product = components['schemas']['ProductDto'];
+export type ProductList = components['schemas']['ProductListDto'];
+export type CreateProductRequest = components['schemas']['CreateProductDto'];
+export type UpdateProductRequest = components['schemas']['UpdateProductDto'];
+export type Supplier = components['schemas']['SupplierDto'];
+export type CreateSupplierRequest = components['schemas']['CreateSupplierDto'];
+export type UpdateSupplierRequest = components['schemas']['UpdateSupplierDto'];
+export type Warehouse = components['schemas']['WarehouseDto'];
+export type CreateWarehouseRequest = components['schemas']['CreateWarehouseDto'];
+export type UpdateWarehouseRequest = components['schemas']['UpdateWarehouseDto'];
+
+export type Project = components['schemas']['ProjectDto'];
+export type ProjectDetail = components['schemas']['ProjectDetailDto'];
+export type ProjectList = components['schemas']['ProjectListDto'];
+export type ProjectMaterial = components['schemas']['ProjectMaterialDto'];
+export type ProjectActivity = components['schemas']['ProjectActivityDto'];
+export type CreateProjectRequest = components['schemas']['CreateProjectDto'];
+export type SetProjectStatusRequest = components['schemas']['SetProjectStatusDto'];
+export type UpsertMaterialRequest = components['schemas']['UpsertMaterialDto'];
+export type UpdateMaterialRequest = components['schemas']['UpdateMaterialDto'];
+export type AllocateMaterialRequest = components['schemas']['AllocateMaterialDto'];
+
+export type StockLevel = components['schemas']['StockLevelDto'];
+export type StockLevelList = components['schemas']['StockLevelListDto'];
+export type StockMovement = components['schemas']['StockMovementDto'];
+export type StockMovementList = components['schemas']['StockMovementListDto'];
+export type AdjustStockRequest = components['schemas']['AdjustStockDto'];
+export type TransferStockRequest = components['schemas']['TransferStockDto'];
+
+export type PurchaseOrder = components['schemas']['PurchaseOrderDto'];
+export type PurchaseOrderDetail = components['schemas']['PurchaseOrderDetailDto'];
+export type PurchaseOrderList = components['schemas']['PurchaseOrderListDto'];
+export type PoLine = components['schemas']['PoLineDto'];
+export type GoodsReceipt = components['schemas']['GoodsReceiptDto'];
+export type CreatePurchaseOrderRequest = components['schemas']['CreatePurchaseOrderDto'];
+export type UpdatePurchaseOrderRequest = components['schemas']['UpdatePurchaseOrderDto'];
+export type ReceivePurchaseOrderRequest = components['schemas']['ReceivePurchaseOrderDto'];
+
+export type Dispatch = components['schemas']['DispatchDto'];
+export type DispatchDetail = components['schemas']['DispatchDetailDto'];
+export type DispatchList = components['schemas']['DispatchListDto'];
+export type DispatchLine = components['schemas']['DispatchLineDto'];
+export type DispatchAttachment = components['schemas']['DispatchAttachmentDto'];
+export type CreateDispatchRequest = components['schemas']['CreateDispatchDto'];
+export type UpdateDispatchRequest = components['schemas']['UpdateDispatchDto'];
+export type DeliverDispatchRequest = components['schemas']['DeliverDispatchDto'];
+
 /**
  * The standard error envelope returned by every `/api/v1` endpoint on failure.
  * It is documented on the auth/admin operations (`ApiErrorDto`) and mirrors

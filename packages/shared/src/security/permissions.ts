@@ -64,6 +64,42 @@ export const PERMISSION_DEFINITIONS = [
     description: 'Upload or remove visit photos and attachments.',
   },
   { key: 'field.visits.complete', description: 'Mark an assigned visit complete.' },
+
+  // Procurement, inventory & logistics (Phase 5, ADR 0034) — the operational
+  // supply-chain layer. Generic, provider-neutral.
+  { key: 'projects.read', description: 'View operational projects/orders.' },
+  { key: 'projects.create', description: 'Create a project/order from a CRM lead.' },
+  { key: 'projects.update', description: 'Edit a project and its material requirements.' },
+  { key: 'projects.approve', description: 'Approve a project and move it into operations.' },
+
+  { key: 'products.read', description: 'View the product/item catalogue.' },
+  { key: 'products.create', description: 'Add products, categories, and units.' },
+  { key: 'products.update', description: 'Edit products, categories, and units.' },
+
+  { key: 'suppliers.read', description: 'View suppliers/vendors.' },
+  { key: 'suppliers.create', description: 'Add a supplier/vendor.' },
+  { key: 'suppliers.update', description: 'Edit a supplier/vendor.' },
+
+  { key: 'warehouses.read', description: 'View warehouses and stock locations.' },
+  { key: 'warehouses.create', description: 'Add a warehouse or stock location.' },
+  { key: 'warehouses.update', description: 'Edit a warehouse or stock location.' },
+
+  { key: 'inventory.read', description: 'View stock levels and movement history.' },
+  { key: 'inventory.adjust', description: 'Post a manual stock adjustment.' },
+  { key: 'inventory.allocate', description: 'Allocate or release project stock.' },
+  { key: 'inventory.transfer', description: 'Transfer stock between warehouses.' },
+
+  { key: 'procurement.read', description: 'View purchase orders and goods receipts.' },
+  { key: 'procurement.create', description: 'Create purchase orders and lines.' },
+  { key: 'procurement.update', description: 'Edit or cancel a draft purchase order.' },
+  { key: 'procurement.approve', description: 'Approve a submitted purchase order.' },
+  { key: 'procurement.receive', description: 'Record goods received against a purchase order.' },
+
+  { key: 'dispatch.read', description: 'View dispatches and deliveries.' },
+  { key: 'dispatch.create', description: 'Create a project dispatch.' },
+  { key: 'dispatch.update', description: 'Edit or cancel a draft dispatch.' },
+  { key: 'dispatch.dispatch', description: 'Send a dispatch out from the warehouse.' },
+  { key: 'dispatch.deliver', description: 'Confirm delivery of a dispatch at the project site.' },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];

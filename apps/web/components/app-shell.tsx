@@ -3,12 +3,25 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { Activity, LayoutDashboard, ShieldCheck, Users } from 'lucide-react';
+import {
+  Activity,
+  Boxes,
+  ClipboardList,
+  FolderKanban,
+  LayoutDashboard,
+  Send,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 import { webEnv } from '@/lib/env';
 
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
   { href: '/crm', label: 'CRM', icon: Users },
+  { href: '/projects', label: 'Projects', icon: FolderKanban },
+  { href: '/inventory/products', label: 'Inventory', icon: Boxes },
+  { href: '/procurement/purchase-orders', label: 'Procurement', icon: ClipboardList },
+  { href: '/logistics/dispatches', label: 'Logistics', icon: Send },
   { href: '/admin', label: 'Administration', icon: ShieldCheck },
   { href: '/health', label: 'System health', icon: Activity },
 ];

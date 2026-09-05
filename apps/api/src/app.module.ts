@@ -13,6 +13,7 @@ import { AdminModule } from './admin/admin.module.js';
 import { CrmModule } from './crm/crm.module.js';
 import { IntegrationsModule } from './integrations/integrations.module.js';
 import { FieldModule } from './field/field.module.js';
+import { SupplyModule } from './supply/supply.module.js';
 
 /**
  * Composition root.
@@ -42,6 +43,7 @@ import { FieldModule } from './field/field.module.js';
     CrmModule,
     IntegrationsModule,
     FieldModule,
+    SupplyModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })
