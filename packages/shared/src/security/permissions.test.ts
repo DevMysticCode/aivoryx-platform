@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the small identity/admin set only — no business permissions', () => {
+  it('is the identity/admin set plus the CRM core — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -23,10 +23,19 @@ describe('permission catalogue', () => {
         'users.delete',
         'users.read',
         'users.update',
+        'crm.leads.read',
+        'crm.leads.create',
+        'crm.leads.update',
+        'crm.leads.assign',
+        'crm.leads.qualify',
+        'crm.leads.followup',
+        'crm.activities.read',
+        'crm.activities.create',
+        'crm.integrations.manage',
       ].sort(),
     );
     for (const key of PERMISSION_KEYS) {
-      expect(key).not.toMatch(/crm|hr|lead|telecall|field|quotation|booking|payroll|invoice/i);
+      expect(key).not.toMatch(/^hr\.|^telecall|^field|^quotation|^booking|^payroll|^invoice/i);
     }
   });
 
@@ -34,7 +43,8 @@ describe('permission catalogue', () => {
     expect(new Set(PERMISSION_KEYS).size).toBe(PERMISSION_KEYS.length);
     for (const def of PERMISSION_DEFINITIONS) {
       expect(def.description.trim().length).toBeGreaterThan(0);
-      expect(def.key).toMatch(/^[a-z]+\.[a-z]+$/);
+      // "<resource>.<action>" or the namespaced "<domain>.<resource>.<action>".
+      expect(def.key).toMatch(/^[a-z]+(\.[a-z]+){1,2}$/);
     }
   });
 

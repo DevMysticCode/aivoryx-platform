@@ -1,6 +1,11 @@
 # Custom Field Architecture
 
-Status: Approved architecture. No application code exists yet.
+Status: **Implemented in Phase 3** for the `lead` entity (ADR 0031), trimmed
+for V1: no `is_filterable`/`is_reportable` flags, no declarative `validation`
+JSON (type coercion + `select` options cover it), and no filterable-value
+indexes beyond an entity-id lookup index — added if/when custom-field
+filtering in the CRM UI is actually needed. The typed-column value storage
+below is exactly as designed.
 
 ## Requirement
 

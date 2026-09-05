@@ -70,6 +70,8 @@ export interface RlsContext {
   tenantId?: string;
   /** for the public invitation-acceptance flow (`tenant_invitations_by_token` policy) */
   invitationTokenHash?: string;
+  /** for the public inbound connector webhook (`lead_sources_by_secret` policy, ADR 0032) */
+  connectorSecretHash?: string;
 }
 
 /** Issue `SET LOCAL` for whichever RLS context keys are provided. */
@@ -83,6 +85,11 @@ export async function applyRlsContext(tx: Tx, ctx: RlsContext): Promise<void> {
   if (ctx.invitationTokenHash !== undefined) {
     await tx.execute(
       sql`select set_config('app.invitation_token_hash', ${ctx.invitationTokenHash}, true)`,
+    );
+  }
+  if (ctx.connectorSecretHash !== undefined) {
+    await tx.execute(
+      sql`select set_config('app.connector_secret_hash', ${ctx.connectorSecretHash}, true)`,
     );
   }
 }

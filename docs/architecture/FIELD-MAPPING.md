@@ -1,6 +1,12 @@
 # Field Mapping Architecture
 
-Status: Approved architecture. No application code exists yet.
+Status: **Partially implemented in Phase 3** (ADR 0032 §6). V1 ships the
+target vocabulary and the "unknown target fails the stage, unmapped fields
+kept" rule via a much smaller mechanism than described below: a flat
+per-source `field_mapping` JSON dictionary instead of the full versioned,
+ordered-rule `lead_mapping_profiles`/`lead_mapping_rules` engine. The richer
+engine remains the target design for when multiple real provider mappings
+need independent versioning.
 
 ## Purpose
 

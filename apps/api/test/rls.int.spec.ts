@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { INTEGRATION_ENABLED } from './support/env.js';
@@ -21,6 +22,16 @@ const RLS_TABLES = [
   'tenants',
   'tenant_invitations',
   'outbox_events',
+  'leads',
+  'lead_activities',
+  'lead_notes',
+  'lead_followups',
+  'custom_field_definitions',
+  'custom_field_values',
+  'lead_sources',
+  'raw_events',
+  'canonical_lead_events',
+  'integration_event_log',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -372,6 +383,193 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
           'this-hash-matches-no-row-at-all',
         ]);
         expect(await count(c, 'tenant_invitations')).toBe(0);
+      } finally {
+        await c.query('rollback').catch(() => undefined);
+        await c.query('reset role').catch(() => undefined);
+        c.release();
+      }
+    });
+  });
+
+  describe('CRM core + inbound integrations (ADR 0031 / 0032)', () => {
+    let leadA: string;
+    let leadB: string;
+    let sourceA: string;
+    let sourceB: string;
+    const secretA = `secret-hash-a-${randomUUID()}`;
+    const secretB = `secret-hash-b-${randomUUID()}`;
+
+    beforeAll(async () => {
+      leadA = randomUUID();
+      leadB = randomUUID();
+      sourceA = randomUUID();
+      sourceB = randomUUID();
+
+      for (const [tenantId, sourceId, leadId, secretHash] of [
+        [fx.tenantA, sourceA, leadA, secretA],
+        [fx.tenantB, sourceB, leadB, secretB],
+      ] as const) {
+        await pool.query(
+          `insert into lead_sources (id, tenant_id, key, name, secret_hash)
+           values ($1,$2,'pabbly-test','Test Source',$3)`,
+          [sourceId, tenantId, secretHash],
+        );
+        await pool.query(
+          `insert into leads (id, tenant_id, source_id, name, phone, normalized_phone)
+           values ($1,$2,$3,'RLS Test Lead','9990000000','9990000000')`,
+          [leadId, tenantId, sourceId],
+        );
+        await pool.query(
+          `insert into lead_activities (id, tenant_id, lead_id, type, payload)
+           values ($1,$2,$3,'created','{}'::jsonb)`,
+          [randomUUID(), tenantId, leadId],
+        );
+        await pool.query(
+          `insert into lead_notes (id, tenant_id, lead_id, body) values ($1,$2,$3,'a note')`,
+          [randomUUID(), tenantId, leadId],
+        );
+        await pool.query(
+          `insert into lead_followups (id, tenant_id, lead_id, due_at) values ($1,$2,$3, now() + interval '1 day')`,
+          [randomUUID(), tenantId, leadId],
+        );
+        const defId = randomUUID();
+        await pool.query(
+          `insert into custom_field_definitions (id, tenant_id, entity, key, label, data_type)
+           values ($1,$2,'lead','budget','Budget','text')`,
+          [defId, tenantId],
+        );
+        await pool.query(
+          `insert into custom_field_values (id, tenant_id, entity, entity_id, definition_id, value_text)
+           values ($1,$2,'lead',$3,$4,'50000')`,
+          [randomUUID(), tenantId, leadId, defId],
+        );
+        const rawId = randomUUID();
+        await pool.query(
+          `insert into raw_events (id, tenant_id, source_id, correlation_id, raw_body, raw_hash)
+           values ($1,$2,$3,'AIV-TEST','{}'::jsonb,$4)`,
+          [rawId, tenantId, sourceId, `hash-${rawId}`],
+        );
+        const canonicalId = randomUUID();
+        await pool.query(
+          `insert into canonical_lead_events (id, tenant_id, raw_event_id, source_id, idempotency_key, status)
+           values ($1,$2,$3,$4,$5,'DONE')`,
+          [canonicalId, tenantId, rawId, sourceId, `idem-${canonicalId}`],
+        );
+        await pool.query(
+          `insert into integration_event_log (id, tenant_id, correlation_id, raw_event_id, stage, to_status)
+           values ($1,$2,'AIV-TEST',$3,'test','DONE')`,
+          [randomUUID(), tenantId, rawId],
+        );
+      }
+    });
+
+    const CRM_TABLES = [
+      'leads',
+      'lead_activities',
+      'lead_notes',
+      'lead_followups',
+      'custom_field_definitions',
+      'custom_field_values',
+      'lead_sources',
+      'raw_events',
+      'canonical_lead_events',
+      'integration_event_log',
+    ];
+
+    it('tenant A cannot READ any tenant B row across all ten Phase 3 tables', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        for (const table of CRM_TABLES) {
+          expect(await count(c, table, `where tenant_id = '${fx.tenantB}'`), `read ${table}`).toBe(
+            0,
+          );
+        }
+      });
+    });
+
+    it('tenant A sees exactly its own rows in each Phase 3 table', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'leads', `where id = '${leadA}'`)).toBe(1);
+        expect(await count(c, 'leads', `where id = '${leadB}'`)).toBe(0);
+        expect(await count(c, 'lead_sources', `where id = '${sourceA}'`)).toBe(1);
+        expect(await count(c, 'lead_sources', `where id = '${sourceB}'`)).toBe(0);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B leads or lead_sources (update/delete affect 0, insert rejected)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (await c.query("update leads set name='HACKED' where id=$1", [leadB])).rowCount,
+        ).toBe(0);
+        expect((await c.query('delete from leads where id=$1', [leadB])).rowCount).toBe(0);
+        expect(
+          (await c.query("update lead_sources set status='revoked' where id=$1", [sourceB]))
+            .rowCount,
+        ).toBe(0);
+
+        await c.query('savepoint sp');
+        await expect(
+          c.query(`insert into leads (id, tenant_id, name) values (gen_random_uuid(), $1, 'x')`, [
+            fx.tenantB,
+          ]),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+
+      const { rows } = await pool.query('select name from leads where id = $1', [leadB]);
+      expect(rows[0]?.name).toBe('RLS Test Lead');
+    });
+
+    it('tenant A cannot read tenant B connector credentials, raw events, or activities/notes/follow-ups/custom fields', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'lead_activities', `where lead_id = '${leadB}'`)).toBe(0);
+        expect(await count(c, 'lead_notes', `where lead_id = '${leadB}'`)).toBe(0);
+        expect(await count(c, 'lead_followups', `where lead_id = '${leadB}'`)).toBe(0);
+        expect(await count(c, 'custom_field_values', `where entity_id = '${leadB}'`)).toBe(0);
+        expect(await count(c, 'raw_events', `where source_id = '${sourceB}'`)).toBe(0);
+        expect(await count(c, 'canonical_lead_events', `where source_id = '${sourceB}'`)).toBe(0);
+      });
+    });
+
+    it('tenant A cannot replay/mutate a tenant B inbound event', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (
+            await c.query(
+              "update canonical_lead_events set status='DEAD_LETTER' where source_id=$1",
+              [sourceB],
+            )
+          ).rowCount,
+        ).toBe(0);
+      });
+    });
+
+    it('the lead_sources by-secret policy exposes exactly the one matching connector, nothing else', async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('set role aivoryx_app');
+        await c.query('begin');
+        await c.query("select set_config('app.connector_secret_hash', $1, true)", [secretA]);
+        expect(await count(c, 'lead_sources')).toBe(1);
+        expect(await count(c, 'lead_sources', `where id = '${sourceA}'`)).toBe(1);
+        expect(await count(c, 'lead_sources', `where id = '${sourceB}'`)).toBe(0);
+        // the by-secret policy does not open any other tenant-owned table
+        expect(await count(c, 'leads')).toBe(0);
+      } finally {
+        await c.query('rollback').catch(() => undefined);
+        await c.query('reset role').catch(() => undefined);
+        c.release();
+      }
+    });
+
+    it('a secret hash matching nothing exposes zero source rows', async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('set role aivoryx_app');
+        await c.query('begin');
+        await c.query("select set_config('app.connector_secret_hash', $1, true)", [
+          'no-such-secret-hash',
+        ]);
+        expect(await count(c, 'lead_sources')).toBe(0);
       } finally {
         await c.query('rollback').catch(() => undefined);
         await c.query('reset role').catch(() => undefined);

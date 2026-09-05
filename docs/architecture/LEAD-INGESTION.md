@@ -1,6 +1,11 @@
 # Lead Ingestion Engine
 
-Status: Approved architecture. No application code exists yet.
+Status: **Implemented in Phase 3** for the `pabbly_bridge` connector (ADR
+0032). The pipeline stages, RawEvent store, idempotency, and dedupe below are
+built as described; see ADR 0032 for the specific V1 simplifications
+(minimum-viable mapping engine, no separate dead-letter table, no BullMQ
+retry queue) and ADR 0031 for the lead deduplication rules. Meta/Google/
+IndiaMART/Justdial/Tata/Bonvoice adapters remain future work.
 
 ## Purpose
 

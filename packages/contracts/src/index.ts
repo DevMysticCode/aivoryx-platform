@@ -32,6 +32,33 @@ export type AssignRoleRequest = components['schemas']['AssignRoleRequestDto'];
 export type AcceptInvitationRequest = components['schemas']['AcceptInvitationRequestDto'];
 export type AcceptInvitationResponse = components['schemas']['AcceptInvitationResponseDto'];
 
+// Phase 3 — CRM core (ADR 0031).
+export type Lead = components['schemas']['LeadDto'];
+export type LeadAssignee = components['schemas']['LeadAssigneeDto'];
+export type LeadContactRequest = components['schemas']['LeadContactDto'];
+export type LeadListResponse = components['schemas']['LeadListResponseDto'];
+export type AssignLeadRequest = components['schemas']['AssignLeadRequestDto'];
+export type LeadStatusRequest = components['schemas']['LeadStatusRequestDto'];
+export type QualifyLeadRequest = components['schemas']['QualifyLeadRequestDto'];
+export type CallAttemptRequest = components['schemas']['CallAttemptRequestDto'];
+export type LeadActivity = components['schemas']['LeadActivityDto'];
+export type CreateNoteRequest = components['schemas']['CreateNoteRequestDto'];
+export type Note = components['schemas']['NoteDto'];
+export type CreateFollowupRequest = components['schemas']['CreateFollowupRequestDto'];
+export type CompleteFollowupRequest = components['schemas']['CompleteFollowupRequestDto'];
+export type RescheduleFollowupRequest = components['schemas']['RescheduleFollowupRequestDto'];
+export type Followup = components['schemas']['FollowupDto'];
+export type CreateCustomFieldRequest = components['schemas']['CreateCustomFieldRequestDto'];
+export type CustomFieldDefinition = components['schemas']['CustomFieldDefinitionDto'];
+
+// Phase 3 — inbound integration engine (ADR 0032).
+export type CreateSourceRequest = components['schemas']['CreateSourceRequestDto'];
+export type CreateSourceResponse = components['schemas']['CreateSourceResponseDto'];
+export type Source = components['schemas']['SourceDto'];
+export type SourceSecretHandoff = components['schemas']['SourceSecretHandoffDto'];
+export type CanonicalEvent = components['schemas']['CanonicalEventDto'];
+export type IngestAcceptedResponse = components['schemas']['IngestAcceptedResponseDto'];
+
 /**
  * The standard error envelope returned by every `/api/v1` endpoint on failure.
  * It is documented on the auth/admin operations (`ApiErrorDto`) and mirrors

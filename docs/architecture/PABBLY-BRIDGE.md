@@ -1,6 +1,10 @@
 # Pabbly Bridge Architecture
 
-Status: Approved architecture. No application code exists yet.
+Status: **Implemented in Phase 3** (ADR 0032). The connector, secret-based
+authentication, tenant derivation, and `generic_json` handling below are
+built as described. Stage 1 of the migration path (below) is where the
+platform is today — capturing real IndiaMART/Justdial `raw_events` rows
+before any direct provider adapter is built.
 
 Covers decisions 22 and 27: Pabbly is a **temporary bridge**, not a permanent
 architectural dependency. IndiaMART and Justdial currently arrive via Pabbly;

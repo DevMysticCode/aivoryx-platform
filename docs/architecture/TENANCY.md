@@ -16,8 +16,12 @@ Single database, single schema, shared tables. Every tenant-owned row carries
 
 - Tenant-owned identity tables with `ENABLE` + `FORCE ROW LEVEL SECURITY`:
   `user_tenant_memberships`, `roles`, `role_permissions`, `membership_roles`,
-  `tenants`, `tenant_invitations`, `outbox_events` (last two: ADR 0030).
-  `users`, `sessions`, global `permissions` have no RLS.
+  `tenants`, `tenant_invitations`, `outbox_events` (last two: ADR 0030),
+  `leads`, `lead_activities`, `lead_notes`, `lead_followups`,
+  `custom_field_definitions`, `custom_field_values`, `lead_sources`,
+  `raw_events`, `canonical_lead_events`, `integration_event_log` (last eight:
+  Phase 3, ADR 0031/0032). `users`, `sessions`, global `permissions` have no
+  RLS.
 - Policy predicate:
   `tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid`, mirrored
   in `WITH CHECK`. `nullif(…, '')` because a touched custom GUC reverts to `''`
@@ -26,7 +30,9 @@ Single database, single schema, shared tables. Every tenant-owned row carries
   (`user_id = app.user_id`) so a user can read their own memberships before a
   tenant is active. `tenant_invitations` similarly has a by-token policy
   (`token_hash = app.invitation_token_hash`) for the pre-context public
-  invitation-accept flow (ADR 0030).
+  invitation-accept flow (ADR 0030); `lead_sources` has an equivalent
+  by-secret policy (`secret_hash = app.connector_secret_hash`) for the public
+  inbound connector webhook (ADR 0032).
 - The API runs every query as the non-privileged role **`aivoryx_app`**
   (`NOSUPERUSER`, `NOBYPASSRLS`, owns nothing) — the pool `SET ROLE`s to it on
   connect. `app.tenant_id` / `app.user_id` are set per transaction with

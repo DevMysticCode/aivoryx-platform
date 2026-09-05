@@ -10,6 +10,8 @@ import { HealthModule } from './health/health.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { SecurityModule } from './security/security.module.js';
 import { AdminModule } from './admin/admin.module.js';
+import { CrmModule } from './crm/crm.module.js';
+import { IntegrationsModule } from './integrations/integrations.module.js';
 
 /**
  * Composition root.
@@ -36,6 +38,8 @@ import { AdminModule } from './admin/admin.module.js';
     AuthModule,
     SecurityModule,
     AdminModule,
+    CrmModule,
+    IntegrationsModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

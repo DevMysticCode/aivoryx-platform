@@ -19,6 +19,16 @@ const TENANT_OWNED_TABLES = [
   'tenants',
   'tenant_invitations',
   'outbox_events',
+  'leads',
+  'lead_activities',
+  'lead_notes',
+  'lead_followups',
+  'custom_field_definitions',
+  'custom_field_values',
+  'lead_sources',
+  'raw_events',
+  'canonical_lead_events',
+  'integration_event_log',
 ];
 
 const NON_TENANT_TABLES = ['users', 'sessions', 'permissions'];

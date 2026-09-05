@@ -3,9 +3,11 @@
  * ADR 0029). `permissions` rows in the database are seeded from this list; API
  * guards reference these constants, never string literals.
  *
- * Keys are `<resource>.<action>`, stable once shipped. This is deliberately the
- * small identity/admin security set only — CRM/HR/business permissions are added
- * by their own modules later.
+ * Keys are `<resource>.<action>` for platform/identity permissions, or the
+ * namespaced `<domain>.<resource>.<action>` for a business module's own
+ * permissions (e.g. `crm.leads.read`, ADR 0031). Stable once shipped. HR and
+ * any other business domain add their own permissions here when they are
+ * built — never a second catalogue or authorization model.
  */
 
 export interface PermissionDefinition {
@@ -31,6 +33,20 @@ export const PERMISSION_DEFINITIONS = [
 
   { key: 'tenants.read', description: 'View the current workspace settings.' },
   { key: 'tenants.update', description: 'Edit the current workspace settings.' },
+
+  // CRM core (Phase 3, ADR 0031/0032) — the reusable Lead domain.
+  { key: 'crm.leads.read', description: 'View leads in the workspace.' },
+  { key: 'crm.leads.create', description: 'Create leads manually.' },
+  { key: 'crm.leads.update', description: 'Edit lead details, status, and custom fields.' },
+  { key: 'crm.leads.assign', description: 'Assign or reassign a lead to a team member.' },
+  { key: 'crm.leads.qualify', description: 'Qualify or disqualify a lead.' },
+  { key: 'crm.leads.followup', description: 'Create, complete, and reschedule follow-ups.' },
+  { key: 'crm.activities.read', description: 'View lead activity and notes.' },
+  { key: 'crm.activities.create', description: 'Add notes and log call attempts on a lead.' },
+  {
+    key: 'crm.integrations.manage',
+    description: 'Configure inbound lead connectors and manage inbound events.',
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];

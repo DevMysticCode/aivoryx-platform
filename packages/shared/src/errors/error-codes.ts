@@ -115,6 +115,67 @@ export const ERROR_CODES = {
     message: 'Choose a password to finish setting up your account.',
   },
 
+  // CRM core — leads, activities, follow-ups, custom fields (Phase 3, ADR 0031)
+  LEAD_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That lead was not found in this workspace.',
+  },
+  LEAD_INVALID_TRANSITION: {
+    httpStatus: 409,
+    message: 'That status change is not allowed from the lead’s current status.',
+  },
+  LEAD_ASSIGNEE_INVALID: {
+    httpStatus: 400,
+    message: 'That person is not a member of this workspace and cannot be assigned this lead.',
+  },
+  NOTE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That note was not found on this lead.',
+  },
+  NOTE_FORBIDDEN: {
+    httpStatus: 403,
+    message: 'You can only edit or delete your own notes.',
+  },
+  FOLLOWUP_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That follow-up was not found on this lead.',
+  },
+  FOLLOWUP_ALREADY_COMPLETED: {
+    httpStatus: 409,
+    message: 'That follow-up has already been completed.',
+  },
+  CUSTOM_FIELD_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That custom field does not exist in this workspace.',
+  },
+  CUSTOM_FIELD_INVALID_VALUE: {
+    httpStatus: 400,
+    message: 'That value is not valid for this custom field.',
+  },
+
+  // inbound integration engine — Pabbly connector (Phase 3, ADR 0032)
+  SOURCE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That lead source was not found in this workspace.',
+  },
+  CONNECTOR_INVALID: {
+    // unknown secret, or a secret/URL source-key mismatch — no enumeration detail
+    httpStatus: 401,
+    message: 'This connector credential is not valid.',
+  },
+  CONNECTOR_REVOKED: {
+    httpStatus: 401,
+    message: 'This connector has been revoked.',
+  },
+  EVENT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That inbound event was not found in this workspace.',
+  },
+  EVENT_NOT_REPLAYABLE: {
+    httpStatus: 409,
+    message: 'That event is not in a state that can be replayed.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,
