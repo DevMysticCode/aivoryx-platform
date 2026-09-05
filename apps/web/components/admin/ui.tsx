@@ -70,7 +70,7 @@ export function StatusBadge({ status }: { status: string }) {
         STATUS_STYLES[key] ?? 'bg-secondary text-secondary-foreground',
       )}
     >
-      {status.replace(/_/g, ' ').toLowerCase()}
+      {status}
     </span>
   );
 }

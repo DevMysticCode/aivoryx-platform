@@ -36,6 +36,7 @@ test.describe('Field operations golden path', () => {
     const phone = `9${Math.floor(Math.random() * 1_000_000_000)}`.slice(0, 10);
     const leadName = `Field E2E Lead ${Date.now()}`;
     const surveyKey = `field_e2e_notes_${Date.now()}`;
+    const surveyLabel = `Field E2E notes ${Date.now()}`;
 
     // ---- 1. admin: log in, create a lead ------------------------------
     await page.goto('/login');
@@ -53,16 +54,31 @@ test.describe('Field operations golden path', () => {
 
     // ---- 2. admin: designate the field agent, unless already one --------
     await page.goto('/admin/field-agents');
+    // wait for the page to settle (either the table or the empty state) before
+    // deciding whether the agent is already designated — the data loads async.
+    await page
+      .getByRole('table')
+      .or(page.getByText('No field agents designated yet.'))
+      .waitFor({ timeout: 10_000 });
     const alreadyAgent = await page
       .getByRole('row')
       .filter({ hasText: AGENT_EMAIL })
       .filter({ hasText: 'active' })
       .count();
     if (!alreadyAgent) {
+      // the option's visible text may be the member's display name or their
+      // email, so pick by finding the option whose value/label mentions the
+      // email via evaluate, falling back to the first real (non-placeholder) entry.
       const agentOption = page.getByRole('combobox').first();
-      await agentOption
-        .selectOption({ label: AGENT_EMAIL })
-        .catch(() => agentOption.selectOption({ index: 1 }));
+      await expect
+        .poll(async () => agentOption.locator('option').count(), { timeout: 10_000 })
+        .toBeGreaterThan(1);
+      const matchIndex = await agentOption.evaluate(
+        (el: HTMLSelectElement, email: string) =>
+          Array.from(el.options).findIndex((o) => o.textContent?.includes(email)),
+        AGENT_EMAIL,
+      );
+      await agentOption.selectOption({ index: matchIndex >= 0 ? matchIndex : 1 });
       await page.getByRole('button', { name: 'Designate' }).click();
       await expect(page.getByRole('row').filter({ hasText: AGENT_EMAIL })).toBeVisible();
     }
@@ -70,7 +86,7 @@ test.describe('Field operations golden path', () => {
     // ---- 3. admin: one non-required survey question, so completion is simple --
     await page.goto('/crm/visits');
     await page.getByLabel('Key').fill(surveyKey);
-    await page.getByLabel('Label').fill('Field E2E notes');
+    await page.getByLabel('Label').fill(surveyLabel);
     await page.getByRole('button', { name: 'Add question' }).click();
     await expect(page.getByText(surveyKey)).toBeVisible();
 
@@ -78,13 +94,15 @@ test.describe('Field operations golden path', () => {
     await page.getByLabel('Lead id').fill(leadId);
     const scheduledAt = new Date(Date.now() + 3_600_000).toISOString().slice(0, 16);
     await page.getByLabel('Scheduled for').fill(scheduledAt);
-    await page
-      .getByLabel('Assign to (optional)')
-      .selectOption({ label: AGENT_EMAIL })
-      .catch(() => {
-        // the option may show the agent's display name instead of email — fall back
-        return page.getByLabel('Assign to (optional)').selectOption({ index: 1 });
-      });
+    // the field-agent list loads asynchronously — wait until it has an option
+    // beyond the "Unassigned" placeholder before trying to select one. The
+    // option's visible text may be the agent's display name or their email,
+    // so select by position (index 1 = first real agent) rather than by label.
+    const assignSelect = page.getByLabel('Assign to (optional)');
+    await expect
+      .poll(async () => assignSelect.locator('option').count(), { timeout: 10_000 })
+      .toBeGreaterThan(1);
+    await assignSelect.selectOption({ index: 1 });
     await page.getByRole('button', { name: 'Schedule' }).click();
     await page.waitForURL(/\/crm\/visits\/[0-9a-f-]+$/);
     const visitId = page.url().split('/').pop()!;
@@ -110,10 +128,27 @@ test.describe('Field operations golden path', () => {
     await agentPage.getByRole('button', { name: 'Check in' }).click();
     await expect(agentPage.getByText(/Checked in/)).toBeVisible({ timeout: 15_000 });
 
-    // 5b. SURVEY
-    await agentPage.getByText('Field E2E notes').waitFor();
-    const surveyInput = agentPage.locator('label', { hasText: 'Field E2E notes' }).locator('input');
-    await surveyInput.fill('All good on site.');
+    // 5b. SURVEY — this tenant may already have other (possibly required)
+    // survey questions configured beyond the one this test just added, so
+    // fill every visible field generically rather than assuming a single one.
+    await agentPage.getByText(surveyLabel).waitFor();
+    const surveyCard = agentPage.getByRole('heading', { name: 'Site survey' }).locator('..');
+    const surveyLabels = surveyCard.locator('label');
+    const fieldCount = await surveyLabels.count();
+    for (let i = 0; i < fieldCount; i++) {
+      const field = surveyLabels.nth(i);
+      if (await field.locator('select').count()) {
+        await field.locator('select').selectOption({ index: 1 });
+      } else if (await field.locator('input[type="checkbox"]').count()) {
+        await field.locator('input[type="checkbox"]').check();
+      } else if (await field.locator('input[type="number"]').count()) {
+        await field.locator('input[type="number"]').fill('10');
+      } else if (await field.locator('input[type="date"]').count()) {
+        await field.locator('input[type="date"]').fill('2026-01-01');
+      } else if (await field.locator('input').count()) {
+        await field.locator('input').fill('E2E test value');
+      }
+    }
     await agentPage.getByRole('button', { name: 'Save survey' }).click();
     await expect(agentPage.getByText('Saved')).toBeVisible();
 
@@ -135,9 +170,11 @@ test.describe('Field operations golden path', () => {
 
     // ---- 6. admin: verify the completed visit from the CRM lead -------
     await page.goto(`/crm/leads/${leadId}`);
-    const visitLink = page.getByRole('link', { name: new Date(scheduledAt).toLocaleString() });
+    // match by href rather than the locale-formatted date text, which can
+    // render slightly differently between Node's Intl and the browser's.
+    const visitLink = page.locator(`a[href="/crm/visits/${visitId}"]`);
     await expect(visitLink).toBeVisible();
-    await expect(page.getByText('completed', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('COMPLETED', { exact: true }).first()).toBeVisible();
 
     const timeline = page.locator('text=Timeline').locator('..');
     await expect(timeline.getByText('visit scheduled', { exact: true }).first()).toBeVisible();

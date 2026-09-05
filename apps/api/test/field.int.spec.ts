@@ -390,6 +390,114 @@ describe.skipIf(!INTEGRATION_ENABLED)('Field operations', () => {
     });
   });
 
+  // ---- attachments --------------------------------------------------
+
+  describe('ATTACHMENTS', () => {
+    const tinyPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+
+    it('uploads, lists, downloads, and deletes a photo — rejecting bad type/size', async () => {
+      const cookie = await adminCookie();
+      const agentC = await fieldAgentCookie(cookie);
+      const lead = await createLead(cookie);
+      const visit = await scheduleVisit(cookie, lead.id, {
+        assignedMembershipId: fx.plainMember.membershipId,
+      });
+
+      const badType = await http
+        .post(`/api/v1/visits/${visit.id}/attachments`)
+        .set('Cookie', agentC)
+        .attach('file', Buffer.from('<script>alert(1)</script>'), {
+          filename: 'evil.html',
+          contentType: 'text/html',
+        });
+      expect(badType.status).toBe(400);
+      expect(badType.body.error.code).toBe('ATTACHMENT_INVALID');
+
+      // multer/busboy already reduces a path-y filename to its basename before
+      // our code ever sees it — verify that holds, on top of our own key
+      // construction never using the filename for anything but the extension.
+      const upload = await http
+        .post(`/api/v1/visits/${visit.id}/attachments`)
+        .set('Cookie', agentC)
+        .attach('file', tinyPng, { filename: '../../etc/passwd.png', contentType: 'image/png' });
+      expect(upload.status).toBe(200);
+      expect(upload.body.contentType).toBe('image/png');
+      expect(upload.body.originalFilename).toBe('passwd.png');
+      expect(upload.body.originalFilename).not.toContain('..');
+      expect(upload.body.originalFilename).not.toContain('/');
+      const attachmentId = upload.body.id as string;
+
+      const list = await http.get(`/api/v1/visits/${visit.id}/attachments`).set('Cookie', agentC);
+      expect(list.status).toBe(200);
+      expect(list.body.some((a: { id: string }) => a.id === attachmentId)).toBe(true);
+
+      const download = await http
+        .get(`/api/v1/visits/${visit.id}/attachments/${attachmentId}/download`)
+        .set('Cookie', agentC);
+      expect(download.status).toBe(200);
+      expect(download.headers['content-type']).toContain('image/png');
+      expect(Buffer.compare(download.body as Buffer, tinyPng)).toBe(0);
+
+      const del = await http
+        .delete(`/api/v1/visits/${visit.id}/attachments/${attachmentId}`)
+        .set('Cookie', agentC);
+      expect(del.status).toBe(204);
+
+      const afterDelete = await http
+        .get(`/api/v1/visits/${visit.id}/attachments/${attachmentId}/download`)
+        .set('Cookie', agentC);
+      expect(afterDelete.status).toBe(404);
+    });
+
+    it('tenant B cannot download or delete tenant A visit attachments', async () => {
+      const cookieA = await adminCookie();
+      const cookieB = await adminBCookie();
+      const lead = await createLead(cookieA);
+      const visit = await scheduleVisit(cookieA, lead.id);
+
+      const upload = await http
+        .post(`/api/v1/visits/${visit.id}/attachments`)
+        .set('Cookie', cookieA)
+        .attach('file', tinyPng, { filename: 'site.png', contentType: 'image/png' });
+      expect(upload.status).toBe(200);
+      const attachmentId = upload.body.id as string;
+
+      const crossDownload = await http
+        .get(`/api/v1/visits/${visit.id}/attachments/${attachmentId}/download`)
+        .set('Cookie', cookieB);
+      expect(crossDownload.status).toBe(404);
+
+      const crossDelete = await http
+        .delete(`/api/v1/visits/${visit.id}/attachments/${attachmentId}`)
+        .set('Cookie', cookieB);
+      expect(crossDelete.status).toBe(404);
+
+      // untouched from tenant A's perspective
+      const stillThere = await http
+        .get(`/api/v1/visits/${visit.id}/attachments/${attachmentId}/download`)
+        .set('Cookie', cookieA);
+      expect(stillThere.status).toBe(200);
+    });
+
+    it('a field agent cannot upload to a visit assigned to someone else', async () => {
+      const cookie = await adminCookie();
+      const agentC = await fieldAgentCookie(cookie);
+      const lead = await createLead(cookie);
+      const visit = await scheduleVisit(cookie, lead.id, {
+        assignedMembershipId: fx.secondAdmin.membershipId,
+      });
+
+      const res = await http
+        .post(`/api/v1/visits/${visit.id}/attachments`)
+        .set('Cookie', agentC)
+        .attach('file', tinyPng, { filename: 'x.png', contentType: 'image/png' });
+      expect(res.status).toBe(403);
+    });
+  });
+
   // ---- field-generated leads ---------------------------------------------
 
   describe('FIELD-GENERATED LEADS', () => {

@@ -42,3 +42,6 @@ pnpm-debug.log*
 
 # drizzle local artifacts
 packages/db/drizzle/meta/_journal.bak
+
+# local-filesystem object storage adapter (dev only — ADR 0033 §11)
+.data/
