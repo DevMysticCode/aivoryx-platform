@@ -50,6 +50,24 @@ describe.skipIf(!INTEGRATION_ENABLED)('per-transaction tenant context', () => {
     }
   });
 
+  it('the invitation-token-hash context (ADR 0030) is also transaction-local — no leakage on pooled reuse', async () => {
+    const handle = db.createDb({ poolMax: 1, appRole: process.env.DATABASE_APP_ROLE });
+    try {
+      await db.withProgressiveContext(handle, async (tx, setContext) => {
+        await setContext({ invitationTokenHash: 'deadbeef' });
+        await tx.execute(sql`select 1`);
+      });
+      const leaked = await db.withAppTransaction(handle, (tx) =>
+        tx.execute<{ v: string | null }>(
+          sql`select nullif(current_setting('app.invitation_token_hash', true), '') as v`,
+        ),
+      );
+      expect(leaked.rows[0]!.v).toBeNull();
+    } finally {
+      await handle.close();
+    }
+  });
+
   it('a createDb({ appRole }) connection runs every query as aivoryx_app, which cannot bypass RLS', async () => {
     // This is exactly how getDb() builds the API's pool. Prove the pool
     // `connect` handler's SET ROLE is in effect on the first query of a fresh

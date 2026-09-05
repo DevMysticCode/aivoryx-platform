@@ -492,12 +492,55 @@ describe.skipIf(!INTEGRATION_ENABLED)('tenant administration & user lifecycle', 
         await pool.end();
       }
     });
+
+    it('concurrent acceptance of the same token: exactly one succeeds, the other is a stable replay error', async () => {
+      const cookie = await adminCookie();
+      const email = uniqueEmail('race');
+      const invite = await http.post('/api/v1/admin/members').set('Cookie', cookie).send({ email });
+      const token: string = invite.body.invitation.token;
+      const invitationId: string = invite.body.invitation.id;
+      const membershipId: string = invite.body.member.membershipId;
+
+      const attempt = () =>
+        http
+          .post('/api/v1/auth/accept-invitation')
+          .send({ token, password: 'race-condition-passphrase' });
+
+      const [r1, r2] = await Promise.all([attempt(), attempt()]);
+      const statuses = [r1.status, r2.status].sort((a, b) => a - b);
+      expect(statuses).toEqual([200, 409]);
+      const winner = r1.status === 200 ? r1 : r2;
+      const loser = r1.status === 200 ? r2 : r1;
+      expect(winner.body).toMatchObject({ ok: true, email });
+      expect(loser.body.error.code).toBe('INVITATION_ALREADY_USED');
+
+      // exactly one acceptance actually took effect
+      const pool = await rawPool();
+      try {
+        const inv = await pool.query('select status from tenant_invitations where id = $1', [
+          invitationId,
+        ]);
+        expect(inv.rows[0]?.status).toBe('accepted');
+        const mem = await pool.query('select status from user_tenant_memberships where id = $1', [
+          membershipId,
+        ]);
+        expect(mem.rows[0]?.status).toBe('active');
+      } finally {
+        await pool.end();
+      }
+
+      // the loser can sign in with the same credential the winner set — the
+      // password was written exactly once, not twice (the loser's transaction
+      // rolled back entirely, including its own password write)
+      const signIn = await login(email, 'race-condition-passphrase');
+      expect(signIn.status).toBe(201);
+    });
   });
 
-  // ---- SECURITY ---------------------------------------------------
+  // ---- MEMBERSHIP & USER SEMANTICS ---------------------------------
 
-  describe('SECURITY', () => {
-    it('inviting an already-active member → 409 MEMBER_ALREADY_EXISTS', async () => {
+  describe('MEMBERSHIP & USER SEMANTICS', () => {
+    it('case 1 — existing user + existing (active) tenant membership → rejected, no duplicate', async () => {
       const cookie = await adminCookie();
       const res = await http
         .post('/api/v1/admin/members')
@@ -507,6 +550,86 @@ describe.skipIf(!INTEGRATION_ENABLED)('tenant administration & user lifecycle', 
       expect(res.body.error.code).toBe('MEMBER_ALREADY_EXISTS');
     });
 
+    it('cases 2/3/4/5 — one global user across two tenants: no duplicate user, independent membership lifecycles, password set exactly once', async () => {
+      const cookieA = await adminCookie();
+      const email = uniqueEmail('multi-tenant');
+
+      // case 3: new user + invitation — creates a brand-new, passwordless global user
+      const inviteA = await http
+        .post('/api/v1/admin/members')
+        .set('Cookie', cookieA)
+        .send({ email });
+      expect(inviteA.status).toBe(200);
+      const userId = inviteA.body.member.userId;
+      const membershipIdA = inviteA.body.member.membershipId;
+
+      // case 2: existing user + NEW tenant membership — must reuse the same
+      // global user, never create a second one, and get an independent membership
+      const cookieB = await adminBCookie();
+      const inviteB = await http
+        .post('/api/v1/admin/members')
+        .set('Cookie', cookieB)
+        .send({ email });
+      expect(inviteB.status).toBe(200);
+      expect(inviteB.body.member.userId).toBe(userId);
+      expect(inviteB.body.member.membershipId).not.toBe(membershipIdA);
+
+      const pool = await rawPool();
+      try {
+        const users = await pool.query('select id from users where lower(email) = lower($1)', [
+          email,
+        ]);
+        expect(users.rowCount).toBe(1); // never duplicated
+        expect(users.rows[0].id).toBe(userId);
+
+        const memberships = await pool.query(
+          'select tenant_id from user_tenant_memberships where user_id = $1',
+          [userId],
+        );
+        expect(memberships.rowCount).toBe(2); // one per tenant
+      } finally {
+        await pool.end();
+      }
+
+      // case 4: existing passwordless user + invitation — still no password
+      // globally, so accepting tenant B's invite without one is rejected
+      const tokenB: string = inviteB.body.invitation.token;
+      const noPassword = await http.post('/api/v1/auth/accept-invitation').send({ token: tokenB });
+      expect(noPassword.status).toBe(400);
+      expect(noPassword.body.error.code).toBe('INVITATION_PASSWORD_REQUIRED');
+
+      const acceptB = await http
+        .post('/api/v1/auth/accept-invitation')
+        .send({ token: tokenB, password: 'multi-tenant-passphrase' });
+      expect(acceptB.status).toBe(200);
+
+      // the OTHER (tenant A) invitation/membership is completely untouched
+      const memberA = await http
+        .get(`/api/v1/admin/members/${membershipIdA}`)
+        .set('Cookie', cookieA);
+      expect(memberA.body.status).toBe('invited');
+      expect(memberA.body.invitationPending).toBe(true);
+
+      // case 5: existing user WITH a password + invitation — no password
+      // required or accepted; accepting tenant A's invite now needs none
+      const tokenA: string = inviteA.body.invitation.token;
+      const acceptA = await http.post('/api/v1/auth/accept-invitation').send({ token: tokenA });
+      expect(acceptA.status).toBe(200);
+
+      const memberAAfter = await http
+        .get(`/api/v1/admin/members/${membershipIdA}`)
+        .set('Cookie', cookieA);
+      expect(memberAAfter.body.status).toBe('active');
+
+      // exactly one password, set once, works for sign-in
+      const signIn = await login(email, 'multi-tenant-passphrase');
+      expect(signIn.status).toBe(201);
+    });
+  });
+
+  // ---- SECURITY ---------------------------------------------------
+
+  describe('SECURITY', () => {
     it('the last usable TENANT_ADMIN cannot be suspended, removed, or stripped of the role', async () => {
       const cookie = await adminBCookie(); // adminB is the ONLY admin of tenant B
       const self = fx.adminB.membershipId;
