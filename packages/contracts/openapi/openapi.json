@@ -218,9 +218,9 @@
         ]
       }
     },
-    "/admin/memberships": {
+    "/admin/tenant": {
       "get": {
-        "operationId": "listMemberships",
+        "operationId": "getTenant",
         "parameters": [],
         "responses": {
           "200": {
@@ -228,10 +228,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AdminMembershipDto"
-                  }
+                  "$ref": "#/components/schemas/TenantDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
                 }
               }
             }
@@ -242,7 +259,464 @@
             "cookie": []
           }
         ],
-        "summary": "Memberships in the active workspace.",
+        "summary": "The current workspace.",
+        "tags": [
+          "admin"
+        ]
+      },
+      "patch": {
+        "operationId": "updateTenant",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Edit the current workspace.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/members": {
+      "get": {
+        "operationId": "listMembers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Members of the current workspace.",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "inviteMember",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteMemberRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteMemberResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Invite a person into the workspace. Returns a one-time invitation token.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/members/{membershipId}": {
+      "get": {
+        "operationId": "getMember",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "A single member.",
+        "tags": [
+          "admin"
+        ]
+      },
+      "patch": {
+        "operationId": "updateMember",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Suspend or reactivate a membership.",
+        "tags": [
+          "admin"
+        ]
+      },
+      "delete": {
+        "operationId": "removeMember",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove a membership from the workspace.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/members/{membershipId}/roles": {
+      "post": {
+        "operationId": "assignMemberRole",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoleRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Assign a generic role to a member.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/members/{membershipId}/roles/{roleKey}": {
+      "delete": {
+        "operationId": "removeMemberRole",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roleKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove a role from a member.",
         "tags": [
           "admin"
         ]
@@ -265,6 +739,26 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -272,7 +766,7 @@
             "cookie": []
           }
         ],
-        "summary": "Roles in the active workspace.",
+        "summary": "Generic roles available in the workspace.",
         "tags": [
           "admin"
         ]
@@ -295,6 +789,26 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -305,6 +819,48 @@
         "summary": "The global permission catalogue.",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/auth/accept-invitation": {
+      "post": {
+        "operationId": "acceptInvitation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInvitationRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInvitationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVITATION_INVALID / INVITATION_EXPIRED / INVITATION_REVOKED / INVITATION_ALREADY_USED / INVITATION_PASSWORD_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Accept a workspace invitation and finish account setup.",
+        "tags": [
+          "auth"
         ]
       }
     }
@@ -488,7 +1044,8 @@
             "type": "string",
             "enum": [
               "active",
-              "suspended"
+              "suspended",
+              "invited"
             ]
           }
         },
@@ -692,20 +1249,43 @@
           "sessionExpiresAt"
         ]
       },
-      "AdminMembershipDto": {
+      "TenantMemberCountsDto": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "number"
+          },
+          "invited": {
+            "type": "number"
+          },
+          "suspended": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "active",
+          "invited",
+          "suspended",
+          "total"
+        ]
+      },
+      "TenantDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
-          "userId": {
+          "slug": {
             "type": "string",
-            "format": "uuid"
+            "example": "acme"
           },
-          "userEmail": {
+          "name": {
             "type": "string",
-            "format": "email"
+            "example": "Acme Inc."
           },
           "status": {
             "type": "string",
@@ -714,7 +1294,120 @@
               "suspended"
             ]
           },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "memberCounts": {
+            "$ref": "#/components/schemas/TenantMemberCountsDto"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "status",
+          "createdAt",
+          "memberCounts"
+        ]
+      },
+      "UpdateTenantRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "example": "Acme Incorporated"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "MemberRoleDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "TENANT_ADMIN"
+          },
+          "name": {
+            "type": "string",
+            "example": "Workspace administrator"
+          }
+        },
+        "required": [
+          "key",
+          "name"
+        ]
+      },
+      "MemberDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "invited"
+            ]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberRoleDto"
+            }
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "invitationPending": {
+            "type": "boolean",
+            "description": "True while an invitation for this membership is still pending."
+          }
+        },
+        "required": [
+          "membershipId",
+          "userId",
+          "email",
+          "name",
+          "status",
+          "roles",
+          "joinedAt",
+          "invitationPending"
+        ]
+      },
+      "InviteMemberRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
           "roleKeys": {
+            "description": "Generic platform role keys.",
             "type": "array",
             "items": {
               "type": "string"
@@ -722,11 +1415,72 @@
           }
         },
         "required": [
+          "email"
+        ]
+      },
+      "InvitationHandoffDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "token": {
+            "type": "string",
+            "description": "One-time invitation token. Returned ONLY here (no email provider is configured); relay it to the invitee out of band."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
           "id",
-          "userId",
-          "userEmail",
-          "status",
-          "roleKeys"
+          "token",
+          "expiresAt"
+        ]
+      },
+      "InviteMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/MemberDto"
+          },
+          "invitation": {
+            "$ref": "#/components/schemas/InvitationHandoffDto"
+          }
+        },
+        "required": [
+          "member",
+          "invitation"
+        ]
+      },
+      "UpdateMemberRequestDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "description": "Reactivate or suspend the membership."
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "AssignRoleRequestDto": {
+        "type": "object",
+        "properties": {
+          "roleKey": {
+            "type": "string",
+            "example": "TENANT_ADMIN"
+          }
+        },
+        "required": [
+          "roleKey"
         ]
       },
       "AdminRoleDto": {
@@ -743,6 +1497,10 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "permissionKeys": {
             "type": "array",
             "items": {
@@ -754,6 +1512,7 @@
           "id",
           "key",
           "name",
+          "description",
           "permissionKeys"
         ]
       },
@@ -771,6 +1530,50 @@
         "required": [
           "key",
           "description"
+        ]
+      },
+      "AcceptInvitationRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The one-time token from the invitation link."
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200,
+            "description": "Required only when the invited account has no password yet."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "AcceptInvitationResponseDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "tenantSlug": {
+            "type": "string",
+            "example": "acme"
+          }
+        },
+        "required": [
+          "ok",
+          "email",
+          "tenantSlug"
         ]
       }
     }

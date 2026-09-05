@@ -11,9 +11,12 @@ export {
   withAppTransaction,
   withUserContext,
   withTenantContext,
+  withProgressiveContext,
+  applyRlsContext,
   currentTenantContext,
   type Tx,
   type TenantContextInput,
+  type RlsContext,
 } from './tx.js';
 export {
   seedPermissions,

@@ -75,6 +75,46 @@ export const ERROR_CODES = {
     message: 'This workspace is suspended.',
   },
 
+  // tenant administration & user lifecycle (Phase 2 Task 3 — ADR 0030)
+  MEMBER_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That member was not found in this workspace.',
+  },
+  MEMBER_ALREADY_EXISTS: {
+    httpStatus: 409,
+    message: 'That person is already a member of this workspace.',
+  },
+  ROLE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That role does not exist in this workspace.',
+  },
+  TENANT_LAST_ADMIN: {
+    // guards against removing / suspending / de-admining the final usable TENANT_ADMIN
+    httpStatus: 409,
+    message: 'A workspace must keep at least one active administrator.',
+  },
+  INVITATION_INVALID: {
+    // unknown token, or a token not bound to the membership/tenant it claims
+    httpStatus: 400,
+    message: 'This invitation link is not valid.',
+  },
+  INVITATION_EXPIRED: {
+    httpStatus: 410,
+    message: 'This invitation has expired.',
+  },
+  INVITATION_REVOKED: {
+    httpStatus: 410,
+    message: 'This invitation has been revoked.',
+  },
+  INVITATION_ALREADY_USED: {
+    httpStatus: 409,
+    message: 'This invitation has already been used.',
+  },
+  INVITATION_PASSWORD_REQUIRED: {
+    httpStatus: 400,
+    message: 'Choose a password to finish setting up your account.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

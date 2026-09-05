@@ -71,6 +71,7 @@ describe('users', () => {
       'email',
       'email_verified_at',
       'id',
+      'name',
       'password_hash',
       'password_updated_at',
       'status',

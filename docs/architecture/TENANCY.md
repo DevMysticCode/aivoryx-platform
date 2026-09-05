@@ -16,14 +16,17 @@ Single database, single schema, shared tables. Every tenant-owned row carries
 
 - Tenant-owned identity tables with `ENABLE` + `FORCE ROW LEVEL SECURITY`:
   `user_tenant_memberships`, `roles`, `role_permissions`, `membership_roles`,
-  `tenants`. `users`, `sessions`, global `permissions` have no RLS.
+  `tenants`, `tenant_invitations`, `outbox_events` (last two: ADR 0030).
+  `users`, `sessions`, global `permissions` have no RLS.
 - Policy predicate:
   `tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid`, mirrored
   in `WITH CHECK`. `nullif(…, '')` because a touched custom GUC reverts to `''`
   on a pooled connection — an unset context must resolve to NULL (no rows), not
   raise. `user_tenant_memberships` also has a SELECT-only self-read policy
   (`user_id = app.user_id`) so a user can read their own memberships before a
-  tenant is active.
+  tenant is active. `tenant_invitations` similarly has a by-token policy
+  (`token_hash = app.invitation_token_hash`) for the pre-context public
+  invitation-accept flow (ADR 0030).
 - The API runs every query as the non-privileged role **`aivoryx_app`**
   (`NOSUPERUSER`, `NOBYPASSRLS`, owns nothing) — the pool `SET ROLE`s to it on
   connect. `app.tenant_id` / `app.user_id` are set per transaction with

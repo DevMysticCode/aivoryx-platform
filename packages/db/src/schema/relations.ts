@@ -1,4 +1,5 @@
 import { relations } from 'drizzle-orm';
+import { outboxEvents, tenantInvitations } from './admin.js';
 import { sessions, tenants, users, userTenantMemberships } from './identity.js';
 import { membershipRoles, permissions, rolePermissions, roles } from './rbac.js';
 
@@ -31,6 +32,23 @@ export const userTenantMembershipsRelations = relations(userTenantMemberships, (
   tenant: one(tenants, { fields: [userTenantMemberships.tenantId], references: [tenants.id] }),
   membershipRoles: many(membershipRoles),
   activeSessions: many(sessions, { relationName: 'session_active_membership' }),
+  invitations: many(tenantInvitations),
+}));
+
+export const tenantInvitationsRelations = relations(tenantInvitations, ({ one }) => ({
+  tenant: one(tenants, { fields: [tenantInvitations.tenantId], references: [tenants.id] }),
+  membership: one(userTenantMemberships, {
+    fields: [tenantInvitations.membershipId],
+    references: [userTenantMemberships.id],
+  }),
+  invitedBy: one(users, {
+    fields: [tenantInvitations.invitedByUserId],
+    references: [users.id],
+  }),
+}));
+
+export const outboxEventsRelations = relations(outboxEvents, ({ one }) => ({
+  tenant: one(tenants, { fields: [outboxEvents.tenantId], references: [tenants.id] }),
 }));
 
 export const rolesRelations = relations(roles, ({ one, many }) => ({

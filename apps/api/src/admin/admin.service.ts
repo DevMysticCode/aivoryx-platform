@@ -2,59 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext } from '@aivoryx/db';
 import { PERMISSION_DEFINITIONS } from '@aivoryx/shared';
-import type { AdminMembershipDto, AdminRoleDto, CataloguePermissionDto } from './admin.dto.js';
+import type { AdminRoleDto, CataloguePermissionDto } from './admin.dto.js';
 
-const { membershipRoles, permissions, rolePermissions, roles, userTenantMemberships, users } =
-  schema;
+const { permissions, rolePermissions, roles } = schema;
 
-interface TenantScope {
+export interface TenantScope {
   tenantId: string;
   userId: string;
 }
 
 /**
- * Thin read surface over the security tables, used to exercise the guard + RLS
- * end to end. Every query runs inside a tenant-context transaction, so Row
- * Level Security is the isolation boundary; the explicit `tenant_id` filters are
- * belt-and-braces correctness, not the security mechanism (TENANCY.md).
+ * Role & catalogue reads for the tenant-admin surface. Runs inside
+ * `withTenantContext`, so RLS scopes `roles` / `role_permissions` to the active
+ * tenant — a role from another tenant is invisible.
  */
 @Injectable()
 export class AdminService {
-  async listMemberships(scope: TenantScope): Promise<AdminMembershipDto[]> {
-    return withTenantContext(getDb(), scope, async (tx) => {
-      const rows = await tx
-        .select({
-          id: userTenantMemberships.id,
-          userId: userTenantMemberships.userId,
-          userEmail: users.email,
-          status: userTenantMemberships.status,
-          roleKey: roles.key,
-        })
-        .from(userTenantMemberships)
-        .innerJoin(users, eq(users.id, userTenantMemberships.userId))
-        .leftJoin(membershipRoles, eq(membershipRoles.membershipId, userTenantMemberships.id))
-        .leftJoin(roles, eq(roles.id, membershipRoles.roleId))
-        .where(eq(userTenantMemberships.tenantId, scope.tenantId));
-
-      const byId = new Map<string, AdminMembershipDto>();
-      for (const row of rows) {
-        let entry = byId.get(row.id);
-        if (!entry) {
-          entry = {
-            id: row.id,
-            userId: row.userId,
-            userEmail: row.userEmail,
-            status: row.status,
-            roleKeys: [],
-          };
-          byId.set(row.id, entry);
-        }
-        if (row.roleKey && !entry.roleKeys.includes(row.roleKey)) entry.roleKeys.push(row.roleKey);
-      }
-      return [...byId.values()];
-    });
-  }
-
   async listRoles(scope: TenantScope): Promise<AdminRoleDto[]> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const rows = await tx
@@ -62,6 +25,7 @@ export class AdminService {
           id: roles.id,
           key: roles.key,
           name: roles.name,
+          description: roles.description,
           permissionKey: permissions.key,
         })
         .from(roles)
@@ -73,13 +37,20 @@ export class AdminService {
       for (const row of rows) {
         let entry = byId.get(row.id);
         if (!entry) {
-          entry = { id: row.id, key: row.key, name: row.name, permissionKeys: [] };
+          entry = {
+            id: row.id,
+            key: row.key,
+            name: row.name,
+            description: row.description,
+            permissionKeys: [],
+          };
           byId.set(row.id, entry);
         }
         if (row.permissionKey && !entry.permissionKeys.includes(row.permissionKey)) {
           entry.permissionKeys.push(row.permissionKey);
         }
       }
+      for (const entry of byId.values()) entry.permissionKeys.sort();
       return [...byId.values()];
     });
   }

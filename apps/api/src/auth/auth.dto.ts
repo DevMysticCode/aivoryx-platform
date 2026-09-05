@@ -40,8 +40,8 @@ export class MembershipSummaryDto {
   @ApiProperty({ enum: ['active', 'suspended'] })
   tenantStatus!: 'active' | 'suspended';
 
-  @ApiProperty({ enum: ['active', 'suspended'] })
-  status!: 'active' | 'suspended';
+  @ApiProperty({ enum: ['active', 'suspended', 'invited'] })
+  status!: 'active' | 'suspended' | 'invited';
 }
 
 export class AuthUserDto {

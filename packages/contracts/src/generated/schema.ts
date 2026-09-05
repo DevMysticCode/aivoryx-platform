@@ -106,18 +106,90 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/memberships': {
+  '/admin/tenant': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** Memberships in the active workspace. */
-    get: operations['listMemberships'];
+    /** The current workspace. */
+    get: operations['getTenant'];
     put?: never;
     post?: never;
     delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit the current workspace. */
+    patch: operations['updateTenant'];
+    trace?: never;
+  };
+  '/admin/members': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Members of the current workspace. */
+    get: operations['listMembers'];
+    put?: never;
+    /** Invite a person into the workspace. Returns a one-time invitation token. */
+    post: operations['inviteMember'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/members/{membershipId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A single member. */
+    get: operations['getMember'];
+    put?: never;
+    post?: never;
+    /** Remove a membership from the workspace. */
+    delete: operations['removeMember'];
+    options?: never;
+    head?: never;
+    /** Suspend or reactivate a membership. */
+    patch: operations['updateMember'];
+    trace?: never;
+  };
+  '/admin/members/{membershipId}/roles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Assign a generic role to a member. */
+    post: operations['assignMemberRole'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/members/{membershipId}/roles/{roleKey}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a role from a member. */
+    delete: operations['removeMemberRole'];
     options?: never;
     head?: never;
     patch?: never;
@@ -130,7 +202,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Roles in the active workspace. */
+    /** Generic roles available in the workspace. */
     get: operations['listRoles'];
     put?: never;
     post?: never;
@@ -151,6 +223,23 @@ export interface paths {
     get: operations['listCataloguePermissions'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/accept-invitation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept a workspace invitation and finish account setup. */
+    post: operations['acceptInvitation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -214,7 +303,7 @@ export interface components {
       /** @enum {string} */
       tenantStatus: 'active' | 'suspended';
       /** @enum {string} */
-      status: 'active' | 'suspended';
+      status: 'active' | 'suspended' | 'invited';
     };
     ActiveContextDto: {
       membership: components['schemas']['MembershipSummaryDto'];
@@ -272,16 +361,80 @@ export interface components {
       /** Format: date-time */
       sessionExpiresAt: string;
     };
-    AdminMembershipDto: {
+    TenantMemberCountsDto: {
+      active: number;
+      invited: number;
+      suspended: number;
+      total: number;
+    };
+    TenantDto: {
       /** Format: uuid */
       id: string;
+      /** @example acme */
+      slug: string;
+      /** @example Acme Inc. */
+      name: string;
+      /** @enum {string} */
+      status: 'active' | 'suspended';
+      /** Format: date-time */
+      createdAt: string;
+      memberCounts: components['schemas']['TenantMemberCountsDto'];
+    };
+    UpdateTenantRequestDto: {
+      /** @example Acme Incorporated */
+      name: string;
+    };
+    MemberRoleDto: {
+      /** @example TENANT_ADMIN */
+      key: string;
+      /** @example Workspace administrator */
+      name: string;
+    };
+    MemberDto: {
+      /** Format: uuid */
+      membershipId: string;
       /** Format: uuid */
       userId: string;
       /** Format: email */
-      userEmail: string;
+      email: string;
+      name: string | null;
       /** @enum {string} */
+      status: 'active' | 'suspended' | 'invited';
+      roles: components['schemas']['MemberRoleDto'][];
+      /** Format: date-time */
+      joinedAt: string;
+      /** @description True while an invitation for this membership is still pending. */
+      invitationPending: boolean;
+    };
+    InviteMemberRequestDto: {
+      /** Format: email */
+      email: string;
+      name?: string;
+      /** @description Generic platform role keys. */
+      roleKeys?: string[];
+    };
+    InvitationHandoffDto: {
+      /** Format: uuid */
+      id: string;
+      /** @description One-time invitation token. Returned ONLY here (no email provider is configured); relay it to the invitee out of band. */
+      token: string;
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    InviteMemberResponseDto: {
+      member: components['schemas']['MemberDto'];
+      invitation: components['schemas']['InvitationHandoffDto'];
+    };
+    UpdateMemberRequestDto: {
+      /**
+       * @description Reactivate or suspend the membership.
+       * @enum {string}
+       */
       status: 'active' | 'suspended';
-      roleKeys: string[];
+    };
+    AssignRoleRequestDto: {
+      /** @example TENANT_ADMIN */
+      roleKey: string;
     };
     AdminRoleDto: {
       /** Format: uuid */
@@ -289,12 +442,28 @@ export interface components {
       /** @example TENANT_ADMIN */
       key: string;
       name: string;
+      description: string | null;
       permissionKeys: string[];
     };
     CataloguePermissionDto: {
       /** @example users.read */
       key: string;
       description: string;
+    };
+    AcceptInvitationRequestDto: {
+      /** @description The one-time token from the invitation link. */
+      token: string;
+      /** @description Required only when the invited account has no password yet. */
+      password?: string;
+      name?: string;
+    };
+    AcceptInvitationResponseDto: {
+      /** @example true */
+      ok: boolean;
+      /** Format: email */
+      email: string;
+      /** @example acme */
+      tenantSlug: string;
     };
   };
   responses: never;
@@ -471,7 +640,7 @@ export interface operations {
       };
     };
   };
-  listMemberships: {
+  getTenant: {
     parameters: {
       query?: never;
       header?: never;
@@ -485,7 +654,328 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['AdminMembershipDto'][];
+          'application/json': components['schemas']['TenantDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTenantRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TenantDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listMembers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  inviteMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InviteMemberRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InviteMemberResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateMemberRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  assignMemberRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignRoleRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeMemberRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+        roleKey: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
         };
       };
     };
@@ -507,6 +997,22 @@ export interface operations {
           'application/json': components['schemas']['AdminRoleDto'][];
         };
       };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
     };
   };
   listCataloguePermissions: {
@@ -524,6 +1030,54 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['CataloguePermissionDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  acceptInvitation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AcceptInvitationRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AcceptInvitationResponseDto'];
+        };
+      };
+      /** @description INVITATION_INVALID / INVITATION_EXPIRED / INVITATION_REVOKED / INVITATION_ALREADY_USED / INVITATION_PASSWORD_REQUIRED */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
         };
       };
     };

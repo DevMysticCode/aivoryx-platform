@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { Activity, LayoutDashboard } from 'lucide-react';
+import { Activity, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { webEnv } from '@/lib/env';
 
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
+  { href: '/admin', label: 'Administration', icon: ShieldCheck },
   { href: '/health', label: 'System health', icon: Activity },
 ];
 

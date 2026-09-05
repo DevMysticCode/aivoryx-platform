@@ -25,7 +25,7 @@ export interface SecurityMembership {
   id: string;
   tenantId: string;
   tenantSlug: string;
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'invited';
 }
 
 export interface SecurityContext {

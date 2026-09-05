@@ -83,6 +83,7 @@ and reportable. See `CUSTOM-FIELDS.md`.
 ## Platform entities
 
 sessions
+tenant_invitations
 audit_logs
 workflow_definitions
 workflow_runs
@@ -112,6 +113,12 @@ superseded by the lead-ingestion entities above.
   `tenants`. Policy: `tenant_id = nullif(current_setting('app.tenant_id', true),
 '')::uuid` (USING + WITH CHECK); `user_tenant_memberships` also has a
   self-read policy on `app.user_id`.
+- Migration `0004` (ADR 0030) adds `tenant_invitations` and `outbox_events`
+  (both `ENABLE` + `FORCE` RLS, same tenant policy), `users.name`, and the
+  `'invited'` value on `membership_status`. Its RLS/grants block is hand-appended
+  after the drizzle-generated DDL with a snapshot identical to the generated one,
+  so `db:generate` reports no drift. `tenant_invitations` also has a by-token
+  policy (`token_hash = app.invitation_token_hash`) for the public accept flow.
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

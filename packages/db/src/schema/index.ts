@@ -34,6 +34,17 @@ export {
   type NewMembershipRoleRow,
 } from './rbac.js';
 
+// Phase 2, Task 3 — tenant administration & user lifecycle (ADR 0030).
+export {
+  invitationStatus,
+  tenantInvitations,
+  outboxEvents,
+  type TenantInvitationRow,
+  type NewTenantInvitationRow,
+  type OutboxEventRow,
+  type NewOutboxEventRow,
+} from './admin.js';
+
 export {
   usersRelations,
   tenantsRelations,
@@ -43,4 +54,6 @@ export {
   permissionsRelations,
   rolePermissionsRelations,
   membershipRolesRelations,
+  tenantInvitationsRelations,
+  outboxEventsRelations,
 } from './relations.js';

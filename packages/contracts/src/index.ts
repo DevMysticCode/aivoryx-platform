@@ -17,9 +17,20 @@ export type LogoutResponse = components['schemas']['LogoutResponseDto'];
 export type MembershipSummary = components['schemas']['MembershipSummaryDto'];
 export type ActiveContext = components['schemas']['ActiveContextDto'];
 export type AuthUser = components['schemas']['AuthUserDto'];
-export type AdminMembership = components['schemas']['AdminMembershipDto'];
 export type AdminRole = components['schemas']['AdminRoleDto'];
 export type CataloguePermission = components['schemas']['CataloguePermissionDto'];
+
+// Phase 2 — tenant administration & user lifecycle (ADR 0030).
+export type Tenant = components['schemas']['TenantDto'];
+export type UpdateTenantRequest = components['schemas']['UpdateTenantRequestDto'];
+export type Member = components['schemas']['MemberDto'];
+export type MemberRole = components['schemas']['MemberRoleDto'];
+export type InviteMemberRequest = components['schemas']['InviteMemberRequestDto'];
+export type InviteMemberResponse = components['schemas']['InviteMemberResponseDto'];
+export type UpdateMemberRequest = components['schemas']['UpdateMemberRequestDto'];
+export type AssignRoleRequest = components['schemas']['AssignRoleRequestDto'];
+export type AcceptInvitationRequest = components['schemas']['AcceptInvitationRequestDto'];
+export type AcceptInvitationResponse = components['schemas']['AcceptInvitationResponseDto'];
 
 /**
  * The standard error envelope returned by every `/api/v1` endpoint on failure.

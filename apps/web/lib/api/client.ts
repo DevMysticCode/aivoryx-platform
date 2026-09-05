@@ -63,6 +63,11 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     throw new ApiError(res.status, body);
   }
 
+  // 204 No Content (and any empty body) has nothing to parse.
+  if (res.status === 204 || res.headers.get('content-length') === '0') {
+    return undefined as T;
+  }
+
   return (await res.json()) as T;
 }
 
