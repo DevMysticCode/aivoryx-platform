@@ -45,6 +45,54 @@ export {
   type NewOutboxEventRow,
 } from './admin.js';
 
+// Phase 3 — CRM core (ADR 0031).
+export {
+  leadStatus,
+  leadActivityType,
+  followupStatus,
+  customFieldEntity,
+  customFieldDataType,
+  customFieldStatus,
+  leads,
+  leadActivities,
+  leadNotes,
+  leadFollowups,
+  customFieldDefinitions,
+  customFieldValues,
+  type LeadRow,
+  type NewLeadRow,
+  type LeadActivityRow,
+  type NewLeadActivityRow,
+  type LeadNoteRow,
+  type NewLeadNoteRow,
+  type LeadFollowupRow,
+  type NewLeadFollowupRow,
+  type CustomFieldDefinitionRow,
+  type NewCustomFieldDefinitionRow,
+  type CustomFieldValueRow,
+  type NewCustomFieldValueRow,
+} from './crm.js';
+
+// Phase 3 — inbound integration engine (ADR 0032).
+export {
+  connectorType,
+  sourceStatus,
+  rawEventStatus,
+  canonicalEventStatus,
+  leadSources,
+  rawEvents,
+  canonicalLeadEvents,
+  integrationEventLog,
+  type LeadSourceRow,
+  type NewLeadSourceRow,
+  type RawEventRow,
+  type NewRawEventRow,
+  type CanonicalLeadEventRow,
+  type NewCanonicalLeadEventRow,
+  type IntegrationEventLogRow,
+  type NewIntegrationEventLogRow,
+} from './integrations.js';
+
 export {
   usersRelations,
   tenantsRelations,
@@ -56,4 +104,14 @@ export {
   membershipRolesRelations,
   tenantInvitationsRelations,
   outboxEventsRelations,
+  leadsRelations,
+  leadActivitiesRelations,
+  leadNotesRelations,
+  leadFollowupsRelations,
+  customFieldDefinitionsRelations,
+  customFieldValuesRelations,
+  leadSourcesRelations,
+  rawEventsRelations,
+  canonicalLeadEventsRelations,
+  integrationEventLogRelations,
 } from './relations.js';

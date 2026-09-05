@@ -1,6 +1,15 @@
 # Raw Event, Idempotency, Retry, Replay and Dead-Letter Architecture
 
-Status: Approved architecture. No application code exists yet.
+Status: **Implemented in Phase 3** (ADR 0032), with two deliberate V1
+trims documented there: `DEAD_LETTER` is a `canonical_lead_events.status`
+value rather than a separate `dead_letter_events` table with its own
+open/replaying/resolved/discarded lifecycle, and the idempotency-key fallback
+(no `provider_record_id`) keys off the raw event's own id rather than a
+phone/email/timestamp hash — the latter was found, via testing, to
+incorrectly collapse two distinct submissions from the same person into one
+event, which is lead-level deduplication's job (ADR 0031), not idempotency's.
+No BullMQ retry queue in V1 — ingestion is synchronous; manual replay is the
+retry mechanism.
 
 Covers decision 23: raw external payloads/events are persisted for debugging,
 reconciliation, replay and idempotency.

@@ -1,6 +1,20 @@
 import { relations } from 'drizzle-orm';
 import { outboxEvents, tenantInvitations } from './admin.js';
+import {
+  customFieldDefinitions,
+  customFieldValues,
+  leadActivities,
+  leadFollowups,
+  leadNotes,
+  leads,
+} from './crm.js';
 import { sessions, tenants, users, userTenantMemberships } from './identity.js';
+import {
+  canonicalLeadEvents,
+  integrationEventLog,
+  leadSources,
+  rawEvents,
+} from './integrations.js';
 import { membershipRoles, permissions, rolePermissions, roles } from './rbac.js';
 
 /**
@@ -75,4 +89,75 @@ export const membershipRolesRelations = relations(membershipRoles, ({ one }) => 
     references: [userTenantMemberships.id],
   }),
   role: one(roles, { fields: [membershipRoles.roleId], references: [roles.id] }),
+}));
+
+// --- CRM core (Phase 3, ADR 0031) ----------------------------------------
+
+export const leadsRelations = relations(leads, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [leads.tenantId], references: [tenants.id] }),
+  source: one(leadSources, { fields: [leads.sourceId], references: [leadSources.id] }),
+  assignee: one(userTenantMemberships, {
+    fields: [leads.assignedMembershipId],
+    references: [userTenantMemberships.id],
+  }),
+  activities: many(leadActivities),
+  notes: many(leadNotes),
+  followups: many(leadFollowups),
+}));
+
+export const leadActivitiesRelations = relations(leadActivities, ({ one }) => ({
+  lead: one(leads, { fields: [leadActivities.leadId], references: [leads.id] }),
+}));
+
+export const leadNotesRelations = relations(leadNotes, ({ one }) => ({
+  lead: one(leads, { fields: [leadNotes.leadId], references: [leads.id] }),
+}));
+
+export const leadFollowupsRelations = relations(leadFollowups, ({ one }) => ({
+  lead: one(leads, { fields: [leadFollowups.leadId], references: [leads.id] }),
+}));
+
+export const customFieldDefinitionsRelations = relations(customFieldDefinitions, ({ one }) => ({
+  tenant: one(tenants, { fields: [customFieldDefinitions.tenantId], references: [tenants.id] }),
+}));
+
+export const customFieldValuesRelations = relations(customFieldValues, ({ one }) => ({
+  definition: one(customFieldDefinitions, {
+    fields: [customFieldValues.definitionId],
+    references: [customFieldDefinitions.id],
+  }),
+}));
+
+// --- Inbound integration engine (Phase 3, ADR 0032) ----------------------
+
+export const leadSourcesRelations = relations(leadSources, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [leadSources.tenantId], references: [tenants.id] }),
+  leads: many(leads),
+  rawEvents: many(rawEvents),
+}));
+
+export const rawEventsRelations = relations(rawEvents, ({ one }) => ({
+  source: one(leadSources, { fields: [rawEvents.sourceId], references: [leadSources.id] }),
+}));
+
+export const canonicalLeadEventsRelations = relations(canonicalLeadEvents, ({ one }) => ({
+  rawEvent: one(rawEvents, {
+    fields: [canonicalLeadEvents.rawEventId],
+    references: [rawEvents.id],
+  }),
+  source: one(leadSources, {
+    fields: [canonicalLeadEvents.sourceId],
+    references: [leadSources.id],
+  }),
+}));
+
+export const integrationEventLogRelations = relations(integrationEventLog, ({ one }) => ({
+  rawEvent: one(rawEvents, {
+    fields: [integrationEventLog.rawEventId],
+    references: [rawEvents.id],
+  }),
+  canonicalLeadEvent: one(canonicalLeadEvents, {
+    fields: [integrationEventLog.canonicalLeadEventId],
+    references: [canonicalLeadEvents.id],
+  }),
 }));

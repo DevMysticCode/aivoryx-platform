@@ -1,6 +1,9 @@
 # Connector and Adapter Architecture
 
-Status: Approved architecture. No application code exists yet.
+Status: **Implemented in Phase 3** for the `pabbly_bridge` connector + the
+`generic_json` adapter (ADR 0032). `webhook`, `email`, `rest_pull`, and
+`manual_csv` remain interfaces/future work; only `pabbly_bridge` has a real
+connector today.
 
 This document defines the provider-neutral boundary that keeps the Lead
 Ingestion Engine (and later, general integrations) free of provider-specific

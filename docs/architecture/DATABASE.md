@@ -38,15 +38,15 @@ tasks.
 
 ## CRM entities
 
+**Implemented (Phase 3, ADR 0031):**
+
 leads
-lead_sources
-lead_source_events
-lead_assignments
-customers
-activities
-tasks
-follow_ups
-calls
+lead_activities
+lead_notes
+lead_followups
+
+`customers` (a lead graduating to an account) remains future work — Phase 3
+stops at qualification/conversion of the lead itself (CLAUDE.md §28).
 
 ## Field/Sales entities
 
@@ -57,28 +57,36 @@ quotations
 quotation_versions
 bookings
 
+Not built — later phase (CLAUDE.md §28).
+
 ## Lead ingestion entities
 
-sources
-connectors_config
-lead_mapping_profiles
-lead_mapping_rules
+**Implemented (Phase 3, ADR 0032):**
+
+lead_sources
 raw_events
 canonical_lead_events
 integration_event_log
-dead_letter_events
-email_ingest_rules
+
+`lead_mapping_profiles` / `lead_mapping_rules` (the full versioned mapping
+engine) and `dead_letter_events` (a separate DLQ lifecycle table) were
+evaluated and deliberately not built for V1 — see ADR 0032 §4/§6 for why a
+smaller mechanism covers the same requirements today. `email_ingest_rules`
+remains future work (no email connector in this phase).
 
 See `LEAD-INGESTION.md`, `FIELD-MAPPING.md`, `RAW-EVENTS-AND-REPLAY.md`,
 `EMAIL-INGESTION.md`.
 
 ## Custom field entities
 
+**Implemented (Phase 3, ADR 0031)** for the `lead` entity:
+
 custom_field_definitions
 custom_field_values
 
-Typed definition + typed-value-column storage (not one JSON blob), filterable
-and reportable. See `CUSTOM-FIELDS.md`.
+Typed definition + typed-value-column storage (not one JSON blob). See
+`CUSTOM-FIELDS.md` for the V1 trims (no filterable/reportable flags or
+declarative validation JSON yet).
 
 ## Platform entities
 
@@ -119,6 +127,13 @@ superseded by the lead-ingestion entities above.
   after the drizzle-generated DDL with a snapshot identical to the generated one,
   so `db:generate` reports no drift. `tenant_invitations` also has a by-token
   policy (`token_hash = app.invitation_token_hash`) for the public accept flow.
+- Migration `0005` (Phase 3, ADR 0031/0032) adds the ten CRM/inbound-integration
+  tables — `leads`, `lead_activities`, `lead_notes`, `lead_followups`,
+  `custom_field_definitions`, `custom_field_values`, `lead_sources`,
+  `raw_events`, `canonical_lead_events`, `integration_event_log` — all
+  `ENABLE` + `FORCE` RLS with the same hand-appended-block pattern as `0004`.
+  `lead_sources` additionally carries a by-secret policy
+  (`secret_hash = app.connector_secret_hash`) for the public inbound webhook.
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

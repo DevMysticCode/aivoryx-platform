@@ -863,6 +863,1740 @@
           "auth"
         ]
       }
+    },
+    "/crm/leads": {
+      "get": {
+        "operationId": "listLeads",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "assignedMembershipId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Search and filter leads.",
+        "tags": [
+          "crm"
+        ]
+      },
+      "post": {
+        "operationId": "createLead",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadContactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Manually create a lead.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}": {
+      "get": {
+        "operationId": "getLead",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "A single lead.",
+        "tags": [
+          "crm"
+        ]
+      },
+      "patch": {
+        "operationId": "updateLead",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadContactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Edit lead identity/contact/custom fields.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/assign": {
+      "post": {
+        "operationId": "assignLead",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignLeadRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Assign or reassign a lead.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/status": {
+      "post": {
+        "operationId": "changeLeadStatus",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadStatusRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Move a lead to a new status.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/qualify": {
+      "post": {
+        "operationId": "qualifyLead",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QualifyLeadRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Qualify or disqualify a lead.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/call-attempts": {
+      "post": {
+        "operationId": "logCallAttempt",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CallAttemptRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Log a manual call attempt on a lead.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/activities": {
+      "get": {
+        "operationId": "listLeadActivities",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeadActivityDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The chronological lead timeline.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/notes": {
+      "get": {
+        "operationId": "listLeadNotes",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NoteDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Notes on a lead.",
+        "tags": [
+          "crm"
+        ]
+      },
+      "post": {
+        "operationId": "createLeadNote",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Add a note to a lead.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/notes/{noteId}": {
+      "patch": {
+        "operationId": "updateLeadNote",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "noteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Edit a note (author, or crm.leads.update).",
+        "tags": [
+          "crm"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteLeadNote",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "noteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Delete a note (author, or crm.leads.update).",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/followups": {
+      "get": {
+        "operationId": "listLeadFollowups",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FollowupDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Follow-ups on a lead.",
+        "tags": [
+          "crm"
+        ]
+      },
+      "post": {
+        "operationId": "createLeadFollowup",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFollowupRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowupDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Schedule a follow-up.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/followups/{followupId}/complete": {
+      "post": {
+        "operationId": "completeLeadFollowup",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "followupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteFollowupRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowupDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Mark a follow-up complete.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/leads/{leadId}/followups/{followupId}/reschedule": {
+      "post": {
+        "operationId": "rescheduleLeadFollowup",
+        "parameters": [
+          {
+            "name": "leadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "followupId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleFollowupRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowupDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Move a follow-up to a new due time.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/custom-fields": {
+      "get": {
+        "operationId": "listCustomFields",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomFieldDefinitionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Lead custom field definitions.",
+        "tags": [
+          "crm"
+        ]
+      },
+      "post": {
+        "operationId": "createCustomField",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomFieldRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomFieldDefinitionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Define a new lead custom field.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/custom-fields/{definitionId}/deprecate": {
+      "patch": {
+        "operationId": "deprecateCustomField",
+        "parameters": [
+          {
+            "name": "definitionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomFieldDefinitionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Retire a lead custom field.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/integrations/webhooks/pabbly/{sourceKey}": {
+      "post": {
+        "operationId": "ingestPabblyWebhook",
+        "parameters": [
+          {
+            "name": "sourceKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestAcceptedResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Inbound Pabbly-relayed lead. Authenticate with \"Authorization: Bearer <connector secret>\".",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/admin/integrations/sources": {
+      "get": {
+        "operationId": "listSources",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SourceDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Configured inbound lead sources.",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "createSource",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSourceRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSourceResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Configure a new Pabbly connector source. Returns a one-time secret.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/integrations/sources/{sourceId}/rotate-secret": {
+      "post": {
+        "operationId": "rotateSourceSecret",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSourceResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Issue a new secret; the old one stops working.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/integrations/sources/{sourceId}/revoke": {
+      "post": {
+        "operationId": "revokeSource",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Revoke a source — it can no longer ingest.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/integrations/sources/{sourceId}/reactivate": {
+      "post": {
+        "operationId": "reactivateSource",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Reactivate a previously revoked source.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/integrations/events": {
+      "get": {
+        "operationId": "listInboundEvents",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CanonicalEventDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Recent inbound lead events.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/integrations/events/{id}": {
+      "get": {
+        "operationId": "getInboundEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "One inbound event, its raw payload, and its stage log.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/integrations/events/{id}/replay": {
+      "post": {
+        "operationId": "replayInboundEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Re-run the pipeline for a failed inbound event.",
+        "tags": [
+          "admin"
+        ]
+      }
     }
   },
   "info": {
@@ -1574,6 +3308,743 @@
           "ok",
           "email",
           "tenantSlug"
+        ]
+      },
+      "LeadAssigneeDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "membershipId",
+          "name",
+          "email"
+        ]
+      },
+      "LeadDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "sourceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressLine": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "ASSIGNED",
+              "CONTACTED",
+              "QUALIFIED",
+              "DISQUALIFIED",
+              "CONVERTED"
+            ]
+          },
+          "assignee": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LeadAssigneeDto"
+              }
+            ]
+          },
+          "qualificationNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "customFields": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "sourceId",
+          "sourceName",
+          "name",
+          "phone",
+          "email",
+          "addressLine",
+          "city",
+          "state",
+          "postalCode",
+          "country",
+          "status",
+          "assignee",
+          "qualificationNote",
+          "customFields",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LeadListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeadDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "LeadContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 320
+          },
+          "addressLine": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "postalCode": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "customFields": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Tenant custom-field values, keyed by field key."
+          }
+        }
+      },
+      "AssignLeadRequestDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "membershipId"
+        ]
+      },
+      "LeadStatusRequestDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ASSIGNED",
+              "CONTACTED",
+              "QUALIFIED",
+              "DISQUALIFIED",
+              "CONVERTED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "QualifyLeadRequestDto": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "QUALIFIED",
+              "DISQUALIFIED"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "CallAttemptRequestDto": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "example": "connected",
+            "maxLength": 40
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "LeadActivityDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "actorMembershipId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "actorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "actorMembershipId",
+          "actorName",
+          "actorEmail",
+          "payload",
+          "createdAt"
+        ]
+      },
+      "NoteDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorMembershipId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "leadId",
+          "authorMembershipId",
+          "body",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateNoteRequestDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "body"
+        ]
+      },
+      "FollowupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignedMembershipId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "leadId",
+          "assignedMembershipId",
+          "dueAt",
+          "status",
+          "note",
+          "result",
+          "createdAt",
+          "completedAt"
+        ]
+      },
+      "CreateFollowupRequestDto": {
+        "type": "object",
+        "properties": {
+          "assignedMembershipId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Defaults to the caller."
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "dueAt"
+        ]
+      },
+      "CompleteFollowupRequestDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      },
+      "RescheduleFollowupRequestDto": {
+        "type": "object",
+        "properties": {
+          "dueAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "dueAt"
+        ]
+      },
+      "CustomFieldDefinitionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "dataType": {
+            "type": "string",
+            "enum": [
+              "text",
+              "number",
+              "boolean",
+              "date",
+              "select"
+            ]
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "options": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "deprecated"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "label",
+          "dataType",
+          "isRequired",
+          "options",
+          "status"
+        ]
+      },
+      "CreateCustomFieldRequestDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 60,
+            "example": "roof_type"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "dataType": {
+            "type": "string",
+            "enum": [
+              "text",
+              "number",
+              "boolean",
+              "date",
+              "select"
+            ]
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "options": {
+            "description": "Required for `select` fields.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "dataType"
+        ]
+      },
+      "IngestAcceptedResponseDto": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "rawEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "canonicalEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dedupeOutcome": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": "string"
+          },
+          "errorMessage": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accepted",
+          "status",
+          "rawEventId"
+        ]
+      },
+      "SourceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "connectorType": {
+            "type": "string",
+            "enum": [
+              "pabbly_bridge"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "revoked"
+            ]
+          },
+          "fieldMapping": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "connectorType",
+          "status",
+          "fieldMapping",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateSourceRequestDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 60,
+            "example": "website-pabbly"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "fieldMapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Provider field -> \"canonical:<field>\" | \"custom:<key>\" | \"skip\" overrides, merged over the built-in defaults."
+          }
+        },
+        "required": [
+          "key",
+          "name"
+        ]
+      },
+      "SourceSecretHandoffDto": {
+        "type": "object",
+        "properties": {
+          "secret": {
+            "type": "string",
+            "description": "One-time connector secret. Returned ONLY here (create / rotate); send it to Pabbly as the \"Authorization: Bearer <secret>\" header. Never returned again."
+          }
+        },
+        "required": [
+          "secret"
+        ]
+      },
+      "CreateSourceResponseDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/SourceDto"
+          },
+          "credential": {
+            "$ref": "#/components/schemas/SourceSecretHandoffDto"
+          }
+        },
+        "required": [
+          "source",
+          "credential"
+        ]
+      },
+      "CanonicalEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rawEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "leadId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "dedupeOutcome": {
+            "type": "string",
+            "nullable": true
+          },
+          "processingAttempts": {
+            "type": "number"
+          },
+          "lastErrorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastErrorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "rawEventId",
+          "sourceId",
+          "status",
+          "leadId",
+          "dedupeOutcome",
+          "processingAttempts",
+          "lastErrorCode",
+          "lastErrorMessage",
+          "createdAt"
         ]
       }
     }
