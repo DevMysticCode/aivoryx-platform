@@ -50,14 +50,20 @@ stops at qualification/conversion of the lead itself (CLAUDE.md §28).
 
 ## Field/Sales entities
 
-field_visits
-site_surveys
-survey_attachments
-quotations
-quotation_versions
-bookings
+**Implemented (Phase 4, ADR 0033):**
 
-Not built — later phase (CLAUDE.md §28).
+field_agents
+visits
+visit_activities
+visit_notes
+visit_attachments
+
+The site survey is `custom_field_definitions`/`custom_field_values` with
+`entity = 'visit'` (see `## Custom field entities` below) — not a separate
+`site_surveys` table. `survey_attachments` is `visit_attachments` (any
+visit-scoped photo, not survey-specific). `quotations` / `quotation_versions`
+/ `bookings` remain not built — later phase (CLAUDE.md §28). See
+`FIELD-OPERATIONS.md`.
 
 ## Lead ingestion entities
 
@@ -79,7 +85,8 @@ See `LEAD-INGESTION.md`, `FIELD-MAPPING.md`, `RAW-EVENTS-AND-REPLAY.md`,
 
 ## Custom field entities
 
-**Implemented (Phase 3, ADR 0031)** for the `lead` entity:
+**Implemented (Phase 3, ADR 0031)** for the `lead` entity, **extended in
+Phase 4 (ADR 0033)** to the `visit` entity (the site survey):
 
 custom_field_definitions
 custom_field_values
@@ -134,6 +141,10 @@ superseded by the lead-ingestion entities above.
   `ENABLE` + `FORCE` RLS with the same hand-appended-block pattern as `0004`.
   `lead_sources` additionally carries a by-secret policy
   (`secret_hash = app.connector_secret_hash`) for the public inbound webhook.
+- Migration `0006` (Phase 4, ADR 0033) adds `field_agents`, `visits`,
+  `visit_activities`, `visit_notes`, `visit_attachments` — all `ENABLE` +
+  `FORCE` RLS with the same hand-appended-block pattern, plus `leads.origin`
+  and the `visit` member on `custom_field_entity`/`lead_activity_type`.
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

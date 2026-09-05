@@ -176,6 +176,57 @@ export const ERROR_CODES = {
     message: 'That event is not in a state that can be replayed.',
   },
 
+  // field operations — visits, GPS, survey, attachments (Phase 4, ADR 0033)
+  FIELD_AGENT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That person is not a field agent in this workspace.',
+  },
+  FIELD_AGENT_INACTIVE: {
+    httpStatus: 409,
+    message: 'That field agent is not currently active.',
+  },
+  VISIT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That visit was not found in this workspace.',
+  },
+  VISIT_INVALID_TRANSITION: {
+    httpStatus: 409,
+    message: 'That status change is not allowed from the visit’s current status.',
+  },
+  VISIT_NOT_ASSIGNED_TO_YOU: {
+    httpStatus: 403,
+    message: 'This visit is not assigned to you.',
+  },
+  VISIT_ALREADY_CHECKED_IN: {
+    httpStatus: 409,
+    message: 'This visit has already been checked in.',
+  },
+  VISIT_NOT_CHECKED_IN: {
+    httpStatus: 409,
+    message: 'Check in before checking out of this visit.',
+  },
+  VISIT_ALREADY_CHECKED_OUT: {
+    httpStatus: 409,
+    message: 'This visit has already been checked out.',
+  },
+  VISIT_INCOMPLETE: {
+    httpStatus: 409,
+    message:
+      'This visit cannot be completed yet — finish check-in, the required survey fields, and check-out first.',
+  },
+  VISIT_LOCATION_REQUIRED: {
+    httpStatus: 400,
+    message: 'Location could not be captured. Enable location access and try again.',
+  },
+  ATTACHMENT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That attachment was not found on this visit.',
+  },
+  ATTACHMENT_INVALID: {
+    httpStatus: 400,
+    message: 'That file could not be uploaded.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

@@ -63,11 +63,22 @@ export const leadActivityType = pgEnum('lead_activity_type', [
   'disqualified',
   'followup_created',
   'followup_completed',
+  // Field operations milestones surfaced onto the lead timeline (Phase 4, ADR
+  // 0033) — the detailed visit-level timeline lives in `visit_activities`.
+  'visit_scheduled',
+  'visit_checked_in',
+  'visit_survey_completed',
+  'visit_checked_out',
+  'visit_completed',
+  'visit_cancelled',
 ]);
 
 export const followupStatus = pgEnum('followup_status', ['pending', 'completed', 'cancelled']);
 
-export const customFieldEntity = pgEnum('custom_field_entity', ['lead']);
+/** Where a lead came from (Phase 4, ADR 0033) — provenance only, not a second lead model. */
+export const leadOrigin = pgEnum('lead_origin', ['manual', 'inbound', 'field_agent']);
+
+export const customFieldEntity = pgEnum('custom_field_entity', ['lead', 'visit']);
 export const customFieldDataType = pgEnum('custom_field_data_type', [
   'text',
   'number',
@@ -106,6 +117,8 @@ export const leads = pgTable(
     assignedMembershipId: uuid('assigned_membership_id'),
     /** reason recorded alongside a QUALIFIED or DISQUALIFIED transition */
     qualificationNote: text('qualification_note'),
+    /** provenance — 'inbound' is set explicitly by the ingestion pipeline (ADR 0032) */
+    origin: leadOrigin('origin').notNull().default('manual'),
     ...entityTimestamps,
   },
   (t) => [

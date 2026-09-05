@@ -59,6 +59,25 @@ export type SourceSecretHandoff = components['schemas']['SourceSecretHandoffDto'
 export type CanonicalEvent = components['schemas']['CanonicalEventDto'];
 export type IngestAcceptedResponse = components['schemas']['IngestAcceptedResponseDto'];
 
+// Phase 4 — field operations: visits, GPS, survey, attachments (ADR 0033).
+export type FieldAgent = components['schemas']['FieldAgentDto'];
+export type DesignateFieldAgentRequest = components['schemas']['DesignateFieldAgentRequestDto'];
+export type Visit = components['schemas']['VisitDto'];
+export type VisitAssignee = components['schemas']['VisitAssigneeDto'];
+export type VisitListResponse = components['schemas']['VisitListResponseDto'];
+export type ScheduleVisitRequest = components['schemas']['ScheduleVisitRequestDto'];
+export type AssignVisitRequest = components['schemas']['AssignVisitRequestDto'];
+export type RescheduleVisitRequest = components['schemas']['RescheduleVisitRequestDto'];
+export type CancelVisitRequest = components['schemas']['CancelVisitRequestDto'];
+export type GeoPointRequest = components['schemas']['GeoPointRequestDto'];
+export type CheckOutRequest = components['schemas']['CheckOutRequestDto'];
+export type SubmitSurveyRequest = components['schemas']['SubmitSurveyRequestDto'];
+export type SurveyFieldValue = components['schemas']['SurveyFieldValueDto'];
+export type VisitActivity = components['schemas']['VisitActivityDto'];
+export type CreateVisitNoteRequest = components['schemas']['CreateVisitNoteRequestDto'];
+export type VisitNote = components['schemas']['VisitNoteDto'];
+export type VisitAttachment = components['schemas']['VisitAttachmentDto'];
+
 /**
  * The standard error envelope returned by every `/api/v1` endpoint on failure.
  * It is documented on the auth/admin operations (`ApiErrorDto`) and mirrors

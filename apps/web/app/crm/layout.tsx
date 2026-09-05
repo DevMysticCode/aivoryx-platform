@@ -3,13 +3,16 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
-import { Users } from 'lucide-react';
+import { CalendarClock, Users } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
 import { Skeleton } from '@/components/admin/ui';
 
-const NAV = [{ href: '/crm/leads', label: 'Leads', icon: Users }];
+const NAV = [
+  { href: '/crm/leads', label: 'Leads', icon: Users },
+  { href: '/crm/visits', label: 'Visits', icon: CalendarClock },
+];
 
 export default function CrmLayout({ children }: { children: ReactNode }) {
   const router = useRouter();

@@ -37,6 +37,7 @@ One decision per file. Status is `Accepted` unless noted. A later ADR may
 | 0030 | Tenant administration & user lifecycle                        | builds on 0026–0029, 0013                         |
 | 0031 | CRM core & lead domain                                        | implements 0009 for the lead entity               |
 | 0032 | Inbound integration engine & connector security               | implements 0004/0017–0023; refines their V1 scope |
+| 0033 | Field operations: visits, field agents, GPS & site survey     | builds on 0015, 0026–0027, 0029, 0031–0032        |
 
 ## Open decisions
 

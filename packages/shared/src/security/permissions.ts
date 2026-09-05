@@ -47,6 +47,23 @@ export const PERMISSION_DEFINITIONS = [
     key: 'crm.integrations.manage',
     description: 'Configure inbound lead connectors and manage inbound events.',
   },
+
+  // Field operations (Phase 4, ADR 0033) — visits built on the CRM lead model.
+  {
+    key: 'field.agents.manage',
+    description: 'Designate or deactivate field agents for the workspace.',
+  },
+  { key: 'field.visits.read', description: 'View site visits.' },
+  { key: 'field.visits.create', description: 'Schedule a new site visit.' },
+  { key: 'field.visits.update', description: 'Edit visit details.' },
+  { key: 'field.visits.assign', description: 'Assign, reassign, reschedule, or cancel a visit.' },
+  { key: 'field.visits.checkin', description: 'Check in or out of an assigned visit.' },
+  { key: 'field.visits.survey', description: 'Complete the site survey for a visit.' },
+  {
+    key: 'field.visits.attachments',
+    description: 'Upload or remove visit photos and attachments.',
+  },
+  { key: 'field.visits.complete', description: 'Mark an assigned visit complete.' },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];
@@ -66,5 +83,6 @@ export function isPermissionKey(value: unknown): value is PermissionKey {
  */
 export const PLATFORM_ROLE_KEYS = {
   tenantAdmin: 'TENANT_ADMIN',
+  fieldAgent: 'FIELD_AGENT',
 } as const;
 export type PlatformRoleKey = (typeof PLATFORM_ROLE_KEYS)[keyof typeof PLATFORM_ROLE_KEYS];

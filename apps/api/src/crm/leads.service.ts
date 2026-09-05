@@ -34,6 +34,8 @@ export interface LeadContactInput {
   postalCode?: string;
   country?: string;
   customFields?: Record<string, CustomFieldInputValue>;
+  /** Provenance (ADR 0033). Defaults to 'manual' — the field UI sets 'field_agent' explicitly. */
+  origin?: 'manual' | 'field_agent';
 }
 
 @Injectable()
@@ -68,6 +70,7 @@ export class LeadsService {
           state: input.state ?? null,
           postalCode: input.postalCode ?? null,
           country: input.country ?? null,
+          origin: input.origin ?? 'manual',
         })
         .returning({ id: leads.id });
       const id = row!.id;

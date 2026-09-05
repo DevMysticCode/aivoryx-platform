@@ -20,8 +20,9 @@ Single database, single schema, shared tables. Every tenant-owned row carries
   `leads`, `lead_activities`, `lead_notes`, `lead_followups`,
   `custom_field_definitions`, `custom_field_values`, `lead_sources`,
   `raw_events`, `canonical_lead_events`, `integration_event_log` (last eight:
-  Phase 3, ADR 0031/0032). `users`, `sessions`, global `permissions` have no
-  RLS.
+  Phase 3, ADR 0031/0032), `field_agents`, `visits`, `visit_activities`,
+  `visit_notes`, `visit_attachments` (last five: Phase 4, ADR 0033). `users`,
+  `sessions`, global `permissions` have no RLS.
 - Policy predicate:
   `tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid`, mirrored
   in `WITH CHECK`. `nullif(…, '')` because a touched custom GUC reverts to `''`

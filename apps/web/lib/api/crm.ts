@@ -94,8 +94,8 @@ export const rescheduleFollowup = (
   body: RescheduleFollowupRequest,
 ) => apiFetch<Followup>(`/crm/leads/${leadId}/followups/${followupId}/reschedule`, json(body));
 
-export const listCustomFields = () =>
-  apiFetch<CustomFieldDefinition[]>('/crm/custom-fields', { cache: 'no-store' });
+export const listCustomFields = (entity: 'lead' | 'visit' = 'lead') =>
+  apiFetch<CustomFieldDefinition[]>(`/crm/custom-fields?entity=${entity}`, { cache: 'no-store' });
 
 export const createCustomField = (body: CreateCustomFieldRequest) =>
   apiFetch<CustomFieldDefinition>('/crm/custom-fields', json(body));

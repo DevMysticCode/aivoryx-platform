@@ -4,7 +4,7 @@ import { PERMISSION_DEFINITIONS, PLATFORM_ROLE_KEYS } from '@aivoryx/shared';
 import { createDb, type DbHandle } from './client.js';
 import { newUuidV7 } from './id.js';
 import { membershipRoles, permissions, rolePermissions, roles } from './schema/index.js';
-import { withTenantContext } from './tx.js';
+import { withTenantContext, type Tx } from './tx.js';
 
 /**
  * Seed / provisioning helpers for the security subsystem (ADR 0029).
@@ -99,6 +99,94 @@ export async function provisionTenantAdmin(
 
       return { roleId, permissionCount: permRows.length };
     },
+  );
+}
+
+/**
+ * The `FIELD_AGENT` platform role (Phase 4, ADR 0033) — the second generic
+ * role alongside `TENANT_ADMIN`. Deliberately narrow: enough to work an
+ * assigned visit and create field-generated leads, nothing administrative
+ * (no `field.visits.create/assign/update`, no `field.agents.manage`, no
+ * `crm.leads.read/update`). Visit assignment/scheduling stays CRM/admin-only.
+ */
+const FIELD_AGENT_PERMISSION_KEYS = [
+  'field.visits.read',
+  'field.visits.checkin',
+  'field.visits.survey',
+  'field.visits.attachments',
+  'field.visits.complete',
+  'crm.leads.create',
+  'crm.activities.create',
+] as const;
+
+export interface ProvisionFieldAgentRoleInput {
+  tenantId: string;
+  actingUserId: string;
+  membershipId?: string;
+}
+
+export interface ProvisionFieldAgentRoleResult {
+  roleId: string;
+  permissionCount: number;
+}
+
+/**
+ * Same as {@link provisionFieldAgentRole} but runs against an already-open,
+ * already-tenant-scoped transaction — for callers (e.g. the field-agent
+ * designation flow) that need this atomic with their own writes rather than
+ * in a second, separate transaction.
+ */
+export async function provisionFieldAgentRoleTx(
+  tx: Tx,
+  input: ProvisionFieldAgentRoleInput,
+): Promise<ProvisionFieldAgentRoleResult> {
+  const [role] = await tx
+    .insert(roles)
+    .values({
+      id: newUuidV7(),
+      tenantId: input.tenantId,
+      key: PLATFORM_ROLE_KEYS.fieldAgent,
+      name: 'Field agent',
+      description: 'Works assigned site visits: check-in/out, survey, photos, notes.',
+    })
+    .onConflictDoUpdate({
+      target: [roles.tenantId, roles.key],
+      set: { name: sql`excluded.name`, updatedAt: sql`now()` },
+    })
+    .returning({ id: roles.id });
+
+  const roleId = role!.id;
+
+  const permRows = await tx
+    .select({ id: permissions.id })
+    .from(permissions)
+    .where(inArray(permissions.key, [...FIELD_AGENT_PERMISSION_KEYS]));
+
+  if (permRows.length > 0) {
+    await tx
+      .insert(rolePermissions)
+      .values(permRows.map((p) => ({ roleId, tenantId: input.tenantId, permissionId: p.id })))
+      .onConflictDoNothing();
+  }
+
+  if (input.membershipId) {
+    await tx
+      .insert(membershipRoles)
+      .values({ membershipId: input.membershipId, roleId, tenantId: input.tenantId })
+      .onConflictDoNothing();
+  }
+
+  return { roleId, permissionCount: permRows.length };
+}
+
+/** Create (or update) the generic `FIELD_AGENT` role for a tenant and grant it
+ *  its fixed, narrow permission set. Idempotent. */
+export async function provisionFieldAgentRole(
+  handle: DbHandle,
+  input: ProvisionFieldAgentRoleInput,
+): Promise<ProvisionFieldAgentRoleResult> {
+  return withTenantContext(handle, { tenantId: input.tenantId, userId: input.actingUserId }, (tx) =>
+    provisionFieldAgentRoleTx(tx, input),
   );
 }
 

@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus the CRM core — no other business domain yet', () => {
+  it('is the identity/admin set plus the CRM core and field operations — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -32,10 +32,19 @@ describe('permission catalogue', () => {
         'crm.activities.read',
         'crm.activities.create',
         'crm.integrations.manage',
+        'field.agents.manage',
+        'field.visits.read',
+        'field.visits.create',
+        'field.visits.update',
+        'field.visits.assign',
+        'field.visits.checkin',
+        'field.visits.survey',
+        'field.visits.attachments',
+        'field.visits.complete',
       ].sort(),
     );
     for (const key of PERMISSION_KEYS) {
-      expect(key).not.toMatch(/^hr\.|^telecall|^field|^quotation|^booking|^payroll|^invoice/i);
+      expect(key).not.toMatch(/^hr\.|^telecall|^quotation|^booking|^payroll|^invoice/i);
     }
   });
 
@@ -54,8 +63,10 @@ describe('permission catalogue', () => {
     expect(isPermissionKey(42)).toBe(false);
   });
 
-  it('exposes the generic TENANT_ADMIN platform role and nothing business-specific', () => {
+  it('exposes only the two generic platform roles and nothing business-specific', () => {
     expect(PLATFORM_ROLE_KEYS.tenantAdmin).toBe('TENANT_ADMIN');
+    expect(PLATFORM_ROLE_KEYS.fieldAgent).toBe('FIELD_AGENT');
     expect(Object.values(PLATFORM_ROLE_KEYS)).not.toContain('SALES_MANAGER');
+    expect(Object.values(PLATFORM_ROLE_KEYS).sort()).toEqual(['FIELD_AGENT', 'TENANT_ADMIN']);
   });
 });

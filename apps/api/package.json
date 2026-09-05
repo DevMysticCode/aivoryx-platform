@@ -9,9 +9,10 @@
     "dev": "nest start --watch",
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.mjs\"",
+    "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.mjs\" \"scripts/**/*.ts\"",
     "test": "vitest run",
     "openapi:extract": "pnpm run build && node scripts/extract-openapi.mjs",
+    "seed:field-demo": "tsx --env-file-if-exists=../../.env scripts/seed-field-demo.ts",
     "clean": "rimraf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "drizzle-orm": "0.38.3",
     "helmet": "8.0.0",
     "ioredis": "5.4.2",
+    "multer": "1.4.5-lts.1",
     "nestjs-pino": "4.2.0",
     "pino": "9.5.0",
     "pino-http": "10.3.0",
@@ -45,6 +47,7 @@
     "@swc/core": "1.10.7",
     "@types/cookie-parser": "1.4.8",
     "@types/express": "5.0.0",
+    "@types/multer": "^2.2.0",
     "@types/node": "22.10.2",
     "@types/pg": "8.11.10",
     "@types/supertest": "6.0.2",

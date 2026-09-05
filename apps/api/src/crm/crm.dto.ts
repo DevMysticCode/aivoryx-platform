@@ -73,6 +73,16 @@ export class LeadContactDto {
   })
   @IsOptional()
   customFields?: Record<string, string | number | boolean | null>;
+
+  @ApiProperty({
+    required: false,
+    enum: ['manual', 'field_agent'],
+    description:
+      'Provenance. The field app sets "field_agent"; omit for a normal CRM-created lead.',
+  })
+  @IsOptional()
+  @IsIn(['manual', 'field_agent'])
+  origin?: 'manual' | 'field_agent';
 }
 
 export class LeadAssigneeDto {
@@ -128,6 +138,9 @@ export class LeadDto {
 
   @ApiProperty({ nullable: true, type: String })
   qualificationNote!: string | null;
+
+  @ApiProperty({ enum: ['manual', 'inbound', 'field_agent'] })
+  origin!: string;
 
   @ApiProperty({ type: Object, additionalProperties: true })
   customFields!: Record<string, unknown>;
@@ -334,6 +347,17 @@ export class CreateCustomFieldRequestDto {
   @IsArray()
   @IsString({ each: true })
   options?: string[];
+
+  @ApiProperty({
+    required: false,
+    enum: ['lead', 'visit'],
+    default: 'lead',
+    description:
+      'Which entity this field belongs to — "visit" defines a site-survey question (ADR 0033).',
+  })
+  @IsOptional()
+  @IsIn(['lead', 'visit'])
+  entity?: 'lead' | 'visit';
 }
 
 export class CustomFieldDefinitionDto {
@@ -357,6 +381,16 @@ export class CustomFieldDefinitionDto {
 
   @ApiProperty({ enum: ['active', 'deprecated'] })
   status!: string;
+
+  @ApiProperty({ enum: ['lead', 'visit'] })
+  entity!: string;
+}
+
+export class ListCustomFieldsQueryDto {
+  @ApiProperty({ required: false, enum: ['lead', 'visit'], default: 'lead' })
+  @IsOptional()
+  @IsIn(['lead', 'visit'])
+  entity?: 'lead' | 'visit';
 }
 
 // ---- pagination / filters (query params, no decorators needed here) ----
