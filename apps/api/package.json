@@ -13,6 +13,7 @@
     "test": "vitest run",
     "openapi:extract": "pnpm run build && node scripts/extract-openapi.mjs",
     "seed:field-demo": "tsx --env-file-if-exists=../../.env scripts/seed-field-demo.ts",
+    "seed:supply-demo": "tsx --env-file-if-exists=../../.env scripts/seed-supply-demo.ts",
     "clean": "rimraf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {

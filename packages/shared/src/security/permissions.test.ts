@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus the CRM core and field operations — no other business domain yet', () => {
+  it('is the identity/admin set plus CRM, field operations, and supply chain — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -41,6 +41,33 @@ describe('permission catalogue', () => {
         'field.visits.survey',
         'field.visits.attachments',
         'field.visits.complete',
+        'projects.read',
+        'projects.create',
+        'projects.update',
+        'projects.approve',
+        'products.read',
+        'products.create',
+        'products.update',
+        'suppliers.read',
+        'suppliers.create',
+        'suppliers.update',
+        'warehouses.read',
+        'warehouses.create',
+        'warehouses.update',
+        'inventory.read',
+        'inventory.adjust',
+        'inventory.allocate',
+        'inventory.transfer',
+        'procurement.read',
+        'procurement.create',
+        'procurement.update',
+        'procurement.approve',
+        'procurement.receive',
+        'dispatch.read',
+        'dispatch.create',
+        'dispatch.update',
+        'dispatch.dispatch',
+        'dispatch.deliver',
       ].sort(),
     );
     for (const key of PERMISSION_KEYS) {

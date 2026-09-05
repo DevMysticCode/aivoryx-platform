@@ -1,0 +1,33 @@
+flowchart TD
+    LEAD["CRM lead<br/>(won / qualified)"]
+    LEAD --> PRJ["Project<br/>DRAFT -> APPROVED -> PROCUREMENT<br/>-> READY_FOR_DISPATCH -> IN_PROGRESS -> COMPLETED"]
+    PRJ --> REQ["project_materials<br/>required / allocated / dispatched / delivered"]
+
+    REQ --> PO["Purchase order<br/>DRAFT -> SUBMITTED -> APPROVED<br/>-> PARTIALLY_RECEIVED -> RECEIVED -> CLOSED"]
+    SUP["Supplier"] --> PO
+    PO -->|"receive (atomic)"| GRN["goods_receipts (+ lines)<br/>idempotent on client key"]
+    GRN -->|"RECEIPT movement"| LEDGER
+
+    subgraph INV["Inventory (per warehouse + product)"]
+      LEDGER["stock_movements<br/>append-only ledger = source of truth<br/>RECEIPT | ALLOCATION | RELEASE | DISPATCH<br/>RETURN | ADJUSTMENT | TRANSFER_IN/OUT"]
+      LEVELS["stock_levels<br/>derived projection<br/>on_hand, reserved, available = on_hand - reserved<br/>CHECK on_hand >= 0 AND reserved <= on_hand"]
+      LEDGER -->|"same tx, FOR UPDATE lock"| LEVELS
+    end
+
+    REQ -->|"allocate (atomic, <= available, <= remaining)"| LEDGER
+    LEDGER -.->|"ALLOCATION raises reserved"| REQ
+
+    REQ --> DSP["Dispatch<br/>DRAFT -> DISPATCHED -> DELIVERED<br/>(DRAFT -> CANCELLED)"]
+    WH["Source warehouse"] --> DSP
+    DSP -->|"dispatch (atomic): DISPATCH movement<br/>lowers on_hand + reserved; bump dispatched_qty"| LEDGER
+    DSP -->|"deliver (atomic): delivered_qty <= dispatched<br/>set delivered_at"| REQ
+    DSP -.-> ATT["dispatch_attachments<br/>(delivery photo/PDF, existing object storage)"]
+
+    PRJ -.->|"project.* / purchase_order.* / inventory.* / dispatch.*"| OUT["transactional outbox (ADR 0013)"]
+    GRN -.-> OUT
+    DSP -.-> OUT
+
+    REQ ==>|"material readiness"| LEAD
+
+    classDef store fill:#eef,stroke:#88a;
+    class LEDGER,LEVELS,GRN,ATT,OUT store;

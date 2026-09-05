@@ -34,18 +34,27 @@ export interface ObjectStorageService {
 
 export const OBJECT_STORAGE = Symbol('OBJECT_STORAGE');
 
-/** A tenant/visit-prefixed key so paths are namespaced by construction —
+/** A tenant/entity-prefixed key so paths are namespaced by construction —
  *  authorization still comes from the DB row, never from key secrecy alone. */
-export function buildVisitAttachmentKey(
+export function buildEntityAttachmentKey(
   tenantId: string,
-  visitId: string,
+  entityKind: string,
+  entityId: string,
   filename: string,
 ): string {
   const ext = path
     .extname(filename)
     .slice(0, 10)
     .replace(/[^a-zA-Z0-9.]/g, '');
-  return `tenants/${tenantId}/visits/${visitId}/${randomUUID()}${ext}`;
+  return `tenants/${tenantId}/${entityKind}/${entityId}/${randomUUID()}${ext}`;
+}
+
+export function buildVisitAttachmentKey(
+  tenantId: string,
+  visitId: string,
+  filename: string,
+): string {
+  return buildEntityAttachmentKey(tenantId, 'visits', visitId, filename);
 }
 
 @Injectable()

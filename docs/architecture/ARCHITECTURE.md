@@ -110,9 +110,10 @@ Lead ingestion / integrations:
 - `EMAIL-INGESTION.md` — generic email connector + parsing configuration
 - `PABBLY-BRIDGE.md` — Pabbly as a temporary transport, not a dependency
 
-CRM / field:
+CRM / field / operations:
 
 - `CRM.md` — the reusable Lead domain
 - `FIELD-OPERATIONS.md` — visits, field agents, GPS, and site survey
+- `SUPPLY-CHAIN.md` — projects, procurement, inventory ledger, dispatch & delivery
 
 Diagrams: `docs/diagrams/`.
