@@ -25,7 +25,9 @@ export type RecipientEntity =
   | 'quotation_customer'
   | 'project_customer'
   | 'invoice_customer'
-  | 'payment_customer';
+  | 'payment_customer'
+  | 'hr_leave_employee'
+  | 'hr_expense_employee';
 
 export interface DefaultTemplate {
   key: string;
@@ -177,6 +179,35 @@ const RAW_TEMPLATES: Omit<DefaultTemplate, 'requiredVars'>[] = [
     emailBody:
       'Invoice {{invoice.number}} for {{customer.name}} is {{invoice.daysOverdue}} days overdue. ' +
       'Outstanding: {{invoice.outstanding}} {{invoice.currency}}.',
+  },
+  // --- HR & Workforce (Phase 12) ---
+  {
+    key: 'hr_leave_approved',
+    title: 'Leave {{leave.number}} approved',
+    body: 'Your {{leave.typeName}} leave from {{leave.startDate}} to {{leave.endDate}} ({{leave.totalDays}} day(s)) was approved.',
+    emailSubject: 'Your leave request {{leave.number}} was approved',
+    emailBody:
+      'Hello {{employee.name}},\n\n' +
+      'Your {{leave.typeName}} leave request {{leave.number}} from {{leave.startDate}} to {{leave.endDate}} ' +
+      '({{leave.totalDays}} day(s)) has been approved.\n\n{{tenant.name}}',
+  },
+  {
+    key: 'hr_expense_reimbursed',
+    title: 'Expense {{expense.number}} reimbursed',
+    body: '{{expense.amount}} {{expense.currency}} for claim {{expense.number}} has been reimbursed.',
+    emailSubject: 'Your expense claim {{expense.number}} was reimbursed',
+    emailBody:
+      'Hello {{employee.name}},\n\n' +
+      'Your expense claim {{expense.number}} ({{expense.amount}} {{expense.currency}}) has been reimbursed. ' +
+      'Reference: {{expense.reference}}.\n\n{{tenant.name}}',
+  },
+  {
+    key: 'hr_payroll_finalized',
+    title: 'Payroll {{payroll.name}} finalized',
+    body: 'Payroll for {{payroll.name}} was finalized: {{payroll.employeeCount}} employees, net {{payroll.netTotal}} {{payroll.currency}}.',
+    emailSubject: 'Payroll {{payroll.name}} finalized',
+    emailBody:
+      'Payroll for {{payroll.name}} was finalized. Net total {{payroll.netTotal}} {{payroll.currency}}.',
   },
 ];
 
@@ -392,6 +423,43 @@ export const DEFAULT_RULES: DefaultRule[] = [
     suppressible: true,
     deepLink: '/finance/invoices/{{invoice.id}}',
     description: 'Notify workspace admins in-app when an invoice becomes overdue.',
+  },
+  // --- HR & Workforce (Phase 12) ---
+  {
+    key: 'hr_leave_approved.employee',
+    eventType: 'hr.leave.approved',
+    templateKey: 'hr_leave_approved',
+    channels: ['in_app', 'email'],
+    recipientStrategy: 'ASSIGNED_USER',
+    entity: 'hr_leave_employee',
+    notificationType: 'success',
+    suppressible: true,
+    deepLink: '/hr/leave',
+    description: 'Notify the employee (if they have a login) when their leave is approved.',
+  },
+  {
+    key: 'hr_expense_reimbursed.employee',
+    eventType: 'hr.expense.reimbursed',
+    templateKey: 'hr_expense_reimbursed',
+    channels: ['in_app', 'email'],
+    recipientStrategy: 'ASSIGNED_USER',
+    entity: 'hr_expense_employee',
+    notificationType: 'success',
+    suppressible: true,
+    deepLink: '/hr/expenses',
+    description: 'Notify the employee when their expense claim is reimbursed.',
+  },
+  {
+    key: 'hr_payroll_finalized.admins',
+    eventType: 'hr.payroll.finalized',
+    templateKey: 'hr_payroll_finalized',
+    channels: ['in_app'],
+    recipientStrategy: 'ROLE',
+    roleKey: 'TENANT_ADMIN',
+    notificationType: 'info',
+    suppressible: true,
+    deepLink: '/hr/payroll',
+    description: 'Notify workspace admins in-app when a payroll period is finalized.',
   },
 ];
 

@@ -592,6 +592,107 @@ export const ERROR_CODES = {
     message: 'That audit record does not exist in this workspace.',
   },
 
+  // HR & Workforce (Phase 12, ADR 0041)
+  HR_EMPLOYEE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That employee does not exist in this workspace.',
+  },
+  HR_ORG_UNIT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That department, designation, location or schedule does not exist.',
+  },
+  HR_DUPLICATE_CODE: { httpStatus: 409, message: 'That code is already in use in this workspace.' },
+  HR_INVALID_MANAGER: {
+    httpStatus: 422,
+    message:
+      'The reporting manager must be another employee in this workspace and cannot create a cycle.',
+  },
+  HR_MEMBERSHIP_INVALID: {
+    httpStatus: 422,
+    message:
+      'The membership must belong to this workspace and cannot already be linked to another employee.',
+  },
+  HR_EMPLOYEE_NOT_LINKED: {
+    httpStatus: 403,
+    message: 'Your account is not linked to an employee record. Ask HR to link it.',
+  },
+  HR_INVALID_STATE: {
+    httpStatus: 422,
+    message: 'That action is not allowed from the current state.',
+  },
+  HR_ATTENDANCE_NOT_CHECKED_IN: {
+    httpStatus: 422,
+    message: 'Cannot check out without an open check-in for today.',
+  },
+  HR_ATTENDANCE_ALREADY_CHECKED_IN: { httpStatus: 409, message: 'Already checked in for today.' },
+  HR_ATTENDANCE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'No attendance record for that employee and date.',
+  },
+  HR_LEAVE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That leave request does not exist in this workspace.',
+  },
+  HR_LEAVE_TYPE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That leave type does not exist in this workspace.',
+  },
+  HR_LEAVE_OVERLAP: {
+    httpStatus: 409,
+    message: 'That employee already has approved or pending leave overlapping these dates.',
+  },
+  HR_LEAVE_INSUFFICIENT_BALANCE: {
+    httpStatus: 422,
+    message:
+      'The leave balance is not enough for this request and the policy does not permit a negative balance.',
+  },
+  HR_NOT_THE_APPROVER: {
+    httpStatus: 403,
+    message: 'You are not the assigned approver for this request.',
+  },
+  HR_EXPENSE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That expense claim does not exist in this workspace.',
+  },
+  HR_EXPENSE_CATEGORY_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That expense category does not exist in this workspace.',
+  },
+  HR_SELF_APPROVAL_FORBIDDEN: { httpStatus: 403, message: 'You cannot approve your own request.' },
+  HR_FORBIDDEN_FOR_OTHERS: {
+    httpStatus: 403,
+    message: 'You can only do this for your own employee record.',
+  },
+  HR_COMPENSATION_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'No compensation record for that employee.',
+  },
+  HR_BANK_DETAILS_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'No bank details on file for that employee.',
+  },
+  HR_PAYROLL_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That payroll period does not exist in this workspace.',
+  },
+  HR_PAYROLL_LOCKED: {
+    httpStatus: 422,
+    message: 'This payroll period is finalized and can no longer be edited.',
+  },
+  HR_PAYROLL_ENTRY_NOT_FOUND: { httpStatus: 404, message: 'That payroll entry does not exist.' },
+  HR_INCENTIVE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That incentive record does not exist in this workspace.',
+  },
+  HR_PERFORMANCE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That performance record does not exist in this workspace.',
+  },
+  HR_ATTACHMENT_INVALID: {
+    httpStatus: 422,
+    message: 'That file could not be attached — check the format and size.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

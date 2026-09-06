@@ -84,7 +84,17 @@ document map below.
 
 ## HR parallel path
 
-Tenant → Employee → Role/Manager → Attendance → Leave → Expenses.
+Tenant → Employee → Role/Manager → Attendance → Leave → Expenses →
+Compensation → Payroll → Payments → Performance.
+
+Delivered in Phase 12 (ADR 0041, `HR-WORKFORCE.md`) as a **bounded domain
+module** — other modules reach it only through narrow contracts / events, never
+its 29 `hr_*` tables. An **Employee is not an Identity** (it may link to a
+`user_tenant_memberships` row but never stores credentials/roles). The **only**
+cross-module seam is `POST /api/v1/field/visits/:id/expense-claim`, which the
+Field PWA uses to raise a claim through the same HR expense domain via the
+exported `ExpensesService`. Not a statutory payroll / tax-filing / accounting
+system.
 
 ## Future productization
 
@@ -122,5 +132,6 @@ CRM / field / operations:
 - `BRANDING.md` — tenant company profile, logo storage, brand-colour token override, onboarding & contextual help (ADR 0039)
 - `DOCUMENT-GENERATION.md` — the reusable `DocumentDefinition` → `DocumentPdfService` engine; pdfmake (pure Node), branded PDF downloads (ADR 0039)
 - `AUDIT.md` — the Global Audit Log: explicit + transactional, append-only, tenant-isolated; central `AuditService`, typed action catalogue, redaction, system actors (ADR 0040)
+- `HR-WORKFORCE.md` — the bounded HR & Workforce module: organisation, employees (≠ identity), attendance, ledger leave balances, first-class expenses + the Field seam, compensation history, immutable payroll snapshots, performance, self-service (ADR 0041)
 
 Diagrams: `docs/diagrams/`.

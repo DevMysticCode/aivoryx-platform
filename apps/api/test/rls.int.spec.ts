@@ -85,6 +85,36 @@ const RLS_TABLES = [
   'tenant_assets',
   'tenant_onboarding',
   'audit_logs',
+  // Phase 12 — HR & Workforce (ADR 0041)
+  'hr_counters',
+  'hr_departments',
+  'hr_designations',
+  'hr_work_locations',
+  'hr_work_schedules',
+  'hr_employees',
+  'hr_employment_history',
+  'hr_employee_bank_details',
+  'hr_employee_documents',
+  'hr_attendance_records',
+  'hr_attendance_corrections',
+  'hr_leave_types',
+  'hr_leave_policies',
+  'hr_leave_balances',
+  'hr_leave_requests',
+  'hr_leave_balance_transactions',
+  'hr_expense_categories',
+  'hr_expense_claims',
+  'hr_expense_reimbursements',
+  'hr_compensation_profiles',
+  'hr_compensation_components',
+  'hr_incentives',
+  'hr_payroll_periods',
+  'hr_payroll_entries',
+  'hr_payroll_entry_components',
+  'hr_payroll_payments',
+  'hr_performance_periods',
+  'hr_performance_goals',
+  'hr_performance_reviews',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -1802,6 +1832,205 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
           ),
         ).rejects.toMatchObject({ code: '23514' });
         await c.query('rollback to savepoint sp');
+      });
+    });
+  });
+
+  describe('HR & Workforce (Phase 12, ADR 0041) — bounded, tenant-isolated', () => {
+    const hr: {
+      empA: string;
+      empB: string;
+      claimA: string;
+      claimB: string;
+      catA: string;
+      catB: string;
+    } = { empA: '', empB: '', claimA: '', claimB: '', catA: '', catB: '' };
+
+    beforeAll(async () => {
+      const mkEmp = async (tenantId: string, number: string): Promise<string> => {
+        const id = randomUUID();
+        await pool.query(
+          `insert into hr_employees
+             (id, tenant_id, employee_number, first_name, last_name, display_name, joining_date, status, employment_type)
+           values ($1,$2,$3,'R','LS',$3,'2025-01-01','ACTIVE','FULL_TIME')`,
+          [id, tenantId, number],
+        );
+        return id;
+      };
+      const mkCat = async (tenantId: string): Promise<string> => {
+        const id = randomUUID();
+        await pool.query(
+          `insert into hr_expense_categories (id, tenant_id, name, code) values ($1,$2,$3,$3)`,
+          [id, tenantId, `CAT-${id.slice(0, 6)}`],
+        );
+        return id;
+      };
+      const mkClaim = async (
+        tenantId: string,
+        employeeId: string,
+        categoryId: string,
+        number: string,
+      ): Promise<string> => {
+        const id = randomUUID();
+        await pool.query(
+          `insert into hr_expense_claims
+             (id, tenant_id, claim_number, employee_id, category_id, claim_date, expense_date, amount, reimbursement_amount, status)
+           values ($1,$2,$3,$4,$5,'2026-01-01','2026-01-01','100.00','100.00','DRAFT')`,
+          [id, tenantId, number, employeeId, categoryId],
+        );
+        return id;
+      };
+
+      hr.empA = await mkEmp(fx.tenantA, 'EMP-A00001');
+      hr.empB = await mkEmp(fx.tenantB, 'EMP-B00001');
+      hr.catA = await mkCat(fx.tenantA);
+      hr.catB = await mkCat(fx.tenantB);
+      hr.claimA = await mkClaim(fx.tenantA, hr.empA, hr.catA, 'EXP-A00001');
+      hr.claimB = await mkClaim(fx.tenantB, hr.empB, hr.catB, 'EXP-B00001');
+
+      // bank details + attendance + document for tenant B (isolation targets)
+      await pool.query(
+        `insert into hr_employee_bank_details
+           (id, tenant_id, employee_id, account_holder_name, account_number, preferred_method)
+         values ($1,$2,$3,'B Holder','999888777666','BANK_TRANSFER')`,
+        [randomUUID(), fx.tenantB, hr.empB],
+      );
+      await pool.query(
+        `insert into hr_attendance_records (id, tenant_id, employee_id, work_date, status, source)
+         values ($1,$2,$3,'2026-01-02','PRESENT','WEB')`,
+        [randomUUID(), fx.tenantB, hr.empB],
+      );
+      await pool.query(
+        `insert into hr_employee_documents
+           (id, tenant_id, employee_id, kind, title, object_key, content_type, size_bytes)
+         values ($1,$2,$3,'general','B doc',$4,'application/pdf',10)`,
+        [randomUUID(), fx.tenantB, hr.empB, `tenants/${fx.tenantB}/hr-employees/${hr.empB}/x.pdf`],
+      );
+    });
+
+    it('every HR table has RLS ENABLED and FORCED and grants only DML to aivoryx_app', async () => {
+      const hrTables = RLS_TABLES.filter((t) => t.startsWith('hr_'));
+      const { rows } = await pool.query<{
+        relname: string;
+        relrowsecurity: boolean;
+        relforcerowsecurity: boolean;
+      }>(
+        `select relname, relrowsecurity, relforcerowsecurity from pg_class
+          where relnamespace='public'::regnamespace and relname = any($1)`,
+        [hrTables],
+      );
+      expect(rows.length).toBe(hrTables.length);
+      for (const r of rows) {
+        expect(r.relrowsecurity, `${r.relname} ENABLE`).toBe(true);
+        expect(r.relforcerowsecurity, `${r.relname} FORCE`).toBe(true);
+      }
+      const grant = await pool.query(
+        `select privilege_type from information_schema.role_table_grants
+          where table_name='hr_employees' and grantee='aivoryx_app' order by 1`,
+      );
+      expect(grant.rows.map((g) => g.privilege_type).sort()).toEqual([
+        'DELETE',
+        'INSERT',
+        'SELECT',
+        'UPDATE',
+      ]);
+    });
+
+    it('tenant A cannot READ tenant B HR rows (employees, claims, bank details, attendance, docs)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'hr_employees', `where tenant_id='${fx.tenantB}'`)).toBe(0);
+        expect(await count(c, 'hr_employees', `where id='${hr.empB}'`)).toBe(0);
+        expect(await count(c, 'hr_expense_claims', `where id='${hr.claimB}'`)).toBe(0);
+        expect(await count(c, 'hr_employee_bank_details', `where tenant_id='${fx.tenantB}'`)).toBe(
+          0,
+        );
+        expect(await count(c, 'hr_attendance_records', `where tenant_id='${fx.tenantB}'`)).toBe(0);
+        expect(await count(c, 'hr_employee_documents', `where tenant_id='${fx.tenantB}'`)).toBe(0);
+        // its own rows ARE visible
+        expect(await count(c, 'hr_employees', `where id='${hr.empA}'`)).toBe(1);
+        expect(await count(c, 'hr_expense_claims', `where id='${hr.claimA}'`)).toBe(1);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B HR rows (update/delete affect 0, insert rejected by WITH CHECK)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (
+            await c.query("update hr_employees set first_name='HACK' where tenant_id=$1", [
+              fx.tenantB,
+            ])
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from hr_expense_claims where tenant_id=$1', [fx.tenantB]))
+            .rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into hr_employees
+               (id, tenant_id, employee_number, first_name, last_name, display_name, joining_date, status, employment_type)
+             values (gen_random_uuid(), $1, 'EMP-X', 'x','y','x y','2025-01-01','ACTIVE','FULL_TIME')`,
+            [fx.tenantB],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query('select first_name from hr_employees where id=$1', [
+        hr.empB,
+      ]);
+      expect(rows[0].first_name).not.toBe('HACK');
+    });
+
+    it('a cross-tenant reporting manager is rejected by the composite (id, tenant_id) FK', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into hr_employees
+               (id, tenant_id, employee_number, first_name, last_name, display_name, joining_date, status, employment_type, manager_id)
+             values (gen_random_uuid(), $1, 'EMP-XM', 'x','y','x y','2025-01-01','ACTIVE','FULL_TIME', $2)`,
+            [fx.tenantA, hr.empB], // manager is a tenant-B employee
+          ),
+        ).rejects.toMatchObject({ code: '23503' }); // FK violation
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('a cross-tenant membership link is rejected by the composite membership FK', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into hr_employees
+               (id, tenant_id, employee_number, first_name, last_name, display_name, joining_date, status, employment_type, membership_id)
+             values (gen_random_uuid(), $1, 'EMP-XL', 'x','y','x y','2025-01-01','ACTIVE','FULL_TIME', $2)`,
+            [fx.tenantA, fx.adminB.membershipId], // membership belongs to tenant B
+          ),
+        ).rejects.toMatchObject({ code: '23503' });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('a cross-tenant attachment row is rejected by the composite employee FK', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into hr_employee_documents
+               (id, tenant_id, employee_id, kind, title, object_key, content_type, size_bytes)
+             values (gen_random_uuid(), $1, $2, 'general', 't', 'k', 'application/pdf', 1)`,
+            [fx.tenantA, hr.empB], // employee belongs to tenant B
+          ),
+        ).rejects.toMatchObject({ code: '23503' });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('tenant B, symmetrically, cannot see tenant A HR rows', async () => {
+      await asApp(fx.tenantB, fx.adminB.userId, async (c) => {
+        expect(await count(c, 'hr_employees', `where tenant_id='${fx.tenantA}'`)).toBe(0);
+        expect(await count(c, 'hr_expense_claims', `where id='${hr.claimA}'`)).toBe(0);
       });
     });
   });

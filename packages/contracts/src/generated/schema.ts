@@ -1026,6 +1026,1285 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/field/visits/{visitId}/expense-claim': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Raise an HR expense claim for a visit the caller worked. */
+    post: operations['createFieldVisitExpenseClaim'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/dashboard': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** HR dashboard counters. */
+    get: operations['hrDashboard'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/departments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List departments. */
+    get: operations['listHrDepartments'];
+    put?: never;
+    /** Create a department. */
+    post: operations['createHrDepartment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/departments/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a department. */
+    patch: operations['updateHrDepartment'];
+    trace?: never;
+  };
+  '/hr/designations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List designations. */
+    get: operations['listHrDesignations'];
+    put?: never;
+    /** Create a designation. */
+    post: operations['createHrDesignation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/designations/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a designation. */
+    patch: operations['updateHrDesignation'];
+    trace?: never;
+  };
+  '/hr/locations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List work locations. */
+    get: operations['listHrLocations'];
+    put?: never;
+    /** Create a work location. */
+    post: operations['createHrLocation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/locations/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a work location. */
+    patch: operations['updateHrLocation'];
+    trace?: never;
+  };
+  '/hr/schedules': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List work schedules. */
+    get: operations['listHrSchedules'];
+    put?: never;
+    /** Create a work schedule. */
+    post: operations['createHrSchedule'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/organization/chart': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The reporting hierarchy. */
+    get: operations['hrOrgChart'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search employees. */
+    get: operations['listHrEmployees'];
+    put?: never;
+    /** Create an employee. */
+    post: operations['createHrEmployee'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One employee profile. */
+    get: operations['getHrEmployee'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update an employee. */
+    patch: operations['updateHrEmployee'];
+    trace?: never;
+  };
+  '/hr/employees/{id}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Transition employee lifecycle status. */
+    post: operations['changeHrEmployeeStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees/{id}/history': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Employment history (effective-dated). */
+    get: operations['hrEmployeeHistory'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees/{id}/membership': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Link a platform membership to the employee. */
+    post: operations['linkHrEmployeeMembership'];
+    /** Unlink the platform membership. */
+    delete: operations['unlinkHrEmployeeMembership'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees/{id}/documents': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List employee documents. */
+    get: operations['listHrEmployeeDocuments'];
+    put?: never;
+    /** Attach a document to an employee. */
+    post: operations['uploadHrEmployeeDocument'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees/{id}/documents/{documentId}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download an employee document. */
+    get: operations['downloadHrEmployeeDocument'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees/{id}/compensation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Compensation history (sensitive). */
+    get: operations['hrEmployeeCompensationHistory'];
+    put?: never;
+    /** Set a new effective-dated compensation. */
+    post: operations['createHrEmployeeCompensation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees/{id}/bank-details': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Bank details (masked, sensitive). */
+    get: operations['getHrEmployeeBankDetails'];
+    put?: never;
+    /** Create or replace bank details. */
+    post: operations['upsertHrEmployeeBankDetails'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/attendance/check-in': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Check in (own attendance). */
+    post: operations['hrCheckIn'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/attendance/check-out': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Check out (own attendance). */
+    post: operations['hrCheckOut'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/attendance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search attendance records. */
+    get: operations['listHrAttendance'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/attendance/record': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Record/replace a day of attendance for an employee. */
+    post: operations['recordHrAttendance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/attendance/employees/{employeeId}/check-in': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Check in on behalf of an employee. */
+    post: operations['hrCheckInFor'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/attendance/employees/{employeeId}/check-out': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Check out on behalf of an employee. */
+    post: operations['hrCheckOutFor'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/attendance/{id}/corrections': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Correct a historical attendance record. */
+    post: operations['correctHrAttendance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/types': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List leave types with their policy. */
+    get: operations['listHrLeaveTypes'];
+    put?: never;
+    /** Create a leave type + policy. */
+    post: operations['createHrLeaveType'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/types/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a leave type + policy. */
+    patch: operations['updateHrLeaveType'];
+    trace?: never;
+  };
+  '/hr/leave/balances/{employeeId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Leave balances for an employee. */
+    get: operations['hrLeaveBalances'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/balances/adjust': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Ledger adjustment to a leave balance. */
+    post: operations['adjustHrLeaveBalance'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search leave requests. */
+    get: operations['listHrLeaveRequests'];
+    put?: never;
+    /** Create a leave request (self-service unless employeeId given). */
+    post: operations['createHrLeaveRequest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/my-requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My own leave requests. */
+    get: operations['listMyHrLeaveRequests'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/approval-queue': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Leave requests awaiting my decision. */
+    get: operations['hrLeaveApprovalQueue'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/calendar': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Leave calendar entries in a window. */
+    get: operations['hrLeaveCalendar'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/requests/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One leave request. */
+    get: operations['getHrLeaveRequest'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/requests/{id}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve a leave request. */
+    post: operations['approveHrLeaveRequest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/requests/{id}/reject': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reject a leave request. */
+    post: operations['rejectHrLeaveRequest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/leave/requests/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel a leave request. */
+    post: operations['cancelHrLeaveRequest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/categories': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List expense categories. */
+    get: operations['listHrExpenseCategories'];
+    put?: never;
+    /** Create an expense category. */
+    post: operations['createHrExpenseCategory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/categories/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update an expense category. */
+    patch: operations['updateHrExpenseCategory'];
+    trace?: never;
+  };
+  '/hr/expenses': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search expense claims. */
+    get: operations['listHrExpenseClaims'];
+    put?: never;
+    /** Create an expense claim (self-service unless employeeId given). */
+    post: operations['createHrExpenseClaim'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/my-claims': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My own expense claims. */
+    get: operations['listMyHrExpenseClaims'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One expense claim. */
+    get: operations['getHrExpenseClaim'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/{id}/submit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Submit a draft claim for approval. */
+    post: operations['submitHrExpenseClaim'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/{id}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve an expense claim. */
+    post: operations['approveHrExpenseClaim'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/{id}/reject': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reject an expense claim. */
+    post: operations['rejectHrExpenseClaim'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel an expense claim. */
+    post: operations['cancelHrExpenseClaim'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/{id}/reimburse': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Record a reimbursement payment. */
+    post: operations['reimburseHrExpenseClaim'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/expenses/{id}/receipt': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download a claim receipt. */
+    get: operations['downloadHrExpenseReceipt'];
+    put?: never;
+    /** Attach a receipt to a claim. */
+    post: operations['uploadHrExpenseReceipt'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/payroll/periods': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List payroll periods. */
+    get: operations['listHrPayrollPeriods'];
+    put?: never;
+    /** Create a draft payroll period. */
+    post: operations['createHrPayrollPeriod'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/payroll/periods/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One payroll period with its entries. */
+    get: operations['getHrPayrollPeriod'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/payroll/periods/{id}/process': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Calculate all entries for a draft period. */
+    post: operations['processHrPayrollPeriod'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/payroll/periods/{id}/finalize': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Finalize a period (freezes snapshots). */
+    post: operations['finalizeHrPayrollPeriod'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/payroll/periods/{id}/payments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Record a payroll payment for an entry. */
+    post: operations['recordHrPayrollPayment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/payroll/entries/{entryId}/payslip': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Branded payslip PDF for a payroll entry. */
+    get: operations['hrPayslipPdf'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/payroll/me/entries/{entryId}/payslip': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My own payslip PDF. */
+    get: operations['hrMyPayslipPdf'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/incentives': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search incentive records. */
+    get: operations['listHrIncentives'];
+    put?: never;
+    /** Create an incentive record (DRAFT). */
+    post: operations['createHrIncentive'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/incentives/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One incentive record. */
+    get: operations['getHrIncentive'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/incentives/{id}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve an incentive (DRAFT → APPROVED). */
+    post: operations['approveHrIncentive'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/performance/periods': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List performance periods. */
+    get: operations['listHrPerformancePeriods'];
+    put?: never;
+    /** Create a performance period. */
+    post: operations['createHrPerformancePeriod'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/performance/periods/{id}/open': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Open a performance period. */
+    post: operations['openHrPerformancePeriod'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/performance/periods/{id}/close': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Close a performance period. */
+    post: operations['closeHrPerformancePeriod'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/performance/goals': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List performance goals. */
+    get: operations['listHrPerformanceGoals'];
+    put?: never;
+    /** Create a performance goal. */
+    post: operations['createHrPerformanceGoal'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/performance/reviews': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List performance reviews. */
+    get: operations['listHrPerformanceReviews'];
+    put?: never;
+    /** Create a performance review (DRAFT). */
+    post: operations['createHrPerformanceReview'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/performance/reviews/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One performance review. */
+    get: operations['getHrPerformanceReview'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a draft/submitted review. */
+    patch: operations['updateHrPerformanceReview'];
+    trace?: never;
+  };
+  '/hr/performance/reviews/{id}/submit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Submit a review to the employee. */
+    post: operations['submitHrPerformanceReview'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/performance/reviews/{id}/acknowledge': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Acknowledge my own review. */
+    post: operations['acknowledgeHrPerformanceReview'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/performance/reviews/{id}/close': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Close a review. */
+    post: operations['closeHrPerformanceReview'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My HR profile, leave balances and today’s attendance. */
+    get: operations['hrMe'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me/leave-balances': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My leave balances. */
+    get: operations['hrMyLeaveBalances'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me/leave-requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My leave requests. */
+    get: operations['hrMyLeaveRequests'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me/attendance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My attendance records. */
+    get: operations['hrMyAttendance'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me/expenses': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My expense claims. */
+    get: operations['hrMyExpenses'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me/payroll-history': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My finalized payroll history. */
+    get: operations['hrMyPayrollHistory'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/projects': {
     parameters: {
       query?: never;
@@ -3302,7 +4581,8 @@ export interface components {
         | 'execution'
         | 'notifications'
         | 'finance'
-        | 'settings';
+        | 'settings'
+        | 'hr';
       /** @example invoice */
       entityType: string;
       /** Format: uuid */
@@ -3343,7 +4623,8 @@ export interface components {
         | 'execution'
         | 'notifications'
         | 'finance'
-        | 'settings';
+        | 'settings'
+        | 'hr';
       /** @example invoice */
       entityType: string;
       /** Format: uuid */
@@ -3870,6 +5151,964 @@ export interface components {
       uploadedByMembershipId: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    CreateFieldExpenseClaimRequestDto: {
+      /**
+       * Format: uuid
+       * @description HR expense category (e.g. Fuel / Travel).
+       */
+      categoryId: string;
+      /**
+       * Format: date
+       * @example 2026-09-06
+       */
+      expenseDate: string;
+      /**
+       * @description Claimed amount (money, 2dp).
+       * @example 640.00
+       */
+      amount: string;
+      /** @example INR */
+      currency?: string;
+      description?: string;
+      merchant?: string;
+      /**
+       * @description Mileage evidence in km — used only if the category has a mileage rate.
+       * @example 18.50
+       */
+      distanceKm?: string;
+      notes?: string;
+      /**
+       * @description Submit immediately for approval.
+       * @default true
+       */
+      autoSubmit: boolean;
+    };
+    ExpenseReimbursementDto: {
+      reimbursedAmount: string;
+      /** Format: date */
+      paymentDate: string | null;
+      paymentMethod: string | null;
+      paymentReference: string | null;
+      transactionRef: string | null;
+      /** @enum {string} */
+      status: 'PENDING' | 'PAID' | 'FAILED';
+      failureReason: string | null;
+    };
+    ExpenseClaimDto: {
+      /** Format: uuid */
+      id: string;
+      claimNumber: string;
+      /** Format: uuid */
+      employeeId: string;
+      employeeName: string;
+      employeeNumber: string;
+      categoryName: string;
+      /** Format: date */
+      expenseDate: string;
+      amount: string;
+      currency: string;
+      approvedAmount: string | null;
+      reimbursementAmount: string | null;
+      description: string | null;
+      merchant: string | null;
+      /** Format: uuid */
+      projectRef: string | null;
+      /** Format: uuid */
+      visitRef: string | null;
+      distanceKm: string | null;
+      /** @enum {string} */
+      status:
+        | 'DRAFT'
+        | 'SUBMITTED'
+        | 'APPROVED'
+        | 'REJECTED'
+        | 'REIMBURSEMENT_PENDING'
+        | 'REIMBURSED'
+        | 'REIMBURSEMENT_FAILED'
+        | 'CANCELLED';
+      hasReceipt: boolean;
+      /** Format: date-time */
+      decidedAt: string | null;
+      decisionReason: string | null;
+      reimbursement: components['schemas']['ExpenseReimbursementDto'] | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    HrDashboardDto: {
+      totalEmployees: number;
+      activeEmployees: number;
+      presentToday: number;
+      onLeaveToday: number;
+      absentToday: number;
+      pendingLeaveApprovals: number;
+      pendingExpenseApprovals: number;
+      departmentCount: number;
+      currentPayroll: Record<string, never> | null;
+    };
+    OrgUnitDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      code: string;
+      /** @enum {string} */
+      status: 'ACTIVE' | 'ARCHIVED';
+      /** @description Employees currently in this unit. */
+      employeeCount: number;
+    };
+    CreateOrgUnitDto: {
+      name: string;
+      code: string;
+    };
+    UpdateOrgUnitDto: {
+      name?: string;
+      /** @enum {string} */
+      status?: 'ACTIVE' | 'ARCHIVED';
+    };
+    WorkLocationDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      code: string;
+      /** @enum {string} */
+      status: 'ACTIVE' | 'ARCHIVED';
+      /** @description Employees currently in this unit. */
+      employeeCount: number;
+      addressLine: string | null;
+      city: string | null;
+      region: string | null;
+      country: string | null;
+      postalCode: string | null;
+      latitude: string | null;
+      longitude: string | null;
+    };
+    CreateWorkLocationDto: {
+      name: string;
+      code: string;
+      addressLine?: string;
+      city?: string;
+      region?: string;
+      country?: string;
+      postalCode?: string;
+      latitude?: string;
+      longitude?: string;
+    };
+    WorkScheduleDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** @example 09:00 */
+      startTime: string;
+      /** @example 18:00 */
+      endTime: string;
+      /** @description Bitmask: bit 0 = Monday … bit 6 = Sunday. */
+      workingDaysMask: number;
+      graceMinutes: number;
+      /** Format: uuid */
+      locationId: string | null;
+      /** @enum {string} */
+      status: 'ACTIVE' | 'ARCHIVED';
+    };
+    CreateWorkScheduleDto: {
+      name: string;
+      /** @example 09:00 */
+      startTime: string;
+      /** @example 18:00 */
+      endTime: string;
+      /** @default 31 */
+      workingDaysMask: number;
+      /** @default 0 */
+      graceMinutes: number;
+      /** Format: uuid */
+      locationId?: string;
+    };
+    OrgChartNodeDto: {
+      /** Format: uuid */
+      employeeId: string;
+      employeeNumber: string;
+      displayName: string;
+      designation: string | null;
+      department: string | null;
+      /** Format: uuid */
+      managerId: string | null;
+      directReports: number;
+    };
+    OrgChartDto: {
+      nodes: components['schemas']['OrgChartNodeDto'][];
+    };
+    EmployeeListItemDto: {
+      /** Format: uuid */
+      id: string;
+      employeeNumber: string;
+      displayName: string;
+      workEmail: string | null;
+      /** @enum {string} */
+      status: 'ACTIVE' | 'ON_LEAVE' | 'SUSPENDED' | 'TERMINATED' | 'RESIGNED' | 'INACTIVE';
+      /** @enum {string} */
+      employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN' | 'TEMPORARY';
+      department: string | null;
+      designation: string | null;
+      workLocation: string | null;
+      managerName: string | null;
+      hasLogin: boolean;
+      /** Format: date */
+      joiningDate: string;
+    };
+    EmployeeListDto: {
+      items: components['schemas']['EmployeeListItemDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    CreateEmployeeDto: {
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      displayName?: string;
+      workEmail?: string;
+      personalEmail?: string;
+      phone?: string;
+      addressLine?: string;
+      city?: string;
+      region?: string;
+      country?: string;
+      postalCode?: string;
+      emergencyContactName?: string;
+      emergencyContactPhone?: string;
+      emergencyContactRelation?: string;
+      /** Format: date */
+      joiningDate: string;
+      /** @enum {string} */
+      employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN' | 'TEMPORARY';
+      /** Format: uuid */
+      departmentId?: string;
+      /** Format: uuid */
+      designationId?: string;
+      /** Format: uuid */
+      workLocationId?: string;
+      /** Format: uuid */
+      managerId?: string;
+      /** Format: uuid */
+      scheduleId?: string;
+      category?: string;
+      /** Format: date */
+      probationEndDate?: string;
+      notes?: string;
+    };
+    EmployeeDetailDto: {
+      /** Format: uuid */
+      id: string;
+      employeeNumber: string;
+      displayName: string;
+      workEmail: string | null;
+      /** @enum {string} */
+      status: 'ACTIVE' | 'ON_LEAVE' | 'SUSPENDED' | 'TERMINATED' | 'RESIGNED' | 'INACTIVE';
+      /** @enum {string} */
+      employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN' | 'TEMPORARY';
+      department: string | null;
+      designation: string | null;
+      workLocation: string | null;
+      managerName: string | null;
+      hasLogin: boolean;
+      /** Format: date */
+      joiningDate: string;
+      firstName: string;
+      middleName: string | null;
+      lastName: string;
+      personalEmail: string | null;
+      phone: string | null;
+      addressLine: string | null;
+      city: string | null;
+      region: string | null;
+      country: string | null;
+      postalCode: string | null;
+      emergencyContactName: string | null;
+      emergencyContactPhone: string | null;
+      emergencyContactRelation: string | null;
+      category: string | null;
+      /** Format: date */
+      probationEndDate: string | null;
+      /** Format: uuid */
+      departmentId: string | null;
+      /** Format: uuid */
+      designationId: string | null;
+      /** Format: uuid */
+      workLocationId: string | null;
+      /** Format: uuid */
+      managerId: string | null;
+      /** Format: uuid */
+      scheduleId: string | null;
+      /** Format: uuid */
+      membershipId: string | null;
+      notes: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    UpdateEmployeeDto: {
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
+      displayName?: string;
+      workEmail?: string;
+      personalEmail?: string;
+      phone?: string;
+      addressLine?: string;
+      city?: string;
+      region?: string;
+      country?: string;
+      postalCode?: string;
+      emergencyContactName?: string;
+      emergencyContactPhone?: string;
+      emergencyContactRelation?: string;
+      /** Format: date */
+      joiningDate?: string;
+      /** @enum {string} */
+      employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN' | 'TEMPORARY';
+      /** Format: uuid */
+      departmentId?: string;
+      /** Format: uuid */
+      designationId?: string;
+      /** Format: uuid */
+      workLocationId?: string;
+      /** Format: uuid */
+      managerId?: string;
+      /** Format: uuid */
+      scheduleId?: string;
+      category?: string;
+      /** Format: date */
+      probationEndDate?: string;
+      notes?: string;
+      changeReason?: string;
+    };
+    ChangeEmployeeStatusDto: {
+      /** @enum {string} */
+      status: 'ACTIVE' | 'ON_LEAVE' | 'SUSPENDED' | 'TERMINATED' | 'RESIGNED' | 'INACTIVE';
+      reason?: string;
+    };
+    EmploymentHistoryItemDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      effectiveDate: string;
+      changeType: string;
+      from: Record<string, never> | null;
+      to: Record<string, never> | null;
+      reason: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    LinkMembershipDto: {
+      /** Format: uuid */
+      membershipId: string;
+    };
+    EmployeeDocumentDto: {
+      /** Format: uuid */
+      id: string;
+      kind: string;
+      title: string;
+      contentType: string;
+      sizeBytes: number;
+      originalFilename: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    AddEmployeeDocumentMetaDto: {
+      kind: string;
+      title: string;
+    };
+    CompensationComponentDto: {
+      /** @enum {string} */
+      kind: 'EARNING' | 'DEDUCTION' | 'INCENTIVE' | 'REIMBURSEMENT';
+      name: string;
+      amount: string;
+    };
+    CompensationDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      effectiveDate: string;
+      /** @enum {string} */
+      payFrequency: 'MONTHLY' | 'WEEKLY' | 'BIWEEKLY' | 'ANNUAL';
+      currency: string;
+      baseSalary: string;
+      /** @enum {string} */
+      status: 'ACTIVE' | 'SUPERSEDED';
+      components: components['schemas']['CompensationComponentDto'][];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    SalaryComponentInputDto: {
+      /** @enum {string} */
+      kind: 'EARNING' | 'DEDUCTION' | 'INCENTIVE' | 'REIMBURSEMENT';
+      name: string;
+      /** @example 5000.00 */
+      amount: string;
+    };
+    CreateCompensationDto: {
+      /** Format: date */
+      effectiveDate: string;
+      /** @enum {string} */
+      payFrequency?: 'MONTHLY' | 'WEEKLY' | 'BIWEEKLY' | 'ANNUAL';
+      /** @example INR */
+      currency?: string;
+      /** @example 50000.00 */
+      baseSalary: string;
+      components?: components['schemas']['SalaryComponentInputDto'][];
+      notes?: string;
+    };
+    BankDetailsDto: {
+      accountHolderName: string;
+      bankName: string | null;
+      /**
+       * @description Masked — only the last 4 digits.
+       * @example ••••••••4821
+       */
+      accountNumberMasked: string;
+      branch: string | null;
+      bankIdentifier: string | null;
+      swiftBic: string | null;
+      /** @enum {string} */
+      preferredMethod: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE' | 'UPI' | 'OTHER';
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    UpsertBankDetailsDto: {
+      accountHolderName: string;
+      bankName?: string;
+      accountNumber: string;
+      branch?: string;
+      bankIdentifier?: string;
+      swiftBic?: string;
+      /** @enum {string} */
+      preferredMethod?: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE' | 'UPI' | 'OTHER';
+    };
+    GeoPointDto: {
+      lat: number;
+      lng: number;
+      accuracyM?: number;
+    };
+    CheckInDto: {
+      point?: components['schemas']['GeoPointDto'];
+      notes?: string;
+    };
+    AttendanceRecordDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      employeeId: string;
+      employeeName: string;
+      employeeNumber: string;
+      /** Format: date */
+      workDate: string;
+      /** @enum {string} */
+      status:
+        | 'PRESENT'
+        | 'ABSENT'
+        | 'HALF_DAY'
+        | 'LATE'
+        | 'EARLY_DEPARTURE'
+        | 'ON_LEAVE'
+        | 'HOLIDAY'
+        | 'WEEKEND'
+        | 'OTHER';
+      /** Format: date-time */
+      checkInAt: string | null;
+      /** Format: date-time */
+      checkOutAt: string | null;
+      gpsDistanceM: string | null;
+      /** @enum {string} */
+      source: 'WEB' | 'MOBILE' | 'ADMIN' | 'IMPORT' | 'INTEGRATION';
+      notes: string | null;
+      correctionCount: number;
+    };
+    AttendanceListDto: {
+      items: components['schemas']['AttendanceRecordDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    RecordAttendanceDto: {
+      /** Format: uuid */
+      employeeId: string;
+      /** Format: date */
+      workDate: string;
+      /** @enum {string} */
+      status:
+        | 'PRESENT'
+        | 'ABSENT'
+        | 'HALF_DAY'
+        | 'LATE'
+        | 'EARLY_DEPARTURE'
+        | 'ON_LEAVE'
+        | 'HOLIDAY'
+        | 'WEEKEND'
+        | 'OTHER';
+      /** Format: date-time */
+      checkInAt?: string;
+      /** Format: date-time */
+      checkOutAt?: string;
+      notes?: string;
+    };
+    CorrectAttendanceDto: {
+      /** @enum {string} */
+      field: 'status' | 'checkInAt' | 'checkOutAt' | 'notes';
+      /** @description New value (string; ISO datetime for time fields). */
+      value: string;
+      reason: string;
+    };
+    LeaveTypeDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      code: string;
+      isPaid: boolean;
+      requiresApproval: boolean;
+      allowNegativeBalance: boolean;
+      /** @enum {string} */
+      status: 'ACTIVE' | 'ARCHIVED';
+      policy: Record<string, never> | null;
+    };
+    UpsertLeaveTypeDto: {
+      name: string;
+      code: string;
+      /** @default true */
+      isPaid: boolean;
+      /** @default true */
+      requiresApproval: boolean;
+      /** @default false */
+      allowNegativeBalance: boolean;
+      /** @example 18.00 */
+      annualQuota: string;
+      /** @enum {string} */
+      approverStrategy?: 'REPORTING_MANAGER' | 'HR' | 'DESIGNATED_APPROVER' | 'TENANT_ADMIN';
+      /** Format: uuid */
+      designatedApproverMembershipId?: string;
+    };
+    LeaveBalanceDto: {
+      /** Format: uuid */
+      leaveTypeId: string;
+      leaveTypeName: string;
+      year: number;
+      opening: string;
+      accrued: string;
+      consumed: string;
+      adjusted: string;
+      balance: string;
+    };
+    AdjustLeaveBalanceDto: {
+      /** Format: uuid */
+      employeeId: string;
+      /** Format: uuid */
+      leaveTypeId: string;
+      /** @example 2026 */
+      year: number;
+      /**
+       * @description Signed amount to add to the balance ledger.
+       * @example -2.00
+       */
+      amount: string;
+      reason: string;
+    };
+    LeaveRequestDto: {
+      /** Format: uuid */
+      id: string;
+      requestNumber: string;
+      /** Format: uuid */
+      employeeId: string;
+      employeeName: string;
+      employeeNumber: string;
+      /** Format: uuid */
+      leaveTypeId: string;
+      leaveTypeName: string;
+      /** Format: date */
+      startDate: string;
+      /** Format: date */
+      endDate: string;
+      isHalfDay: boolean;
+      halfDayPeriod: string | null;
+      totalDays: string;
+      reason: string | null;
+      /** @enum {string} */
+      status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+      /** Format: uuid */
+      approverMembershipId: string | null;
+      approverName: string | null;
+      decisionReason: string | null;
+      /** Format: date-time */
+      decidedAt: string | null;
+      /** @description The requester’s current balance for this leave type. */
+      availableBalance: string | null;
+      hasAttachment: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    LeaveRequestListDto: {
+      items: components['schemas']['LeaveRequestDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    LeaveCalendarItemDto: {
+      /** Format: uuid */
+      id: string;
+      employeeName: string;
+      department: string | null;
+      leaveTypeName: string;
+      /** Format: date */
+      startDate: string;
+      /** Format: date */
+      endDate: string;
+      totalDays: string;
+      /** @enum {string} */
+      status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+    };
+    CreateLeaveRequestDto: {
+      /**
+       * Format: uuid
+       * @description HR/managers only — omit for a self-service request.
+       */
+      employeeId?: string;
+      /** Format: uuid */
+      leaveTypeId: string;
+      /** Format: date */
+      startDate: string;
+      /** Format: date */
+      endDate: string;
+      /** @default false */
+      isHalfDay: boolean;
+      /** @enum {string} */
+      halfDayPeriod?: 'FIRST_HALF' | 'SECOND_HALF';
+      reason?: string;
+      notes?: string;
+    };
+    LeaveDecisionDto: {
+      reason?: string;
+    };
+    ExpenseCategoryDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      code: string;
+      defaultMileageRate: string | null;
+      requiresReceipt: boolean;
+      /** @enum {string} */
+      status: 'ACTIVE' | 'ARCHIVED';
+    };
+    UpsertExpenseCategoryDto: {
+      name: string;
+      code: string;
+      /** @description Set to make this a mileage category (distance × rate). */
+      defaultMileageRate?: string;
+      /** @default true */
+      requiresReceipt: boolean;
+    };
+    ExpenseClaimListDto: {
+      items: components['schemas']['ExpenseClaimDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    CreateExpenseClaimDto: {
+      /**
+       * Format: uuid
+       * @description HR/managers only — omit for self-service.
+       */
+      employeeId?: string;
+      /** Format: uuid */
+      categoryId: string;
+      /** Format: date */
+      expenseDate: string;
+      /** @example 850.00 */
+      amount: string;
+      /** @example INR */
+      currency?: string;
+      description?: string;
+      merchant?: string;
+      /**
+       * Format: uuid
+       * @description Soft reference to a project (no FK).
+       */
+      projectRef?: string;
+      /**
+       * Format: uuid
+       * @description Soft reference to a field visit (no FK).
+       */
+      visitRef?: string;
+      /** @description Mileage evidence, km. */
+      distanceKm?: string;
+      notes?: string;
+    };
+    ExpenseDecisionDto: {
+      /**
+       * @description Approve for a lower amount (correction).
+       * @example 800.00
+       */
+      approvedAmount?: string;
+      reason?: string;
+    };
+    RecordReimbursementDto: {
+      /** @example 850.00 */
+      reimbursedAmount: string;
+      /** Format: date */
+      paymentDate: string;
+      /** @enum {string} */
+      paymentMethod: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE' | 'UPI' | 'OTHER';
+      paymentReference?: string;
+      transactionRef?: string;
+      /** @description Set with FAILED to record a failed reimbursement. */
+      status?: string;
+      failureReason?: string;
+    };
+    PayrollPeriodDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** Format: date */
+      periodStart: string;
+      /** Format: date */
+      periodEnd: string;
+      /** Format: date */
+      payDate: string | null;
+      currency: string;
+      /** @enum {string} */
+      status:
+        | 'DRAFT'
+        | 'PROCESSING'
+        | 'FINALIZED'
+        | 'PAYMENT_PROCESSING'
+        | 'PARTIALLY_PAID'
+        | 'PAID'
+        | 'CANCELLED';
+      grossTotal: string;
+      deductionTotal: string;
+      incentiveTotal: string;
+      reimbursementTotal: string;
+      netTotal: string;
+      employeeCount: number;
+      paidCount: number;
+      pendingCount: number;
+      failedCount: number;
+      /** Format: date-time */
+      finalizedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    PayrollPeriodListDto: {
+      items: components['schemas']['PayrollPeriodDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    CreatePayrollPeriodDto: {
+      /** @example September 2026 */
+      name: string;
+      /** Format: date */
+      periodStart: string;
+      /** Format: date */
+      periodEnd: string;
+      /** Format: date */
+      payDate?: string;
+      /** @example INR */
+      currency?: string;
+    };
+    PayrollEntryDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      employeeId: string;
+      employeeNumber: string;
+      employeeName: string;
+      currency: string;
+      baseEarnings: string;
+      allowancesTotal: string;
+      incentivesTotal: string;
+      reimbursementsTotal: string;
+      deductionsTotal: string;
+      grossPay: string;
+      netPay: string;
+      /** @enum {string} */
+      paymentStatus: 'PENDING' | 'PAID' | 'PARTIALLY_PAID' | 'FAILED';
+      paidAmount: string;
+      components: components['schemas']['CompensationComponentDto'][];
+    };
+    PayrollPeriodDetailDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** Format: date */
+      periodStart: string;
+      /** Format: date */
+      periodEnd: string;
+      /** Format: date */
+      payDate: string | null;
+      currency: string;
+      /** @enum {string} */
+      status:
+        | 'DRAFT'
+        | 'PROCESSING'
+        | 'FINALIZED'
+        | 'PAYMENT_PROCESSING'
+        | 'PARTIALLY_PAID'
+        | 'PAID'
+        | 'CANCELLED';
+      grossTotal: string;
+      deductionTotal: string;
+      incentiveTotal: string;
+      reimbursementTotal: string;
+      netTotal: string;
+      employeeCount: number;
+      paidCount: number;
+      pendingCount: number;
+      failedCount: number;
+      /** Format: date-time */
+      finalizedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      entries: components['schemas']['PayrollEntryDto'][];
+    };
+    RecordPayrollPaymentDto: {
+      /** Format: uuid */
+      payrollEntryId: string;
+      /** @example 59650.00 */
+      amount: string;
+      /** @enum {string} */
+      paymentMethod: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE' | 'UPI' | 'OTHER';
+      /** Format: date */
+      paymentDate: string;
+      paymentReference?: string;
+      transactionRef?: string;
+      /** @enum {string} */
+      status?: 'PAID' | 'FAILED';
+      failureReason?: string;
+    };
+    IncentiveDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      employeeId: string;
+      employeeName: string;
+      amount: string;
+      currency: string;
+      type: string;
+      reason: string | null;
+      /** @enum {string} */
+      status: 'DRAFT' | 'APPROVED' | 'REJECTED' | 'PAID';
+      /** Format: uuid */
+      payrollPeriodId: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    IncentiveListDto: {
+      items: components['schemas']['IncentiveDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    CreateIncentiveDto: {
+      /** Format: uuid */
+      employeeId: string;
+      /** @example 3000.00 */
+      amount: string;
+      /** @example INR */
+      currency?: string;
+      /**
+       * @description Free-text, tenant-defined.
+       * @example performance
+       */
+      type: string;
+      reason?: string;
+      sourceRef?: string;
+    };
+    PerformancePeriodDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** Format: date */
+      periodStart: string;
+      /** Format: date */
+      periodEnd: string;
+      /** @enum {string} */
+      status: 'DRAFT' | 'OPEN' | 'CLOSED';
+    };
+    CreatePerformancePeriodDto: {
+      /** @example H2 2026 */
+      name: string;
+      /** Format: date */
+      periodStart: string;
+      /** Format: date */
+      periodEnd: string;
+    };
+    PerformanceGoalDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      performancePeriodId: string;
+      /** Format: uuid */
+      employeeId: string;
+      employeeName: string;
+      title: string;
+      description: string | null;
+      weight: number | null;
+      /** @enum {string} */
+      status: 'OPEN' | 'ACHIEVED' | 'MISSED' | 'CANCELLED';
+    };
+    CreateGoalDto: {
+      /** Format: uuid */
+      performancePeriodId: string;
+      /** Format: uuid */
+      employeeId: string;
+      title: string;
+      description?: string;
+      weight?: number;
+    };
+    PerformanceReviewDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      performancePeriodId: string;
+      periodName: string;
+      /** Format: uuid */
+      employeeId: string;
+      employeeName: string;
+      overallRating: number | null;
+      managerComments: string | null;
+      employeeComments: string | null;
+      /** @enum {string} */
+      status: 'DRAFT' | 'SUBMITTED' | 'ACKNOWLEDGED' | 'CLOSED';
+      /** Format: date-time */
+      submittedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreateReviewDto: {
+      /** Format: uuid */
+      performancePeriodId: string;
+      /** Format: uuid */
+      employeeId: string;
+      overallRating?: number;
+      managerComments?: string;
+    };
+    UpdateReviewDto: {
+      overallRating?: number;
+      managerComments?: string;
+      employeeComments?: string;
+    };
+    HrMeDto: {
+      employee: components['schemas']['EmployeeDetailDto'];
+      leaveBalances: components['schemas']['LeaveBalanceDto'][];
+      todayAttendance: components['schemas']['AttendanceRecordDto'] | null;
+    };
+    PayrollHistoryItemDto: {
+      periodName: string;
+      /** Format: date */
+      payDate: string | null;
+      netPay: string;
+      currency: string;
+      /** @enum {string} */
+      paymentStatus: 'PENDING' | 'PAID' | 'PARTIALLY_PAID' | 'FAILED';
+      paymentReference: string | null;
+      /** Format: uuid */
+      payrollEntryId: string;
     };
     ProjectDto: {
       /** Format: uuid */
@@ -4998,10 +7237,6 @@ export interface components {
     MaterialOverrideDto: {
       reason: string;
     };
-    GeoPointDto: {
-      lat: number;
-      lng: number;
-    };
     StartInstallationDto: {
       location?: components['schemas']['GeoPointDto'];
     };
@@ -6113,7 +8348,49 @@ export interface operations {
           | 'settings.company.updated'
           | 'settings.branding.updated'
           | 'settings.logo.updated'
-          | 'settings.onboarding.updated';
+          | 'settings.onboarding.updated'
+          | 'hr.employee.created'
+          | 'hr.employee.updated'
+          | 'hr.employee.status_changed'
+          | 'hr.employee.department_changed'
+          | 'hr.employee.designation_changed'
+          | 'hr.employee.manager_changed'
+          | 'hr.employee.membership_linked'
+          | 'hr.employee.membership_unlinked'
+          | 'hr.employee.document_added'
+          | 'hr.bank_details.updated'
+          | 'hr.organization.department_created'
+          | 'hr.organization.designation_created'
+          | 'hr.organization.location_created'
+          | 'hr.organization.schedule_created'
+          | 'hr.attendance.checked_in'
+          | 'hr.attendance.checked_out'
+          | 'hr.attendance.recorded'
+          | 'hr.attendance.corrected'
+          | 'hr.leave.type_created'
+          | 'hr.leave.requested'
+          | 'hr.leave.approved'
+          | 'hr.leave.rejected'
+          | 'hr.leave.cancelled'
+          | 'hr.leave.balance_adjusted'
+          | 'hr.expense.created'
+          | 'hr.expense.submitted'
+          | 'hr.expense.approved'
+          | 'hr.expense.rejected'
+          | 'hr.expense.cancelled'
+          | 'hr.expense.reimbursed'
+          | 'hr.expense.reimbursement_failed'
+          | 'hr.compensation.created'
+          | 'hr.compensation.changed'
+          | 'hr.incentive.created'
+          | 'hr.incentive.approved'
+          | 'hr.payroll.created'
+          | 'hr.payroll.processed'
+          | 'hr.payroll.finalized'
+          | 'hr.payroll.payment_recorded'
+          | 'hr.performance.goal_created'
+          | 'hr.performance.review_submitted'
+          | 'hr.performance.review_closed';
         module?:
           | 'auth'
           | 'identity'
@@ -6125,7 +8402,8 @@ export interface operations {
           | 'execution'
           | 'notifications'
           | 'finance'
-          | 'settings';
+          | 'settings'
+          | 'hr';
         entityType?: string;
         entityId?: string;
         page?: number;
@@ -8536,6 +10814,3727 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createFieldVisitExpenseClaim: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        visitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateFieldExpenseClaimRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrDashboard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HrDashboardDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrDepartments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgUnitDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrDepartment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateOrgUnitDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgUnitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateHrDepartment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateOrgUnitDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgUnitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrDesignations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgUnitDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrDesignation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateOrgUnitDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgUnitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateHrDesignation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateOrgUnitDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgUnitDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrLocations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkLocationDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrLocation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateWorkLocationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkLocationDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateHrLocation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateOrgUnitDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkLocationDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrSchedules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkScheduleDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrSchedule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateWorkScheduleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkScheduleDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrOrgChart: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgChartDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrEmployees: {
+    parameters: {
+      query?: {
+        q?: string;
+        departmentId?: string;
+        designationId?: string;
+        workLocationId?: string;
+        status?: 'ACTIVE' | 'ON_LEAVE' | 'SUSPENDED' | 'TERMINATED' | 'RESIGNED' | 'INACTIVE';
+        employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN' | 'TEMPORARY';
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrEmployee: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateEmployeeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getHrEmployee: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateHrEmployee: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateEmployeeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  changeHrEmployeeStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChangeEmployeeStatusDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrEmployeeHistory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmploymentHistoryItemDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  linkHrEmployeeMembership: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LinkMembershipDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  unlinkHrEmployeeMembership: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrEmployeeDocuments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDocumentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadHrEmployeeDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddEmployeeDocumentMetaDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDocumentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadHrEmployeeDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrEmployeeCompensationHistory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompensationDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrEmployeeCompensation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateCompensationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompensationDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getHrEmployeeBankDetails: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BankDetailsDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  upsertHrEmployeeBankDetails: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertBankDetailsDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BankDetailsDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrCheckIn: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckInDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttendanceRecordDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrCheckOut: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckInDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttendanceRecordDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrAttendance: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        from?: string;
+        to?: string;
+        status?:
+          | 'PRESENT'
+          | 'ABSENT'
+          | 'HALF_DAY'
+          | 'LATE'
+          | 'EARLY_DEPARTURE'
+          | 'ON_LEAVE'
+          | 'HOLIDAY'
+          | 'WEEKEND'
+          | 'OTHER';
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttendanceListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  recordHrAttendance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecordAttendanceDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttendanceRecordDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrCheckInFor: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        employeeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckInDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttendanceRecordDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrCheckOutFor: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        employeeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckInDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttendanceRecordDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  correctHrAttendance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CorrectAttendanceDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttendanceRecordDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrLeaveTypes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveTypeDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrLeaveType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertLeaveTypeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveTypeDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateHrLeaveType: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertLeaveTypeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveTypeDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrLeaveBalances: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        employeeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveBalanceDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  adjustHrLeaveBalance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdjustLeaveBalanceDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveBalanceDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrLeaveRequests: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        leaveTypeId?: string;
+        status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+        from?: string;
+        to?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrLeaveRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLeaveRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listMyHrLeaveRequests: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        leaveTypeId?: string;
+        status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+        from?: string;
+        to?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrLeaveApprovalQueue: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrLeaveCalendar: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        departmentId?: string;
+        leaveTypeId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveCalendarItemDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getHrLeaveRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  approveHrLeaveRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LeaveDecisionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  rejectHrLeaveRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LeaveDecisionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  cancelHrLeaveRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrExpenseCategories: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseCategoryDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrExpenseCategory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertExpenseCategoryDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseCategoryDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateHrExpenseCategory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertExpenseCategoryDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseCategoryDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrExpenseClaims: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        categoryId?: string;
+        status?:
+          | 'DRAFT'
+          | 'SUBMITTED'
+          | 'APPROVED'
+          | 'REJECTED'
+          | 'REIMBURSEMENT_PENDING'
+          | 'REIMBURSED'
+          | 'REIMBURSEMENT_FAILED'
+          | 'CANCELLED';
+        visitRef?: string;
+        from?: string;
+        to?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrExpenseClaim: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateExpenseClaimDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listMyHrExpenseClaims: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        categoryId?: string;
+        status?:
+          | 'DRAFT'
+          | 'SUBMITTED'
+          | 'APPROVED'
+          | 'REJECTED'
+          | 'REIMBURSEMENT_PENDING'
+          | 'REIMBURSED'
+          | 'REIMBURSEMENT_FAILED'
+          | 'CANCELLED';
+        visitRef?: string;
+        from?: string;
+        to?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getHrExpenseClaim: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  submitHrExpenseClaim: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  approveHrExpenseClaim: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExpenseDecisionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  rejectHrExpenseClaim: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExpenseDecisionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  cancelHrExpenseClaim: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  reimburseHrExpenseClaim: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecordReimbursementDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadHrExpenseReceipt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadHrExpenseReceipt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrPayrollPeriods: {
+    parameters: {
+      query?: {
+        status?:
+          | 'DRAFT'
+          | 'PROCESSING'
+          | 'FINALIZED'
+          | 'PAYMENT_PROCESSING'
+          | 'PARTIALLY_PAID'
+          | 'PAID'
+          | 'CANCELLED';
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayrollPeriodListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrPayrollPeriod: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreatePayrollPeriodDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayrollPeriodDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getHrPayrollPeriod: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayrollPeriodDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  processHrPayrollPeriod: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayrollPeriodDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  finalizeHrPayrollPeriod: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayrollPeriodDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  recordHrPayrollPayment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecordPayrollPaymentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayrollPeriodDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrPayslipPdf: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMyPayslipPdf: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrIncentives: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        status?: 'DRAFT' | 'APPROVED' | 'REJECTED' | 'PAID';
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IncentiveListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrIncentive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateIncentiveDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IncentiveDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getHrIncentive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IncentiveDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  approveHrIncentive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IncentiveDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrPerformancePeriods: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformancePeriodDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrPerformancePeriod: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreatePerformancePeriodDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformancePeriodDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  openHrPerformancePeriod: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformancePeriodDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  closeHrPerformancePeriod: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformancePeriodDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrPerformanceGoals: {
+    parameters: {
+      query?: {
+        performancePeriodId?: string;
+        employeeId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceGoalDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrPerformanceGoal: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateGoalDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceGoalDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listHrPerformanceReviews: {
+    parameters: {
+      query?: {
+        performancePeriodId?: string;
+        employeeId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceReviewDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createHrPerformanceReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReviewDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceReviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getHrPerformanceReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceReviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateHrPerformanceReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateReviewDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceReviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  submitHrPerformanceReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceReviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  acknowledgeHrPerformanceReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceReviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  closeHrPerformanceReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceReviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HrMeDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMyLeaveBalances: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveBalanceDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMyLeaveRequests: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        leaveTypeId?: string;
+        status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+        from?: string;
+        to?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveRequestListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMyAttendance: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        from?: string;
+        to?: string;
+        status?:
+          | 'PRESENT'
+          | 'ABSENT'
+          | 'HALF_DAY'
+          | 'LATE'
+          | 'EARLY_DEPARTURE'
+          | 'ON_LEAVE'
+          | 'HOLIDAY'
+          | 'WEEKEND'
+          | 'OTHER';
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttendanceListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMyExpenses: {
+    parameters: {
+      query?: {
+        employeeId?: string;
+        categoryId?: string;
+        status?:
+          | 'DRAFT'
+          | 'SUBMITTED'
+          | 'APPROVED'
+          | 'REJECTED'
+          | 'REIMBURSEMENT_PENDING'
+          | 'REIMBURSED'
+          | 'REIMBURSEMENT_FAILED'
+          | 'CANCELLED';
+        visitRef?: string;
+        from?: string;
+        to?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpenseClaimListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMyPayrollHistory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayrollHistoryItemDto'][];
+        };
       };
       401: {
         headers: {

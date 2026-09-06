@@ -10,6 +10,8 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -423,4 +425,60 @@ export class VisitAttachmentDto {
 
   @ApiProperty({ format: 'date-time' })
   createdAt!: string;
+}
+
+// ---- field → HR expense claim (Phase 12, ADR 0041) ---------------------
+// The Field module never touches HR tables. This request is forwarded through
+// the narrow `ExpensesService.createFromFieldVisit` capability; the employee is
+// resolved server-side from the caller's authenticated membership.
+
+export class CreateFieldExpenseClaimRequestDto {
+  @ApiProperty({ format: 'uuid', description: 'HR expense category (e.g. Fuel / Travel).' })
+  @IsUUID()
+  categoryId!: string;
+
+  @ApiProperty({ format: 'date', example: '2026-09-06' })
+  @IsISO8601()
+  expenseDate!: string;
+
+  @ApiProperty({ example: '640.00', description: 'Claimed amount (money, 2dp).' })
+  @Matches(/^\d+(\.\d{1,2})?$/)
+  amount!: string;
+
+  @ApiProperty({ required: false, example: 'INR' })
+  @IsOptional()
+  @Matches(/^[A-Z]{3}$/)
+  currency?: string;
+
+  @ApiProperty({ required: false, maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  description?: string;
+
+  @ApiProperty({ required: false, maxLength: 200 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  merchant?: string;
+
+  @ApiProperty({
+    required: false,
+    example: '18.50',
+    description: 'Mileage evidence in km — used only if the category has a mileage rate.',
+  })
+  @IsOptional()
+  @Matches(/^\d+(\.\d{1,2})?$/)
+  distanceKm?: string;
+
+  @ApiProperty({ required: false, maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  notes?: string;
+
+  @ApiProperty({ required: false, default: true, description: 'Submit immediately for approval.' })
+  @IsOptional()
+  @IsBoolean()
+  autoSubmit?: boolean;
 }

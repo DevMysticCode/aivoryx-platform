@@ -45,6 +45,7 @@ export const auditModule = pgEnum('audit_module', [
   'notifications',
   'finance',
   'settings',
+  'hr',
 ]);
 
 export const auditLogs = pgTable(

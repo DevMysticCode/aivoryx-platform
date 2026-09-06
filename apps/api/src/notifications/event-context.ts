@@ -30,6 +30,12 @@ const {
   invoices,
   payments,
   userTenantMemberships,
+  employees,
+  leaveRequests,
+  leaveTypes,
+  expenseClaims,
+  expenseReimbursements,
+  payrollPeriods,
 } = schema;
 
 export interface EventRefs {
@@ -466,6 +472,122 @@ export async function buildEventContext(
         customer: { name: c?.name ?? 'Customer' },
       },
       refs: { ...baseRefs, customerEmail: c?.email ?? null, customerName: c?.name ?? null },
+    };
+  }
+
+  // --- hr.leave.approved (Phase 12) ---------------------------
+  if (type === 'hr.leave.approved') {
+    const leaveRequestId = str(payload, 'leaveRequestId');
+    if (!leaveRequestId) return null;
+    const [lr] = await tx
+      .select({
+        number: leaveRequests.requestNumber,
+        startDate: leaveRequests.startDate,
+        endDate: leaveRequests.endDate,
+        totalDays: leaveRequests.totalDays,
+        employeeId: leaveRequests.employeeId,
+        leaveTypeId: leaveRequests.leaveTypeId,
+      })
+      .from(leaveRequests)
+      .where(and(eq(leaveRequests.tenantId, tenantId), eq(leaveRequests.id, leaveRequestId)))
+      .limit(1);
+    if (!lr) return null;
+    const [lt] = await tx
+      .select({ name: leaveTypes.name })
+      .from(leaveTypes)
+      .where(and(eq(leaveTypes.tenantId, tenantId), eq(leaveTypes.id, lr.leaveTypeId)))
+      .limit(1);
+    const [emp] = await tx
+      .select({ name: employees.displayName, membershipId: employees.membershipId })
+      .from(employees)
+      .where(and(eq(employees.tenantId, tenantId), eq(employees.id, lr.employeeId)))
+      .limit(1);
+    return {
+      context: {
+        tenant,
+        employee: { name: emp?.name ?? 'Employee' },
+        leave: {
+          number: lr.number,
+          typeName: lt?.name ?? 'Leave',
+          startDate: lr.startDate,
+          endDate: lr.endDate,
+          totalDays: lr.totalDays,
+        },
+      },
+      refs: { ...baseRefs, assignedMembershipId: emp?.membershipId ?? null },
+    };
+  }
+
+  // --- hr.expense.reimbursed (Phase 12) ----------------------
+  if (type === 'hr.expense.reimbursed') {
+    const expenseClaimId = str(payload, 'expenseClaimId');
+    if (!expenseClaimId) return null;
+    const [ec] = await tx
+      .select({
+        number: expenseClaims.claimNumber,
+        amount: expenseClaims.amount,
+        currency: expenseClaims.currency,
+        employeeId: expenseClaims.employeeId,
+      })
+      .from(expenseClaims)
+      .where(and(eq(expenseClaims.tenantId, tenantId), eq(expenseClaims.id, expenseClaimId)))
+      .limit(1);
+    if (!ec) return null;
+    const [rb] = await tx
+      .select({ ref: expenseReimbursements.paymentReference })
+      .from(expenseReimbursements)
+      .where(
+        and(
+          eq(expenseReimbursements.tenantId, tenantId),
+          eq(expenseReimbursements.expenseClaimId, expenseClaimId),
+        ),
+      )
+      .limit(1);
+    const [emp] = await tx
+      .select({ name: employees.displayName, membershipId: employees.membershipId })
+      .from(employees)
+      .where(and(eq(employees.tenantId, tenantId), eq(employees.id, ec.employeeId)))
+      .limit(1);
+    return {
+      context: {
+        tenant,
+        employee: { name: emp?.name ?? 'Employee' },
+        expense: {
+          number: ec.number,
+          amount: money(ec.amount),
+          currency: ec.currency,
+          reference: rb?.ref ?? '—',
+        },
+      },
+      refs: { ...baseRefs, assignedMembershipId: emp?.membershipId ?? null },
+    };
+  }
+
+  // --- hr.payroll.finalized (Phase 12) ----------------------
+  if (type === 'hr.payroll.finalized') {
+    const payrollPeriodId = str(payload, 'payrollPeriodId');
+    if (!payrollPeriodId) return null;
+    const [pp] = await tx
+      .select({
+        name: payrollPeriods.name,
+        netTotal: payrollPeriods.netTotal,
+        currency: payrollPeriods.currency,
+      })
+      .from(payrollPeriods)
+      .where(and(eq(payrollPeriods.tenantId, tenantId), eq(payrollPeriods.id, payrollPeriodId)))
+      .limit(1);
+    if (!pp) return null;
+    return {
+      context: {
+        tenant,
+        payroll: {
+          name: pp.name,
+          netTotal: money(pp.netTotal),
+          currency: pp.currency,
+          employeeCount: typeof payload.employeeCount === 'number' ? payload.employeeCount : 0,
+        },
+      },
+      refs: baseRefs,
     };
   }
 

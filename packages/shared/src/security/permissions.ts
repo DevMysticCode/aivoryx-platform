@@ -223,6 +223,60 @@ export const PERMISSION_DEFINITIONS = [
   // append-only and has no write/delete API. Not granted to a user just because
   // they can use a business module.
   { key: 'audit.read', description: 'View the workspace audit log.' },
+
+  // HR & Workforce (Phase 12, ADR 0041). A bounded domain. Sensitive
+  // permissions (compensation, bank details) are deliberately narrow and are
+  // NOT implied by the general HR-read permissions.
+  { key: 'hr.employee.read', description: 'View employee profiles (no salary or bank details).' },
+  { key: 'hr.employee.create', description: 'Create employee profiles.' },
+  { key: 'hr.employee.update', description: 'Edit employee profiles and employment details.' },
+  {
+    key: 'hr.employee.manage',
+    description: 'Employee lifecycle, membership linking and documents.',
+  },
+  {
+    key: 'hr.organization.read',
+    description: 'View departments, designations, locations and the org chart.',
+  },
+  {
+    key: 'hr.organization.manage',
+    description: 'Manage departments, designations, locations and schedules.',
+  },
+  { key: 'hr.attendance.read', description: 'View team / workspace attendance.' },
+  { key: 'hr.attendance.self', description: 'Record and view one’s own attendance.' },
+  { key: 'hr.attendance.manage', description: 'Record attendance on behalf of employees.' },
+  { key: 'hr.attendance.correct', description: 'Correct historical attendance records.' },
+  { key: 'hr.leave.read', description: 'View team / workspace leave.' },
+  { key: 'hr.leave.request', description: 'Request and cancel one’s own leave.' },
+  { key: 'hr.leave.approve', description: 'Approve or reject leave requests assigned to me.' },
+  { key: 'hr.leave.manage', description: 'Manage leave types, policies and balances.' },
+  { key: 'hr.expense.read', description: 'View team / workspace expense claims.' },
+  { key: 'hr.expense.submit', description: 'Create and submit one’s own expense claims.' },
+  { key: 'hr.expense.approve', description: 'Approve or reject expense claims assigned to me.' },
+  { key: 'hr.expense.manage', description: 'Manage expense categories and mileage rates.' },
+  {
+    key: 'hr.expense.reimburse',
+    description: 'Record reimbursement payments for approved claims.',
+  },
+  { key: 'hr.compensation.read', description: 'View employee compensation (highly sensitive).' },
+  {
+    key: 'hr.compensation.manage',
+    description: 'Create and change employee compensation records.',
+  },
+  {
+    key: 'hr.bank_details.read',
+    description: 'View employee bank / payment details (highly sensitive).',
+  },
+  { key: 'hr.bank_details.manage', description: 'Edit employee bank / payment details.' },
+  { key: 'hr.payroll.read', description: 'View payroll periods, entries and payslips.' },
+  { key: 'hr.payroll.manage', description: 'Create and edit draft payroll periods.' },
+  { key: 'hr.payroll.process', description: 'Process (calculate) a payroll period.' },
+  { key: 'hr.payroll.finalize', description: 'Finalize a payroll period (freezes its snapshot).' },
+  { key: 'hr.payroll.payment', description: 'Record payroll payment processing.' },
+  { key: 'hr.incentive.read', description: 'View incentive records.' },
+  { key: 'hr.incentive.manage', description: 'Create and approve incentive records.' },
+  { key: 'hr.performance.read', description: 'View performance periods, goals and reviews.' },
+  { key: 'hr.performance.manage', description: 'Manage performance periods, goals and reviews.' },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];
