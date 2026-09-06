@@ -74,6 +74,13 @@ const RLS_TABLES = [
   'notification_preferences',
   'notifications',
   'notification_deliveries',
+  'finance_counters',
+  'finance_idempotency',
+  'invoices',
+  'invoice_lines',
+  'payments',
+  'payment_allocations',
+  'credit_notes',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -1421,6 +1428,157 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         await c.query('reset role').catch(() => undefined);
         c.release();
       }
+    });
+  });
+
+  describe('Finance — operational invoicing & payments (Phase 9, ADR 0038)', () => {
+    const FINANCE_TABLES = [
+      'finance_counters',
+      'finance_idempotency',
+      'invoices',
+      'invoice_lines',
+      'payments',
+      'payment_allocations',
+      'credit_notes',
+    ];
+    const fids: Record<'A' | 'B', Record<string, string>> = { A: {}, B: {} };
+
+    beforeAll(async () => {
+      for (const [key, tenantId, membershipId] of [
+        ['A', fx.tenantA, fx.admin.membershipId],
+        ['B', fx.tenantB, fx.adminB.membershipId],
+      ] as const) {
+        const g = fids[key];
+        g.customer = randomUUID();
+        g.invoice = randomUUID();
+        g.line = randomUUID();
+        g.payment = randomUUID();
+        g.alloc = randomUUID();
+        g.credit = randomUUID();
+
+        await pool.query(
+          `insert into customers (id, tenant_id, number, name, created_by_membership_id)
+           values ($1,$2,$3,'RLS Finance Co',$4)`,
+          [g.customer, tenantId, `CUST-RLS-${key}`, membershipId],
+        );
+        await pool.query(
+          `insert into invoices (id, tenant_id, number, customer_id, status, currency, grand_total, subtotal, tax_total, created_by_membership_id)
+           values ($1,$2,$3,$4,'ISSUED','INR','1000.00','1000.00','0.00',$5)`,
+          [g.invoice, tenantId, `INV-RLS-${key}`, g.customer, membershipId],
+        );
+        await pool.query(
+          `insert into invoice_lines (id, tenant_id, invoice_id, line_no, description, quantity, unit_price, line_total)
+           values ($1,$2,$3,1,'Line','1','1000.00','1000.00')`,
+          [g.line, tenantId, g.invoice],
+        );
+        await pool.query(
+          `insert into payments (id, tenant_id, number, customer_id, payment_date, amount, currency, method, created_by_membership_id)
+           values ($1,$2,$3,$4, now()::date, '1000.00','INR','BANK_TRANSFER',$5)`,
+          [g.payment, tenantId, `PMT-RLS-${key}`, g.customer, membershipId],
+        );
+        await pool.query(
+          `insert into payment_allocations (id, tenant_id, payment_id, invoice_id, amount, created_by_membership_id)
+           values ($1,$2,$3,$4,'1000.00',$5)`,
+          [g.alloc, tenantId, g.payment, g.invoice, membershipId],
+        );
+        await pool.query(
+          `insert into credit_notes (id, tenant_id, number, customer_id, invoice_id, status, currency, reason, amount, created_by_membership_id)
+           values ($1,$2,$3,$4,$5,'DRAFT','INR','RLS','10.00',$6)`,
+          [g.credit, tenantId, `CN-RLS-${key}`, g.customer, g.invoice, membershipId],
+        );
+        await pool.query(
+          `insert into finance_counters (id, tenant_id, kind, prefix, value) values (gen_random_uuid(),$1,'invoice','INV-',5)`,
+          [tenantId],
+        );
+      }
+    });
+
+    it('every finance table has RLS ENABLED and FORCED', async () => {
+      const { rows } = await pool.query<{ relname: string; a: boolean; f: boolean }>(
+        `select relname, relrowsecurity as a, relforcerowsecurity as f
+           from pg_class where relnamespace='public'::regnamespace and relname = any($1)`,
+        [FINANCE_TABLES],
+      );
+      expect(rows.length).toBe(FINANCE_TABLES.length);
+      for (const r of rows) {
+        expect(r.a, `${r.relname} ENABLE`).toBe(true);
+        expect(r.f, `${r.relname} FORCE`).toBe(true);
+      }
+    });
+
+    it('tenant A cannot READ any tenant B finance row', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        for (const table of FINANCE_TABLES) {
+          expect(await count(c, table, `where tenant_id = '${fx.tenantB}'`), `read ${table}`).toBe(
+            0,
+          );
+        }
+        expect(await count(c, 'invoices', `where id = '${fids.B.invoice}'`)).toBe(0);
+        expect(await count(c, 'payments', `where id = '${fids.B.payment}'`)).toBe(0);
+        expect(await count(c, 'payment_allocations', `where id = '${fids.B.alloc}'`)).toBe(0);
+      });
+    });
+
+    it('tenant A sees exactly its own finance rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'invoices', `where id = '${fids.A.invoice}'`)).toBe(1);
+        expect(await count(c, 'payments', `where id = '${fids.A.payment}'`)).toBe(1);
+        expect(await count(c, 'credit_notes', `where id = '${fids.A.credit}'`)).toBe(1);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B finance rows (update/delete 0, insert rejected)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (await c.query("update invoices set status='PAID' where id=$1", [fids.B.invoice]))
+            .rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query("update payments set status='REVERSED' where id=$1", [fids.B.payment]))
+            .rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from payment_allocations where tenant_id=$1', [fx.tenantB]))
+            .rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into invoices (id,tenant_id,number,customer_id,status,currency,grand_total,subtotal,tax_total,created_by_membership_id)
+             values (gen_random_uuid(),$1,'X',$2,'DRAFT','INR','0','0','0',$3)`,
+            [fx.tenantB, fids.B.customer, fx.adminB.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query('select status from invoices where id=$1', [
+        fids.B.invoice,
+      ]);
+      expect(rows[0]?.status).toBe('ISSUED');
+    });
+
+    it('a cross-tenant composite FK (allocation -> invoice) is rejected', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into payment_allocations (id,tenant_id,payment_id,invoice_id,amount,created_by_membership_id)
+             values (gen_random_uuid(),$1,$2,$3,'1.00',$4)`,
+            [fx.tenantA, fids.A.payment, fids.B.invoice, fx.admin.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: expect.stringMatching(/23503|42501/) });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('the DB CHECK blocks an over-allocated invoice even on a raw connection', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query("update invoices set amount_paid='2000.00' where id=$1", [fids.A.invoice]),
+        ).rejects.toMatchObject({ code: '23514' });
+        await c.query('rollback to savepoint sp');
+      });
     });
   });
 

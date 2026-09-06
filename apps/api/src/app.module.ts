@@ -17,6 +17,7 @@ import { SupplyModule } from './supply/supply.module.js';
 import { CommercialModule } from './commercial/commercial.module.js';
 import { ExecutionModule } from './execution/execution.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { FinanceModule } from './finance/finance.module.js';
 
 /**
  * Composition root.
@@ -50,6 +51,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
     CommercialModule,
     ExecutionModule,
     NotificationsModule,
+    FinanceModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

@@ -190,6 +190,25 @@ export const PERMISSION_DEFINITIONS = [
     key: 'notifications.preferences.update',
     description: 'Change your notification preferences.',
   },
+
+  // Finance — operational invoicing & payments (Phase 9, ADR 0038).
+  { key: 'finance.read', description: 'View the finance overview and financial summaries.' },
+  { key: 'finance.invoices.read', description: 'View invoices and their lines.' },
+  { key: 'finance.invoices.create', description: 'Create draft invoices.' },
+  { key: 'finance.invoices.update', description: 'Edit a draft invoice.' },
+  {
+    key: 'finance.invoices.issue',
+    description: 'Issue an invoice (freezes its financial snapshot).',
+  },
+  { key: 'finance.invoices.cancel', description: 'Cancel or void an invoice.' },
+  { key: 'finance.payments.read', description: 'View payments and their allocations.' },
+  { key: 'finance.payments.create', description: 'Record a customer payment.' },
+  { key: 'finance.payments.allocate', description: 'Allocate a payment to one or more invoices.' },
+  { key: 'finance.payments.reverse', description: 'Reverse a recorded payment.' },
+  { key: 'finance.credit_notes.read', description: 'View credit notes.' },
+  { key: 'finance.credit_notes.create', description: 'Create a draft credit note.' },
+  { key: 'finance.credit_notes.issue', description: 'Issue a credit note.' },
+  { key: 'finance.credit_notes.cancel', description: 'Cancel a credit note.' },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];

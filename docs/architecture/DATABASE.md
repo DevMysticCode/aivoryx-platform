@@ -143,6 +143,24 @@ works with zero configuration; a tenant row _overrides_ a default by key. Plus
 strategy. No second event bus — the engine consumes the existing
 `outbox_events`. See `NOTIFICATIONS.md`.
 
+## Finance entities
+
+**Implemented (Phase 9, ADR 0038):**
+
+invoices -- number unique per tenant; frozen totals; projections amount_paid / amount_credited; CHECK paid + credited <= grand_total
+invoice_lines -- snapshot line_subtotal/discount/taxable/tax/total; discount_type AMOUNT|PERCENT
+payments -- RECORDED -> REVERSED / CANCELLED; never deleted; projection allocated_amount; CHECK allocated <= amount
+payment_allocations -- authoritative payment<->invoice link; unique(tenant, payment, invoice); reversed_at = null means active
+credit_notes -- lump adjustment; DRAFT -> ISSUED / CANCELLED; optional invoice link
+finance_counters -- (tenant, kind) -> prefix / padding / value; atomic increment for INV-000001 style numbers
+finance_idempotency -- (tenant, key) -> operation / result_ref for Idempotency-Key retries
+
+Operational finance only � no ledger / chart of accounts / journals / P&L /
+statutory accounting. `outstanding` and `overdue` are derived, never stored.
+Money is `NUMERIC` throughout (no floats). Finance events flow to the existing
+`outbox_events`; no `credit_note_lines` table (a credit note is a single
+amount). See `FINANCE.md`.
+
 ## Lead ingestion entities
 
 **Implemented (Phase 3, ADR 0032):**
@@ -259,6 +277,15 @@ project_id is not null` on `quotations`. It also adds
   `UPDATE`, both gated on the server-only `app.outbox_dispatcher` GUC — used by
   the notification worker to drain the outbox (it opens no other table and
   cannot `INSERT`).
+- Migration `0011` (Phase 9, ADR 0038) adds the 7 finance tables (`invoices`,
+  `invoice_lines`, `payments`, `payment_allocations`, `credit_notes`,
+  `finance_counters`, `finance_idempotency`) � all `ENABLE` + `FORCE` RLS with
+  the same hand-appended-block pattern, composite `(id, tenant_id)` FKs,
+  per-tenant unique numbers / idempotency keys, money non-negative CHECKs and
+  the invariant CHECKs `amount_paid + amount_credited <= grand_total` and
+  `allocated_amount <= amount`, plus 6 enums
+  (`invoice_status`, `invoice_source`, `line_discount_type`, `payment_status`,
+  `payment_method`, `credit_note_status`).
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

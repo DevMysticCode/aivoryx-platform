@@ -481,6 +481,77 @@ export const ERROR_CODES = {
     message: 'No email provider is configured, so email notifications cannot be delivered.',
   },
 
+  // finance — operational invoicing & payments (Phase 9, ADR 0038)
+  INVOICE_NOT_FOUND: { httpStatus: 404, message: 'That invoice was not found.' },
+  INVOICE_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the invoice’s current status.',
+  },
+  INVOICE_IMMUTABLE: {
+    httpStatus: 409,
+    message:
+      'An issued invoice cannot be edited. Cancel it and raise a new one, or issue a credit note.',
+  },
+  INVOICE_NO_LINES: {
+    httpStatus: 422,
+    message: 'An invoice must have at least one line before it can be issued.',
+  },
+  INVOICE_HAS_ALLOCATIONS: {
+    httpStatus: 409,
+    message: 'This invoice has payments allocated to it. Reverse them before cancelling.',
+  },
+  PAYMENT_NOT_FOUND: { httpStatus: 404, message: 'That payment was not found.' },
+  PAYMENT_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the payment’s current status.',
+  },
+  PAYMENT_ALREADY_REVERSED: {
+    httpStatus: 409,
+    message: 'That payment has already been reversed.',
+  },
+  ALLOCATION_NOT_FOUND: { httpStatus: 404, message: 'That payment allocation was not found.' },
+  ALLOCATION_EXCEEDS_INVOICE: {
+    httpStatus: 422,
+    message: 'The allocation would exceed the invoice’s outstanding balance.',
+  },
+  ALLOCATION_EXCEEDS_PAYMENT: {
+    httpStatus: 422,
+    message: 'The allocation would exceed the payment’s unallocated amount.',
+  },
+  ALLOCATION_INVOICE_NOT_OPEN: {
+    httpStatus: 409,
+    message: 'Payments can only be allocated to an issued invoice that is not fully paid.',
+  },
+  ALLOCATION_DUPLICATE: {
+    httpStatus: 409,
+    message: 'This payment is already allocated to that invoice.',
+  },
+  CREDIT_NOTE_NOT_FOUND: { httpStatus: 404, message: 'That credit note was not found.' },
+  CREDIT_NOTE_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the credit note’s current status.',
+  },
+  CREDIT_NOTE_IMMUTABLE: {
+    httpStatus: 409,
+    message: 'An issued credit note cannot be edited. Cancel it and raise a new one.',
+  },
+  CREDIT_NOTE_EXCEEDS_INVOICE: {
+    httpStatus: 422,
+    message: 'The credit note would exceed the invoice’s outstanding balance.',
+  },
+  FINANCE_CURRENCY_MISMATCH: {
+    httpStatus: 422,
+    message: 'The currencies of the records involved do not match.',
+  },
+  FINANCE_INVALID_AMOUNT: {
+    httpStatus: 422,
+    message: 'That amount is not valid for this financial operation.',
+  },
+  FINANCE_IDEMPOTENCY_MISMATCH: {
+    httpStatus: 409,
+    message: 'That idempotency key was already used for a different operation.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

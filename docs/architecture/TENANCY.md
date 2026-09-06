@@ -34,7 +34,10 @@ Single database, single schema, shared tables. Every tenant-owned row carries
   `project_defects`, `project_net_metering`, `project_handover`,
   `project_execution_attachments` (last 9: Phase 7, ADR 0036),
   `notification_templates`, `notification_rules`, `notification_preferences`,
-  `notifications`, `notification_deliveries` (last 5: Phase 8, ADR 0037).
+  `notifications`, `notification_deliveries` (last 5: Phase 8, ADR 0037),
+  `invoices`, `invoice_lines`, `payments`, `payment_allocations`,
+  `credit_notes`, `finance_counters`, `finance_idempotency` (last 7: Phase 9,
+  ADR 0038).
   `users`, `sessions`, global `permissions` have no RLS.
 - `outbox_events` additionally carries two dispatcher-only policies (Phase 8):
   a cross-tenant `SELECT` and the `dispatched_at` `UPDATE`, both gated on the

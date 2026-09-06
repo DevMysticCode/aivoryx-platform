@@ -27,6 +27,8 @@ const {
   visits,
   dispatches,
   purchaseOrders,
+  invoices,
+  payments,
   userTenantMemberships,
 } = schema;
 
@@ -354,6 +356,87 @@ export async function buildEventContext(
     return {
       context: { tenant, lead: { id: leadId, name: owner.name, source: owner.source } },
       refs: { ...baseRefs, assignedMembershipId: owner.assigned },
+    };
+  }
+
+  // --- invoice.issued / invoice.overdue (Phase 9) -----------
+  if (type === 'invoice.issued' || type === 'invoice.overdue') {
+    const invoiceId = str(payload, 'invoiceId');
+    if (!invoiceId) return null;
+    const [inv] = await tx
+      .select({
+        id: invoices.id,
+        number: invoices.number,
+        currency: invoices.currency,
+        grandTotal: invoices.grandTotal,
+        amountPaid: invoices.amountPaid,
+        amountCredited: invoices.amountCredited,
+        dueDate: invoices.dueDate,
+        customerId: invoices.customerId,
+      })
+      .from(invoices)
+      .where(and(eq(invoices.tenantId, tenantId), eq(invoices.id, invoiceId)))
+      .limit(1);
+    if (!inv) return null;
+    const [c] = await tx
+      .select({ name: customers.name, email: customers.email })
+      .from(customers)
+      .where(and(eq(customers.tenantId, tenantId), eq(customers.id, inv.customerId)))
+      .limit(1);
+    // outstanding is carried on the finance event (fixed-point); fall back to
+    // grand_total (an invoice is fully outstanding the moment it is issued).
+    const outstanding = money(str(payload, 'outstanding') ?? inv.grandTotal);
+    return {
+      context: {
+        tenant,
+        invoice: {
+          id: inv.id,
+          number: inv.number,
+          currency: inv.currency,
+          grandTotal: money(inv.grandTotal),
+          dueDate: inv.dueDate ?? 'on receipt',
+          outstanding,
+          daysOverdue: typeof payload.daysOverdue === 'number' ? payload.daysOverdue : 0,
+        },
+        customer: { name: c?.name ?? 'Customer' },
+      },
+      refs: { ...baseRefs, customerEmail: c?.email ?? null, customerName: c?.name ?? null },
+    };
+  }
+
+  // --- payment.recorded (Phase 9) --------------------------
+  if (type === 'payment.recorded') {
+    const paymentId = str(payload, 'paymentId');
+    if (!paymentId) return null;
+    const [pay] = await tx
+      .select({
+        id: payments.id,
+        number: payments.number,
+        amount: payments.amount,
+        currency: payments.currency,
+        customerId: payments.customerId,
+      })
+      .from(payments)
+      .where(and(eq(payments.tenantId, tenantId), eq(payments.id, paymentId)))
+      .limit(1);
+    if (!pay) return null;
+    const [c] = await tx
+      .select({ name: customers.name, email: customers.email })
+      .from(customers)
+      .where(and(eq(customers.tenantId, tenantId), eq(customers.id, pay.customerId)))
+      .limit(1);
+    return {
+      context: {
+        tenant,
+        payment: {
+          id: pay.id,
+          number: pay.number,
+          amount: money(pay.amount),
+          currency: pay.currency,
+        },
+        customer: { name: c?.name ?? 'Customer' },
+      },
+      refs: { ...baseRefs, customerEmail: c?.email ?? null, customerName: c?.name ?? null },
     };
   }
 

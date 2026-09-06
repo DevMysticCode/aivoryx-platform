@@ -14,6 +14,7 @@ import {
   Send,
   ShieldCheck,
   Users,
+  Wallet,
 } from 'lucide-react';
 import { webEnv } from '@/lib/env';
 import { NotificationBell } from '@/components/notification-bell';
@@ -27,6 +28,7 @@ const NAV = [
   { href: '/inventory/products', label: 'Inventory', icon: Boxes },
   { href: '/procurement/purchase-orders', label: 'Procurement', icon: ClipboardList },
   { href: '/logistics/dispatches', label: 'Logistics', icon: Send },
+  { href: '/finance', label: 'Finance', icon: Wallet },
   { href: '/admin', label: 'Administration', icon: ShieldCheck },
   { href: '/health', label: 'System health', icon: Activity },
 ];
