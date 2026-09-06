@@ -100,6 +100,23 @@ export const PERMISSION_DEFINITIONS = [
   { key: 'dispatch.update', description: 'Edit or cancel a draft dispatch.' },
   { key: 'dispatch.dispatch', description: 'Send a dispatch out from the warehouse.' },
   { key: 'dispatch.deliver', description: 'Confirm delivery of a dispatch at the project site.' },
+
+  // Commercial — customers, quotations & project booking (Phase 6, ADR 0035).
+  { key: 'customers.read', description: 'View customers/commercial parties.' },
+  { key: 'customers.create', description: 'Create a customer, or promote a lead to one.' },
+  { key: 'customers.update', description: 'Edit a customer record.' },
+
+  { key: 'quotations.read', description: 'View quotations and their revisions.' },
+  { key: 'quotations.create', description: 'Create a quotation for a lead.' },
+  { key: 'quotations.update', description: 'Edit the current draft revision of a quotation.' },
+  { key: 'quotations.send', description: 'Mark a quotation as sent (freezes the revision).' },
+  { key: 'quotations.accept', description: 'Record customer acceptance of a quotation.' },
+  { key: 'quotations.cancel', description: 'Cancel a quotation.' },
+  { key: 'quotations.revise', description: 'Create a new revision of an open quotation.' },
+  {
+    key: 'quotations.book',
+    description: 'Book an accepted quotation — promotes the customer and activates the project.',
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];

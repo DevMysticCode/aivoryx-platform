@@ -14,6 +14,7 @@ import { CrmModule } from './crm/crm.module.js';
 import { IntegrationsModule } from './integrations/integrations.module.js';
 import { FieldModule } from './field/field.module.js';
 import { SupplyModule } from './supply/supply.module.js';
+import { CommercialModule } from './commercial/commercial.module.js';
 
 /**
  * Composition root.
@@ -44,6 +45,7 @@ import { SupplyModule } from './supply/supply.module.js';
     IntegrationsModule,
     FieldModule,
     SupplyModule,
+    CommercialModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

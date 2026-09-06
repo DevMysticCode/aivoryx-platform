@@ -93,6 +93,22 @@ no "set quantity" table — `stock_levels` is only ever moved by a
 no floats. Delivery proof reuses the Phase 4 object-storage adapter
 (`dispatch_attachments` mirrors `visit_attachments`). See `SUPPLY-CHAIN.md`.
 
+## Commercial entities
+
+**Implemented (Phase 6, ADR 0035):**
+
+customers -- reusable commercial party; created by promoting a lead (carries lead_id)
+quotations
+quotation_revisions -- immutable priced snapshots; totals STORED, not only derived
+quotation_lines -- product_id optional (service/custom lines allowed)
+quotation_activities
+quotation_attachments
+
+Money is `NUMERIC` throughout (no floats). Booking is one atomic transaction
+that promotes the customer and activates the **existing Phase 5 `projects`
+row** (`DRAFT → APPROVED`) — there is no `orders` entity. Only a `draft`
+revision is mutable; `revise` appends a new one. See `COMMERCIAL.md`.
+
 ## Lead ingestion entities
 
 **Implemented (Phase 3, ADR 0032):**
@@ -182,6 +198,14 @@ superseded by the lead-ingestion entities above.
   `FORCE` RLS with the same hand-appended-block pattern, composite
   `(id, tenant_id)` FKs, a `stock_levels` non-negative `CHECK`, and a partial
   unique index on `stock_movements (tenant_id, idempotency_key)`.
+- Migration `0008` (Phase 6, ADR 0035) adds the 6 commercial tables
+  (`customers`, `quotations`, `quotation_revisions`, `quotation_lines`,
+  `quotation_activities`, `quotation_attachments`) — all `ENABLE` + `FORCE`
+  RLS with the same hand-appended-block pattern, composite `(id, tenant_id)`
+  FKs, non-negative money `CHECK`s, and `unique(tenant_id, project_id) where
+project_id is not null` on `quotations`. It also adds
+  `quotation_created/sent/accepted/booked` to `lead_activity_type` and
+  `booked` to `project_activity_type` via `ALTER TYPE ... ADD VALUE`.
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

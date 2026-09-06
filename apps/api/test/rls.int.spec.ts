@@ -54,6 +54,12 @@ const RLS_TABLES = [
   'dispatches',
   'dispatch_lines',
   'dispatch_attachments',
+  'customers',
+  'quotations',
+  'quotation_revisions',
+  'quotation_lines',
+  'quotation_activities',
+  'quotation_attachments',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -917,6 +923,146 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
           c.query(
             `insert into projects (id,tenant_id,lead_id,number,status,created_by_membership_id)
              values (gen_random_uuid(),$1,$2,'PRJ-X','DRAFT',$3)`,
+            [fx.tenantA, ids.B.lead, fx.admin.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: expect.stringMatching(/23503|42501/) });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+  });
+
+  describe('Commercial — customers & quotations (Phase 6, ADR 0035)', () => {
+    const COMMERCIAL_TABLES = [
+      'customers',
+      'quotations',
+      'quotation_revisions',
+      'quotation_lines',
+      'quotation_activities',
+      'quotation_attachments',
+    ];
+    const ids: Record<'A' | 'B', Record<string, string>> = { A: {}, B: {} };
+
+    beforeAll(async () => {
+      for (const [key, tenantId, membershipId] of [
+        ['A', fx.tenantA, fx.admin.membershipId],
+        ['B', fx.tenantB, fx.adminB.membershipId],
+      ] as const) {
+        const g = ids[key];
+        g.lead = randomUUID();
+        g.customer = randomUUID();
+        g.quotation = randomUUID();
+        g.revision = randomUUID();
+        g.line = randomUUID();
+
+        await pool.query(
+          `insert into leads (id, tenant_id, name, phone, normalized_phone) values ($1,$2,'Commercial RLS Lead','9994440000','9994440000')`,
+          [g.lead, tenantId],
+        );
+        await pool.query(
+          `insert into customers (id,tenant_id,number,name,status,created_by_membership_id)
+           values ($1,$2,'CUST-1','RLS Customer','active',$3)`,
+          [g.customer, tenantId, membershipId],
+        );
+        await pool.query(
+          `insert into quotations (id,tenant_id,number,lead_id,customer_id,status,current_revision_no,created_by_membership_id)
+           values ($1,$2,'Q-1',$3,$4,'DRAFT',1,$5)`,
+          [g.quotation, tenantId, g.lead, g.customer, membershipId],
+        );
+        await pool.query(
+          `insert into quotation_revisions (id,tenant_id,quotation_id,revision_no,status,total,created_by_membership_id)
+           values ($1,$2,$3,1,'draft','100.00',$4)`,
+          [g.revision, tenantId, g.quotation, membershipId],
+        );
+        await pool.query(
+          `insert into quotation_lines (id,tenant_id,revision_id,line_no,description,quantity,unit_price,line_net,line_tax,line_total)
+           values ($1,$2,$3,1,'Line','1','100.00','100.00','0.00','100.00')`,
+          [g.line, tenantId, g.revision],
+        );
+        await pool.query(
+          `insert into quotation_activities (id,tenant_id,quotation_id,type,actor_membership_id,payload)
+           values ($1,$2,$3,'created',$4,'{}'::jsonb)`,
+          [randomUUID(), tenantId, g.quotation, membershipId],
+        );
+        await pool.query(
+          `insert into quotation_attachments (id,tenant_id,quotation_id,object_key,content_type,file_size)
+           values ($1,$2,$3,$4,'application/pdf',2048)`,
+          [
+            randomUUID(),
+            tenantId,
+            g.quotation,
+            `tenants/${tenantId}/quotations/${g.quotation}/${randomUUID()}.pdf`,
+          ],
+        );
+      }
+    });
+
+    it('every Phase 6 tenant-owned table has RLS ENABLED and FORCED', async () => {
+      const { rows } = await pool.query<{ relname: string; a: boolean; f: boolean }>(
+        `select relname, relrowsecurity as a, relforcerowsecurity as f
+           from pg_class where relnamespace='public'::regnamespace and relname = any($1)`,
+        [COMMERCIAL_TABLES],
+      );
+      expect(rows.length).toBe(COMMERCIAL_TABLES.length);
+      for (const r of rows) {
+        expect(r.a, `${r.relname} ENABLE`).toBe(true);
+        expect(r.f, `${r.relname} FORCE`).toBe(true);
+      }
+    });
+
+    it('tenant A cannot READ any tenant B row across the commercial tables', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        for (const table of COMMERCIAL_TABLES) {
+          expect(await count(c, table, `where tenant_id = '${fx.tenantB}'`), `read ${table}`).toBe(
+            0,
+          );
+        }
+      });
+    });
+
+    it('tenant A sees exactly its own commercial rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'quotations', `where id = '${ids.A.quotation}'`)).toBe(1);
+        expect(await count(c, 'quotations', `where id = '${ids.B.quotation}'`)).toBe(0);
+        expect(await count(c, 'customers', `where id = '${ids.B.customer}'`)).toBe(0);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B commercial rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (await c.query("update quotations set status='CANCELLED' where id=$1", [ids.B.quotation]))
+            .rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query("update quotation_lines set unit_price='0' where id=$1", [ids.B.line]))
+            .rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from customers where id=$1', [ids.B.customer])).rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into quotation_activities (id,tenant_id,quotation_id,type,payload)
+             values (gen_random_uuid(),$1,$2,'sent','{}'::jsonb)`,
+            [fx.tenantB, ids.B.quotation],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query('select status from quotations where id=$1', [
+        ids.B.quotation,
+      ]);
+      expect(rows[0]?.status).toBe('DRAFT');
+    });
+
+    it('a cross-tenant composite FK is rejected by the database', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into quotations (id,tenant_id,number,lead_id,status,current_revision_no,created_by_membership_id)
+             values (gen_random_uuid(),$1,'Q-X',$2,'DRAFT',1,$3)`,
             [fx.tenantA, ids.B.lead, fx.admin.membershipId],
           ),
         ).rejects.toMatchObject({ code: expect.stringMatching(/23503|42501/) });

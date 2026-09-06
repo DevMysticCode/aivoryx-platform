@@ -71,6 +71,12 @@ export const leadActivityType = pgEnum('lead_activity_type', [
   'visit_checked_out',
   'visit_completed',
   'visit_cancelled',
+  // Commercial milestones surfaced onto the lead timeline (Phase 6, ADR 0035)
+  // — the detailed quotation timeline lives in `quotation_activities`.
+  'quotation_created',
+  'quotation_sent',
+  'quotation_accepted',
+  'quotation_booked',
 ]);
 
 export const followupStatus = pgEnum('followup_status', ['pending', 'completed', 'cancelled']);

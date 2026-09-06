@@ -115,5 +115,6 @@ CRM / field / operations:
 - `CRM.md` — the reusable Lead domain
 - `FIELD-OPERATIONS.md` — visits, field agents, GPS, and site survey
 - `SUPPLY-CHAIN.md` — projects, procurement, inventory ledger, dispatch & delivery
+- `COMMERCIAL.md` — customers, quotations, revisions & atomic project booking
 
 Diagrams: `docs/diagrams/`.

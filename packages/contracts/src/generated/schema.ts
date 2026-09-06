@@ -1548,6 +1548,300 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/customers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search customers. */
+    get: operations['listCustomers'];
+    put?: never;
+    /** Create a customer. */
+    post: operations['createCustomer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/customers/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A customer with linked records. */
+    get: operations['getCustomer'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a customer. */
+    patch: operations['updateCustomer'];
+    trace?: never;
+  };
+  '/customers/from-lead/{leadId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Promote a CRM lead to a customer. */
+    post: operations['promoteLeadToCustomer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search quotations. */
+    get: operations['listQuotations'];
+    put?: never;
+    /** Create a quotation for a lead. */
+    post: operations['createQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A quotation with all revisions. */
+    get: operations['getQuotation'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit the current draft revision (header + lines). */
+    patch: operations['updateQuotation'];
+    trace?: never;
+  };
+  '/quotations/{id}/activities': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Quotation timeline. */
+    get: operations['listQuotationActivities'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/print': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Server-rendered printable quotation document. */
+    get: operations['printQuotation'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/revise': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create a new editable revision. */
+    post: operations['reviseQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/send': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark sent — freezes the revision. */
+    post: operations['sendQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/accept': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Record customer acceptance. */
+    post: operations['acceptQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel a quotation. */
+    post: operations['cancelQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/expire': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark a sent quotation expired. */
+    post: operations['expireQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/book': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Book an accepted quotation — promotes the customer and activates the project. */
+    post: operations['bookQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/attachments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Quotation documents. */
+    get: operations['listQuotationAttachments'];
+    put?: never;
+    /** Attach a document. */
+    post: operations['uploadQuotationAttachment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/attachments/{attachmentId}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download a document. */
+    get: operations['downloadQuotationAttachment'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/{id}/attachments/{attachmentId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a document. */
+    delete: operations['deleteQuotationAttachment'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/leads/{leadId}/quotations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A lead's quotations. */
+    get: operations['listLeadQuotations'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2804,6 +3098,307 @@ export interface components {
       deliveryNotes?: string;
       /** @description Per-line delivered quantities; omit to accept every line in full. */
       lines?: components['schemas']['DeliveryLineInputDto'][];
+    };
+    CustomerDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      name: string;
+      phone: string | null;
+      email: string | null;
+      addressLine: string | null;
+      city: string | null;
+      state: string | null;
+      postalCode: string | null;
+      country: string | null;
+      siteAddressLine: string | null;
+      siteCity: string | null;
+      siteState: string | null;
+      taxReference: string | null;
+      notes: string | null;
+      /** @enum {string} */
+      status: 'prospect' | 'active' | 'inactive';
+      /** Format: uuid */
+      leadId: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CustomerListDto: {
+      items: components['schemas']['CustomerDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    CustomerLinkDto: {
+      /** Format: uuid */
+      id: string;
+      label: string;
+      status: string | null;
+    };
+    CustomerDetailDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      name: string;
+      phone: string | null;
+      email: string | null;
+      addressLine: string | null;
+      city: string | null;
+      state: string | null;
+      postalCode: string | null;
+      country: string | null;
+      siteAddressLine: string | null;
+      siteCity: string | null;
+      siteState: string | null;
+      taxReference: string | null;
+      notes: string | null;
+      /** @enum {string} */
+      status: 'prospect' | 'active' | 'inactive';
+      /** Format: uuid */
+      leadId: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      leads: components['schemas']['CustomerLinkDto'][];
+      quotations: components['schemas']['CustomerLinkDto'][];
+      projects: components['schemas']['CustomerLinkDto'][];
+    };
+    CreateCustomerDto: {
+      name: string;
+      /** @description Auto-generated if omitted. */
+      number?: string;
+      phone?: string;
+      email?: string;
+      addressLine?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+      siteAddressLine?: string;
+      siteCity?: string;
+      siteState?: string;
+      taxReference?: string;
+      notes?: string;
+    };
+    UpdateCustomerDto: {
+      name?: string;
+      /** @description Auto-generated if omitted. */
+      number?: string;
+      phone?: string;
+      email?: string;
+      addressLine?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      country?: string;
+      siteAddressLine?: string;
+      siteCity?: string;
+      siteState?: string;
+      taxReference?: string;
+      notes?: string;
+      /** @enum {string} */
+      status?: 'prospect' | 'active' | 'inactive';
+    };
+    PromoteLeadDto: {
+      /** @description Auto-generated if omitted. */
+      number?: string;
+    };
+    QuotationDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** @enum {string} */
+      status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'BOOKED' | 'CANCELLED' | 'EXPIRED';
+      currentRevisionNo: number;
+      /** Format: uuid */
+      leadId: string;
+      leadName: string | null;
+      /** Format: uuid */
+      customerId: string | null;
+      customerName: string | null;
+      /** Format: uuid */
+      projectId: string | null;
+      projectNumber: string | null;
+      /** Format: date-time */
+      validityDate: string | null;
+      total: string;
+      /** Format: date-time */
+      bookedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    QuotationListDto: {
+      items: components['schemas']['QuotationDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    QuotationLineDto: {
+      /** Format: uuid */
+      id: string;
+      lineNo: number;
+      /** Format: uuid */
+      productId: string | null;
+      productSku: string | null;
+      description: string;
+      unitLabel: string | null;
+      quantity: string;
+      unitPrice: string;
+      discount: string;
+      taxRate: string;
+      lineNet: string;
+      lineTax: string;
+      lineTotal: string;
+    };
+    QuotationRevisionDto: {
+      /** Format: uuid */
+      id: string;
+      revisionNo: number;
+      /** @enum {string} */
+      status: 'draft' | 'sent' | 'accepted' | 'superseded';
+      /** Format: date-time */
+      issueDate: string | null;
+      /** Format: date-time */
+      validityDate: string | null;
+      notes: string | null;
+      subtotal: string;
+      discountTotal: string;
+      taxTotal: string;
+      total: string;
+      /** Format: date-time */
+      sentAt: string | null;
+      /** Format: date-time */
+      acceptedAt: string | null;
+      acceptedByName: string | null;
+      acceptanceNote: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      lines: components['schemas']['QuotationLineDto'][];
+    };
+    QuotationDetailDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** @enum {string} */
+      status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'BOOKED' | 'CANCELLED' | 'EXPIRED';
+      currentRevisionNo: number;
+      /** Format: uuid */
+      leadId: string;
+      leadName: string | null;
+      /** Format: uuid */
+      customerId: string | null;
+      customerName: string | null;
+      /** Format: uuid */
+      projectId: string | null;
+      projectNumber: string | null;
+      /** Format: date-time */
+      validityDate: string | null;
+      total: string;
+      /** Format: date-time */
+      bookedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      currentRevision: components['schemas']['QuotationRevisionDto'];
+      revisions: components['schemas']['QuotationRevisionDto'][];
+    };
+    QuotationActivityDto: {
+      /** Format: uuid */
+      id: string;
+      type: string;
+      actorName: string | null;
+      payload: {
+        [key: string]: unknown;
+      };
+      /** Format: date-time */
+      createdAt: string;
+    };
+    QuotationLineInputDto: {
+      /**
+       * Format: uuid
+       * @description Optional catalogue product.
+       */
+      productId?: string;
+      /** @description Line description. Required for service/custom lines; defaults to the product name. */
+      description?: string;
+      unitLabel?: string;
+      /** @description Decimal string, >= 0. */
+      quantity: string;
+      /** @description Decimal money string, >= 0. */
+      unitPrice: string;
+      /** @description Decimal money string, >= 0. */
+      discount?: string;
+      /** @description Rate, e.g. 0.18 for 18%. */
+      taxRate?: string;
+    };
+    CreateQuotationDto: {
+      /** Format: uuid */
+      leadId: string;
+      /**
+       * Format: uuid
+       * @description Link an existing customer.
+       */
+      customerId?: string;
+      /**
+       * Format: uuid
+       * @description Link an existing draft project.
+       */
+      projectId?: string;
+      /** @description Auto-generated if omitted. */
+      number?: string;
+      /** Format: date-time */
+      issueDate?: string;
+      /** Format: date-time */
+      validityDate?: string;
+      notes?: string;
+      lines?: components['schemas']['QuotationLineInputDto'][];
+    };
+    UpdateQuotationDto: {
+      /** Format: uuid */
+      customerId?: Record<string, never>;
+      /** Format: uuid */
+      projectId?: Record<string, never>;
+      /** Format: date-time */
+      issueDate?: string;
+      /** Format: date-time */
+      validityDate?: string;
+      notes?: string;
+      lines?: components['schemas']['QuotationLineInputDto'][];
+    };
+    ReviseQuotationDto: {
+      reason?: string;
+    };
+    AcceptQuotationDto: {
+      note?: string;
+    };
+    BookQuotationDto: {
+      /** @description Retry key — a repeated booking with the same key is a no-op. */
+      idempotencyKey?: string;
+    };
+    BookingResultDto: {
+      quotation: components['schemas']['QuotationDto'];
+      /** Format: uuid */
+      projectId: string;
+      projectNumber: string;
+      /** Format: uuid */
+      customerId: string;
+    };
+    QuotationAttachmentDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      quotationId: string;
+      originalFilename: string | null;
+      contentType: string;
+      fileSize: number;
+      /** Format: date-time */
+      createdAt: string;
     };
   };
   responses: never;
@@ -7327,6 +7922,852 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listCustomers: {
+    parameters: {
+      query?: {
+        q?: string;
+        status?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createCustomer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateCustomerDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getCustomer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateCustomer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateCustomerDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  promoteLeadToCustomer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        leadId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PromoteLeadDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listQuotations: {
+    parameters: {
+      query?: {
+        status?: string;
+        customerId?: string;
+        leadId?: string;
+        q?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateQuotationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateQuotationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listQuotationActivities: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationActivityDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  printQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  reviseQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReviseQuotationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  sendQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  acceptQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AcceptQuotationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  cancelQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  expireQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  bookQuotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BookQuotationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BookingResultDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listQuotationAttachments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationAttachmentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadQuotationAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationAttachmentDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadQuotationAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        attachmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deleteQuotationAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        attachmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listLeadQuotations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        leadId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationListDto'];
+        };
       };
       401: {
         headers: {

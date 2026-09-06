@@ -7,6 +7,8 @@ import {
   Activity,
   Boxes,
   ClipboardList,
+  Contact,
+  FileText,
   FolderKanban,
   LayoutDashboard,
   Send,
@@ -18,6 +20,8 @@ import { webEnv } from '@/lib/env';
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
   { href: '/crm', label: 'CRM', icon: Users },
+  { href: '/customers', label: 'Customers', icon: Contact },
+  { href: '/quotations', label: 'Quotations', icon: FileText },
   { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/inventory/products', label: 'Inventory', icon: Boxes },
   { href: '/procurement/purchase-orders', label: 'Procurement', icon: ClipboardList },

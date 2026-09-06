@@ -40,6 +40,16 @@ const SUPPLY_STATUS_STYLES: Record<string, string> = {
   // dispatch lifecycle
   dispatched: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
   delivered: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  // quotation lifecycle (Phase 6, ADR 0035)
+  sent: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  accepted: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+  booked: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  expired: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  superseded: 'bg-secondary text-secondary-foreground',
+  // customer status
+  prospect: 'bg-secondary text-secondary-foreground',
+  active: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  inactive: 'bg-secondary text-secondary-foreground',
 };
 
 export function SupplyStatusBadge({ status }: { status: string }) {

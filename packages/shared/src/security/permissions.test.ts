@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus CRM, field operations, and supply chain — no other business domain yet', () => {
+  it('is the identity/admin set plus CRM, field operations, supply chain, and commercial — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -68,10 +68,21 @@ describe('permission catalogue', () => {
         'dispatch.update',
         'dispatch.dispatch',
         'dispatch.deliver',
+        'customers.read',
+        'customers.create',
+        'customers.update',
+        'quotations.read',
+        'quotations.create',
+        'quotations.update',
+        'quotations.send',
+        'quotations.accept',
+        'quotations.cancel',
+        'quotations.revise',
+        'quotations.book',
       ].sort(),
     );
     for (const key of PERMISSION_KEYS) {
-      expect(key).not.toMatch(/^hr\.|^telecall|^quotation|^booking|^payroll|^invoice/i);
+      expect(key).not.toMatch(/^hr\.|^telecall|^payroll|^invoice|^finance\./i);
     }
   });
 

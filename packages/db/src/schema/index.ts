@@ -177,6 +177,32 @@ export {
   type NewDispatchAttachmentRow,
 } from './supply.js';
 
+// Phase 6 — commercial: customers, quotations & project booking (ADR 0035).
+export {
+  customerStatus,
+  quotationStatus,
+  quotationRevisionStatus,
+  quotationActivityType,
+  customers,
+  quotations,
+  quotationRevisions,
+  quotationLines,
+  quotationActivities,
+  quotationAttachments,
+  type CustomerRow,
+  type NewCustomerRow,
+  type QuotationRow,
+  type NewQuotationRow,
+  type QuotationRevisionRow,
+  type NewQuotationRevisionRow,
+  type QuotationLineRow,
+  type NewQuotationLineRow,
+  type QuotationActivityRow,
+  type NewQuotationActivityRow,
+  type QuotationAttachmentRow,
+  type NewQuotationAttachmentRow,
+} from './commercial.js';
+
 export {
   usersRelations,
   tenantsRelations,
@@ -218,4 +244,10 @@ export {
   dispatchesRelations,
   dispatchLinesRelations,
   dispatchAttachmentsRelations,
+  customersRelations,
+  quotationsRelations,
+  quotationRevisionsRelations,
+  quotationLinesRelations,
+  quotationActivitiesRelations,
+  quotationAttachmentsRelations,
 } from './relations.js';

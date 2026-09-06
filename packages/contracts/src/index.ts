@@ -130,6 +130,30 @@ export type CreateDispatchRequest = components['schemas']['CreateDispatchDto'];
 export type UpdateDispatchRequest = components['schemas']['UpdateDispatchDto'];
 export type DeliverDispatchRequest = components['schemas']['DeliverDispatchDto'];
 
+// Phase 6 — commercial: customers, quotations & project booking (ADR 0035).
+export type Customer = components['schemas']['CustomerDto'];
+export type CustomerDetail = components['schemas']['CustomerDetailDto'];
+export type CustomerList = components['schemas']['CustomerListDto'];
+export type CustomerLink = components['schemas']['CustomerLinkDto'];
+export type CreateCustomerRequest = components['schemas']['CreateCustomerDto'];
+export type UpdateCustomerRequest = components['schemas']['UpdateCustomerDto'];
+export type PromoteLeadRequest = components['schemas']['PromoteLeadDto'];
+
+export type Quotation = components['schemas']['QuotationDto'];
+export type QuotationDetail = components['schemas']['QuotationDetailDto'];
+export type QuotationList = components['schemas']['QuotationListDto'];
+export type QuotationRevision = components['schemas']['QuotationRevisionDto'];
+export type QuotationLine = components['schemas']['QuotationLineDto'];
+export type QuotationLineInput = components['schemas']['QuotationLineInputDto'];
+export type QuotationActivity = components['schemas']['QuotationActivityDto'];
+export type QuotationAttachment = components['schemas']['QuotationAttachmentDto'];
+export type CreateQuotationRequest = components['schemas']['CreateQuotationDto'];
+export type UpdateQuotationRequest = components['schemas']['UpdateQuotationDto'];
+export type ReviseQuotationRequest = components['schemas']['ReviseQuotationDto'];
+export type AcceptQuotationRequest = components['schemas']['AcceptQuotationDto'];
+export type BookQuotationRequest = components['schemas']['BookQuotationDto'];
+export type BookingResult = components['schemas']['BookingResultDto'];
+
 /**
  * The standard error envelope returned by every `/api/v1` endpoint on failure.
  * It is documented on the auth/admin operations (`ApiErrorDto`) and mirrors

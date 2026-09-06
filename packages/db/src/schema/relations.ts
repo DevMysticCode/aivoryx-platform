@@ -8,6 +8,14 @@ import {
   leadNotes,
   leads,
 } from './crm.js';
+import {
+  customers,
+  quotationActivities,
+  quotationAttachments,
+  quotationLines,
+  quotationRevisions,
+  quotations,
+} from './commercial.js';
 import { fieldAgents, visitActivities, visitAttachments, visitNotes, visits } from './field.js';
 import { sessions, tenants, users, userTenantMemberships } from './identity.js';
 import {
@@ -326,5 +334,54 @@ export const dispatchAttachmentsRelations = relations(dispatchAttachments, ({ on
   dispatch: one(dispatches, {
     fields: [dispatchAttachments.dispatchId],
     references: [dispatches.id],
+  }),
+}));
+
+// --- Phase 6 — commercial (ADR 0035) ------------------------------------
+
+export const customersRelations = relations(customers, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [customers.tenantId], references: [tenants.id] }),
+  lead: one(leads, { fields: [customers.leadId], references: [leads.id] }),
+  quotations: many(quotations),
+  projects: many(projects),
+}));
+
+export const quotationsRelations = relations(quotations, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [quotations.tenantId], references: [tenants.id] }),
+  lead: one(leads, { fields: [quotations.leadId], references: [leads.id] }),
+  customer: one(customers, { fields: [quotations.customerId], references: [customers.id] }),
+  project: one(projects, { fields: [quotations.projectId], references: [projects.id] }),
+  revisions: many(quotationRevisions),
+  activities: many(quotationActivities),
+  attachments: many(quotationAttachments),
+}));
+
+export const quotationRevisionsRelations = relations(quotationRevisions, ({ one, many }) => ({
+  quotation: one(quotations, {
+    fields: [quotationRevisions.quotationId],
+    references: [quotations.id],
+  }),
+  lines: many(quotationLines),
+}));
+
+export const quotationLinesRelations = relations(quotationLines, ({ one }) => ({
+  revision: one(quotationRevisions, {
+    fields: [quotationLines.revisionId],
+    references: [quotationRevisions.id],
+  }),
+  product: one(products, { fields: [quotationLines.productId], references: [products.id] }),
+}));
+
+export const quotationActivitiesRelations = relations(quotationActivities, ({ one }) => ({
+  quotation: one(quotations, {
+    fields: [quotationActivities.quotationId],
+    references: [quotations.id],
+  }),
+}));
+
+export const quotationAttachmentsRelations = relations(quotationAttachments, ({ one }) => ({
+  quotation: one(quotations, {
+    fields: [quotationAttachments.quotationId],
+    references: [quotations.id],
   }),
 }));

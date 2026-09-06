@@ -334,6 +334,49 @@ export const ERROR_CODES = {
   },
   // `ATTACHMENT_NOT_FOUND` / `ATTACHMENT_INVALID` are shared with Phase 4 (above).
 
+  // commercial — customers, quotations & booking (Phase 6, ADR 0035)
+  CUSTOMER_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That customer was not found in this workspace.',
+  },
+  QUOTATION_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That quotation was not found in this workspace.',
+  },
+  QUOTATION_INVALID_TRANSITION: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the quotation’s current status.',
+  },
+  QUOTATION_IMMUTABLE: {
+    httpStatus: 409,
+    message:
+      'This quotation revision is finalized and can no longer be edited. Create a new revision instead.',
+  },
+  QUOTATION_REVISION_REQUIRED: {
+    httpStatus: 409,
+    message: 'A new revision must be created before this quotation can be changed.',
+  },
+  QUOTATION_NO_LINES: {
+    httpStatus: 409,
+    message: 'A quotation needs at least one line item before it can be sent.',
+  },
+  QUOTATION_EXPIRED: {
+    httpStatus: 409,
+    message: 'This quotation has passed its validity date and can no longer be accepted.',
+  },
+  QUOTATION_NOT_ACCEPTED: {
+    httpStatus: 409,
+    message: 'The quotation must be accepted before it can be booked.',
+  },
+  QUOTATION_ALREADY_BOOKED: {
+    httpStatus: 409,
+    message: 'This quotation has already been booked.',
+  },
+  BOOKING_CONFLICT: {
+    httpStatus: 409,
+    message: 'The project for this booking is not in a state that can be activated.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,
