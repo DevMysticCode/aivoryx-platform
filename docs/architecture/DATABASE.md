@@ -191,6 +191,46 @@ Typed definition + typed-value-column storage (not one JSON blob). See
 `CUSTOM-FIELDS.md` for the V1 trims (no filterable/reportable flags or
 declarative validation JSON yet).
 
+## HR & Workforce entities
+
+**Implemented (Phase 12, ADR 0041, `HR-WORKFORCE.md`) — migration `0014`.**
+29 tenant-owned tables, all RLS `ENABLE` + `FORCE`:
+
+hr_counters
+hr_departments · hr_designations · hr_work_locations · hr_work_schedules
+hr_employees · hr_employment_history · hr_employee_bank_details · hr_employee_documents
+hr_attendance_records · hr_attendance_corrections
+hr_leave_types · hr_leave_policies · hr_leave_balances · hr_leave_requests · hr_leave_balance_transactions
+hr_expense_categories · hr_expense_claims · hr_expense_reimbursements
+hr_compensation_profiles · hr_compensation_components · hr_incentives
+hr_payroll_periods · hr_payroll_entries · hr_payroll_entry_components · hr_payroll_payments
+hr_performance_periods · hr_performance_goals · hr_performance_reviews
+
+Notes:
+
+- Money columns are `NUMERIC(18,2)` with an explicit `currency` (no floats).
+- `hr_employees.membership_id` is a **nullable** composite FK
+  `(membership_id, tenant_id) → user_tenant_memberships(id, tenant_id)` with
+  `unique(tenant_id, membership_id)` — an employee is **not** an identity.
+- `hr_leave_balances.balance` is `GENERATED ALWAYS AS (opening + accrued +
+adjusted − consumed) STORED` — it cannot drift.
+- `hr_expense_claims.project_ref` / `.visit_ref` are plain nullable `uuid`
+  columns **with no foreign key** — soft references that keep HR extractable.
+- `hr_employment_history` and `hr_attendance_corrections` are immutable
+  (append-only in practice); compensation history rows store no salary figure.
+- `hr_payroll_entries.snapshot` (JSONB) is frozen at finalize — a later change
+  to salary / leave / expenses never alters it.
+- Every non-child table has `unique(id, tenant_id)` for composite child FKs.
+- Enums: `hr_employee_status`, `hr_employment_type`, `hr_org_unit_status`,
+  `hr_employment_change_type`, `hr_attendance_status`, `hr_attendance_source`,
+  `hr_half_day_period`, `hr_leave_approver_strategy`, `hr_leave_request_status`,
+  `hr_leave_balance_txn_kind`, `hr_expense_claim_status`,
+  `hr_reimbursement_status`, `hr_payment_method`, `hr_pay_frequency`,
+  `hr_compensation_status`, `hr_salary_component_kind`,
+  `hr_payroll_period_status`, `hr_payroll_payment_status`, `hr_incentive_status`,
+  `hr_performance_period_status`, `hr_performance_goal_status`,
+  `hr_performance_review_status`.
+
 ## Platform entities
 
 sessions
@@ -293,6 +333,13 @@ project_id is not null` on `quotations`. It also adds
   rows, `#rrggbb` / ISO-currency CHECKs on the colour + currency columns, a
   positive `size_bytes` CHECK on `tenant_assets`, and one enum
   (`tenant_asset_kind`). Logo bytes live in object storage, never in a column.
+- Migration `0014` (Phase 12, ADR 0041) adds the 29 `hr_*` tables and their
+  enums. First statement is `ALTER TYPE audit_module ADD VALUE 'hr'` (safe in a
+  migration transaction on PG 12+ because the new value is not used in the same
+  transaction). The hand-appended block applies the standard
+  `GRANT SELECT, INSERT, UPDATE, DELETE`, `ENABLE` + `FORCE ROW LEVEL SECURITY`
+  and the `tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid`
+  isolation policy (USING + WITH CHECK) to every HR table.
 - Migration `0013` (Phase 11, ADR 0040) adds the append-only `audit_logs` table.
   Unlike every other tenant table it is **`SELECT` + `INSERT` only** for
   `aivoryx_app` — the hand-appended block `REVOKE`s `UPDATE, DELETE` (which the

@@ -251,5 +251,41 @@ export type AuditLog = components['schemas']['AuditLogDto'];
 export type AuditLogDetail = components['schemas']['AuditLogDetailDto'];
 export type AuditLogList = components['schemas']['AuditLogListDto'];
 
+// ── HR & Workforce (Phase 12, ADR 0041) ──────────────────────────────
+export type HrOrgUnit = components['schemas']['OrgUnitDto'];
+export type HrWorkLocation = components['schemas']['WorkLocationDto'];
+export type HrWorkSchedule = components['schemas']['WorkScheduleDto'];
+export type HrOrgChart = components['schemas']['OrgChartDto'];
+export type HrOrgChartNode = components['schemas']['OrgChartNodeDto'];
+export type HrEmployeeListItem = components['schemas']['EmployeeListItemDto'];
+export type HrEmployeeDetail = components['schemas']['EmployeeDetailDto'];
+export type HrEmployeeList = components['schemas']['EmployeeListDto'];
+export type HrEmploymentHistoryItem = components['schemas']['EmploymentHistoryItemDto'];
+export type HrEmployeeDocument = components['schemas']['EmployeeDocumentDto'];
+export type HrBankDetails = components['schemas']['BankDetailsDto'];
+export type HrAttendanceRecord = components['schemas']['AttendanceRecordDto'];
+export type HrAttendanceList = components['schemas']['AttendanceListDto'];
+export type HrLeaveType = components['schemas']['LeaveTypeDto'];
+export type HrLeaveBalance = components['schemas']['LeaveBalanceDto'];
+export type HrLeaveRequest = components['schemas']['LeaveRequestDto'];
+export type HrLeaveRequestList = components['schemas']['LeaveRequestListDto'];
+export type HrLeaveCalendarItem = components['schemas']['LeaveCalendarItemDto'];
+export type HrExpenseCategory = components['schemas']['ExpenseCategoryDto'];
+export type HrExpenseClaim = components['schemas']['ExpenseClaimDto'];
+export type HrExpenseClaimList = components['schemas']['ExpenseClaimListDto'];
+export type HrCompensation = components['schemas']['CompensationDto'];
+export type HrIncentive = components['schemas']['IncentiveDto'];
+export type HrIncentiveList = components['schemas']['IncentiveListDto'];
+export type HrPayrollPeriod = components['schemas']['PayrollPeriodDto'];
+export type HrPayrollPeriodDetail = components['schemas']['PayrollPeriodDetailDto'];
+export type HrPayrollPeriodList = components['schemas']['PayrollPeriodListDto'];
+export type HrPayrollEntry = components['schemas']['PayrollEntryDto'];
+export type HrPayrollHistoryItem = components['schemas']['PayrollHistoryItemDto'];
+export type HrPerformancePeriod = components['schemas']['PerformancePeriodDto'];
+export type HrPerformanceGoal = components['schemas']['PerformanceGoalDto'];
+export type HrPerformanceReview = components['schemas']['PerformanceReviewDto'];
+export type HrMe = components['schemas']['HrMeDto'];
+export type HrDashboard = components['schemas']['HrDashboardDto'];
+
 /** All versioned API routes are served under this prefix (ADR 0005). */
 export const API_V1_PREFIX = '/api/v1';

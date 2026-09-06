@@ -129,6 +129,13 @@ const FIELD_AGENT_PERMISSION_KEYS = [
   'notifications.read',
   'notifications.preferences.read',
   'notifications.preferences.update',
+  // Phase 12 (ADR 0041): a field agent linked to an employee record can raise
+  // *their own* HR expense claims from the field PWA (and read them back via
+  // the self-scoped `/hr/me/expenses` and `/hr/expenses/my-claims` routes).
+  // The claim is always self-scoped server-side (membership → linked employee);
+  // a field agent gets no `hr.expense.read` (that is tenant-wide), and no HR
+  // approval, reimbursement, compensation, bank, payroll or admin keys.
+  'hr.expense.submit',
 ] as const;
 
 export interface ProvisionFieldAgentRoleInput {

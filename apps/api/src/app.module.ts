@@ -21,6 +21,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { FinanceModule } from './finance/finance.module.js';
 import { SettingsModule } from './settings/settings.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
+import { HrModule } from './hr/hr.module.js';
 
 /**
  * Composition root.
@@ -58,6 +59,7 @@ import { DocumentsModule } from './documents/documents.module.js';
     FinanceModule,
     SettingsModule,
     DocumentsModule,
+    HrModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

@@ -1,0 +1,70 @@
+%% HR & Workforce — bounded domain module (Phase 12, ADR 0041)
+flowchart TD
+    subgraph PLATFORM [Shared platform — HR depends only on these]
+      IDENT[(user_tenant_memberships<br/>identity · auth · roles)]
+      OUTBOX[(transactional outbox)]
+      AUDIT[Global Audit Log]
+      DOCS[Document engine · branded PDF]
+      STORE[Object storage abstraction]
+      NOTIF[Phase 8 Notification Engine]
+    end
+
+    subgraph HR [HrModule — 29 hr_* tables · RLS ENABLE + FORCE]
+      ORG[Organisation<br/>departments · designations · locations · schedules]
+      EMP[Employee<br/>EMP-000001 · lifecycle FSM]
+      HIST[(hr_employment_history<br/>effective-dated · immutable · no salary)]
+      ATT[Attendance<br/>server time · 1 row/day · immutable corrections]
+      LV[Leave<br/>types + policies + ledger balances]
+      LVBAL[(hr_leave_balances<br/>balance = opening+accrued+adjusted−consumed<br/>GENERATED)]
+      EXP[Expense claim<br/>DRAFT→SUBMITTED→APPROVED→REIMBURSED]
+      REIMB[(hr_expense_reimbursements<br/>operational payment state only)]
+      COMP[Compensation history<br/>supersede · never overwrite]
+      INC[Incentives · generic]
+      PAY[Payroll period<br/>DRAFT→PROCESSING→FINALIZED→…→PAID]
+      SNAP[(hr_payroll_entries.snapshot<br/>frozen at finalize · immutable)]
+      PERF[Performance<br/>periods · goals · reviews]
+      ME[/hr/me · self-service<br/>membership → employee · fail closed/]
+    end
+
+    IDENT -. nullable composite FK .-> EMP
+    ORG --> EMP
+    EMP --> HIST
+    EMP --> ATT
+    EMP --> LV
+    LV --> LVBAL
+    EMP --> EXP
+    EXP -->|approve · freeze approved_amount| REIMB
+    EMP --> COMP
+    EMP --> INC
+    COMP --> PAY
+    INC -->|APPROVED + unpaid, in window| PAY
+    REIMB -->|PAID, in window| PAY
+    PAY -->|finalize| SNAP
+    SNAP --> PAYSLIP[Payslip PDF]
+    PAYSLIP --- DOCS
+    EMP --> PERF
+    EMP --> ME
+
+    %% the ONLY cross-module seam
+    FIELD["Field PWA · visit"] -->|POST /field/visits/:id/expense-claim<br/>ownership server-derived| SEAM{{ExpensesService.createFromFieldVisit<br/>the only HR export}}
+    SEAM --> EXP
+
+    %% platform integrations (events out, never direct channel calls)
+    EMP --> AUDIT
+    LV --> AUDIT
+    EXP --> AUDIT
+    PAY --> AUDIT
+    COMP --> AUDIT
+    EMP --> OUTBOX
+    LV --> OUTBOX
+    EXP --> OUTBOX
+    PAY --> OUTBOX
+    OUTBOX --> NOTIF
+    ATT --- STORE
+    EXP --- STORE
+
+    subgraph PRIVACY [sensitive — dedicated permissions, never in list DTO / audit / notifications / logs]
+      COMP
+      BANK[(hr_employee_bank_details<br/>accountNumberMasked only)]
+    end
+    EMP -. hr.bank_details.* .-> BANK

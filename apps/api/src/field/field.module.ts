@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AdminModule } from '../admin/admin.module.js';
 import { StorageModule } from '../storage/storage.module.js';
+import { HrModule } from '../hr/hr.module.js';
 import { FieldAgentsController } from './field-agents.controller.js';
 import { FieldAgentsService } from './field-agents.service.js';
+import { FieldExpensesController } from './field-expenses.controller.js';
 import { VisitAttachmentsService } from './visit-attachments.service.js';
 import { VisitNotesService } from './visit-notes.service.js';
 import { VisitsController } from './visits.controller.js';
@@ -17,8 +19,8 @@ import { VisitsService } from './visits.service.js';
  * mechanism.
  */
 @Module({
-  imports: [AdminModule, StorageModule],
-  controllers: [FieldAgentsController, VisitsController],
+  imports: [AdminModule, StorageModule, HrModule],
+  controllers: [FieldAgentsController, VisitsController, FieldExpensesController],
   providers: [FieldAgentsService, VisitsService, VisitNotesService, VisitAttachmentsService],
   exports: [FieldAgentsService, VisitsService],
 })

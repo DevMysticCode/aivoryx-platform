@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, notifications, finance, platform settings, and the audit log — no other business domain yet', () => {
+  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, notifications, finance, platform settings, the audit log, and HR & workforce — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -122,10 +122,44 @@ describe('permission catalogue', () => {
         'settings.company.read',
         'settings.company.update',
         'audit.read',
+        'hr.employee.read',
+        'hr.employee.create',
+        'hr.employee.update',
+        'hr.employee.manage',
+        'hr.organization.read',
+        'hr.organization.manage',
+        'hr.attendance.read',
+        'hr.attendance.self',
+        'hr.attendance.manage',
+        'hr.attendance.correct',
+        'hr.leave.read',
+        'hr.leave.request',
+        'hr.leave.approve',
+        'hr.leave.manage',
+        'hr.expense.read',
+        'hr.expense.submit',
+        'hr.expense.approve',
+        'hr.expense.manage',
+        'hr.expense.reimburse',
+        'hr.compensation.read',
+        'hr.compensation.manage',
+        'hr.bank_details.read',
+        'hr.bank_details.manage',
+        'hr.payroll.read',
+        'hr.payroll.manage',
+        'hr.payroll.process',
+        'hr.payroll.finalize',
+        'hr.payroll.payment',
+        'hr.incentive.read',
+        'hr.incentive.manage',
+        'hr.performance.read',
+        'hr.performance.manage',
       ].sort(),
     );
+    // No recruitment / ATS / benefits domain yet, and no country-specific
+    // statutory payroll permissions (those belong to future modules).
     for (const key of PERMISSION_KEYS) {
-      expect(key).not.toMatch(/^hr\.|^telecall|^payroll/i);
+      expect(key).not.toMatch(/^recruit|^ats\.|^benefits\.|statutory|\bpf\b|\besi\b/i);
     }
   });
 

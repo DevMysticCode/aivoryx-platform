@@ -14,6 +14,7 @@ import {
   Send,
   Settings,
   ShieldCheck,
+  UserCog,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ const NAV = [
   { href: '/procurement/purchase-orders', label: 'Procurement', icon: ClipboardList },
   { href: '/logistics/dispatches', label: 'Logistics', icon: Send },
   { href: '/finance', label: 'Finance', icon: Wallet },
+  { href: '/hr', label: 'HR & Workforce', icon: UserCog },
   { href: '/admin', label: 'Administration', icon: ShieldCheck },
   { href: '/settings/company', label: 'Settings', icon: Settings },
   { href: '/health', label: 'System health', icon: Activity },

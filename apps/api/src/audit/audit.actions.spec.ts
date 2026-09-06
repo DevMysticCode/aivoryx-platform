@@ -47,6 +47,10 @@ describe('audit action catalogue', () => {
       'finance.payment.',
       'finance.credit_note.',
       'settings.',
+      'hr.employee.',
+      'hr.leave.',
+      'hr.expense.',
+      'hr.payroll.',
     ];
     for (const p of prefixes) {
       expect(
@@ -61,6 +65,7 @@ describe('audit action catalogue', () => {
     expect(isAuditAction('finance.invoice.explode')).toBe(false);
     expect(isAuditAction(42)).toBe(false);
     expect(isAuditModule('finance')).toBe(true);
-    expect(isAuditModule('hr')).toBe(false);
+    expect(isAuditModule('hr')).toBe(true);
+    expect(isAuditModule('not-a-module')).toBe(false);
   });
 });

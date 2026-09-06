@@ -50,6 +50,42 @@ deferred until their real API/payload capabilities are verified.
 
 ## Stream C — HR (parallel)
 
+Phase 12 (ADR 0041, `HR-WORKFORCE.md`) delivered the **HR & Workforce** module
+— a bounded domain that other modules reach only through narrow contracts /
+events, never its tables:
+
+- organisation config (departments / designations / locations / lightweight
+  schedules) — all tenant-configurable, nothing hardcoded ✅
+- employee master with a server-generated, concurrency-safe tenant number
+  (`EMP-000001`), an explicit lifecycle state machine, and effective-dated
+  employment history that is never overwritten ✅
+- **Employee ≠ Identity** — an employee may link to a `user_tenant_memberships`
+  row (composite FK) but never stores credentials / roles / sessions ✅
+- attendance: server-time only, one row/day (no overlaps), optional
+  straight-line GPS, immutable audited corrections ✅
+- leave: types + policies + **ledger balances** (`opening + accrued + adjusted −
+consumed` as a generated column); configurable approver strategy
+  (reporting-manager / HR / designated / admin); overlap + concurrent-approval
+  safe; no self-approval ✅
+- expenses: first-class claim → approval → reimbursement; frozen approved
+  amounts; mileage from a tenant rate; **the same domain serves a field agent
+  through `POST /field/visits/:id/expense-claim`** (the only Field → HR seam) ✅
+- compensation history (supersede, never overwrite; no salary in audit) ·
+  generic incentives ✅
+- payroll: period → process → **finalize (immutable per-employee snapshot)** →
+  payment recording; exact fixed-point money; branded payslip PDF via the
+  Phase 10 document engine ✅
+- performance: lightweight periods / goals / reviews (DRAFT → SUBMITTED →
+  ACKNOWLEDGED → CLOSED) ✅
+- employee self-service at `/hr/me` — resolved from the session, fails closed
+  when unlinked, never another employee's sensitive data ✅
+- `hr.*` permission catalogue (35 keys; compensation & bank-details isolated) ·
+  `hr` audit module (~44 actions) · notification events via the existing outbox
+  (no direct email/SMS calls) · every HR table RLS `ENABLE` + `FORCE` ✅
+- statutory payroll / tax filing / bank-API integration / an accounting
+  replacement / recruitment / biometric attendance / shift rostering — out of
+  scope
+
 - employee master
 - organization/department
 - documents
