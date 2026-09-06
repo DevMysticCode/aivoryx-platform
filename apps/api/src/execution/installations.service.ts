@@ -78,6 +78,7 @@ export class InstallationsService {
         tenantId: scope.tenantId,
         type: 'installation.assigned',
         payload: { projectId, membershipId: body.membershipId },
+        actorMembershipId: scope.actorMembershipId,
       });
     });
     return this.view(scope, projectId);

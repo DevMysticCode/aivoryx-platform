@@ -117,5 +117,6 @@ CRM / field / operations:
 - `SUPPLY-CHAIN.md` — projects, procurement, inventory ledger, dispatch & delivery
 - `COMMERCIAL.md` — customers, quotations, revisions & atomic project booking
 - `EPC-EXECUTION.md` — milestones, installation, checklists, QC, defects, net metering, handover, completion
+- `NOTIFICATIONS.md` — event → rule → recipient → template → channel, delivery tracking, preferences (ADR 0037)
 
 Diagrams: `docs/diagrams/`.

@@ -11,6 +11,8 @@ export {
   withAppTransaction,
   withUserContext,
   withTenantContext,
+  withTenantSystemContext,
+  withOutboxDispatcherContext,
   withProgressiveContext,
   applyRlsContext,
   currentTenantContext,

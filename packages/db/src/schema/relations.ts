@@ -1,6 +1,13 @@
 import { relations } from 'drizzle-orm';
 import { outboxEvents, tenantInvitations } from './admin.js';
 import {
+  notificationDeliveries,
+  notificationPreferences,
+  notificationRules,
+  notificationTemplates,
+  notifications,
+} from './notifications.js';
+import {
   customFieldDefinitions,
   customFieldValues,
   leadActivities,
@@ -465,3 +472,38 @@ export const projectExecutionAttachmentsRelations = relations(
     }),
   }),
 );
+
+// Phase 8 — Notifications & Communications Engine (ADR 0037).
+
+export const notificationTemplatesRelations = relations(notificationTemplates, ({ one }) => ({
+  tenant: one(tenants, { fields: [notificationTemplates.tenantId], references: [tenants.id] }),
+}));
+
+export const notificationRulesRelations = relations(notificationRules, ({ one }) => ({
+  tenant: one(tenants, { fields: [notificationRules.tenantId], references: [tenants.id] }),
+}));
+
+export const notificationPreferencesRelations = relations(notificationPreferences, ({ one }) => ({
+  tenant: one(tenants, { fields: [notificationPreferences.tenantId], references: [tenants.id] }),
+  membership: one(userTenantMemberships, {
+    fields: [notificationPreferences.membershipId],
+    references: [userTenantMemberships.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [notifications.tenantId], references: [tenants.id] }),
+  recipient: one(userTenantMemberships, {
+    fields: [notifications.recipientMembershipId],
+    references: [userTenantMemberships.id],
+  }),
+  deliveries: many(notificationDeliveries),
+}));
+
+export const notificationDeliveriesRelations = relations(notificationDeliveries, ({ one }) => ({
+  tenant: one(tenants, { fields: [notificationDeliveries.tenantId], references: [tenants.id] }),
+  notification: one(notifications, {
+    fields: [notificationDeliveries.notificationId],
+    references: [notifications.id],
+  }),
+}));

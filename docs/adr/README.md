@@ -3,44 +3,45 @@
 One decision per file. Status is `Accepted` unless noted. A later ADR may
 `refine` or `supersede` an earlier one; the earlier file records the pointer.
 
-| ADR  | Title                                                         | Notes                                                           |
-| ---- | ------------------------------------------------------------- | --------------------------------------------------------------- |
-| 0001 | Modular monolith                                              |                                                                 |
-| 0002 | PWA first                                                     |                                                                 |
-| 0003 | CRM primary, HR parallel                                      |                                                                 |
-| 0004 | Aivoryx Integration Engine                                    | refined by 0017–0023                                            |
-| 0005 | REST API, code-first OpenAPI, `/api/v1`                       | updated from "OpenAPI as contract"                              |
-| 0006 | Initial hosting: Vercel + Railway                             | supersedes "Railway First"                                      |
-| 0007 | Drizzle ORM                                                   |                                                                 |
-| 0008 | UUIDv7 identifiers                                            |                                                                 |
-| 0009 | Multi-tenancy: PostgreSQL RLS + application guards            | implemented by 0027                                             |
-| 0010 | Cookie sessions + Argon2id                                    | refined by 0026; implemented by 0028                            |
-| 0011 | Scope-aware RBAC                                              | refined by 0026; implemented by 0029                            |
-| 0012 | Background processing: Redis + BullMQ                         |                                                                 |
-| 0013 | Transactional outbox for important events                     |                                                                 |
-| 0014 | Structured logging: Pino, correlation IDs, stable error codes |                                                                 |
-| 0015 | Object storage: S3-compatible, Cloudflare R2 initially        |                                                                 |
-| 0016 | Testing: Vitest + Playwright                                  |                                                                 |
-| 0017 | Generic Lead Ingestion Engine                                 |                                                                 |
-| 0018 | Connector / adapter separation                                |                                                                 |
-| 0019 | Raw events, idempotency, retry, replay, dead-letter           |                                                                 |
-| 0020 | Typed tenant-configurable custom fields                       |                                                                 |
-| 0021 | Provider-to-canonical field mapping                           |                                                                 |
-| 0022 | Pabbly as a temporary bridge                                  | refines 0004                                                    |
-| 0023 | Generic email ingestion                                       |                                                                 |
-| 0024 | Reusable core, no client-specific leakage                     |                                                                 |
-| 0025 | Git branch strategy: short-lived `feature/*` onto `main`      | no `develop` branch                                             |
-| 0026 | Identity, membership & session data model                     | refines 0010, 0011                                              |
-| 0027 | RLS runtime role & per-transaction tenant context             | implements 0009                                                 |
-| 0028 | Session lifecycle & login tenant auto-selection               | implements 0010                                                 |
-| 0029 | RBAC enforcement & permission catalogue                       | implements 0011                                                 |
-| 0030 | Tenant administration & user lifecycle                        | builds on 0026–0029, 0013                                       |
-| 0031 | CRM core & lead domain                                        | implements 0009 for the lead entity                             |
-| 0032 | Inbound integration engine & connector security               | implements 0004/0017–0023; refines their V1 scope               |
-| 0033 | Field operations: visits, field agents, GPS & site survey     | builds on 0015, 0026–0027, 0029, 0031–0032                      |
-| 0034 | Projects, procurement, inventory & logistics                  | builds on 0013–0015, 0026–0027, 0029, 0031, 0033                |
-| 0035 | Commercial: customers, quotations & project booking           | builds on 0013–0015, 0026–0027, 0029, 0031, 0033–0034           |
-| 0036 | EPC project execution                                         | extends 0034; builds on 0013–0015, 0027, 0029, 0031, 0033, 0035 |
+| ADR  | Title                                                         | Notes                                                               |
+| ---- | ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 0001 | Modular monolith                                              |                                                                     |
+| 0002 | PWA first                                                     |                                                                     |
+| 0003 | CRM primary, HR parallel                                      |                                                                     |
+| 0004 | Aivoryx Integration Engine                                    | refined by 0017–0023                                                |
+| 0005 | REST API, code-first OpenAPI, `/api/v1`                       | updated from "OpenAPI as contract"                                  |
+| 0006 | Initial hosting: Vercel + Railway                             | supersedes "Railway First"                                          |
+| 0007 | Drizzle ORM                                                   |                                                                     |
+| 0008 | UUIDv7 identifiers                                            |                                                                     |
+| 0009 | Multi-tenancy: PostgreSQL RLS + application guards            | implemented by 0027                                                 |
+| 0010 | Cookie sessions + Argon2id                                    | refined by 0026; implemented by 0028                                |
+| 0011 | Scope-aware RBAC                                              | refined by 0026; implemented by 0029                                |
+| 0012 | Background processing: Redis + BullMQ                         |                                                                     |
+| 0013 | Transactional outbox for important events                     |                                                                     |
+| 0014 | Structured logging: Pino, correlation IDs, stable error codes |                                                                     |
+| 0015 | Object storage: S3-compatible, Cloudflare R2 initially        |                                                                     |
+| 0016 | Testing: Vitest + Playwright                                  |                                                                     |
+| 0017 | Generic Lead Ingestion Engine                                 |                                                                     |
+| 0018 | Connector / adapter separation                                |                                                                     |
+| 0019 | Raw events, idempotency, retry, replay, dead-letter           |                                                                     |
+| 0020 | Typed tenant-configurable custom fields                       |                                                                     |
+| 0021 | Provider-to-canonical field mapping                           |                                                                     |
+| 0022 | Pabbly as a temporary bridge                                  | refines 0004                                                        |
+| 0023 | Generic email ingestion                                       |                                                                     |
+| 0024 | Reusable core, no client-specific leakage                     |                                                                     |
+| 0025 | Git branch strategy: short-lived `feature/*` onto `main`      | no `develop` branch                                                 |
+| 0026 | Identity, membership & session data model                     | refines 0010, 0011                                                  |
+| 0027 | RLS runtime role & per-transaction tenant context             | implements 0009                                                     |
+| 0028 | Session lifecycle & login tenant auto-selection               | implements 0010                                                     |
+| 0029 | RBAC enforcement & permission catalogue                       | implements 0011                                                     |
+| 0030 | Tenant administration & user lifecycle                        | builds on 0026–0029, 0013                                           |
+| 0031 | CRM core & lead domain                                        | implements 0009 for the lead entity                                 |
+| 0032 | Inbound integration engine & connector security               | implements 0004/0017–0023; refines their V1 scope                   |
+| 0033 | Field operations: visits, field agents, GPS & site survey     | builds on 0015, 0026–0027, 0029, 0031–0032                          |
+| 0034 | Projects, procurement, inventory & logistics                  | builds on 0013–0015, 0026–0027, 0029, 0031, 0033                    |
+| 0035 | Commercial: customers, quotations & project booking           | builds on 0013–0015, 0026–0027, 0029, 0031, 0033–0034               |
+| 0036 | EPC project execution                                         | extends 0034; builds on 0013–0015, 0027, 0029, 0031, 0033, 0035     |
+| 0037 | Notifications & communications engine                         | consumes 0013; builds on 0012, 0014, 0027, 0029; no vendor coupling |
 
 ## Open decisions
 

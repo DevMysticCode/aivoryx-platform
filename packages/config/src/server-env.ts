@@ -107,6 +107,34 @@ export const serverEnvSchema = z
      *  whenever OBJECT_STORAGE_ENDPOINT is unset — an S3/R2 adapter can be swapped
      *  in later behind the same `ObjectStorageService` interface. */
     OBJECT_STORAGE_LOCAL_DIR: z.string().default('.data/object-storage'),
+
+    // --- Notifications & Communications Engine (Phase 8, ADR 0037) ---------
+    /** Master switch for the async notification dispatcher + delivery worker.
+     *  Off in unit tests / OpenAPI generation; on everywhere else by default. */
+    NOTIFICATIONS_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((v) => v === 'true'),
+    /** How often the outbox dispatcher drains undelivered `outbox_events`. */
+    NOTIFICATIONS_POLL_MS: z.coerce.number().int().min(250).max(60_000).default(2000),
+    /** BullMQ delivery attempts before a delivery is marked permanently FAILED. */
+    NOTIFICATIONS_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(5),
+    /**
+     * Which `EmailProvider` implementation to use. `fake` captures messages in
+     * memory (tests only — never sends). `console` logs a safe summary and is
+     * the development/default provider. `smtp` uses a provider-neutral SMTP
+     * transport (`EMAIL_SMTP_URL`). Real email requires only configuration,
+     * never a code change.
+     */
+    EMAIL_PROVIDER: z.enum(['fake', 'console', 'smtp']).default('console'),
+    /** RFC 5321 `MAIL FROM` / `From:` identity for outbound email. */
+    EMAIL_FROM: z.string().default('Aivoryx <no-reply@aivoryx.local>'),
+    /** SMTP connection string for `EMAIL_PROVIDER=smtp`, e.g.
+     *  `smtp://user:pass@smtp.example.com:587`. Never committed. */
+    EMAIL_SMTP_URL: z
+      .string()
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
   })
   .superRefine((env, ctx) => {
     if (env.APP_ENV === 'production' && env.SESSION_SECRET.includes('change-me')) {

@@ -475,6 +475,7 @@ export class QuotationsService {
         tenantId: scope.tenantId,
         type: 'quotation.sent',
         payload: { quotationId: id, revisionNo: q.currentRevisionNo },
+        actorMembershipId: scope.actorMembershipId,
       });
     });
     return this.get(scope, id);
@@ -543,6 +544,7 @@ export class QuotationsService {
         tenantId: scope.tenantId,
         type: 'quotation.accepted',
         payload: { quotationId: id, revisionNo: q.currentRevisionNo },
+        actorMembershipId: scope.actorMembershipId,
       });
     });
     return this.get(scope, id);
@@ -782,6 +784,7 @@ export class QuotationsService {
         tenantId: scope.tenantId,
         type: 'quotation.booked',
         payload: { quotationId: id, projectId, customerId },
+        actorMembershipId: scope.actorMembershipId,
       });
       await this.outbox.emit(tx, {
         tenantId: scope.tenantId,

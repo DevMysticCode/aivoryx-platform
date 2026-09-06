@@ -16,7 +16,8 @@
     "seed:supply-demo": "tsx --env-file-if-exists=../../.env scripts/seed-supply-demo.ts",
     "clean": "rimraf dist .turbo *.tsbuildinfo",
     "seed:commercial-demo": "tsx --env-file-if-exists=../../.env scripts/seed-commercial-demo.ts",
-    "seed:execution-demo": "tsx --env-file-if-exists=../../.env scripts/seed-execution-demo.ts"
+    "seed:execution-demo": "tsx --env-file-if-exists=../../.env scripts/seed-execution-demo.ts",
+    "seed:notifications-demo": "tsx --env-file-if-exists=../../.env scripts/seed-notifications-demo.ts"
   },
   "dependencies": {
     "@aivoryx/config": "workspace:*",
@@ -37,6 +38,7 @@
     "ioredis": "5.4.2",
     "multer": "1.4.5-lts.1",
     "nestjs-pino": "4.2.0",
+    "nodemailer": "6.9.16",
     "pino": "9.5.0",
     "pino-http": "10.3.0",
     "reflect-metadata": "0.2.2",
@@ -52,6 +54,7 @@
     "@types/express": "5.0.0",
     "@types/multer": "^2.2.0",
     "@types/node": "22.10.2",
+    "@types/nodemailer": "6.4.17",
     "@types/pg": "8.11.10",
     "@types/supertest": "6.0.2",
     "eslint": "9.17.0",

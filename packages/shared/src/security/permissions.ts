@@ -167,6 +167,29 @@ export const PERMISSION_DEFINITIONS = [
   { key: 'projects.defects.read', description: 'View project defects.' },
   { key: 'projects.defects.create', description: 'Raise a project defect.' },
   { key: 'projects.defects.update', description: 'Update or resolve a project defect.' },
+
+  // Notifications & Communications Engine (Phase 8, ADR 0037). The per-user
+  // notification list + own preferences need no permission (every authenticated
+  // membership may see and manage its own); these gate tenant-wide configuration.
+  { key: 'notifications.read', description: 'View your own notifications.' },
+  {
+    key: 'notifications.manage',
+    description: 'Enable, disable or configure the tenant’s notification rules.',
+  },
+  { key: 'notifications.templates.read', description: 'View notification templates.' },
+  {
+    key: 'notifications.templates.manage',
+    description: 'Edit or reset the tenant’s notification templates.',
+  },
+  {
+    key: 'notifications.deliveries.read',
+    description: 'View notification delivery history and failures.',
+  },
+  { key: 'notifications.preferences.read', description: 'View your notification preferences.' },
+  {
+    key: 'notifications.preferences.update',
+    description: 'Change your notification preferences.',
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];

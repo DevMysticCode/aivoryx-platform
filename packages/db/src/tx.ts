@@ -107,6 +107,44 @@ export function withProgressiveContext<T>(
   return handle.db.transaction((tx) => fn(tx, (ctx) => applyRlsContext(tx, ctx)));
 }
 
+/**
+ * Transaction with `app.tenant_id` bound but NO `app.user_id` — for trusted
+ * system/background work (e.g. the Phase 8 notification worker) that acts
+ * *within* one tenant but on behalf of no interactive user. Every tenant-owned
+ * table stays RLS-scoped to `tenantId`; policies that also require
+ * `app.user_id` (e.g. `utm_self_read`) simply do not match, which is correct
+ * for a system actor. The `tenantId` must come from a trusted source such as a
+ * committed `outbox_events` row — never from a client request.
+ */
+export function withTenantSystemContext<T>(
+  handle: DbHandle,
+  tenantId: string,
+  fn: (tx: Tx) => Promise<T>,
+): Promise<T> {
+  return handle.db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.tenant_id', ${tenantId}, true)`);
+    return fn(tx);
+  });
+}
+
+/**
+ * Transaction that sets `app.outbox_dispatcher = 'on'` and nothing else. The
+ * two additive `outbox_events` policies from migration `0010` then allow a
+ * cross-tenant SELECT of undelivered rows and the `dispatched_at` UPDATE — and
+ * nothing else, on any table. This GUC is only ever set here, server-side; no
+ * client request can reach `set_config`. Use it ONLY to read the outbox and
+ * stamp delivery; do all per-tenant work in `withTenantSystemContext`.
+ */
+export function withOutboxDispatcherContext<T>(
+  handle: DbHandle,
+  fn: (tx: Tx) => Promise<T>,
+): Promise<T> {
+  return handle.db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.outbox_dispatcher', 'on', true)`);
+    return fn(tx);
+  });
+}
+
 /** Read back the current transaction's tenant context (diagnostics / tests). */
 export async function currentTenantContext(
   tx: Tx,

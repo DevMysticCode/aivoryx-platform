@@ -185,6 +185,23 @@ export type UpdateNetMeteringRequest = components['schemas']['UpdateNetMeteringD
 export type UpdateHandoverRequest = components['schemas']['UpdateHandoverDto'];
 export type CompleteMilestoneRequest = components['schemas']['CompleteMilestoneDto'];
 
+// Phase 8 — Notifications & Communications Engine (ADR 0037).
+export type Notification = components['schemas']['NotificationDto'];
+export type NotificationList = components['schemas']['NotificationListDto'];
+export type NotificationUnreadCount = components['schemas']['UnreadCountDto'];
+export type MarkAllReadResult = components['schemas']['MarkAllReadResultDto'];
+export type NotificationPreferences = components['schemas']['NotificationPreferencesDto'];
+export type UpdateNotificationPreferencesRequest =
+  components['schemas']['UpdateNotificationPreferencesDto'];
+export type NotificationRule = components['schemas']['NotificationRuleDto'];
+export type UpdateNotificationRuleRequest = components['schemas']['UpdateNotificationRuleDto'];
+export type NotificationTemplate = components['schemas']['NotificationTemplateDto'];
+export type NotificationTemplateChannel = components['schemas']['NotificationTemplateChannelDto'];
+export type UpdateNotificationTemplateRequest =
+  components['schemas']['UpdateNotificationTemplateDto'];
+export type NotificationDelivery = components['schemas']['NotificationDeliveryDto'];
+export type NotificationDeliveryList = components['schemas']['NotificationDeliveryListDto'];
+
 /**
  * The standard error envelope returned by every `/api/v1` endpoint on failure.
  * It is documented on the auth/admin operations (`ApiErrorDto`) and mirrors

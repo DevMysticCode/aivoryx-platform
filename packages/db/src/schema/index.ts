@@ -245,6 +245,29 @@ export {
   type NewProjectExecutionAttachmentRow,
 } from './execution.js';
 
+// Phase 8 — Notifications & Communications Engine (ADR 0037).
+export {
+  notificationChannel,
+  notificationType,
+  notificationDeliveryStatus,
+  notificationRecipientStrategy,
+  notificationTemplates,
+  notificationRules,
+  notificationPreferences,
+  notifications,
+  notificationDeliveries,
+  type NotificationTemplateRow,
+  type NewNotificationTemplateRow,
+  type NotificationRuleRow,
+  type NewNotificationRuleRow,
+  type NotificationPreferenceRow,
+  type NewNotificationPreferenceRow,
+  type NotificationRow,
+  type NewNotificationRow,
+  type NotificationDeliveryRow,
+  type NewNotificationDeliveryRow,
+} from './notifications.js';
+
 export {
   usersRelations,
   tenantsRelations,
@@ -300,4 +323,9 @@ export {
   projectNetMeteringRelations,
   projectHandoverRelations,
   projectExecutionAttachmentsRelations,
+  notificationTemplatesRelations,
+  notificationRulesRelations,
+  notificationPreferencesRelations,
+  notificationsRelations,
+  notificationDeliveriesRelations,
 } from './relations.js';

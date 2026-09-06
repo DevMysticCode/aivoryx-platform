@@ -16,6 +16,7 @@ import { FieldModule } from './field/field.module.js';
 import { SupplyModule } from './supply/supply.module.js';
 import { CommercialModule } from './commercial/commercial.module.js';
 import { ExecutionModule } from './execution/execution.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 /**
  * Composition root.
@@ -48,6 +49,7 @@ import { ExecutionModule } from './execution/execution.module.js';
     SupplyModule,
     CommercialModule,
     ExecutionModule,
+    NotificationsModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

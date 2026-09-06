@@ -181,6 +181,7 @@ export class VisitsService {
         tenantId: scope.tenantId,
         type: 'visit.assigned',
         payload: { visitId, membershipId },
+        actorMembershipId: scope.actorMembershipId,
       });
     });
     return this.get(scope, visitId, { canSeeAll: true });

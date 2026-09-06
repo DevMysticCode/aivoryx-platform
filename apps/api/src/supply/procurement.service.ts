@@ -218,6 +218,7 @@ export class ProcurementService {
           tenantId: scope.tenantId,
           type: 'purchase_order.approved',
           payload: { purchaseOrderId: id },
+          actorMembershipId: scope.actorMembershipId,
         });
       }
       return loadPoDetail(tx, scope.tenantId, id);
