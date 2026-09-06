@@ -8,6 +8,7 @@ import { PasswordService } from '../auth/password.service.js';
 import { generateInvitationToken, hashInvitationToken } from './invitation-token.js';
 import { OutboxService } from './outbox.service.js';
 import { resolveRoleKeys } from './admin-queries.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const { membershipRoles, tenantInvitations, userTenantMemberships, users } = schema;
 
@@ -16,6 +17,8 @@ export const INVITATION_CREATED_EVENT = 'user.invitation.created';
 export interface CreateInvitationInput {
   tenantId: string;
   actingUserId: string;
+  /** the acting admin's membership — for audit attribution */
+  actingMembershipId: string;
   email: string;
   name?: string;
   roleKeys: string[];
@@ -49,6 +52,7 @@ export class InvitationService {
     @Inject(SERVER_ENV) env: ServerEnv,
     private readonly passwords: PasswordService,
     private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
   ) {
     this.ttlMs = env.INVITATION_TTL_HOURS * 3_600_000;
   }
@@ -168,6 +172,16 @@ export class InvitationService {
           },
         });
 
+        // 6. audit — same transaction, so a failed audit rolls the invite back
+        await this.audit.record(tx, {
+          tenantId: input.tenantId,
+          action: 'tenant.member.invited',
+          entityType: 'membership',
+          entityId: membershipId,
+          actor: { type: 'USER', membershipId: input.actingMembershipId },
+          metadata: { email, roleKeys: input.roleKeys, reinvite: Boolean(existingMembership) },
+        });
+
         return { membershipId, invitationId: invitation!.id };
       },
     );
@@ -264,6 +278,17 @@ export class InvitationService {
         .update(userTenantMemberships)
         .set({ status: 'active', updatedAt: sql`now()` })
         .where(eq(userTenantMemberships.id, membershipRow.id));
+
+      // The acting person IS the invitee; their membership is now active, so it
+      // is a valid USER actor for this tenant. Same transaction as the accept.
+      await this.audit.record(tx, {
+        tenantId: invitation.tenantId,
+        action: 'tenant.member.invitation_accepted',
+        entityType: 'membership',
+        entityId: membershipRow.id,
+        actor: { type: 'USER', membershipId: membershipRow.id },
+        metadata: { email: invitation.email },
+      });
 
       const [tenant] = await tx
         .select({ slug: schema.tenants.slug })

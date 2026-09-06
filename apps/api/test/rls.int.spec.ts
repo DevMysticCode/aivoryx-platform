@@ -84,6 +84,7 @@ const RLS_TABLES = [
   'tenant_company_profiles',
   'tenant_assets',
   'tenant_onboarding',
+  'audit_logs',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -1677,6 +1678,131 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         [pids.B.profile],
       );
       expect(rows[0]?.primary_color).toBe('#1e40af');
+    });
+  });
+
+  describe('Global Audit Log (Phase 11, ADR 0040) — append-only, tenant-isolated', () => {
+    const aids: Record<'A' | 'B', string> = { A: '', B: '' };
+
+    beforeAll(async () => {
+      for (const [key, tenantId, membershipId] of [
+        ['A', fx.tenantA, fx.admin.membershipId],
+        ['B', fx.tenantB, fx.adminB.membershipId],
+      ] as const) {
+        aids[key] = randomUUID();
+        await pool.query(
+          `insert into audit_logs (id, tenant_id, actor_membership_id, actor_type, action, entity_type, module)
+           values ($1,$2,$3,'USER','finance.invoice.issued','invoice','finance')`,
+          [aids[key], tenantId, membershipId],
+        );
+      }
+    });
+
+    it('has RLS ENABLED + FORCED and the app role holds SELECT/INSERT only', async () => {
+      const { rows } = await pool.query<{ a: boolean; f: boolean }>(
+        `select relrowsecurity as a, relforcerowsecurity as f
+           from pg_class where relname='audit_logs' and relnamespace='public'::regnamespace`,
+      );
+      expect(rows[0]?.a).toBe(true);
+      expect(rows[0]?.f).toBe(true);
+      const priv = await pool.query<{ p: string }>(
+        `select privilege_type as p from information_schema.role_table_grants
+          where table_name='audit_logs' and grantee='aivoryx_app'`,
+      );
+      const perms = priv.rows.map((r) => r.p).sort();
+      expect(perms).toEqual(['INSERT', 'SELECT']);
+    });
+
+    it('tenant A cannot READ tenant B audit rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'audit_logs', `where tenant_id = '${fx.tenantB}'`)).toBe(0);
+        expect(await count(c, 'audit_logs', `where id = '${aids.B}'`)).toBe(0);
+      });
+    });
+
+    it('tenant B cannot READ tenant A audit rows', async () => {
+      await asApp(fx.tenantB, fx.adminB.userId, async (c) => {
+        expect(await count(c, 'audit_logs', `where id = '${aids.A}'`)).toBe(0);
+        expect(await count(c, 'audit_logs', `where id = '${aids.B}'`)).toBe(1);
+      });
+    });
+
+    it('tenant A cannot INSERT an audit row for tenant B (WITH CHECK)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into audit_logs (id, tenant_id, actor_membership_id, actor_type, action, entity_type, module)
+             values (gen_random_uuid(), $1, $2, 'USER', 'crm.lead.created', 'lead', 'crm')`,
+            [fx.tenantB, fx.adminB.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: expect.stringMatching(/42501|23503/) });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('a cross-tenant actor membership is rejected by the composite FK', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into audit_logs (id, tenant_id, actor_membership_id, actor_type, action, entity_type, module)
+             values (gen_random_uuid(), $1, $2, 'USER', 'crm.lead.created', 'lead', 'crm')`,
+            [fx.tenantA, fx.adminB.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: '23503' });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('the app role cannot UPDATE an audit row', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query("update audit_logs set action='x.y.z' where id=$1", [aids.A]),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('the app role cannot DELETE an audit row', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(c.query('delete from audit_logs where id=$1', [aids.A])).rejects.toMatchObject(
+          { code: '42501' },
+        );
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query('select id from audit_logs where id=$1', [aids.A]);
+      expect(rows).toHaveLength(1);
+    });
+
+    it('the DB CHECK forbids a SYSTEM row that carries a membership id', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into audit_logs (id, tenant_id, actor_membership_id, actor_type, action, entity_type, module)
+             values (gen_random_uuid(), $1, $2, 'SYSTEM', 'crm.lead.created', 'lead', 'crm')`,
+            [fx.tenantA, fx.admin.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: '23514' });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('the DB CHECK rejects a malformed action key', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into audit_logs (id, tenant_id, actor_membership_id, actor_type, action, entity_type, module)
+             values (gen_random_uuid(), $1, $2, 'USER', 'NotAnAction', 'lead', 'crm')`,
+            [fx.tenantA, fx.admin.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: '23514' });
+        await c.query('rollback to savepoint sp');
+      });
     });
   });
 

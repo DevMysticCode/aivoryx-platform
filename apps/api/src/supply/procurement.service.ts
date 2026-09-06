@@ -4,6 +4,7 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { dec, formatDec, lineTotal, sumMoney } from './decimal.js';
 import { applyStockMovement } from './inventory-core.js';
 import { isValidPoTransition, poCanReceive, poIsEditable } from './lifecycles.js';
@@ -34,7 +35,10 @@ type PoStatus = (typeof purchaseOrders.status.enumValues)[number];
 
 @Injectable()
 export class ProcurementService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(
     scope: TenantScope,
@@ -131,6 +135,14 @@ export class ProcurementService {
           type: 'purchase_order.created',
           payload: { purchaseOrderId: poId, number, supplierId: body.supplierId },
         });
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'purchase_order.created',
+          entityType: 'purchase_order',
+          entityId: poId,
+          actor: userActor(scope),
+          metadata: { number, supplierId: body.supplierId, projectId: body.projectId ?? null },
+        });
         return poId;
       } catch (err) {
         if (isUniqueViolation(err)) throw new AppError('DUPLICATE_CODE', { details: { number } });
@@ -219,6 +231,14 @@ export class ProcurementService {
           type: 'purchase_order.approved',
           payload: { purchaseOrderId: id },
           actorMembershipId: scope.actorMembershipId,
+        });
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'purchase_order.approved',
+          entityType: 'purchase_order',
+          entityId: id,
+          actor: userActor(scope),
+          changes: { status: { from: po.status, to: 'APPROVED' } },
         });
       }
       return loadPoDetail(tx, scope.tenantId, id);
@@ -373,6 +393,14 @@ export class ProcurementService {
         tenantId: scope.tenantId,
         type: 'inventory.received',
         payload: { warehouseId: body.warehouseId, goodsReceiptId: grId },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'inventory.received',
+        entityType: 'goods_receipt',
+        entityId: grId,
+        actor: userActor(scope),
+        metadata: { purchaseOrderId: id, warehouseId: body.warehouseId, poStatus: nextStatus },
       });
     });
     return this.get(scope, id);

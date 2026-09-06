@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import type { TenantScope } from '../supply/common.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
+import { buildChanges } from '../audit/audit.redaction.js';
 import type { BrandingDto, CompanyProfileDto, UpdateCompanyProfileDto } from './settings.dto.js';
 
 const { tenants, tenantCompanyProfiles, tenantAssets } = schema;
@@ -25,6 +27,8 @@ export interface DocumentBranding {
  */
 @Injectable()
 export class CompanyProfileService {
+  constructor(private readonly audit: AuditService) {}
+
   async get(scope: TenantScope): Promise<CompanyProfileDto> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const [tenant] = await tx
@@ -65,6 +69,8 @@ export class CompanyProfileService {
       if (patch.primaryColor !== undefined) set.primaryColor = patch.primaryColor.toLowerCase();
       if (patch.accentColor !== undefined) set.accentColor = patch.accentColor.toLowerCase();
 
+      const before = await this.loadProfile(tx, scope.tenantId);
+
       await tx
         .insert(tenantCompanyProfiles)
         .values({ tenantId: scope.tenantId, ...set })
@@ -72,6 +78,33 @@ export class CompanyProfileService {
           target: tenantCompanyProfiles.tenantId,
           set: { ...set, updatedAt: new Date() },
         });
+
+      const brandingFields = (['primaryColor', 'accentColor'] as const).filter((k) => k in set);
+      const companyFields = Object.keys(set).filter(
+        (k) => k !== 'updatedByMembershipId' && k !== 'primaryColor' && k !== 'accentColor',
+      );
+      const actor = userActor(scope);
+      if (companyFields.length > 0) {
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'settings.company.updated',
+          entityType: 'company_profile',
+          entityId: before?.id ?? null,
+          actor,
+          metadata: { fields: companyFields },
+          changes: buildChanges(before ?? {}, set, companyFields as never),
+        });
+      }
+      if (brandingFields.length > 0) {
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'settings.branding.updated',
+          entityType: 'company_profile',
+          entityId: before?.id ?? null,
+          actor,
+          changes: buildChanges(before ?? {}, set, brandingFields as never),
+        });
+      }
 
       const [tenant] = await tx
         .select({ name: tenants.name })

@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { isValidProjectTransition, type ProjectStatus } from '../supply/lifecycles.js';
 import { ensureAndLoadTemplates } from './checklist-templates.js';
 import {
@@ -43,7 +44,10 @@ const {
 
 @Injectable()
 export class ExecutionService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   // ---- execution view ------------------------------------------
 
@@ -317,6 +321,14 @@ export class ExecutionService {
         type: 'project.completed',
         payload: { projectId, leadId: project.leadId },
         actorMembershipId: scope.actorMembershipId,
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.completed',
+        entityType: 'project',
+        entityId: projectId,
+        actor: userActor(scope),
+        changes: { status: { from: project.status, to: 'COMPLETED' } },
       });
       return { completed: true, projectStatus: 'COMPLETED', missing: [] };
     });

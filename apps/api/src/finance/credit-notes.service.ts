@@ -3,6 +3,7 @@ import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { DocumentRenderService } from '../documents/document-render.service.js';
 import { buildCreditNoteDocument } from '../documents/builders.js';
 import { pageBounds, type Paged, type TenantScope } from './common.js';
@@ -29,6 +30,7 @@ export class CreditNotesService {
   constructor(
     private readonly outbox: OutboxService,
     private readonly documents: DocumentRenderService,
+    private readonly audit: AuditService,
   ) {}
 
   /** Branded PDF of the credit note (Phase 10). Tenant-scoped load + branding. */
@@ -158,6 +160,20 @@ export class CreditNotesService {
               payload: { creditNoteId: cn!.id, number, customerId: body.customerId },
               actorMembershipId: scope.actorMembershipId,
             });
+            await this.audit.record(tx, {
+              tenantId: scope.tenantId,
+              action: 'finance.credit_note.created',
+              entityType: 'credit_note',
+              entityId: cn!.id,
+              actor: userActor(scope),
+              metadata: {
+                number,
+                customerId: body.customerId,
+                invoiceId: body.invoiceId ?? null,
+                amount,
+                currency,
+              },
+            });
             return { id: cn!.id };
           } catch (err) {
             if (isUniqueViolation(err))
@@ -239,6 +255,15 @@ export class CreditNotesService {
             payload: { creditNoteId: id, number: cn.number, invoiceId: cn.invoiceId },
             actorMembershipId: scope.actorMembershipId,
           });
+          await this.audit.record(tx, {
+            tenantId: scope.tenantId,
+            action: 'finance.credit_note.issued',
+            entityType: 'credit_note',
+            entityId: id,
+            actor: userActor(scope),
+            metadata: { number: cn.number, invoiceId: cn.invoiceId, amount: cn.amount },
+            changes: { status: { from: cn.status, to: 'ISSUED' } },
+          });
           return { id: cn.id };
         },
         async (existingId) => ({ id: existingId }),
@@ -279,6 +304,15 @@ export class CreditNotesService {
         type: 'credit_note.cancelled',
         payload: { creditNoteId: id, number: cn.number },
         actorMembershipId: scope.actorMembershipId,
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'finance.credit_note.cancelled',
+        entityType: 'credit_note',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { number: cn.number, reason: reason ?? null, wasIssued },
+        changes: { status: { from: cn.status, to: 'CANCELLED' } },
       });
       return this.detail(tx, scope, id);
     });

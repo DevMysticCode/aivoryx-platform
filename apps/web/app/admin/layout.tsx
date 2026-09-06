@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
-import { Bell, Building2, MapPin, Plug, ShieldCheck, Users } from 'lucide-react';
+import { Bell, Building2, MapPin, Plug, ScrollText, ShieldCheck, Users } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
@@ -16,6 +16,7 @@ const NAV = [
   { href: '/admin/settings', label: 'Workspace settings', icon: Building2 },
   { href: '/admin/integrations', label: 'Integrations', icon: Plug },
   { href: '/admin/notifications', label: 'Notifications', icon: Bell },
+  { href: '/admin/audit', label: 'Audit log', icon: ScrollText },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

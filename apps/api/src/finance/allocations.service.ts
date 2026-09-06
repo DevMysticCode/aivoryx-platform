@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { guardMoney, isCheckViolation, isUniqueViolation, type TenantScope } from './common.js';
 import { assertPositiveMoney, dec, invoiceOutstanding, paymentUnallocated } from './money.js';
 import { invoiceAcceptsAllocation } from './lifecycles.js';
@@ -28,7 +29,10 @@ export interface AllocationRequest {
  */
 @Injectable()
 export class PaymentAllocationService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   async allocate(
     scope: TenantScope,
@@ -50,6 +54,17 @@ export class PaymentAllocationService {
           for (const req of requests) {
             await this.allocateOne(tx, scope, payment, req);
           }
+          await this.audit.record(tx, {
+            tenantId: scope.tenantId,
+            action: 'finance.payment.allocated',
+            entityType: 'payment',
+            entityId: paymentId,
+            actor: userActor(scope),
+            metadata: {
+              number: payment.number,
+              allocations: requests.map((r) => ({ invoiceId: r.invoiceId, amount: r.amount })),
+            },
+          });
           return { id: paymentId };
         },
         async () => ({ id: paymentId }),

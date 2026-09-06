@@ -3,6 +3,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { isValidHandoverTransition, isValidNetMeteringTransition } from './lifecycles.js';
 import {
   loadExecProject,
@@ -24,7 +25,10 @@ const { projectNetMetering, projectHandover, projectInstallations, projectQcInsp
 
 @Injectable()
 export class ProjectWorkflowsService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   private view(scope: TenantScope, projectId: string): Promise<ExecutionViewDto> {
     return withTenantContext(getDb(), scope, (tx) => buildView(tx, scope.tenantId, projectId));
@@ -213,6 +217,14 @@ export class ProjectWorkflowsService {
         tenantId: scope.tenantId,
         type: 'handover.completed',
         payload: { projectId },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.handover.updated',
+        entityType: 'project',
+        entityId: projectId,
+        actor: userActor(scope),
+        metadata: { operation: 'completed' },
       });
     });
     return this.view(scope, projectId);

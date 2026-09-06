@@ -3,12 +3,15 @@ import { and, desc, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { generateConnectorSecret, hashConnectorSecret } from './connector-token.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 
 const { canonicalLeadEvents, integrationEventLog, leadSources, rawEvents } = schema;
 
 export interface TenantScope {
   tenantId: string;
   userId: string;
+  /** the acting membership — for audit attribution */
+  actorMembershipId: string;
 }
 
 export interface SourceView {
@@ -29,6 +32,8 @@ export interface SourceWithSecret {
 
 @Injectable()
 export class SourcesService {
+  constructor(private readonly audit: AuditService) {}
+
   list(scope: TenantScope): Promise<SourceView[]> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const rows = await tx
@@ -64,6 +69,14 @@ export class SourcesService {
           fieldMapping: input.fieldMapping ?? {},
         })
         .returning();
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'integration.source.created',
+        entityType: 'lead_source',
+        entityId: row!.id,
+        actor: userActor(scope),
+        metadata: { key: input.key, name: input.name },
+      });
       return row!;
     });
     return { source: toView(source), secret };
@@ -80,6 +93,13 @@ export class SourcesService {
         .set({ secretHash, updatedAt: new Date() })
         .where(eq(leadSources.id, sourceId))
         .returning();
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'integration.source.secret_rotated',
+        entityType: 'lead_source',
+        entityId: sourceId,
+        actor: userActor(scope),
+      });
       return row!;
     });
     return { source: toView(source), secret };
@@ -93,6 +113,14 @@ export class SourcesService {
         .set({ status: 'revoked', revokedAt: new Date(), updatedAt: new Date() })
         .where(eq(leadSources.id, sourceId))
         .returning();
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'integration.source.revoked',
+        entityType: 'lead_source',
+        entityId: sourceId,
+        actor: userActor(scope),
+        changes: { status: { from: 'active', to: 'revoked' } },
+      });
       return updated!;
     });
     return toView(row);
@@ -106,6 +134,14 @@ export class SourcesService {
         .set({ status: 'active', revokedAt: null, updatedAt: new Date() })
         .where(eq(leadSources.id, sourceId))
         .returning();
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'integration.source.reactivated',
+        entityType: 'lead_source',
+        entityId: sourceId,
+        actor: userActor(scope),
+        changes: { status: { from: 'revoked', to: 'active' } },
+      });
       return updated!;
     });
     return toView(row);

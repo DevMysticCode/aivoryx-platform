@@ -83,7 +83,12 @@ export class AuthController {
     @Security() ctx: SecurityContext,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LogoutResponseDto> {
-    await this.auth.logout(ctx.session.id);
+    await this.auth.logoutWithContext(
+      ctx.session.id,
+      ctx.tenantId && ctx.membership
+        ? { tenantId: ctx.tenantId, userId: ctx.user.id, membershipId: ctx.membership.id }
+        : null,
+    );
     res.clearCookie(this.env.SESSION_COOKIE_NAME, this.clearCookieOptions());
     return { ok: true };
   }

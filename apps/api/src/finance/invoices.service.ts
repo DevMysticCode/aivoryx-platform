@@ -4,6 +4,7 @@ import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
 import { DocumentRenderService } from '../documents/document-render.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { buildInvoiceDocument } from '../documents/builders.js';
 import { pageBounds, type Paged, type TenantScope } from './common.js';
 import { guardMoney, isCheckViolation, isUniqueViolation, normaliseCurrency } from './common.js';
@@ -72,6 +73,7 @@ export class InvoicesService {
   constructor(
     private readonly outbox: OutboxService,
     private readonly documents: DocumentRenderService,
+    private readonly audit: AuditService,
   ) {}
 
   // ---- reads -----------------------------------------------------
@@ -246,6 +248,20 @@ export class InvoicesService {
               payload: { invoiceId: inv!.id, number, customerId: body.customerId },
               actorMembershipId: scope.actorMembershipId,
             });
+            await this.audit.record(tx, {
+              tenantId: scope.tenantId,
+              action: 'finance.invoice.created',
+              entityType: 'invoice',
+              entityId: inv!.id,
+              actor: userActor(scope),
+              metadata: {
+                number,
+                customerId: body.customerId,
+                grandTotal: totals.grandTotal,
+                currency,
+                source: quotationId ? 'quotation' : body.projectId ? 'project' : 'manual',
+              },
+            });
             return { id: inv!.id };
           } catch (err) {
             if (isUniqueViolation(err))
@@ -357,6 +373,20 @@ export class InvoicesService {
             payload: { invoiceId: inv!.id, number, customerId: q.customerId, quotationId: q.id },
             actorMembershipId: scope.actorMembershipId,
           });
+          await this.audit.record(tx, {
+            tenantId: scope.tenantId,
+            action: 'finance.invoice.created',
+            entityType: 'invoice',
+            entityId: inv!.id,
+            actor: userActor(scope),
+            metadata: {
+              number,
+              customerId: q.customerId,
+              quotationId: q.id,
+              grandTotal: totals.grandTotal,
+              source: 'quotation',
+            },
+          });
           return { id: inv!.id };
         },
         async (existingId) => ({ id: existingId }),
@@ -456,6 +486,15 @@ export class InvoicesService {
             },
             actorMembershipId: scope.actorMembershipId,
           });
+          await this.audit.record(tx, {
+            tenantId: scope.tenantId,
+            action: 'finance.invoice.issued',
+            entityType: 'invoice',
+            entityId: id,
+            actor: userActor(scope),
+            metadata: { number: inv.number, grandTotal: inv.grandTotal, currency: inv.currency },
+            changes: { status: { from: inv.status, to: 'ISSUED' } },
+          });
           return { id: inv.id };
         },
         async (existingId) => ({ id: existingId }),
@@ -504,6 +543,15 @@ export class InvoicesService {
         type: target === 'VOID' ? 'invoice.voided' : 'invoice.cancelled',
         payload: { invoiceId: id, number: inv.number },
         actorMembershipId: scope.actorMembershipId,
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: target === 'VOID' ? 'finance.invoice.voided' : 'finance.invoice.cancelled',
+        entityType: 'invoice',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { number: inv.number, reason: body.reason ?? null },
+        changes: { status: { from: inv.status, to: target } },
       });
       return this.detail(tx, scope, id);
     });

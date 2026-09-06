@@ -167,6 +167,30 @@ redesigning the product.
 - help CMS, drag-drop document designer, custom tenant CSS/JS, customer portal,
   custom domains / white-label DNS, PDF archival, e-signatures — out of scope
 
+## Stream I — Platform: Global Audit Log
+
+Phase 11 (ADR 0040, `AUDIT.md`) delivered the **Global Audit & Activity Log** —
+a foundational, cross-cutting capability every future module (HR included) plugs
+into.
+
+- tenant-owned, **append-only** `audit_logs` (migration 0013) — ENABLE + FORCE
+  RLS, `SELECT`/`INSERT`-only grant, no update/delete policy or API ✅
+- central `AuditService.record(tx, …)` — one row **inside the mutation's
+  transaction**; a failed audit rolls the mutation back ✅
+- typed action catalogue (`action → module`, ~70 keys) · unknown action refused ✅
+- server-derived tenant + actor · `USER` from `SecurityContext`,
+  `SYSTEM` from `withSystemAuditActor(...)` · composite actor FK ✅
+- redaction pass — secrets stripped, size bounded, `{field:{from,to}}` diffs for
+  approved fields only · full row snapshots never stored ✅
+- correlation id + a new safe request-context ALS (ip / user-agent / request id) ✅
+- representative high-value actions audited across Phases 2–10 ✅
+- auth events recorded only when a tenant is known (login auto-select, logout,
+  every tenant switch) — not a SIEM ✅
+- `audit.read` permission · `GET /admin/audit` (paginated, filtered) +
+  `/admin/audit/:id` · `/admin/audit` console with detail drawer ✅
+- retention / archival, tamper-evident export, event-sourcing, search engine,
+  trigger-based universal auditing — out of scope
+
 ## Stream G — Service
 
 - warranty

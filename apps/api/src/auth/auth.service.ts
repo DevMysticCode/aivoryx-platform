@@ -1,10 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
-import { getDb, schema, withAppTransaction, withUserContext } from '@aivoryx/db';
+import { getDb, schema, withAppTransaction, withTenantContext, withUserContext } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import type { ServerEnv } from '@aivoryx/config';
 import { SERVER_ENV } from '../config/config.module.js';
 import type { SecurityMembership } from '../security/security-context.js';
+import { AuditService } from '../audit/audit.service.js';
 import { PasswordService } from './password.service.js';
 import { SessionService } from './session.service.js';
 
@@ -42,7 +43,33 @@ export class AuthService {
     @Inject(SERVER_ENV) private readonly env: ServerEnv,
     private readonly passwords: PasswordService,
     private readonly sessions: SessionService,
+    private readonly audit: AuditService,
   ) {}
+
+  /**
+   * Record a security event in a tenant's audit log. Auth events can happen
+   * before a tenant is resolved (multi-tenant login, logout with no active
+   * tenant); those cases are intentionally NOT written to any tenant's log
+   * (ADR 0040 §"auth events"). This is best-effort (`recordSafe`) — an audit
+   * hiccup must never fail a login/logout.
+   */
+  private async auditSecurityEvent(
+    tenantId: string,
+    userId: string,
+    membershipId: string,
+    action: 'auth.login' | 'auth.logout' | 'auth.tenant_switched',
+    sessionId: string,
+  ): Promise<void> {
+    await withTenantContext(getDb(), { tenantId, userId }, (tx) =>
+      this.audit.recordSafe(tx, {
+        tenantId,
+        action,
+        entityType: 'session',
+        entityId: sessionId,
+        actor: { type: 'USER', membershipId },
+      }),
+    );
+  }
 
   private dummyHash(): Promise<string> {
     dummyHashPromise ??= this.passwords.hash(`dummy:${cryptoRandom()}`);
@@ -109,6 +136,21 @@ export class AuthService {
       'login succeeded',
     );
 
+    // Only when login auto-selected a single tenant can this be attributed to a
+    // tenant. Multi-tenant users generate `auth.tenant_switched` on their next call.
+    if (activeMembershipId) {
+      const active = usable.find((m) => m.id === activeMembershipId);
+      if (active) {
+        await this.auditSecurityEvent(
+          active.tenantId,
+          user.id,
+          activeMembershipId,
+          'auth.login',
+          session.id,
+        );
+      }
+    }
+
     return {
       token,
       sessionId: session.id,
@@ -122,6 +164,23 @@ export class AuthService {
 
   async logout(sessionId: string): Promise<void> {
     await this.sessions.revoke(sessionId);
+  }
+
+  /** Logout with a known active tenant — records `auth.logout` in that tenant. */
+  async logoutWithContext(
+    sessionId: string,
+    ctx: { tenantId: string; userId: string; membershipId: string } | null,
+  ): Promise<void> {
+    await this.sessions.revoke(sessionId);
+    if (ctx) {
+      await this.auditSecurityEvent(
+        ctx.tenantId,
+        ctx.userId,
+        ctx.membershipId,
+        'auth.logout',
+        sessionId,
+      );
+    }
   }
 
   /** Every membership the user holds, with its tenant. RLS `utm_self_read` scopes this to the user. */
@@ -189,6 +248,13 @@ export class AuthService {
     this.logger.log(
       { userId: input.userId, sessionId: input.sessionId, tenantId: membership.tenantId },
       'active tenant switched',
+    );
+    await this.auditSecurityEvent(
+      membership.tenantId,
+      input.userId,
+      membershipId,
+      'auth.tenant_switched',
+      input.sessionId,
     );
     return membership;
   }

@@ -574,6 +574,24 @@ export const ERROR_CODES = {
     message: 'The document could not be generated. Please try again.',
   },
 
+  // global audit log (Phase 11, ADR 0040)
+  AUDIT_ACTION_UNKNOWN: {
+    httpStatus: 500,
+    message: 'An audit record referenced an action that is not in the catalogue.',
+  },
+  AUDIT_TENANT_REQUIRED: {
+    httpStatus: 500,
+    message: 'An audit record was attempted without a resolved tenant.',
+  },
+  AUDIT_ACTOR_REQUIRED: {
+    httpStatus: 500,
+    message: 'An audit record was attempted without a resolved actor.',
+  },
+  AUDIT_LOG_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That audit record does not exist in this workspace.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

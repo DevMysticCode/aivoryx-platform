@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
 
-const svc = new NotificationPreferencesService();
+// `channelAllowed` is pure; the audit dependency is unused by these tests.
+const svc = new NotificationPreferencesService({} as never);
 
 describe('preference evaluation', () => {
   it('blocks a channel the user disabled', () => {

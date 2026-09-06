@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import type { TenantScope } from '../supply/common.js';
 import type { NotificationChannel } from './catalogue.js';
 
@@ -20,6 +21,8 @@ const DEFAULT_PREFERENCES: ResolvedPreferences = { inAppEnabled: true, emailEnab
  */
 @Injectable()
 export class NotificationPreferencesService {
+  constructor(private readonly audit: AuditService) {}
+
   /** Worker-side: read within an existing tenant transaction. */
   async resolve(tx: Tx, tenantId: string, membershipId: string): Promise<ResolvedPreferences> {
     const [row] = await tx
@@ -74,6 +77,14 @@ export class NotificationPreferencesService {
             updatedAt: new Date(),
           },
         });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'notification.preference.updated',
+        entityType: 'notification_preference',
+        entityId: scope.actorMembershipId,
+        actor: userActor(scope),
+        metadata: { inAppEnabled: input.inAppEnabled, emailEnabled: input.emailEnabled },
+      });
       return this.resolve(tx, scope.tenantId, scope.actorMembershipId);
     });
   }

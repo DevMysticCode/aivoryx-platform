@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import type { ServerEnv } from '@aivoryx/config';
 import { correlationRequestHandler } from '../observability/correlation.middleware.js';
+import { requestMetaRequestHandler } from '../observability/request-context.js';
 
 /**
  * All cross-cutting HTTP setup in one place so `main.ts` and tests configure the
@@ -15,6 +16,8 @@ export function configureApp(app: INestApplication, env: ServerEnv): void {
 
   // Correlation id first, so every downstream log/error carries it.
   app.use(correlationRequestHandler);
+  // Safe request metadata (ip / user-agent / request id) for the audit log.
+  app.use(requestMetaRequestHandler);
   app.use(helmet());
   app.use(cookieParser());
 

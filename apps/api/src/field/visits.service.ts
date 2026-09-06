@@ -3,6 +3,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { leadExists } from '../crm/lead-queries.js';
 import {
   loadActiveCustomFieldDefsWithMeta,
@@ -61,7 +62,10 @@ export interface GeoPointInput {
 
 @Injectable()
 export class VisitsService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(
     scope: TenantScope,
@@ -147,6 +151,18 @@ export class VisitsService {
           payload: { visitId: id, membershipId: input.assignedMembershipId },
         });
       }
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'field.visit.created',
+        entityType: 'visit',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: {
+          leadId: input.leadId,
+          scheduledAt: input.scheduledAt,
+          assignedMembershipId: input.assignedMembershipId ?? null,
+        },
+      });
       return id;
     });
     return this.get(scope, visitId, { canSeeAll: true });
@@ -183,6 +199,14 @@ export class VisitsService {
         payload: { visitId, membershipId },
         actorMembershipId: scope.actorMembershipId,
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'field.visit.assigned',
+        entityType: 'visit',
+        entityId: visitId,
+        actor: userActor(scope),
+        changes: { assignedMembershipId: { from: current.assignedMembershipId, to: membershipId } },
+      });
     });
     return this.get(scope, visitId, { canSeeAll: true });
   }
@@ -211,6 +235,14 @@ export class VisitsService {
         tenantId: scope.tenantId,
         type: 'visit.rescheduled',
         payload: { visitId, scheduledAt },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'field.visit.rescheduled',
+        entityType: 'visit',
+        entityId: visitId,
+        actor: userActor(scope),
+        changes: { scheduledAt: { from: current.scheduledAt.toISOString(), to: scheduledAt } },
       });
     });
     return this.get(scope, visitId, { canSeeAll: true });
@@ -242,6 +274,15 @@ export class VisitsService {
         type: 'visit_cancelled',
         actorMembershipId: scope.actorMembershipId,
         payload: { visitId },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'field.visit.cancelled',
+        entityType: 'visit',
+        entityId: visitId,
+        actor: userActor(scope),
+        metadata: { reason: reason ?? null },
+        changes: { status: { from: current.status, to: 'CANCELLED' } },
       });
     });
     return this.get(scope, visitId, { canSeeAll: true });
@@ -301,6 +342,13 @@ export class VisitsService {
         tenantId: scope.tenantId,
         type: 'visit.checked_in',
         payload: { visitId },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'field.visit.checked_in',
+        entityType: 'visit',
+        entityId: visitId,
+        actor: userActor(scope),
       });
     });
     return this.get(scope, visitId, { canSeeAll: true });
@@ -369,6 +417,13 @@ export class VisitsService {
         type: 'visit.checked_out',
         payload: { visitId },
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'field.visit.checked_out',
+        entityType: 'visit',
+        entityId: visitId,
+        actor: userActor(scope),
+      });
     });
     return this.get(scope, visitId, { canSeeAll: true });
   }
@@ -413,6 +468,13 @@ export class VisitsService {
             tenantId: scope.tenantId,
             type: 'survey.completed',
             payload: { visitId },
+          });
+          await this.audit.record(tx, {
+            tenantId: scope.tenantId,
+            action: 'field.visit.survey_completed',
+            entityType: 'visit',
+            entityId: visitId,
+            actor: userActor(scope),
           });
         } else {
           await recordVisitActivity(tx, {
@@ -474,6 +536,14 @@ export class VisitsService {
         tenantId: scope.tenantId,
         type: 'visit.completed',
         payload: { visitId },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'field.visit.completed',
+        entityType: 'visit',
+        entityId: visitId,
+        actor: userActor(scope),
+        changes: { status: { from: current.status, to: 'COMPLETED' } },
       });
     });
     return this.get(scope, visitId, { canSeeAll: true });

@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, notifications, finance, and platform settings — no other business domain yet', () => {
+  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, notifications, finance, platform settings, and the audit log — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -121,6 +121,7 @@ describe('permission catalogue', () => {
         'finance.credit_notes.cancel',
         'settings.company.read',
         'settings.company.update',
+        'audit.read',
       ].sort(),
     );
     for (const key of PERMISSION_KEYS) {

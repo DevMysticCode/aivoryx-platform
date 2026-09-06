@@ -218,6 +218,11 @@ export const PERMISSION_DEFINITIONS = [
     key: 'settings.company.update',
     description: 'Edit the workspace company profile, branding and logos.',
   },
+
+  // Global Audit Log (Phase 11, ADR 0040). Read-only: the audit trail is
+  // append-only and has no write/delete API. Not granted to a user just because
+  // they can use a business module.
+  { key: 'audit.read', description: 'View the workspace audit log.' },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];

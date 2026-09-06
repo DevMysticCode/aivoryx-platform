@@ -4,6 +4,7 @@ import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { normalizeEmail, normalizePhone } from '../crm/lead-normalization.js';
 import { isUniqueViolation, pageBounds, type TenantScope } from '../supply/common.js';
 import type {
@@ -53,7 +54,10 @@ async function nextCustomerNumber(tx: Tx, tenantId: string, requested?: string):
  */
 @Injectable()
 export class CustomersService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(
     scope: TenantScope,
@@ -160,6 +164,14 @@ export class CustomersService {
           type: 'customer.created',
           payload: { customerId: created, number, source: 'manual' },
         });
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'customer.created',
+          entityType: 'customer',
+          entityId: created,
+          actor: userActor(scope),
+          metadata: { number, name: body.name },
+        });
         return created;
       } catch (err) {
         if (isUniqueViolation(err)) throw new AppError('DUPLICATE_CODE', { details: { number } });
@@ -199,6 +211,19 @@ export class CustomersService {
           updatedAt: new Date(),
         })
         .where(and(eq(customers.id, id), eq(customers.tenantId, scope.tenantId)));
+
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'customer.updated',
+        entityType: 'customer',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: {
+          fields: Object.entries(body)
+            .filter(([, v]) => v !== undefined)
+            .map(([k]) => k),
+        },
+      });
     });
     return this.get(scope, id);
   }

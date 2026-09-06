@@ -174,10 +174,14 @@ export class AdminController {
   }
 }
 
-function scope(ctx: SecurityContext): { tenantId: string; userId: string } {
-  if (!ctx.tenantId) {
+function scope(ctx: SecurityContext): {
+  tenantId: string;
+  userId: string;
+  actorMembershipId: string;
+} {
+  if (!ctx.tenantId || !ctx.membership) {
     // Unreachable: @RequirePermission implies a resolved tenant. Defensive only.
     throw new AppError('AUTH_NO_ACTIVE_TENANT');
   }
-  return { tenantId: ctx.tenantId, userId: ctx.user.id };
+  return { tenantId: ctx.tenantId, userId: ctx.user.id, actorMembershipId: ctx.membership.id };
 }

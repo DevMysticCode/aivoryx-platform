@@ -246,5 +246,10 @@ export type Branding = components['schemas']['BrandingDto'];
 export type Onboarding = components['schemas']['OnboardingDto'];
 export type OnboardingStep = components['schemas']['OnboardingStepDto'];
 
+// Phase 11 — Global Audit Log (ADR 0040).
+export type AuditLog = components['schemas']['AuditLogDto'];
+export type AuditLogDetail = components['schemas']['AuditLogDetailDto'];
+export type AuditLogList = components['schemas']['AuditLogListDto'];
+
 /** All versioned API routes are served under this prefix (ADR 0005). */
 export const API_V1_PREFIX = '/api/v1';

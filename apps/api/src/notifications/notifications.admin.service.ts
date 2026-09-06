@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { AppError } from '@aivoryx/shared';
 import type { TenantScope } from '../supply/common.js';
 import { pageBounds } from '../supply/common.js';
@@ -34,6 +35,8 @@ const TEMPLATE_CHANNELS: NotificationChannel[] = ['in_app', 'email'];
  */
 @Injectable()
 export class NotificationsAdminService {
+  constructor(private readonly audit: AuditService) {}
+
   async listRules(scope: TenantScope): Promise<NotificationRuleDto[]> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const overrides = await this.loadRuleOverrides(tx, scope.tenantId);
@@ -91,6 +94,14 @@ export class NotificationsAdminService {
             updatedAt: new Date(),
           },
         });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'notification.rule.updated',
+        entityType: 'notification_rule',
+        entityId: null,
+        actor: userActor(scope),
+        metadata: { key, isActive: patch.isActive, channels: channels ?? undefined },
+      });
     });
     return this.listRules(scope);
   }
@@ -152,6 +163,14 @@ export class NotificationsAdminService {
             },
           });
       }
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'notification.template.updated',
+        entityType: 'notification_template',
+        entityId: null,
+        actor: userActor(scope),
+        metadata: { key },
+      });
     });
     return this.getTemplate(scope, key);
   }

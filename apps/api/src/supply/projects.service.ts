@@ -4,6 +4,7 @@ import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { dec, formatDec } from './decimal.js';
 import { applyStockMovement } from './inventory-core.js';
 import {
@@ -58,7 +59,10 @@ async function recordActivity(
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(
     scope: TenantScope,
@@ -179,6 +183,14 @@ export class ProjectsService {
           type: 'project.created',
           payload: { projectId: id, leadId: body.leadId, number },
         });
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'project.created',
+          entityType: 'project',
+          entityId: id,
+          actor: userActor(scope),
+          metadata: { number, leadId: body.leadId ?? null },
+        });
         return id;
       } catch (err) {
         if (isUniqueViolation(err)) throw new AppError('DUPLICATE_CODE', { details: { number } });
@@ -215,6 +227,15 @@ export class ProjectsService {
         tenantId: scope.tenantId,
         type: 'project.approved',
         payload: { projectId: id },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.updated',
+        entityType: 'project',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { operation: 'approved' },
+        changes: { status: { from: current.status, to: 'APPROVED' } },
       });
     });
     return this.get(scope, id);
@@ -516,6 +537,20 @@ export class ProjectsService {
         type: kind === 'ALLOCATION' ? 'inventory.allocated' : 'inventory.released',
         payload: { projectId, productId: body.productId, quantity: body.quantity },
       });
+      if (kind === 'ALLOCATION') {
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'inventory.allocated',
+          entityType: 'project',
+          entityId: projectId,
+          actor: userActor(scope),
+          metadata: {
+            productId: body.productId,
+            warehouseId: body.warehouseId,
+            quantity: body.quantity,
+          },
+        });
+      }
     });
   }
 }
