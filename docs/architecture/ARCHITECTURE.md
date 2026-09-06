@@ -116,5 +116,6 @@ CRM / field / operations:
 - `FIELD-OPERATIONS.md` — visits, field agents, GPS, and site survey
 - `SUPPLY-CHAIN.md` — projects, procurement, inventory ledger, dispatch & delivery
 - `COMMERCIAL.md` — customers, quotations, revisions & atomic project booking
+- `EPC-EXECUTION.md` — milestones, installation, checklists, QC, defects, net metering, handover, completion
 
 Diagrams: `docs/diagrams/`.

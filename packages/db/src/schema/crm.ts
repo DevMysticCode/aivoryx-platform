@@ -77,6 +77,8 @@ export const leadActivityType = pgEnum('lead_activity_type', [
   'quotation_sent',
   'quotation_accepted',
   'quotation_booked',
+  // EPC execution milestone surfaced onto the lead timeline (Phase 7, ADR 0036).
+  'project_completed',
 ]);
 
 export const followupStatus = pgEnum('followup_status', ['pending', 'completed', 'cancelled']);

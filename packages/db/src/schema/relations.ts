@@ -16,6 +16,16 @@ import {
   quotationRevisions,
   quotations,
 } from './commercial.js';
+import {
+  projectChecklistItems,
+  projectDefects,
+  projectExecutionAttachments,
+  projectHandover,
+  projectInstallations,
+  projectMilestones,
+  projectNetMetering,
+  projectQcInspections,
+} from './execution.js';
 import { fieldAgents, visitActivities, visitAttachments, visitNotes, visits } from './field.js';
 import { sessions, tenants, users, userTenantMemberships } from './identity.js';
 import {
@@ -385,3 +395,73 @@ export const quotationAttachmentsRelations = relations(quotationAttachments, ({ 
     references: [quotations.id],
   }),
 }));
+
+// --- Phase 7 — EPC project execution (ADR 0036) ----------------------
+
+export const projectMilestonesRelations = relations(projectMilestones, ({ one }) => ({
+  tenant: one(tenants, { fields: [projectMilestones.tenantId], references: [tenants.id] }),
+  project: one(projects, { fields: [projectMilestones.projectId], references: [projects.id] }),
+}));
+
+export const projectInstallationsRelations = relations(projectInstallations, ({ one }) => ({
+  tenant: one(tenants, { fields: [projectInstallations.tenantId], references: [tenants.id] }),
+  project: one(projects, { fields: [projectInstallations.projectId], references: [projects.id] }),
+  assignee: one(userTenantMemberships, {
+    fields: [projectInstallations.assignedMembershipId],
+    references: [userTenantMemberships.id],
+  }),
+  visit: one(visits, { fields: [projectInstallations.visitId], references: [visits.id] }),
+}));
+
+export const projectChecklistItemsRelations = relations(projectChecklistItems, ({ one }) => ({
+  tenant: one(tenants, { fields: [projectChecklistItems.tenantId], references: [tenants.id] }),
+  project: one(projects, { fields: [projectChecklistItems.projectId], references: [projects.id] }),
+  inspection: one(projectQcInspections, {
+    fields: [projectChecklistItems.inspectionId],
+    references: [projectQcInspections.id],
+  }),
+}));
+
+export const projectQcInspectionsRelations = relations(projectQcInspections, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [projectQcInspections.tenantId], references: [tenants.id] }),
+  project: one(projects, { fields: [projectQcInspections.projectId], references: [projects.id] }),
+  checklist: many(projectChecklistItems),
+  defects: many(projectDefects),
+}));
+
+export const projectDefectsRelations = relations(projectDefects, ({ one }) => ({
+  tenant: one(tenants, { fields: [projectDefects.tenantId], references: [tenants.id] }),
+  project: one(projects, { fields: [projectDefects.projectId], references: [projects.id] }),
+  inspection: one(projectQcInspections, {
+    fields: [projectDefects.inspectionId],
+    references: [projectQcInspections.id],
+  }),
+  assignee: one(userTenantMemberships, {
+    fields: [projectDefects.assignedMembershipId],
+    references: [userTenantMemberships.id],
+  }),
+}));
+
+export const projectNetMeteringRelations = relations(projectNetMetering, ({ one }) => ({
+  tenant: one(tenants, { fields: [projectNetMetering.tenantId], references: [tenants.id] }),
+  project: one(projects, { fields: [projectNetMetering.projectId], references: [projects.id] }),
+}));
+
+export const projectHandoverRelations = relations(projectHandover, ({ one }) => ({
+  tenant: one(tenants, { fields: [projectHandover.tenantId], references: [tenants.id] }),
+  project: one(projects, { fields: [projectHandover.projectId], references: [projects.id] }),
+}));
+
+export const projectExecutionAttachmentsRelations = relations(
+  projectExecutionAttachments,
+  ({ one }) => ({
+    tenant: one(tenants, {
+      fields: [projectExecutionAttachments.tenantId],
+      references: [tenants.id],
+    }),
+    project: one(projects, {
+      fields: [projectExecutionAttachments.projectId],
+      references: [projects.id],
+    }),
+  }),
+);

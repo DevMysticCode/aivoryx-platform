@@ -109,6 +109,24 @@ that promotes the customer and activates the **existing Phase 5 `projects`
 row** (`DRAFT → APPROVED`) — there is no `orders` entity. Only a `draft`
 revision is mutable; `revise` appends a new one. See `COMMERCIAL.md`.
 
+## EPC execution entities
+
+**Implemented (Phase 7, ADR 0036):**
+
+project_milestones -- the 11-key execution checklist (extends `projects`, not a new project table)
+project_installations -- one per project; assignment references a field-agent membership
+checklist_templates -- tenant-configurable checklist definitions
+project_checklist_items -- per-project / per-QC-inspection checklist values
+project_qc_inspections -- repeatable, seq-numbered QC inspections
+project_defects -- lightweight defect list (OPEN → IN_PROGRESS → RESOLVED → VERIFIED)
+project_net_metering -- internal grid-connection tracking (configurable, not a solar-only project column)
+project_handover -- customer handover + internal acknowledgement
+project_execution_attachments -- polymorphic (entity_kind, entity_id), bytes in object storage
+
+The Phase 5 `project_status` enum is unchanged — execution detail lives in
+milestones + workflow records. Completion is server-enforced
+(`PROJECT_COMPLETION_BLOCKED` with a `missing` list). See `EPC-EXECUTION.md`.
+
 ## Lead ingestion entities
 
 **Implemented (Phase 3, ADR 0032):**
@@ -206,6 +224,15 @@ superseded by the lead-ingestion entities above.
 project_id is not null` on `quotations`. It also adds
   `quotation_created/sent/accepted/booked` to `lead_activity_type` and
   `booked` to `project_activity_type` via `ALTER TYPE ... ADD VALUE`.
+- Migration `0009` (Phase 7, ADR 0036) adds the 9 EPC-execution tables
+  (`project_milestones`, `project_installations`, `checklist_templates`,
+  `project_checklist_items`, `project_qc_inspections`, `project_defects`,
+  `project_net_metering`, `project_handover`,
+  `project_execution_attachments`) — all `ENABLE` + `FORCE` RLS with the same
+  hand-appended-block pattern, composite `(id, tenant_id)` FKs, and
+  tenant/assignee/status indexes. It also adds `project_completed` to
+  `lead_activity_type` and 15 execution values to `project_activity_type` via
+  `ALTER TYPE ... ADD VALUE`.
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

@@ -60,6 +60,15 @@ const RLS_TABLES = [
   'quotation_lines',
   'quotation_activities',
   'quotation_attachments',
+  'project_milestones',
+  'project_installations',
+  'checklist_templates',
+  'project_checklist_items',
+  'project_qc_inspections',
+  'project_defects',
+  'project_net_metering',
+  'project_handover',
+  'project_execution_attachments',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -1064,6 +1073,173 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
             `insert into quotations (id,tenant_id,number,lead_id,status,current_revision_no,created_by_membership_id)
              values (gen_random_uuid(),$1,'Q-X',$2,'DRAFT',1,$3)`,
             [fx.tenantA, ids.B.lead, fx.admin.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: expect.stringMatching(/23503|42501/) });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+  });
+
+  describe('EPC project execution (Phase 7, ADR 0036)', () => {
+    const EXECUTION_TABLES = [
+      'project_milestones',
+      'project_installations',
+      'checklist_templates',
+      'project_checklist_items',
+      'project_qc_inspections',
+      'project_defects',
+      'project_net_metering',
+      'project_handover',
+      'project_execution_attachments',
+    ];
+    const ids: Record<'A' | 'B', Record<string, string>> = { A: {}, B: {} };
+
+    beforeAll(async () => {
+      for (const [key, tenantId, membershipId] of [
+        ['A', fx.tenantA, fx.admin.membershipId],
+        ['B', fx.tenantB, fx.adminB.membershipId],
+      ] as const) {
+        const g = ids[key];
+        g.lead = randomUUID();
+        g.project = randomUUID();
+        g.milestone = randomUUID();
+        g.installation = randomUUID();
+        g.template = randomUUID();
+        g.item = randomUUID();
+        g.inspection = randomUUID();
+        g.defect = randomUUID();
+
+        await pool.query(
+          `insert into leads (id, tenant_id, name, phone, normalized_phone) values ($1,$2,'Exec RLS Lead','9995550000','9995550000')`,
+          [g.lead, tenantId],
+        );
+        await pool.query(
+          `insert into projects (id,tenant_id,lead_id,number,status,created_by_membership_id)
+           values ($1,$2,$3,'PRJ-EXE','IN_PROGRESS',$4)`,
+          [g.project, tenantId, g.lead, membershipId],
+        );
+        await pool.query(
+          `insert into project_milestones (id,tenant_id,project_id,key,sort_order) values ($1,$2,$3,'PLANNING',0)`,
+          [g.milestone, tenantId, g.project],
+        );
+        await pool.query(
+          `insert into project_installations (id,tenant_id,project_id,status,created_by_membership_id)
+           values ($1,$2,$3,'UNASSIGNED',$4)`,
+          [g.installation, tenantId, g.project, membershipId],
+        );
+        await pool.query(
+          `insert into checklist_templates (id,tenant_id,kind,label) values ($1,$2,'installation','Site prepared')`,
+          [g.template, tenantId],
+        );
+        await pool.query(
+          `insert into project_checklist_items (id,tenant_id,project_id,kind,label) values ($1,$2,$3,'installation','Site prepared')`,
+          [g.item, tenantId, g.project],
+        );
+        await pool.query(
+          `insert into project_qc_inspections (id,tenant_id,project_id,seq,status,created_by_membership_id)
+           values ($1,$2,$3,1,'PENDING',$4)`,
+          [g.inspection, tenantId, g.project, membershipId],
+        );
+        await pool.query(
+          `insert into project_defects (id,tenant_id,project_id,description,created_by_membership_id)
+           values ($1,$2,$3,'RLS defect',$4)`,
+          [g.defect, tenantId, g.project, membershipId],
+        );
+        await pool.query(
+          `insert into project_net_metering (id,tenant_id,project_id,status,created_by_membership_id)
+           values (gen_random_uuid(),$1,$2,'NOT_STARTED',$3)`,
+          [tenantId, g.project, membershipId],
+        );
+        await pool.query(
+          `insert into project_handover (id,tenant_id,project_id,status,created_by_membership_id)
+           values (gen_random_uuid(),$1,$2,'PENDING',$3)`,
+          [tenantId, g.project, membershipId],
+        );
+        await pool.query(
+          `insert into project_execution_attachments (id,tenant_id,project_id,entity_kind,entity_id,object_key,content_type,file_size)
+           values (gen_random_uuid(),$1,$2,'installation',$3,$4,'image/jpeg',1024)`,
+          [
+            tenantId,
+            g.project,
+            g.installation,
+            `tenants/${tenantId}/projects/execution/${randomUUID()}.jpg`,
+          ],
+        );
+      }
+    });
+
+    it('every Phase 7 tenant-owned table has RLS ENABLED and FORCED', async () => {
+      const { rows } = await pool.query<{ relname: string; a: boolean; f: boolean }>(
+        `select relname, relrowsecurity as a, relforcerowsecurity as f
+           from pg_class where relnamespace='public'::regnamespace and relname = any($1)`,
+        [EXECUTION_TABLES],
+      );
+      expect(rows.length).toBe(EXECUTION_TABLES.length);
+      for (const r of rows) {
+        expect(r.a, `${r.relname} ENABLE`).toBe(true);
+        expect(r.f, `${r.relname} FORCE`).toBe(true);
+      }
+    });
+
+    it('tenant A cannot READ any tenant B row across the execution tables', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        for (const table of EXECUTION_TABLES) {
+          expect(await count(c, table, `where tenant_id = '${fx.tenantB}'`), `read ${table}`).toBe(
+            0,
+          );
+        }
+      });
+    });
+
+    it('tenant A sees exactly its own execution rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'project_installations', `where id = '${ids.A.installation}'`)).toBe(
+          1,
+        );
+        expect(await count(c, 'project_installations', `where id = '${ids.B.installation}'`)).toBe(
+          0,
+        );
+        expect(await count(c, 'project_qc_inspections', `where id = '${ids.B.inspection}'`)).toBe(
+          0,
+        );
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B execution rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (
+            await c.query("update project_installations set status='COMPLETED' where id=$1", [
+              ids.B.installation,
+            ])
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from project_defects where id=$1', [ids.B.defect])).rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into project_milestones (id,tenant_id,project_id,key) values (gen_random_uuid(),$1,$2,'COMPLETED')`,
+            [fx.tenantB, ids.B.project],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query('select status from project_installations where id=$1', [
+        ids.B.installation,
+      ]);
+      expect(rows[0]?.status).toBe('UNASSIGNED');
+    });
+
+    it('a cross-tenant composite FK is rejected by the database', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into project_installations (id,tenant_id,project_id,status,created_by_membership_id)
+             values (gen_random_uuid(),$1,$2,'UNASSIGNED',$3)`,
+            [fx.tenantA, ids.B.project, fx.admin.membershipId],
           ),
         ).rejects.toMatchObject({ code: expect.stringMatching(/23503|42501/) });
         await c.query('rollback to savepoint sp');

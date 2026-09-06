@@ -377,6 +377,84 @@ export const ERROR_CODES = {
     message: 'The project for this booking is not in a state that can be activated.',
   },
 
+  // EPC project execution (Phase 7, ADR 0036)
+  EXECUTION_NOT_STARTED: {
+    httpStatus: 409,
+    message: 'Project execution has not been started for this project.',
+  },
+  MILESTONE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That execution milestone was not found on this project.',
+  },
+  CHECKLIST_ITEM_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That checklist item was not found.',
+  },
+  INSTALLATION_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'No installation record was found for this project.',
+  },
+  INSTALLATION_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the installation’s current status.',
+  },
+  INSTALLATION_NOT_ASSIGNED_TO_YOU: {
+    httpStatus: 403,
+    message: 'This installation is not assigned to you.',
+  },
+  INSTALLATION_CHECKLIST_INCOMPLETE: {
+    httpStatus: 409,
+    message: 'Required installation checklist items are not complete.',
+  },
+  MATERIAL_NOT_READY: {
+    httpStatus: 409,
+    message: 'Required materials are not ready and no override is in place.',
+  },
+  QC_INSPECTION_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That QC inspection was not found on this project.',
+  },
+  QC_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the inspection’s current status.',
+  },
+  QC_CHECKLIST_INCOMPLETE: {
+    httpStatus: 409,
+    message: 'Required QC checks are not complete.',
+  },
+  QC_BLOCKING_DEFECTS: {
+    httpStatus: 409,
+    message: 'This project has unresolved defects that block QC from passing.',
+  },
+  QC_NOT_PASSED: {
+    httpStatus: 409,
+    message: 'QC has not been passed for this project.',
+  },
+  DEFECT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That defect was not found on this project.',
+  },
+  DEFECT_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That status change is not allowed from the defect’s current status.',
+  },
+  NET_METERING_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That net-metering status change is not allowed.',
+  },
+  HANDOVER_INVALID_STATE: {
+    httpStatus: 409,
+    message: 'That action is not allowed from the handover’s current status.',
+  },
+  HANDOVER_NOT_READY: {
+    httpStatus: 409,
+    message: 'The handover cannot be completed until its prerequisites are met.',
+  },
+  PROJECT_COMPLETION_BLOCKED: {
+    httpStatus: 409,
+    message: 'The project cannot be completed until all execution requirements are met.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

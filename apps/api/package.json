@@ -15,7 +15,8 @@
     "seed:field-demo": "tsx --env-file-if-exists=../../.env scripts/seed-field-demo.ts",
     "seed:supply-demo": "tsx --env-file-if-exists=../../.env scripts/seed-supply-demo.ts",
     "clean": "rimraf dist .turbo *.tsbuildinfo",
-    "seed:commercial-demo": "tsx --env-file-if-exists=../../.env scripts/seed-commercial-demo.ts"
+    "seed:commercial-demo": "tsx --env-file-if-exists=../../.env scripts/seed-commercial-demo.ts",
+    "seed:execution-demo": "tsx --env-file-if-exists=../../.env scripts/seed-execution-demo.ts"
   },
   "dependencies": {
     "@aivoryx/config": "workspace:*",

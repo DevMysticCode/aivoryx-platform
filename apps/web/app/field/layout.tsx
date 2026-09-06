@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
-import { CalendarDays, ListChecks, UserPlus } from 'lucide-react';
+import { CalendarDays, HardHat, ListChecks, UserPlus } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/admin/ui';
 const NAV = [
   { href: '/field', label: 'Today', icon: CalendarDays },
   { href: '/field/visits', label: 'Visits', icon: ListChecks },
+  { href: '/field/projects', label: 'Projects', icon: HardHat },
   { href: '/field/leads/new', label: 'New lead', icon: UserPlus },
 ];
 
