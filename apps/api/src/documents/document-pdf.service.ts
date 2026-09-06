@@ -33,19 +33,38 @@ export class DocumentPdfService {
 
   async render(def: DocumentDefinition, branding: DocumentBrandingContext): Promise<Buffer> {
     try {
-      const docDefinition = this.build(def, branding);
-      const pdfDoc = this.printer.createPdfKitDocument(docDefinition);
-      const chunks: Buffer[] = [];
-      return await new Promise<Buffer>((resolve, reject) => {
-        pdfDoc.on('data', (c: Buffer) => chunks.push(c));
-        pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
-        pdfDoc.on('error', reject);
-        pdfDoc.end();
-      });
+      return await this.renderOnce(def, branding);
     } catch (err) {
+      // A stored logo that pdfkit cannot decode (corrupt / truncated bytes)
+      // must never take down document generation — fall back to the text
+      // identity header and try once more.
+      if (branding.logo) {
+        this.logger.warn(`document render failed with logo; retrying without it: ${String(err)}`);
+        try {
+          return await this.renderOnce(def, { ...branding, logo: null });
+        } catch (retryErr) {
+          this.logger.error(`document render failed: ${String(retryErr)}`);
+          throw new AppError('DOCUMENT_RENDER_FAILED');
+        }
+      }
       this.logger.error(`document render failed: ${String(err)}`);
       throw new AppError('DOCUMENT_RENDER_FAILED');
     }
+  }
+
+  private async renderOnce(
+    def: DocumentDefinition,
+    branding: DocumentBrandingContext,
+  ): Promise<Buffer> {
+    const docDefinition = this.build(def, branding);
+    const pdfDoc = this.printer.createPdfKitDocument(docDefinition);
+    const chunks: Buffer[] = [];
+    return await new Promise<Buffer>((resolve, reject) => {
+      pdfDoc.on('data', (c: Buffer) => chunks.push(c));
+      pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
+      pdfDoc.on('error', reject);
+      pdfDoc.end();
+    });
   }
 
   private build(def: DocumentDefinition, b: DocumentBrandingContext): TDocumentDefinitions {

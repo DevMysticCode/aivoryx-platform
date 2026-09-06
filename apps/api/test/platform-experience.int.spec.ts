@@ -47,9 +47,14 @@ describe.skipIf(!INTEGRATION_ENABLED)(
     const plainCookie = () =>
       cookieFor(fx.plainMember.email, fx.plainMember.password, fx.plainMember.membershipId);
 
-    /** A header-valid 64×64 PNG (signature + IHDR). The logo validator sniffs the
-     *  header only, so this exercises the accept path without a decode step. */
-    const PNG_64 = (() => {
+    /** A genuine 24×24 solid PNG — decodes cleanly, so it exercises both upload
+     *  validation and PDF logo embedding. */
+    const REAL_PNG = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAALElEQVR4nGPkL8tjoAZgooopDKMGEQNGA5swGA0jwmA0jAiD0TAiDAZfGAEAKEQBI+45dKMAAAAASUVORK5CYII=',
+      'base64',
+    );
+    /** Valid PNG signature + IHDR but no image data — a decoder rejects it. */
+    const CORRUPT_PNG = (() => {
       const buf = Buffer.alloc(64);
       buf.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
       buf.write('IHDR', 12, 'ascii');
@@ -125,7 +130,7 @@ describe.skipIf(!INTEGRATION_ENABLED)(
       const up = await http
         .post('/api/v1/settings/company/logo')
         .set('Cookie', cookie)
-        .attach('file', PNG_64, { filename: 'logo.png', contentType: 'image/png' });
+        .attach('file', REAL_PNG, { filename: 'logo.png', contentType: 'image/png' });
       expect(up.status).toBe(200);
       expect(up.body.hasLogo).toBe(true);
 
@@ -147,6 +152,16 @@ describe.skipIf(!INTEGRATION_ENABLED)(
           filename: 'evil.png',
           contentType: 'image/png',
         });
+      expect(res.status).toBe(422);
+      expect(res.body.error.code).toBe('LOGO_INVALID');
+    });
+
+    it('rejects a header-only / truncated PNG (no image data)', async () => {
+      const cookie = await adminCookie();
+      const res = await http
+        .post('/api/v1/settings/company/logo')
+        .set('Cookie', cookie)
+        .attach('file', CORRUPT_PNG, { filename: 'logo.png', contentType: 'image/png' });
       expect(res.status).toBe(422);
       expect(res.body.error.code).toBe('LOGO_INVALID');
     });
@@ -218,11 +233,16 @@ describe.skipIf(!INTEGRATION_ENABLED)(
 
     it('serves a real, branded PDF for an invoice (correct type, filename, %PDF bytes)', async () => {
       const cookie = await adminCookie();
-      // re-apply branding removed by the logo test above
+      // re-apply branding removed by the logo test above, and put a real logo
+      // back so the PDF exercises image embedding end-to-end
       await http
         .put('/api/v1/settings/company')
         .set('Cookie', cookie)
         .send({ displayName: 'Aurora Renewables', primaryColor: '#1e40af' });
+      await http
+        .post('/api/v1/settings/company/logo')
+        .set('Cookie', cookie)
+        .attach('file', REAL_PNG, { filename: 'logo.png', contentType: 'image/png' });
       const inv = await makeIssuedInvoice(cookie);
 
       const res = await http

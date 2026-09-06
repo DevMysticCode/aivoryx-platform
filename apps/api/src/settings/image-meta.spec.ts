@@ -8,13 +8,17 @@ import { ImageValidationError, readImageMeta } from './image-meta.js';
  * are rejected.
  */
 
+const IEND = Buffer.from([0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82]);
+
+/** A structurally complete PNG: signature + IHDR (with dims) + an IDAT marker
+ *  + the IEND trailer. Enough for the header-only `readImageMeta` checks. */
 function pngBuffer(width: number, height: number): Buffer {
-  const buf = Buffer.alloc(33);
-  buf.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0); // signature
-  buf.write('IHDR', 12, 'ascii');
-  buf.writeUInt32BE(width, 16);
-  buf.writeUInt32BE(height, 20);
-  return buf;
+  const head = Buffer.alloc(24);
+  head.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0); // signature
+  head.write('IHDR', 12, 'ascii');
+  head.writeUInt32BE(width, 16);
+  head.writeUInt32BE(height, 20);
+  return Buffer.concat([head, Buffer.from('....IDAT....', 'ascii'), IEND]);
 }
 
 function jpegBuffer(width: number, height: number): Buffer {
@@ -89,5 +93,22 @@ describe('readImageMeta', () => {
     buf.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
     // no IHDR marker at offset 12
     expect(() => readImageMeta(buf)).toThrow(/png_header_unreadable/);
+  });
+
+  it('rejects a header-only / truncated PNG (valid IHDR but no IDAT/IEND)', () => {
+    const buf = Buffer.alloc(32);
+    buf.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+    buf.write('IHDR', 12, 'ascii');
+    buf.writeUInt32BE(64, 16);
+    buf.writeUInt32BE(64, 20);
+    expect(() => readImageMeta(buf)).toThrow(/png_no_image_data|png_truncated/);
+  });
+
+  it('rejects a PNG whose IEND trailer is missing (truncated body)', () => {
+    const noEnd = Buffer.concat([
+      pngBuffer(64, 64).subarray(0, 24),
+      Buffer.from('....IDAT....some data', 'ascii'),
+    ]);
+    expect(() => readImageMeta(noEnd)).toThrow(/png_truncated/);
   });
 });

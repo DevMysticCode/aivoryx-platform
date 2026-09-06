@@ -190,6 +190,22 @@ describe('builders map DTOs to a generic definition (no recompute)', () => {
   });
 });
 
+/** A genuine 24×24 solid PNG. */
+const REAL_PNG_24 = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAALElEQVR4nGPkL8tjoAZgooopDKMGEQNGA5swGA0jwmA0jAiD0TAiDAZfGAEAKEQBI+45dKMAAAAASUVORK5CYII=',
+  'base64',
+);
+
+/** PNG signature + IHDR only — a decoder rejects it. */
+const CORRUPT_PNG = (() => {
+  const b = Buffer.alloc(64);
+  b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  b.write('IHDR', 12, 'ascii');
+  b.writeUInt32BE(64, 16);
+  b.writeUInt32BE(64, 20);
+  return b;
+})();
+
 describe('DocumentPdfService.render', () => {
   const service = new DocumentPdfService();
 
@@ -227,5 +243,24 @@ describe('DocumentPdfService.render', () => {
       { ...branding, primaryColor: null, logo: null },
     );
     expect(buf.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  });
+
+  it('embeds a real logo image', async () => {
+    const buf = await service.render(buildInvoiceDocument(invoice), {
+      ...branding,
+      logo: { body: REAL_PNG_24, contentType: 'image/png' },
+    });
+    expect(buf.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+    expect(buf.length).toBeGreaterThan(1000);
+  });
+
+  it('never 500s on a corrupt stored logo — falls back to the text header', async () => {
+    const buf = await service.render(buildInvoiceDocument(invoice), {
+      ...branding,
+      logo: { body: CORRUPT_PNG, contentType: 'image/png' },
+    });
+    expect(buf.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+    const doc = await PDFDocument.load(buf);
+    expect(doc.getAuthor()).toBe('Aurora Renewables');
   });
 });

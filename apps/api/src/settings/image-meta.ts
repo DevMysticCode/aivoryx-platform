@@ -28,6 +28,16 @@ function readPng(buf: Buffer): ImageMeta {
   if (buf.length < 24 || buf.toString('ascii', 12, 16) !== 'IHDR') {
     throw new ImageValidationError('png_header_unreadable');
   }
+  // A whole-file sanity check so a header-only / truncated PNG is rejected at
+  // upload rather than breaking every later document render: it must carry
+  // image data (IDAT) and end with the IEND chunk.
+  if (buf.indexOf(Buffer.from('IDAT', 'ascii')) === -1) {
+    throw new ImageValidationError('png_no_image_data');
+  }
+  const iend = Buffer.from([0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82]);
+  if (!buf.subarray(-8).equals(iend)) {
+    throw new ImageValidationError('png_truncated');
+  }
   return { format: 'image/png', width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
 }
 
