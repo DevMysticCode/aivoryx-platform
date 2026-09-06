@@ -50,7 +50,51 @@ const SUPPLY_STATUS_STYLES: Record<string, string> = {
   prospect: 'bg-secondary text-secondary-foreground',
   active: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   inactive: 'bg-secondary text-secondary-foreground',
+  // EPC execution (Phase 7, ADR 0036)
+  unassigned: 'bg-secondary text-secondary-foreground',
+  assigned: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  pending: 'bg-secondary text-secondary-foreground',
+  passed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  failed: 'bg-destructive/10 text-destructive',
+  done: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  blocked: 'bg-destructive/10 text-destructive',
+  skipped: 'bg-secondary text-secondary-foreground',
+  open: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  resolved: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  verified: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  not_started: 'bg-secondary text-secondary-foreground',
+  documents_pending: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  under_review: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  ready: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  na: 'bg-secondary text-secondary-foreground',
+  low: 'bg-secondary text-secondary-foreground',
+  medium: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  high: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+  critical: 'bg-destructive/10 text-destructive',
 };
+
+export function ProgressBar({ value, label }: { value: number; label?: string }) {
+  const pct = Math.max(0, Math.min(100, Math.round(value)));
+  return (
+    <div className="space-y-1">
+      {label ? (
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{label}</span>
+          <span className="font-medium tabular-nums">{pct}%</span>
+        </div>
+      ) : null}
+      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+        <div
+          className={cn(
+            'h-full rounded-full transition-all',
+            pct === 100 ? 'bg-emerald-500' : 'bg-primary',
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function SupplyStatusBadge({ status }: { status: string }) {
   const key = status.toLowerCase();

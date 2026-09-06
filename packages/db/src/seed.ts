@@ -105,9 +105,13 @@ export async function provisionTenantAdmin(
 /**
  * The `FIELD_AGENT` platform role (Phase 4, ADR 0033) — the second generic
  * role alongside `TENANT_ADMIN`. Deliberately narrow: enough to work an
- * assigned visit and create field-generated leads, nothing administrative
+ * assigned visit, create field-generated leads, and work an assigned
+ * installation / defect (Phase 7, ADR 0036) — nothing administrative
  * (no `field.visits.create/assign/update`, no `field.agents.manage`, no
- * `crm.leads.read/update`). Visit assignment/scheduling stays CRM/admin-only.
+ * `crm.leads.read/update`, no `projects.execution.*` beyond installation
+ * work, no `projects.installation.assign`, no `projects.qc.*`,
+ * `projects.complete`, or handover/net-metering control). Assignment,
+ * scheduling, QC, and project administration stay CRM/admin-only.
  */
 const FIELD_AGENT_PERMISSION_KEYS = [
   'field.visits.read',
@@ -117,6 +121,11 @@ const FIELD_AGENT_PERMISSION_KEYS = [
   'field.visits.complete',
   'crm.leads.create',
   'crm.activities.create',
+  'projects.installation.read',
+  'projects.installation.update',
+  'projects.installation.complete',
+  'projects.defects.read',
+  'projects.defects.update',
 ] as const;
 
 export interface ProvisionFieldAgentRoleInput {

@@ -15,6 +15,7 @@ import { IntegrationsModule } from './integrations/integrations.module.js';
 import { FieldModule } from './field/field.module.js';
 import { SupplyModule } from './supply/supply.module.js';
 import { CommercialModule } from './commercial/commercial.module.js';
+import { ExecutionModule } from './execution/execution.module.js';
 
 /**
  * Composition root.
@@ -46,6 +47,7 @@ import { CommercialModule } from './commercial/commercial.module.js';
     FieldModule,
     SupplyModule,
     CommercialModule,
+    ExecutionModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

@@ -1842,6 +1842,538 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/projects/{projectId}/execution': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The full execution workspace. */
+    get: operations['getProjectExecution'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/execution/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Initialise execution: milestones, checklists, workflow records. */
+    post: operations['startProjectExecution'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/milestones': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Execution milestones. */
+    get: operations['listProjectMilestones'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/milestones/{milestoneId}/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Manually complete a milestone. */
+    post: operations['completeProjectMilestone'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Complete the project once all execution requirements are met. */
+    post: operations['completeProject'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/field/projects': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My assigned installation work. */
+    get: operations['listFieldProjects'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/field/projects/{projectId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** An assigned project execution view. */
+    get: operations['getFieldProject'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/installations/assign': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Assign / reassign to a field agent. */
+    post: operations['assignInstallation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/installations/unassign': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Clear the installation assignee. */
+    post: operations['unassignInstallation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/installations/material-override': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Permit installation to start before materials are READY. */
+    post: operations['overrideInstallationMaterials'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/installations/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Start on-site installation. */
+    post: operations['startInstallation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/installations/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark installation complete. */
+    post: operations['completeInstallation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/checklists': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Checklist items for a project. */
+    get: operations['listProjectChecklist'];
+    put?: never;
+    /** Add an ad-hoc checklist item. */
+    post: operations['addChecklistItem'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/checklists/{itemId}/toggle': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Set a checklist item status. */
+    post: operations['toggleChecklistItem'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/checklists/{itemId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove an ad-hoc checklist item. */
+    delete: operations['removeChecklistItem'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/checklist-templates': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Checklist template definitions. */
+    get: operations['listChecklistTemplates'];
+    put?: never;
+    /** Add a checklist template. */
+    post: operations['createChecklistTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/checklist-templates/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a checklist template. */
+    patch: operations['updateChecklistTemplate'];
+    trace?: never;
+  };
+  '/projects/{projectId}/qc': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Open a QC inspection. */
+    post: operations['createQcInspection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/qc/{inspectionId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A QC inspection with its checklist. */
+    get: operations['getQcInspection'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/qc/{inspectionId}/checklist/{itemId}/toggle': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Set a QC checklist item. */
+    post: operations['toggleQcChecklistItem'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/qc/{inspectionId}/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Begin the QC inspection. */
+    post: operations['startQcInspection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/qc/{inspectionId}/pass': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Pass the QC inspection. */
+    post: operations['passQcInspection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/qc/{inspectionId}/fail': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Fail the QC inspection. */
+    post: operations['failQcInspection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/defects': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Defects on a project. */
+    get: operations['listProjectDefects'];
+    put?: never;
+    /** Raise a defect. */
+    post: operations['createProjectDefect'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/defects/{defectId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update / resolve a defect. */
+    patch: operations['updateProjectDefect'];
+    trace?: never;
+  };
+  '/projects/{projectId}/net-metering': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The net-metering record. */
+    get: operations['getNetMetering'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update the net-metering record. */
+    patch: operations['updateNetMetering'];
+    trace?: never;
+  };
+  '/projects/{projectId}/handover': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update the handover record + acknowledgement. */
+    patch: operations['updateHandover'];
+    trace?: never;
+  };
+  '/projects/{projectId}/handover/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Complete the customer handover. */
+    post: operations['completeHandover'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/execution/attachments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Execution evidence files. */
+    get: operations['listExecutionAttachments'];
+    put?: never;
+    /** Attach an evidence file. */
+    post: operations['uploadExecutionAttachment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/execution/attachments/{attachmentId}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download an evidence file. */
+    get: operations['downloadExecutionAttachment'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/projects/{projectId}/execution/attachments/{attachmentId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove an evidence file. */
+    delete: operations['deleteExecutionAttachment'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3394,6 +3926,327 @@ export interface components {
       id: string;
       /** Format: uuid */
       quotationId: string;
+      originalFilename: string | null;
+      contentType: string;
+      fileSize: number;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ReadinessDto: {
+      /** @enum {string} */
+      state: 'NOT_READY' | 'PARTIALLY_READY' | 'READY';
+      requiredQty: string;
+      allocatedQty: string;
+      dispatchedQty: string;
+      deliveredQty: string;
+      shortLines: number;
+      totalLines: number;
+    };
+    MilestoneDto: {
+      /** Format: uuid */
+      id: string;
+      key: string;
+      sortOrder: number;
+      /** @enum {string} */
+      status: 'pending' | 'in_progress' | 'done' | 'skipped' | 'blocked';
+      /** Format: date-time */
+      completedAt: string | null;
+      completedByName: string | null;
+      notes: string | null;
+    };
+    InstallationDto: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      status: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+      /** Format: uuid */
+      assignedMembershipId: string | null;
+      assignedName: string | null;
+      /** Format: date-time */
+      assignedAt: string | null;
+      /** Format: date-time */
+      startedAt: string | null;
+      /** Format: date-time */
+      completedAt: string | null;
+      notes: string | null;
+      equipmentInstalled: string | null;
+      issues: string | null;
+      materialOverride: boolean;
+      materialOverrideReason: string | null;
+    };
+    ChecklistItemDto: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      kind: 'installation' | 'qc' | 'handover';
+      /** Format: uuid */
+      inspectionId: string | null;
+      label: string;
+      sortOrder: number;
+      required: boolean;
+      /** @enum {string} */
+      status: 'pending' | 'done' | 'na';
+      /** Format: date-time */
+      completedAt: string | null;
+      completedByName: string | null;
+      notes: string | null;
+    };
+    QcInspectionDto: {
+      /** Format: uuid */
+      id: string;
+      seq: number;
+      /** @enum {string} */
+      status: 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED';
+      /** Format: uuid */
+      inspectorMembershipId: string | null;
+      inspectorName: string | null;
+      /** Format: date-time */
+      inspectedAt: string | null;
+      notes: string | null;
+      resultNote: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    DefectDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      inspectionId: string | null;
+      description: string;
+      /** @enum {string} */
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      /** @enum {string} */
+      status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'VERIFIED';
+      /** Format: uuid */
+      assignedMembershipId: string | null;
+      assignedName: string | null;
+      resolutionNote: string | null;
+      /** Format: date-time */
+      resolvedAt: string | null;
+      /** Format: date-time */
+      verifiedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    NetMeteringDto: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      status:
+        | 'NOT_STARTED'
+        | 'DOCUMENTS_PENDING'
+        | 'SUBMITTED'
+        | 'UNDER_REVIEW'
+        | 'APPROVED'
+        | 'REJECTED'
+        | 'COMPLETED';
+      notRequired: boolean;
+      referenceNumber: string | null;
+      /** Format: date-time */
+      submittedAt: string | null;
+      /** Format: date-time */
+      approvedAt: string | null;
+      notes: string | null;
+    };
+    HandoverDto: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      status: 'PENDING' | 'READY' | 'COMPLETED';
+      notes: string | null;
+      customerAcknowledged: boolean;
+      acknowledgedByName: string | null;
+      /** Format: date-time */
+      handoverAt: string | null;
+    };
+    ExecutionProgressDto: {
+      /** @description materials readiness, 0-100 */
+      materials: number;
+      /** @description installation checklist done, 0-100 */
+      installation: number;
+      /** @description QC (0 pending, 100 passed) */
+      qc: number;
+      /** @description net metering, 0-100 */
+      netMetering: number;
+      /** @description handover, 0-100 */
+      handover: number;
+      /** @description overall milestones done, 0-100 */
+      overall: number;
+    };
+    ExecutionViewDto: {
+      /** Format: uuid */
+      projectId: string;
+      projectNumber: string;
+      projectStatus: string;
+      /** Format: uuid */
+      leadId: string;
+      leadName: string | null;
+      /** Format: uuid */
+      customerId: string | null;
+      customerName: string | null;
+      executionStarted: boolean;
+      readiness: components['schemas']['ReadinessDto'];
+      milestones: components['schemas']['MilestoneDto'][];
+      installation: components['schemas']['InstallationDto'] | null;
+      installationChecklist: components['schemas']['ChecklistItemDto'][];
+      qcInspections: components['schemas']['QcInspectionDto'][];
+      defects: components['schemas']['DefectDto'][];
+      netMetering: components['schemas']['NetMeteringDto'] | null;
+      handover: components['schemas']['HandoverDto'] | null;
+      handoverChecklist: components['schemas']['ChecklistItemDto'][];
+      progress: components['schemas']['ExecutionProgressDto'];
+      completionMissing: string[];
+      canComplete: boolean;
+    };
+    CompleteMilestoneDto: {
+      notes?: string;
+    };
+    ProjectCompletionResultDto: {
+      completed: boolean;
+      projectStatus: string;
+      missing: string[];
+    };
+    FieldProjectDto: {
+      /** Format: uuid */
+      projectId: string;
+      projectNumber: string;
+      customerName: string | null;
+      siteCity: string | null;
+      /** @enum {string} */
+      installationStatus: 'UNASSIGNED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+      /** @enum {string} */
+      readinessState: 'NOT_READY' | 'PARTIALLY_READY' | 'READY';
+      openDefects: number;
+    };
+    AssignInstallationDto: {
+      /**
+       * Format: uuid
+       * @description Field-agent membership id.
+       */
+      membershipId: string;
+      /** Format: uuid */
+      visitId?: string;
+    };
+    MaterialOverrideDto: {
+      reason: string;
+    };
+    GeoPointDto: {
+      lat: number;
+      lng: number;
+    };
+    StartInstallationDto: {
+      location?: components['schemas']['GeoPointDto'];
+    };
+    CompleteInstallationDto: {
+      notes?: string;
+      equipmentInstalled?: string;
+      issues?: string;
+      location?: components['schemas']['GeoPointDto'];
+    };
+    AddChecklistItemDto: {
+      /** @enum {string} */
+      kind: 'installation' | 'qc' | 'handover';
+      label: string;
+      required?: boolean;
+      /**
+       * Format: uuid
+       * @description For a QC-inspection checklist item.
+       */
+      inspectionId?: string;
+    };
+    ToggleChecklistItemDto: {
+      /** @enum {string} */
+      status: 'pending' | 'done' | 'na';
+      notes?: string;
+    };
+    TemplateDto: {
+      /** Format: uuid */
+      id: string;
+      kind: string;
+      label: string;
+      sortOrder: number;
+      required: boolean;
+      isActive: boolean;
+    };
+    UpsertTemplateDto: {
+      /** @enum {string} */
+      kind: 'installation' | 'qc' | 'handover';
+      label: string;
+      required?: boolean;
+      sortOrder?: number;
+      isActive?: boolean;
+    };
+    CreateQcInspectionDto: {
+      /** Format: uuid */
+      inspectorMembershipId?: string;
+      notes?: string;
+    };
+    QcInspectionDetailDto: {
+      /** Format: uuid */
+      id: string;
+      seq: number;
+      /** @enum {string} */
+      status: 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED';
+      /** Format: uuid */
+      inspectorMembershipId: string | null;
+      inspectorName: string | null;
+      /** Format: date-time */
+      inspectedAt: string | null;
+      notes: string | null;
+      resultNote: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      checklist: components['schemas']['ChecklistItemDto'][];
+    };
+    FailQcDto: {
+      resultNote?: string;
+    };
+    CreateDefectDto: {
+      description: string;
+      /** @enum {string} */
+      severity?: 'low' | 'medium' | 'high' | 'critical';
+      /** Format: uuid */
+      assignedMembershipId?: string;
+      /** Format: uuid */
+      inspectionId?: string;
+    };
+    UpdateDefectDto: {
+      /** @enum {string} */
+      status?: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'VERIFIED';
+      /** @enum {string} */
+      severity?: 'low' | 'medium' | 'high' | 'critical';
+      /** Format: uuid */
+      assignedMembershipId?: Record<string, never> | null;
+      resolutionNote?: string;
+    };
+    UpdateNetMeteringDto: {
+      /** @enum {string} */
+      status?:
+        | 'NOT_STARTED'
+        | 'DOCUMENTS_PENDING'
+        | 'SUBMITTED'
+        | 'UNDER_REVIEW'
+        | 'APPROVED'
+        | 'REJECTED'
+        | 'COMPLETED';
+      notRequired?: boolean;
+      referenceNumber?: string;
+      notes?: string;
+    };
+    UpdateHandoverDto: {
+      notes?: string;
+      customerAcknowledged?: boolean;
+      acknowledgedByName?: string;
+    };
+    ExecutionAttachmentDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      projectId: string;
+      /** @enum {string} */
+      entityKind: 'installation' | 'qc' | 'defect' | 'net_metering' | 'handover';
+      /** Format: uuid */
+      entityId: string;
       originalFilename: string | null;
       contentType: string;
       fileSize: number;
@@ -8768,6 +9621,1412 @@ export interface operations {
         content: {
           'application/json': components['schemas']['QuotationListDto'];
         };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getProjectExecution: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  startProjectExecution: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listProjectMilestones: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  completeProjectMilestone: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        milestoneId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CompleteMilestoneDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  completeProject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProjectCompletionResultDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listFieldProjects: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FieldProjectDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getFieldProject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  assignInstallation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignInstallationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  unassignInstallation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  overrideInstallationMaterials: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MaterialOverrideDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  startInstallation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartInstallationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  completeInstallation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CompleteInstallationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listProjectChecklist: {
+    parameters: {
+      query: {
+        kind: string;
+      };
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChecklistItemDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  addChecklistItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddChecklistItemDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChecklistItemDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  toggleChecklistItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ToggleChecklistItemDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeChecklistItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listChecklistTemplates: {
+    parameters: {
+      query: {
+        kind: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TemplateDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createChecklistTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertTemplateDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TemplateDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateChecklistTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertTemplateDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TemplateDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createQcInspection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateQcInspectionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getQcInspection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        inspectionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QcInspectionDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  toggleQcChecklistItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        inspectionId: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ToggleChecklistItemDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChecklistItemDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  startQcInspection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        inspectionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  passQcInspection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        inspectionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  failQcInspection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        inspectionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FailQcDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listProjectDefects: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DefectDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createProjectDefect: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateDefectDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DefectDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateProjectDefect: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        defectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateDefectDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DefectDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getNetMetering: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NetMeteringDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateNetMetering: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateNetMeteringDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateHandover: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateHandoverDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  completeHandover: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listExecutionAttachments: {
+    parameters: {
+      query: {
+        entityKind: string;
+        entityId: string;
+      };
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionAttachmentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadExecutionAttachment: {
+    parameters: {
+      query: {
+        entityKind: string;
+        entityId: string;
+      };
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExecutionAttachmentDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadExecutionAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        attachmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deleteExecutionAttachment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        attachmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       401: {
         headers: {

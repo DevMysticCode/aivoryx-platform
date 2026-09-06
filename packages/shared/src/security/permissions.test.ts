@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus CRM, field operations, supply chain, and commercial — no other business domain yet', () => {
+  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, and EPC execution — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -79,6 +79,25 @@ describe('permission catalogue', () => {
         'quotations.cancel',
         'quotations.revise',
         'quotations.book',
+        'projects.execution.read',
+        'projects.execution.update',
+        'projects.installation.assign',
+        'projects.installation.read',
+        'projects.installation.update',
+        'projects.installation.complete',
+        'projects.qc.read',
+        'projects.qc.create',
+        'projects.qc.update',
+        'projects.qc.approve',
+        'projects.net_metering.read',
+        'projects.net_metering.update',
+        'projects.handover.read',
+        'projects.handover.update',
+        'projects.handover.complete',
+        'projects.complete',
+        'projects.defects.read',
+        'projects.defects.create',
+        'projects.defects.update',
       ].sort(),
     );
     for (const key of PERMISSION_KEYS) {
@@ -91,7 +110,7 @@ describe('permission catalogue', () => {
     for (const def of PERMISSION_DEFINITIONS) {
       expect(def.description.trim().length).toBeGreaterThan(0);
       // "<resource>.<action>" or the namespaced "<domain>.<resource>.<action>".
-      expect(def.key).toMatch(/^[a-z]+(\.[a-z]+){1,2}$/);
+      expect(def.key).toMatch(/^[a-z]+(\.[a-z_]+){1,2}$/);
     }
   });
 

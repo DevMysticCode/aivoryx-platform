@@ -154,6 +154,37 @@ export type AcceptQuotationRequest = components['schemas']['AcceptQuotationDto']
 export type BookQuotationRequest = components['schemas']['BookQuotationDto'];
 export type BookingResult = components['schemas']['BookingResultDto'];
 
+// Phase 7 — EPC project execution (ADR 0036).
+export type ExecutionView = components['schemas']['ExecutionViewDto'];
+export type ExecutionProgress = components['schemas']['ExecutionProgressDto'];
+export type Milestone = components['schemas']['MilestoneDto'];
+export type ChecklistItem = components['schemas']['ChecklistItemDto'];
+export type ChecklistTemplate = components['schemas']['TemplateDto'];
+export type Readiness = components['schemas']['ReadinessDto'];
+export type Installation = components['schemas']['InstallationDto'];
+export type QcInspection = components['schemas']['QcInspectionDto'];
+export type QcInspectionDetail = components['schemas']['QcInspectionDetailDto'];
+export type Defect = components['schemas']['DefectDto'];
+export type NetMetering = components['schemas']['NetMeteringDto'];
+export type Handover = components['schemas']['HandoverDto'];
+export type ExecutionAttachment = components['schemas']['ExecutionAttachmentDto'];
+export type FieldProject = components['schemas']['FieldProjectDto'];
+export type ProjectCompletionResult = components['schemas']['ProjectCompletionResultDto'];
+export type AssignInstallationRequest = components['schemas']['AssignInstallationDto'];
+export type CompleteInstallationRequest = components['schemas']['CompleteInstallationDto'];
+export type StartInstallationRequest = components['schemas']['StartInstallationDto'];
+export type MaterialOverrideRequest = components['schemas']['MaterialOverrideDto'];
+export type ToggleChecklistItemRequest = components['schemas']['ToggleChecklistItemDto'];
+export type AddChecklistItemRequest = components['schemas']['AddChecklistItemDto'];
+export type UpsertTemplateRequest = components['schemas']['UpsertTemplateDto'];
+export type CreateQcInspectionRequest = components['schemas']['CreateQcInspectionDto'];
+export type FailQcRequest = components['schemas']['FailQcDto'];
+export type CreateDefectRequest = components['schemas']['CreateDefectDto'];
+export type UpdateDefectRequest = components['schemas']['UpdateDefectDto'];
+export type UpdateNetMeteringRequest = components['schemas']['UpdateNetMeteringDto'];
+export type UpdateHandoverRequest = components['schemas']['UpdateHandoverDto'];
+export type CompleteMilestoneRequest = components['schemas']['CompleteMilestoneDto'];
+
 /**
  * The standard error envelope returned by every `/api/v1` endpoint on failure.
  * It is documented on the auth/admin operations (`ApiErrorDto`) and mirrors

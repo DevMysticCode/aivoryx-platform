@@ -83,23 +83,24 @@ that activates the Phase 5 project. See ADR 0035 and
 
 ## Stream E — EPC
 
-Phase 5 delivered the provider-neutral operational spine — projects (CRM→ops
-bridge), procurement, inventory (movement-ledger source of truth), and
-logistics (dispatch/delivery). See ADR 0034 and
-`docs/architecture/SUPPLY-CHAIN.md`. Installation/QC/commissioning/handover
-remain for a later EPC phase.
+Phase 5 delivered the provider-neutral operational spine (projects,
+procurement, inventory, logistics — ADR 0034, `SUPPLY-CHAIN.md`). Phase 7
+delivered EPC execution — planning/milestones, material readiness,
+installation assignment + field-PWA workflow, configurable checklists, QC
+inspections + defects, net-metering tracking, customer handover, and
+server-enforced project completion (ADR 0036, `EPC-EXECUTION.md`).
 
 - onboarding
 - projects ✅ (Phase 5)
 - procurement ✅ (Phase 5)
 - inventory ✅ (Phase 5)
 - logistics ✅ (Phase 5)
-- installation
-- QC
+- installation ✅ (Phase 7)
+- QC ✅ (Phase 7)
 - documentation
-- net metering
+- net metering ✅ (Phase 7 — internal tracking; no utility API)
 - commissioning
-- handover
+- handover ✅ (Phase 7)
 
 ## Stream F — Finance
 

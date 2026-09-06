@@ -1,0 +1,37 @@
+flowchart TD
+    BOOKED["Booked project (Phase 5/6)\nproject_status: APPROVED"]
+    BOOKED --> START["POST /projects/:id/execution/start\n→ 11 project_milestones\n→ project_installations (UNASSIGNED)\n→ project_net_metering / project_handover\n→ installation + handover checklists from checklist_templates"]
+
+    START --> READY{"material readiness\n(roll-up over Phase 5 project_materials)"}
+    READY -- "delivered >= required (or no lines)" --> RDY["READY"]
+    READY -- "some delivered" --> PART["PARTIALLY_READY"]
+    READY -- "nothing delivered" --> NR["NOT_READY"]
+
+    START --> ASSIGN["assign → field-agent membership\nUNASSIGNED → ASSIGNED"]
+    ASSIGN --> STARTI["field agent: start\n(READY  OR  material_override)\nASSIGNED → IN_PROGRESS"]
+    NR -. "MATERIAL_NOT_READY" .-> STARTI
+    STARTI --> CL["installation checklist\n(required items must be done)"]
+    CL --> DONEI["complete\n(atomic: checklist check + status + milestone + outbox)\nIN_PROGRESS → COMPLETED"]
+
+    DONEI --> QC["QC inspection (seq-numbered, repeatable)\nPENDING → IN_PROGRESS"]
+    QC --> QCCL["QC checklist + defect check"]
+    QCCL -- "required done AND no OPEN/IN_PROGRESS defects" --> PASS["pass → PASSED"]
+    QCCL -- "QC_BLOCKING_DEFECTS / QC_CHECKLIST_INCOMPLETE" --> FAIL["fail → FAILED"]
+    FAIL --> DEFECT["project_defects\nOPEN → IN_PROGRESS → RESOLVED → VERIFIED"]
+    DEFECT --> QC
+
+    PASS --> NM["net metering (internal tracking)\nNOT_STARTED → … → COMPLETED   or   not_required"]
+    NM --> HO["handover\nchecklist + customer_acknowledged (internal, NOT e-signature)\nPENDING → READY → COMPLETED"]
+
+    HO --> COMPLETE{"POST /projects/:id/complete\ncheckProjectCompletion (server, FOR UPDATE)"}
+    COMPLETE -- "installation COMPLETED + QC PASSED\n+ net metering COMPLETED/not_required\n+ handover COMPLETED + no open defects" --> DONE["project_status → COMPLETED\n+ 'completed' project activity\n+ 'project_completed' on the CRM lead timeline\n+ project.completed outbox event"]
+    COMPLETE -- "PROJECT_COMPLETION_BLOCKED\n{ missing: [...] }" --> HO
+
+    START -.->|"execution_started / installation.* / qc.* / defect.* / net_metering.* / handover.completed / project.completed"| OUT["transactional outbox (ADR 0013)"]
+    DONEI -.-> OUT
+    PASS -.-> OUT
+    HO -.-> OUT
+    DONE -.-> OUT
+
+    classDef store fill:#eef,stroke:#88a;
+    class OUT,DEFECT store;

@@ -86,6 +86,22 @@ export const projectActivityType = pgEnum('project_activity_type', [
   'delivered',
   // Phase 6 (ADR 0035): the project was activated by booking a quotation.
   'booked',
+  // Phase 7 (ADR 0036): EPC execution milestones on the project timeline.
+  'execution_started',
+  'milestone_completed',
+  'installation_assigned',
+  'installation_started',
+  'installation_completed',
+  'qc_created',
+  'qc_passed',
+  'qc_failed',
+  'defect_created',
+  'defect_resolved',
+  'net_metering_updated',
+  'net_metering_submitted',
+  'net_metering_approved',
+  'handover_completed',
+  'completed',
 ]);
 
 export const warehouseType = pgEnum('warehouse_type', ['main', 'regional', 'transit', 'site']);

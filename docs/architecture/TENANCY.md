@@ -29,7 +29,11 @@ Single database, single schema, shared tables. Every tenant-owned row carries
   `dispatches`, `dispatch_lines`, `dispatch_attachments` (last 17: Phase 5,
   ADR 0034), `customers`, `quotations`, `quotation_revisions`,
   `quotation_lines`, `quotation_activities`, `quotation_attachments` (last 6:
-  Phase 6, ADR 0035). `users`, `sessions`, global `permissions` have no RLS.
+  Phase 6, ADR 0035), `project_milestones`, `project_installations`,
+  `checklist_templates`, `project_checklist_items`, `project_qc_inspections`,
+  `project_defects`, `project_net_metering`, `project_handover`,
+  `project_execution_attachments` (last 9: Phase 7, ADR 0036). `users`,
+  `sessions`, global `permissions` have no RLS.
 - Policy predicate:
   `tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid`, mirrored
   in `WITH CHECK`. `nullif(…, '')` because a touched custom GUC reverts to `''`

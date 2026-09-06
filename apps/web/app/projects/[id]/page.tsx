@@ -68,6 +68,14 @@ export default function ProjectDetailPage() {
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
+          {p.status !== 'DRAFT' ? (
+            <Link
+              href={`/projects/${p.id}/execution`}
+              className="inline-flex h-9 items-center rounded-md border px-3 text-sm font-medium hover:bg-accent"
+            >
+              Execution workspace
+            </Link>
+          ) : null}
           {p.status === 'DRAFT' && canApprove ? (
             <Button onClick={() => approve.mutate()} disabled={approve.isPending}>
               {approve.isPending ? 'Approving…' : 'Approve project'}

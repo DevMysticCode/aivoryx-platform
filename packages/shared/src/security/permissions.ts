@@ -117,6 +117,56 @@ export const PERMISSION_DEFINITIONS = [
     key: 'quotations.book',
     description: 'Book an accepted quotation — promotes the customer and activates the project.',
   },
+
+  // EPC project execution (Phase 7, ADR 0036). Detailed execution state lives
+  // in milestones/workflows, not in the project status enum.
+  {
+    key: 'projects.execution.read',
+    description: 'View a project execution workspace (all projects).',
+  },
+  {
+    key: 'projects.execution.update',
+    description: 'Manage project execution: milestones, checklists, overrides.',
+  },
+  {
+    key: 'projects.installation.assign',
+    description: 'Assign or reassign an installation to a field agent.',
+  },
+  { key: 'projects.installation.read', description: 'View assigned installation work.' },
+  {
+    key: 'projects.installation.update',
+    description: 'Record installation progress, notes and photos.',
+  },
+  { key: 'projects.installation.complete', description: 'Mark an installation complete.' },
+
+  { key: 'projects.qc.read', description: 'View QC inspections and results.' },
+  { key: 'projects.qc.create', description: 'Create a QC inspection for a project.' },
+  { key: 'projects.qc.update', description: 'Record QC checklist and notes.' },
+  { key: 'projects.qc.approve', description: 'Pass or fail a QC inspection.' },
+
+  {
+    key: 'projects.net_metering.read',
+    description: 'View the net-metering / grid-connection record.',
+  },
+  {
+    key: 'projects.net_metering.update',
+    description: 'Update the net-metering / grid-connection record.',
+  },
+
+  { key: 'projects.handover.read', description: 'View the customer handover record.' },
+  {
+    key: 'projects.handover.update',
+    description: 'Update the customer handover record and checklist.',
+  },
+  { key: 'projects.handover.complete', description: 'Complete the customer handover.' },
+
+  {
+    key: 'projects.complete',
+    description: 'Complete a project once all execution requirements are met.',
+  },
+  { key: 'projects.defects.read', description: 'View project defects.' },
+  { key: 'projects.defects.create', description: 'Raise a project defect.' },
+  { key: 'projects.defects.update', description: 'Update or resolve a project defect.' },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];
