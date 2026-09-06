@@ -2547,6 +2547,333 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/finance/invoices': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search invoices. */
+    get: operations['listInvoices'];
+    put?: never;
+    /** Create a draft invoice. */
+    post: operations['createInvoice'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/invoices/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One invoice with lines and payments. */
+    get: operations['getInvoice'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a draft invoice. */
+    patch: operations['updateInvoice'];
+    trace?: never;
+  };
+  '/finance/invoices/{id}/print': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Server-rendered printable invoice. */
+    get: operations['printInvoice'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/invoices/from-quotation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create a draft invoice from an accepted/booked quotation. */
+    post: operations['createInvoiceFromQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/invoices/{id}/issue': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Issue an invoice (freezes its snapshot). */
+    post: operations['issueInvoice'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/invoices/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel or void an invoice. */
+    post: operations['cancelInvoice'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/payments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search payments. */
+    get: operations['listPayments'];
+    put?: never;
+    /** Record a customer payment. */
+    post: operations['recordPayment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/payments/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One payment with its allocations. */
+    get: operations['getPayment'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/payments/{id}/print': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Printable payment receipt. */
+    get: operations['printPaymentReceipt'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/payments/{id}/allocate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Allocate a payment to invoices. */
+    post: operations['allocatePayment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/payments/{id}/reverse': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reverse a recorded payment. */
+    post: operations['reversePayment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/credit-notes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search credit notes. */
+    get: operations['listCreditNotes'];
+    put?: never;
+    /** Create a draft credit note. */
+    post: operations['createCreditNote'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/credit-notes/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One credit note. */
+    get: operations['getCreditNote'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/credit-notes/{id}/issue': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Issue a credit note. */
+    post: operations['issueCreditNote'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/credit-notes/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel a credit note. */
+    post: operations['cancelCreditNote'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/overview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Workspace financial totals by currency. */
+    get: operations['financeOverview'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/customers/{customerId}/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A customer’s invoiced / paid / outstanding / overdue plus recent records. */
+    get: operations['customerFinancialSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/projects/{projectId}/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A project’s invoiced / paid / outstanding / overdue. */
+    get: operations['projectFinancialSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/maintenance/overdue-sweep': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Emit invoice.overdue for newly-overdue invoices (idempotent; a scheduler may call this). */
+    post: operations['financeOverdueSweep'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4536,6 +4863,333 @@ export interface components {
       total: number;
       page: number;
       pageSize: number;
+    };
+    InvoiceDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      customerId: string;
+      customerName: string | null;
+      /** Format: uuid */
+      projectId: string | null;
+      projectNumber: string | null;
+      /** Format: uuid */
+      quotationId: string | null;
+      /** @enum {string} */
+      source: 'manual' | 'quotation' | 'project';
+      /** @enum {string} */
+      status: 'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED' | 'VOID';
+      currency: string;
+      issueDate: string | null;
+      dueDate: string | null;
+      notes: string | null;
+      reference: string | null;
+      subtotal: string;
+      discountTotal: string;
+      taxTotal: string;
+      grandTotal: string;
+      amountPaid: string;
+      amountCredited: string;
+      amountOutstanding: string;
+      overdue: boolean;
+      daysOverdue: number;
+      /** Format: date-time */
+      issuedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    InvoiceListDto: {
+      items: components['schemas']['InvoiceDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    MoneyLineDto: {
+      lineNo: number;
+      description: string;
+      reference: string | null;
+      /** Format: uuid */
+      productId: string | null;
+      unitLabel: string | null;
+      quantity: string;
+      unitPrice: string;
+      /** @enum {string} */
+      discountType: 'AMOUNT' | 'PERCENT';
+      discountValue: string;
+      taxName: string | null;
+      taxRate: string;
+      lineSubtotal: string;
+      lineDiscount: string;
+      lineTaxable: string;
+      lineTax: string;
+      lineTotal: string;
+    };
+    AllocationDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      paymentId: string;
+      paymentNumber: string;
+      /** Format: uuid */
+      invoiceId: string;
+      invoiceNumber: string;
+      amount: string;
+      reversed: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    InvoiceDetailDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      customerId: string;
+      customerName: string | null;
+      /** Format: uuid */
+      projectId: string | null;
+      projectNumber: string | null;
+      /** Format: uuid */
+      quotationId: string | null;
+      /** @enum {string} */
+      source: 'manual' | 'quotation' | 'project';
+      /** @enum {string} */
+      status: 'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED' | 'VOID';
+      currency: string;
+      issueDate: string | null;
+      dueDate: string | null;
+      notes: string | null;
+      reference: string | null;
+      subtotal: string;
+      discountTotal: string;
+      taxTotal: string;
+      grandTotal: string;
+      amountPaid: string;
+      amountCredited: string;
+      amountOutstanding: string;
+      overdue: boolean;
+      daysOverdue: number;
+      /** Format: date-time */
+      issuedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      lines: components['schemas']['MoneyLineDto'][];
+      allocations: components['schemas']['AllocationDto'][];
+    };
+    InvoiceLineInputDto: {
+      description: string;
+      reference?: string;
+      /** Format: uuid */
+      productId?: string;
+      unitLabel?: string;
+      /** @example 1 */
+      quantity: string;
+      /** @example 1000.00 */
+      unitPrice: string;
+      /** @enum {string} */
+      discountType?: 'AMOUNT' | 'PERCENT';
+      /** @example 0 */
+      discountValue?: string;
+      taxName?: string;
+      /** @example 0.18 */
+      taxRate?: string;
+    };
+    CreateInvoiceDto: {
+      /** Format: uuid */
+      customerId: string;
+      /** Format: uuid */
+      projectId?: string;
+      /** Format: uuid */
+      quotationId?: string;
+      /** @example INR */
+      currency?: string;
+      issueDate?: string;
+      dueDate?: string;
+      notes?: string;
+      reference?: string;
+      lines: components['schemas']['InvoiceLineInputDto'][];
+    };
+    CreateInvoiceFromQuotationDto: {
+      /** Format: uuid */
+      quotationId: string;
+      dueDate?: string;
+    };
+    UpdateInvoiceDto: {
+      issueDate?: string;
+      dueDate?: string;
+      notes?: string;
+      reference?: string;
+      /** Format: uuid */
+      projectId?: string;
+      lines?: components['schemas']['InvoiceLineInputDto'][];
+    };
+    IssueInvoiceDto: {
+      issueDate?: string;
+      dueDate?: string;
+    };
+    CancelInvoiceDto: {
+      /** @enum {string} */
+      mode?: 'CANCELLED' | 'VOID';
+      reason?: string;
+    };
+    PaymentDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      customerId: string;
+      customerName: string | null;
+      paymentDate: string;
+      amount: string;
+      currency: string;
+      /** @enum {string} */
+      method: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE' | 'UPI' | 'OTHER';
+      reference: string | null;
+      notes: string | null;
+      /** @enum {string} */
+      status: 'RECORDED' | 'REVERSED' | 'CANCELLED';
+      allocatedAmount: string;
+      unallocatedAmount: string;
+      /** Format: date-time */
+      reversedAt: string | null;
+      reversalReason: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    PaymentListDto: {
+      items: components['schemas']['PaymentDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    PaymentDetailDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      customerId: string;
+      customerName: string | null;
+      paymentDate: string;
+      amount: string;
+      currency: string;
+      /** @enum {string} */
+      method: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE' | 'UPI' | 'OTHER';
+      reference: string | null;
+      notes: string | null;
+      /** @enum {string} */
+      status: 'RECORDED' | 'REVERSED' | 'CANCELLED';
+      allocatedAmount: string;
+      unallocatedAmount: string;
+      /** Format: date-time */
+      reversedAt: string | null;
+      reversalReason: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      allocations: components['schemas']['AllocationDto'][];
+    };
+    AllocationInputDto: {
+      /** Format: uuid */
+      invoiceId: string;
+      /** @example 1000.00 */
+      amount: string;
+    };
+    RecordPaymentDto: {
+      /** Format: uuid */
+      customerId: string;
+      paymentDate: string;
+      /** @example 50000.00 */
+      amount: string;
+      /** @example INR */
+      currency?: string;
+      /** @enum {string} */
+      method?: 'BANK_TRANSFER' | 'CASH' | 'CARD' | 'CHEQUE' | 'UPI' | 'OTHER';
+      reference?: string;
+      notes?: string;
+      providerReference?: string;
+      /** @description Optional: allocate the payment to these invoices in the same request. */
+      allocations?: components['schemas']['AllocationInputDto'][];
+    };
+    AllocatePaymentDto: {
+      allocations: components['schemas']['AllocationInputDto'][];
+    };
+    ReversePaymentDto: {
+      reason?: string;
+    };
+    CreditNoteDto: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      customerId: string;
+      customerName: string | null;
+      /** Format: uuid */
+      invoiceId: string | null;
+      invoiceNumber: string | null;
+      /** Format: uuid */
+      projectId: string | null;
+      /** @enum {string} */
+      status: 'DRAFT' | 'ISSUED' | 'CANCELLED';
+      currency: string;
+      issueDate: string | null;
+      reason: string;
+      amount: string;
+      notes: string | null;
+      /** Format: date-time */
+      issuedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreditNoteListDto: {
+      items: components['schemas']['CreditNoteDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    CreateCreditNoteDto: {
+      /** Format: uuid */
+      customerId: string;
+      /** Format: uuid */
+      invoiceId?: string;
+      /** Format: uuid */
+      projectId?: string;
+      /** @example 10000.00 */
+      amount: string;
+      /** @example INR */
+      currency?: string;
+      reason: string;
+      notes?: string;
+      issueDate?: string;
+    };
+    CancelCreditNoteDto: {
+      reason?: string;
+    };
+    FinancialSummaryDto: {
+      currency: string;
+      invoicedTotal: string;
+      paidTotal: string;
+      creditedTotal: string;
+      outstandingTotal: string;
+      overdueTotal: string;
+      invoiceCount: number;
+      overdueCount: number;
+    };
+    FinanceOverviewDto: {
+      byCurrency: components['schemas']['FinancialSummaryDto'][];
+    };
+    CustomerFinancialViewDto: {
+      currency: string;
+      invoicedTotal: string;
+      paidTotal: string;
+      creditedTotal: string;
+      outstandingTotal: string;
+      overdueTotal: string;
+      invoiceCount: number;
+      overdueCount: number;
+      recentInvoices: components['schemas']['InvoiceDto'][];
+      recentPayments: components['schemas']['PaymentDto'][];
+    };
+    OverdueSweepResultDto: {
+      notified: number;
     };
   };
   responses: never;
@@ -11747,6 +12401,912 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['NotificationDeliveryListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listInvoices: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: 'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED' | 'VOID';
+        customerId?: string;
+        projectId?: string;
+        overdue?: boolean;
+        from?: string;
+        to?: string;
+        q?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createInvoice: {
+    parameters: {
+      query?: never;
+      header: {
+        'idempotency-key': string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateInvoiceDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getInvoice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateInvoice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateInvoiceDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  printInvoice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createInvoiceFromQuotation: {
+    parameters: {
+      query?: never;
+      header: {
+        'idempotency-key': string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateInvoiceFromQuotationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  issueInvoice: {
+    parameters: {
+      query?: never;
+      header: {
+        'idempotency-key': string;
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['IssueInvoiceDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  cancelInvoice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelInvoiceDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listPayments: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: 'RECORDED' | 'REVERSED' | 'CANCELLED';
+        customerId?: string;
+        unallocatedOnly?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaymentListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  recordPayment: {
+    parameters: {
+      query?: never;
+      header: {
+        'idempotency-key': string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RecordPaymentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaymentDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPayment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaymentDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  printPaymentReceipt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  allocatePayment: {
+    parameters: {
+      query?: never;
+      header: {
+        'idempotency-key': string;
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AllocatePaymentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaymentDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  reversePayment: {
+    parameters: {
+      query?: never;
+      header: {
+        'idempotency-key': string;
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReversePaymentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaymentDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listCreditNotes: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: 'DRAFT' | 'ISSUED' | 'CANCELLED';
+        customerId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreditNoteListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createCreditNote: {
+    parameters: {
+      query?: never;
+      header: {
+        'idempotency-key': string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateCreditNoteDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreditNoteDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getCreditNote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreditNoteDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  issueCreditNote: {
+    parameters: {
+      query?: never;
+      header: {
+        'idempotency-key': string;
+      };
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreditNoteDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  cancelCreditNote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelCreditNoteDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreditNoteDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  financeOverview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FinanceOverviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  customerFinancialSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        customerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerFinancialViewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  projectFinancialSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FinancialSummaryDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  financeOverdueSweep: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OverdueSweepResultDto'];
         };
       };
       401: {

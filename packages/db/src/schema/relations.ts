@@ -7,6 +7,7 @@ import {
   notificationTemplates,
   notifications,
 } from './notifications.js';
+import { creditNotes, invoiceLines, invoices, paymentAllocations, payments } from './finance.js';
 import {
   customFieldDefinitions,
   customFieldValues,
@@ -506,4 +507,39 @@ export const notificationDeliveriesRelations = relations(notificationDeliveries,
     fields: [notificationDeliveries.notificationId],
     references: [notifications.id],
   }),
+}));
+
+// Phase 9 — Finance: operational invoicing & payments (ADR 0038).
+
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [invoices.tenantId], references: [tenants.id] }),
+  customer: one(customers, { fields: [invoices.customerId], references: [customers.id] }),
+  project: one(projects, { fields: [invoices.projectId], references: [projects.id] }),
+  quotation: one(quotations, { fields: [invoices.quotationId], references: [quotations.id] }),
+  lines: many(invoiceLines),
+  allocations: many(paymentAllocations),
+  creditNotes: many(creditNotes),
+}));
+
+export const invoiceLinesRelations = relations(invoiceLines, ({ one }) => ({
+  tenant: one(tenants, { fields: [invoiceLines.tenantId], references: [tenants.id] }),
+  invoice: one(invoices, { fields: [invoiceLines.invoiceId], references: [invoices.id] }),
+}));
+
+export const paymentsRelations = relations(payments, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [payments.tenantId], references: [tenants.id] }),
+  customer: one(customers, { fields: [payments.customerId], references: [customers.id] }),
+  allocations: many(paymentAllocations),
+}));
+
+export const paymentAllocationsRelations = relations(paymentAllocations, ({ one }) => ({
+  tenant: one(tenants, { fields: [paymentAllocations.tenantId], references: [tenants.id] }),
+  payment: one(payments, { fields: [paymentAllocations.paymentId], references: [payments.id] }),
+  invoice: one(invoices, { fields: [paymentAllocations.invoiceId], references: [invoices.id] }),
+}));
+
+export const creditNotesRelations = relations(creditNotes, ({ one }) => ({
+  tenant: one(tenants, { fields: [creditNotes.tenantId], references: [tenants.id] }),
+  customer: one(customers, { fields: [creditNotes.customerId], references: [customers.id] }),
+  invoice: one(invoices, { fields: [creditNotes.invoiceId], references: [invoices.id] }),
 }));

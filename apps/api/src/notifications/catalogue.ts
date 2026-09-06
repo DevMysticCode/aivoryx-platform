@@ -23,7 +23,9 @@ export type RecipientEntity =
   | 'installation'
   | 'visit'
   | 'quotation_customer'
-  | 'project_customer';
+  | 'project_customer'
+  | 'invoice_customer'
+  | 'payment_customer';
 
 export interface DefaultTemplate {
   key: string;
@@ -146,6 +148,35 @@ const RAW_TEMPLATES: Omit<DefaultTemplate, 'requiredVars'>[] = [
     body: 'A new lead {{lead.name}} was captured from {{lead.source}}.',
     emailSubject: 'New lead: {{lead.name}}',
     emailBody: 'A new lead {{lead.name}} was captured from {{lead.source}}.',
+  },
+  {
+    key: 'invoice_issued',
+    title: 'Invoice {{invoice.number}} issued',
+    body: 'Invoice {{invoice.number}} for {{customer.name}} — {{invoice.grandTotal}} {{invoice.currency}}, due {{invoice.dueDate}}.',
+    emailSubject: 'Invoice {{invoice.number}} from {{tenant.name}}',
+    emailBody:
+      'Hello {{customer.name}},\n\n' +
+      'Please find invoice {{invoice.number}} for {{invoice.grandTotal}} {{invoice.currency}}, due {{invoice.dueDate}}.\n\n' +
+      'Thank you,\n{{tenant.name}}',
+  },
+  {
+    key: 'payment_recorded',
+    title: 'Payment {{payment.number}} recorded',
+    body: '{{payment.amount}} {{payment.currency}} received from {{customer.name}}.',
+    emailSubject: 'Payment received — {{payment.number}}',
+    emailBody:
+      'Hello {{customer.name}},\n\n' +
+      'We have recorded your payment of {{payment.amount}} {{payment.currency}} (ref {{payment.number}}). Thank you.\n\n' +
+      '{{tenant.name}}',
+  },
+  {
+    key: 'invoice_overdue',
+    title: 'Invoice {{invoice.number}} overdue',
+    body: 'Invoice {{invoice.number}} for {{customer.name}} is {{invoice.daysOverdue}} days overdue — {{invoice.outstanding}} {{invoice.currency}} outstanding.',
+    emailSubject: 'Invoice {{invoice.number}} is overdue',
+    emailBody:
+      'Invoice {{invoice.number}} for {{customer.name}} is {{invoice.daysOverdue}} days overdue. ' +
+      'Outstanding: {{invoice.outstanding}} {{invoice.currency}}.',
   },
 ];
 
@@ -326,6 +357,41 @@ export const DEFAULT_RULES: DefaultRule[] = [
     suppressible: true,
     deepLink: '/crm/leads/{{lead.id}}',
     description: 'Notify workspace admins in-app when a new lead is captured.',
+  },
+  {
+    key: 'invoice_issued.customer',
+    eventType: 'invoice.issued',
+    templateKey: 'invoice_issued',
+    channels: ['email'],
+    recipientStrategy: 'CUSTOMER',
+    entity: 'invoice_customer',
+    notificationType: 'action_required',
+    suppressible: true,
+    deepLink: '/finance/invoices/{{invoice.id}}',
+    description: 'Email the customer when an invoice is issued to them.',
+  },
+  {
+    key: 'payment_recorded.customer',
+    eventType: 'payment.recorded',
+    templateKey: 'payment_recorded',
+    channels: ['email'],
+    recipientStrategy: 'CUSTOMER',
+    entity: 'payment_customer',
+    notificationType: 'success',
+    suppressible: true,
+    description: 'Email the customer a receipt when a payment is recorded.',
+  },
+  {
+    key: 'invoice_overdue.admins',
+    eventType: 'invoice.overdue',
+    templateKey: 'invoice_overdue',
+    channels: ['in_app'],
+    recipientStrategy: 'ROLE',
+    roleKey: 'TENANT_ADMIN',
+    notificationType: 'warning',
+    suppressible: true,
+    deepLink: '/finance/invoices/{{invoice.id}}',
+    description: 'Notify workspace admins in-app when an invoice becomes overdue.',
   },
 ];
 

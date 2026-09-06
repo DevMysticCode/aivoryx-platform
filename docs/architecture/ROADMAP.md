@@ -120,15 +120,25 @@ transactional outbox — no second event bus or queue.
 
 ## Stream F — Finance
 
-- billing
-- receivables
-- payables
-- expenses
-- bank/cash
-- GST/TDS where applicable
-- project costing
-- commissions
-- profitability
+Phase 9 (ADR 0038, `FINANCE.md`) delivered the **operational finance layer** —
+an operational receivables capability, not an accounting system.
+
+- invoices: draft → issue (immutable snapshot) → partially paid ⇄ paid ✅
+- generic taxes / discounts, fixed-point money ✅
+- tenant-safe, concurrency-safe numbering (`INV-000001`) ✅
+- payments: record, unallocated, allocate to one/many invoices, partial, full ✅
+- over-allocation rejection · currency-match · payment reversal ✅
+- credit notes / adjustments ✅
+- derived outstanding + overdue (no cron) ✅
+- finance events → existing outbox → Phase 8 notifications ✅
+- customer + project financial summaries · printable invoice + receipt ✅
+- idempotency keys · concurrent-mutation safety · direct RLS tests ✅
+- payables / expenses / bank-cash — deferred
+- **accounting** (general ledger, chart of accounts, journals, trial balance,
+  P&L, balance sheet, bank reconciliation, GST/VAT filing, accounting periods,
+  depreciation) — out of scope; belongs in Zoho Books / Xero / QuickBooks via a
+  future integration layer
+- project costing · commissions · profitability — deferred
 
 ## Stream G — Service
 

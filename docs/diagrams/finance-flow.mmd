@@ -1,0 +1,38 @@
+%% Finance — operational invoicing & payments (Phase 9, ADR 0038)
+flowchart TD
+    C[Customer / Project / Quotation] --> INV[Invoice · DRAFT]
+    INV -->|edit lines / dates| INV
+    INV -->|issue · freezes snapshot| ISS[Invoice · ISSUED]
+    ISS -->|due_date < today ∧ outstanding > 0| OD{{overdue = true<br/>derived, not a status}}
+
+    PAY[Payment · RECORDED] -->|may stay fully unallocated| PAY
+    PAY -->|allocate · FOR UPDATE payment→invoice| ALLOC[(payment_allocations · active)]
+    ALLOC --> RECALC[recalcInvoice / recalcPayment<br/>lock + recompute projection]
+    RECALC --> ISS
+    ISS -->|0 < outstanding < total| PP[Invoice · PARTIALLY_PAID]
+    PP -->|outstanding = 0| PD[Invoice · PAID]
+    PP -.->|more payment| PD
+
+    CN[Credit note · DRAFT] -->|issue · amount ≤ outstanding| CNI[(credit_notes · ISSUED)]
+    CNI --> RECALC
+
+    PAY -->|reverse · FOR UPDATE + RECORDED guard| REV[Payment · REVERSED]
+    REV -->|stamp reversed_at on payment + allocations| RECALC
+
+    subgraph GUARDS [invariants]
+      G1[unique tenant+payment+invoice]
+      G2[CHECK amount_paid + amount_credited ≤ grand_total]
+      G3[CHECK allocated_amount ≤ amount]
+      G4[Idempotency-Key → finance_idempotency]
+      G5[finance_counters atomic value = value + 1]
+    end
+
+    ISS --> OUT[(outbox_events)]
+    PP --> OUT
+    PD --> OUT
+    REV --> OUT
+    CNI --> OUT
+    OD --> OUT
+    OUT --> N[Phase 8 Notification Engine<br/>invoice issued / payment receipt / overdue]
+
+    ISS --> SUM[Customer + Project financial summary<br/>read-only, computed live]

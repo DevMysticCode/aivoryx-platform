@@ -211,5 +211,32 @@ export type NotificationDeliveryList = components['schemas']['NotificationDelive
 export type ApiError = components['schemas']['ApiErrorDto'];
 export type { ErrorResponseBody as ApiErrorResponse } from '@aivoryx/shared';
 
+// Phase 9 — Finance: operational invoicing & payments (ADR 0038).
+export type Invoice = components['schemas']['InvoiceDto'];
+export type InvoiceDetail = components['schemas']['InvoiceDetailDto'];
+export type InvoiceList = components['schemas']['InvoiceListDto'];
+export type InvoiceLineInput = components['schemas']['InvoiceLineInputDto'];
+export type MoneyLine = components['schemas']['MoneyLineDto'];
+export type Allocation = components['schemas']['AllocationDto'];
+export type Payment = components['schemas']['PaymentDto'];
+export type PaymentDetail = components['schemas']['PaymentDetailDto'];
+export type PaymentList = components['schemas']['PaymentListDto'];
+export type CreditNote = components['schemas']['CreditNoteDto'];
+export type CreditNoteList = components['schemas']['CreditNoteListDto'];
+export type FinancialSummary = components['schemas']['FinancialSummaryDto'];
+export type CustomerFinancialView = components['schemas']['CustomerFinancialViewDto'];
+export type FinanceOverview = components['schemas']['FinanceOverviewDto'];
+export type CreateInvoiceRequest = components['schemas']['CreateInvoiceDto'];
+export type UpdateInvoiceRequest = components['schemas']['UpdateInvoiceDto'];
+export type IssueInvoiceRequest = components['schemas']['IssueInvoiceDto'];
+export type CancelInvoiceRequest = components['schemas']['CancelInvoiceDto'];
+export type CreateInvoiceFromQuotationRequest =
+  components['schemas']['CreateInvoiceFromQuotationDto'];
+export type RecordPaymentRequest = components['schemas']['RecordPaymentDto'];
+export type AllocatePaymentRequest = components['schemas']['AllocatePaymentDto'];
+export type ReversePaymentRequest = components['schemas']['ReversePaymentDto'];
+export type CreateCreditNoteRequest = components['schemas']['CreateCreditNoteDto'];
+export type CancelCreditNoteRequest = components['schemas']['CancelCreditNoteDto'];
+
 /** All versioned API routes are served under this prefix (ADR 0005). */
 export const API_V1_PREFIX = '/api/v1';

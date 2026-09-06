@@ -7,11 +7,25 @@ import { ApiError } from '@/lib/api/client';
  * Tailwind + the shared design tokens (no new component library — CLAUDE.md §12).
  */
 
-export function PageHeader({ title, description }: { title: string; description?: string }) {
+export function PageHeader({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  /** optional right-aligned action slot */
+  children?: ReactNode;
+}) {
   return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-      {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+      </div>
+      {children ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">{children}</div>
+      ) : null}
     </div>
   );
 }

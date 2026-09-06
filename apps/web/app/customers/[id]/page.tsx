@@ -8,6 +8,7 @@ import { useCustomer, useUpdateCustomer } from '@/lib/commercial/use-commercial'
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Field, Skeleton } from '@/components/admin/ui';
 import { fmtDate, Select, SupplyStatusBadge } from '@/components/supply/ui';
+import { CustomerFinanceCard } from '@/components/finance/summary-card';
 
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -133,6 +134,8 @@ export default function CustomerDetailPage() {
           ) : null}
         </Card>
       )}
+
+      <CustomerFinanceCard customerId={id} />
 
       <div className="grid gap-4 md:grid-cols-3">
         <LinkCard title="Leads" items={c.leads} hrefBase="/crm/leads" />

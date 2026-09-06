@@ -17,7 +17,8 @@
     "clean": "rimraf dist .turbo *.tsbuildinfo",
     "seed:commercial-demo": "tsx --env-file-if-exists=../../.env scripts/seed-commercial-demo.ts",
     "seed:execution-demo": "tsx --env-file-if-exists=../../.env scripts/seed-execution-demo.ts",
-    "seed:notifications-demo": "tsx --env-file-if-exists=../../.env scripts/seed-notifications-demo.ts"
+    "seed:notifications-demo": "tsx --env-file-if-exists=../../.env scripts/seed-notifications-demo.ts",
+    "seed:finance-demo": "tsx --env-file-if-exists=../../.env scripts/seed-finance-demo.ts"
   },
   "dependencies": {
     "@aivoryx/config": "workspace:*",

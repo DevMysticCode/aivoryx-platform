@@ -71,6 +71,14 @@ const SUPPLY_STATUS_STYLES: Record<string, string> = {
   medium: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   high: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
   critical: 'bg-destructive/10 text-destructive',
+  // finance (Phase 9, ADR 0038)
+  issued: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  partially_paid: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  paid: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  void: 'bg-secondary text-secondary-foreground',
+  recorded: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  reversed: 'bg-destructive/10 text-destructive',
+  overdue: 'bg-destructive/10 text-destructive',
 };
 
 export function ProgressBar({ value, label }: { value: number; label?: string }) {

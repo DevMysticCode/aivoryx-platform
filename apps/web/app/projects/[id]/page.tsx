@@ -17,6 +17,7 @@ import {
 } from '@/lib/supply/use-supply';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Skeleton } from '@/components/admin/ui';
+import { ProjectFinanceCard } from '@/components/finance/summary-card';
 import { fmtQty, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
 import type { ProjectMaterial } from '@aivoryx/contracts';
 
@@ -129,6 +130,8 @@ export default function ProjectDetailPage() {
           <p className="text-sm text-muted-foreground">No activity yet.</p>
         )}
       </Card>
+
+      <ProjectFinanceCard projectId={id} />
     </section>
   );
 }

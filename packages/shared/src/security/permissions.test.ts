@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, and notifications — no other business domain yet', () => {
+  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, notifications, and finance — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -105,10 +105,24 @@ describe('permission catalogue', () => {
         'notifications.deliveries.read',
         'notifications.preferences.read',
         'notifications.preferences.update',
+        'finance.read',
+        'finance.invoices.read',
+        'finance.invoices.create',
+        'finance.invoices.update',
+        'finance.invoices.issue',
+        'finance.invoices.cancel',
+        'finance.payments.read',
+        'finance.payments.create',
+        'finance.payments.allocate',
+        'finance.payments.reverse',
+        'finance.credit_notes.read',
+        'finance.credit_notes.create',
+        'finance.credit_notes.issue',
+        'finance.credit_notes.cancel',
       ].sort(),
     );
     for (const key of PERMISSION_KEYS) {
-      expect(key).not.toMatch(/^hr\.|^telecall|^payroll|^invoice|^finance\./i);
+      expect(key).not.toMatch(/^hr\.|^telecall|^payroll/i);
     }
   });
 

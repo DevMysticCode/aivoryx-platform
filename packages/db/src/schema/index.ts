@@ -268,6 +268,37 @@ export {
   type NewNotificationDeliveryRow,
 } from './notifications.js';
 
+// Phase 9 — Finance: operational invoicing & payments (ADR 0038).
+export {
+  invoiceStatus,
+  lineDiscountType,
+  paymentStatus,
+  paymentMethod,
+  creditNoteStatus,
+  invoiceSource,
+  financeCounters,
+  financeIdempotency,
+  invoices,
+  invoiceLines,
+  payments,
+  paymentAllocations,
+  creditNotes,
+  type FinanceCounterRow,
+  type NewFinanceCounterRow,
+  type FinanceIdempotencyRow,
+  type NewFinanceIdempotencyRow,
+  type InvoiceRow,
+  type NewInvoiceRow,
+  type InvoiceLineRow,
+  type NewInvoiceLineRow,
+  type PaymentRow,
+  type NewPaymentRow,
+  type PaymentAllocationRow,
+  type NewPaymentAllocationRow,
+  type CreditNoteRow,
+  type NewCreditNoteRow,
+} from './finance.js';
+
 export {
   usersRelations,
   tenantsRelations,
@@ -328,4 +359,9 @@ export {
   notificationPreferencesRelations,
   notificationsRelations,
   notificationDeliveriesRelations,
+  invoicesRelations,
+  invoiceLinesRelations,
+  paymentsRelations,
+  paymentAllocationsRelations,
+  creditNotesRelations,
 } from './relations.js';
