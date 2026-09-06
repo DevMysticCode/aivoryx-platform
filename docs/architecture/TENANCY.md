@@ -32,8 +32,15 @@ Single database, single schema, shared tables. Every tenant-owned row carries
   Phase 6, ADR 0035), `project_milestones`, `project_installations`,
   `checklist_templates`, `project_checklist_items`, `project_qc_inspections`,
   `project_defects`, `project_net_metering`, `project_handover`,
-  `project_execution_attachments` (last 9: Phase 7, ADR 0036). `users`,
-  `sessions`, global `permissions` have no RLS.
+  `project_execution_attachments` (last 9: Phase 7, ADR 0036),
+  `notification_templates`, `notification_rules`, `notification_preferences`,
+  `notifications`, `notification_deliveries` (last 5: Phase 8, ADR 0037).
+  `users`, `sessions`, global `permissions` have no RLS.
+- `outbox_events` additionally carries two dispatcher-only policies (Phase 8):
+  a cross-tenant `SELECT` and the `dispatched_at` `UPDATE`, both gated on the
+  server-only `app.outbox_dispatcher` GUC. They open no other table and cannot
+  `INSERT`. The notification worker uses them to drain the outbox, then does all
+  per-tenant work under `app.tenant_id` taken from the committed event row.
 - Policy predicate:
   `tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid`, mirrored
   in `WITH CHECK`. `nullif(…, '')` because a touched custom GUC reverts to `''`

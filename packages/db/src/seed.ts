@@ -126,6 +126,9 @@ const FIELD_AGENT_PERMISSION_KEYS = [
   'projects.installation.complete',
   'projects.defects.read',
   'projects.defects.update',
+  'notifications.read',
+  'notifications.preferences.read',
+  'notifications.preferences.update',
 ] as const;
 
 export interface ProvisionFieldAgentRoleInput {

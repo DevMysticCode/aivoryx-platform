@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 import { webEnv } from '@/lib/env';
+import { NotificationBell } from '@/components/notification-bell';
 
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
@@ -49,6 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col md:flex-row">
       <header className="flex items-center justify-between border-b px-4 py-3 md:hidden">
         <Brand />
+        <NotificationBell />
       </header>
 
       <aside className="hidden w-60 shrink-0 border-r bg-secondary/30 p-4 md:block">
@@ -68,6 +70,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex flex-1 flex-col">
+        <div className="hidden items-center justify-end border-b px-4 py-2 md:flex md:px-8">
+          <NotificationBell />
+        </div>
         <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 md:px-8">{children}</main>
         <footer className="border-t px-4 py-3 text-xs text-muted-foreground md:px-8">
           Aivoryx Platform · {webEnv.NEXT_PUBLIC_APP_ENV}

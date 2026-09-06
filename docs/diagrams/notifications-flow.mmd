@@ -1,0 +1,32 @@
+%% Notifications & Communications Engine (Phase 8, ADR 0037)
+flowchart TD
+    BM[Business module] -->|same tx, commit| OB[(outbox_events)]
+    OB -->|poll: app.outbox_dispatcher GUC<br/>cross-tenant SELECT + dispatched_at only| DISP[OutboxDispatcher]
+    DISP -->|withTenantSystemContext<br/>tenant from the event row| ENG[NotificationEngine]
+
+    subgraph ENG_INTERNALS [per event, per tenant RLS context]
+      RULES[Effective rules<br/>code defaults ⊕ tenant overrides]
+      CTX[Safe context builder<br/>whitelisted business fields only]
+      RR[RecipientResolver<br/>USER · ACTOR · ASSIGNED_USER · ROLE · CUSTOMER]
+      TR["Template render<br/>{{ var }} interpolation only"]
+    end
+    ENG --> RULES --> CTX --> RR --> TR
+    TR -->|INSERT ... ON CONFLICT DO NOTHING| N[(notifications)]
+    TR -->|dedupe + idempotency keys| D[(notification_deliveries · PENDING)]
+    D -->|jobId = deliveryId| Q[[BullMQ notifications queue]]
+
+    Q -->|deliver job · attempts + backoff| DEL[NotificationDeliveryService]
+    DEL --> PREF{Preference gate<br/>unless rule non-suppressible}
+    PREF -->|blocked| CANCEL[status = CANCELLED]
+    PREF -->|allowed| ADPT{ChannelAdapter}
+    ADPT --> INAPP[in-app · the notifications row]
+    ADPT --> EMAIL[email · EmailProvider<br/>fake / console / smtp]
+    ADPT --> WA[whatsapp · interface only]
+    ADPT --> SMS[sms · interface only]
+    INAPP --> SENT[status = SENT]
+    EMAIL -->|ok| SENT
+    EMAIL -->|transient| RETRY[re-throw → BullMQ retry] --> Q
+    EMAIL -->|permanent / attempts exhausted| FAIL[status = FAILED]
+
+    N -->|GET /notifications, bell| UI[Web app shell + /settings/notifications]
+    D -->|GET /admin/notifications/deliveries| ADMIN[/admin/notifications*/]

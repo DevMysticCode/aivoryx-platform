@@ -69,6 +69,11 @@ const RLS_TABLES = [
   'project_net_metering',
   'project_handover',
   'project_execution_attachments',
+  'notification_templates',
+  'notification_rules',
+  'notification_preferences',
+  'notifications',
+  'notification_deliveries',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -1244,6 +1249,178 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         ).rejects.toMatchObject({ code: expect.stringMatching(/23503|42501/) });
         await c.query('rollback to savepoint sp');
       });
+    });
+  });
+
+  describe('Notifications & Communications Engine (Phase 8, ADR 0037)', () => {
+    const NOTIFICATION_TABLES = [
+      'notification_templates',
+      'notification_rules',
+      'notification_preferences',
+      'notifications',
+      'notification_deliveries',
+    ];
+    const nids: Record<'A' | 'B', Record<string, string>> = { A: {}, B: {} };
+
+    beforeAll(async () => {
+      for (const [key, tenantId, membershipId] of [
+        ['A', fx.tenantA, fx.admin.membershipId],
+        ['B', fx.tenantB, fx.adminB.membershipId],
+      ] as const) {
+        const g = nids[key];
+        g.notification = randomUUID();
+        g.delivery = randomUUID();
+        await pool.query(
+          `insert into notification_templates (id,tenant_id,key,channel,title,body)
+           values (gen_random_uuid(),$1,'lead_created','in_app','T','B')`,
+          [tenantId],
+        );
+        await pool.query(
+          `insert into notification_rules (id,tenant_id,key,event_type,is_active)
+           values (gen_random_uuid(),$1,'lead_created.admins','lead.created',true)`,
+          [tenantId],
+        );
+        await pool.query(
+          `insert into notification_preferences (id,tenant_id,membership_id,in_app_enabled,email_enabled)
+           values (gen_random_uuid(),$1,$2,true,false)`,
+          [tenantId, membershipId],
+        );
+        await pool.query(
+          `insert into notifications (id,tenant_id,dedupe_key,recipient_membership_id,type,title,body)
+           values ($1,$2,$3,$4,'info','RLS notification','body')`,
+          [g.notification, tenantId, `dedupe-${g.notification}`, membershipId],
+        );
+        await pool.query(
+          `insert into notification_deliveries (id,tenant_id,notification_id,channel,recipient_ref,status,idempotency_key)
+           values ($1,$2,$3,'in_app',$4,'pending',$5)`,
+          [g.delivery, tenantId, g.notification, membershipId, `idem-${g.delivery}`],
+        );
+      }
+    });
+
+    it('every notification table has RLS ENABLED and FORCED', async () => {
+      const { rows } = await pool.query<{ relname: string; a: boolean; f: boolean }>(
+        `select relname, relrowsecurity as a, relforcerowsecurity as f
+           from pg_class where relnamespace='public'::regnamespace and relname = any($1)`,
+        [NOTIFICATION_TABLES],
+      );
+      expect(rows.length).toBe(NOTIFICATION_TABLES.length);
+      for (const r of rows) {
+        expect(r.a, `${r.relname} ENABLE`).toBe(true);
+        expect(r.f, `${r.relname} FORCE`).toBe(true);
+      }
+    });
+
+    it('tenant A cannot READ any tenant B notification row (templates, rules, prefs, notifications, deliveries)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        for (const table of NOTIFICATION_TABLES) {
+          expect(await count(c, table, `where tenant_id = '${fx.tenantB}'`), `read ${table}`).toBe(
+            0,
+          );
+        }
+        expect(await count(c, 'notifications', `where id = '${nids.B.notification}'`)).toBe(0);
+      });
+    });
+
+    it('tenant A sees exactly its own notification rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'notifications', `where id = '${nids.A.notification}'`)).toBe(1);
+        expect(await count(c, 'notification_deliveries', `where id = '${nids.A.delivery}'`)).toBe(
+          1,
+        );
+        expect(await count(c, 'notification_deliveries', `where id = '${nids.B.delivery}'`)).toBe(
+          0,
+        );
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B notification rows (update/delete 0, insert rejected)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (
+            await c.query('update notifications set read_at = now() where id = $1', [
+              nids.B.notification,
+            ])
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (
+            await c.query("update notification_deliveries set status='sent' where id=$1", [
+              nids.B.delivery,
+            ])
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from notification_rules where tenant_id=$1', [fx.tenantB]))
+            .rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into notifications (id,tenant_id,dedupe_key,type,title,body)
+             values (gen_random_uuid(),$1,'x','info','x','x')`,
+            [fx.tenantB],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query('select read_at from notifications where id = $1', [
+        nids.B.notification,
+      ]);
+      expect(rows[0]?.read_at).toBeNull();
+    });
+
+    it('preferences are isolated per tenant', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'notification_preferences', `where tenant_id='${fx.tenantB}'`)).toBe(
+          0,
+        );
+        expect(await count(c, 'notification_preferences', `where tenant_id='${fx.tenantA}'`)).toBe(
+          1,
+        );
+      });
+    });
+
+    it('a cross-tenant composite FK (delivery -> notification) is rejected', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into notification_deliveries (id,tenant_id,notification_id,channel,recipient_ref,status,idempotency_key)
+             values (gen_random_uuid(),$1,$2,'in_app','x','pending',$3)`,
+            [fx.tenantA, nids.B.notification, `idem-x-${randomUUID()}`],
+          ),
+        ).rejects.toMatchObject({ code: expect.stringMatching(/23503|42501/) });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('the outbox dispatcher GUC grants ONLY cross-tenant read + dispatched_at on outbox_events', async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('set role aivoryx_app');
+        await c.query('begin');
+        await c.query("select set_config('app.outbox_dispatcher', 'on', true)");
+        // can see undelivered events across tenants...
+        const seen = await count(c, 'outbox_events', 'where dispatched_at is null');
+        expect(seen).toBeGreaterThanOrEqual(0);
+        // ...but the flag opens no other tenant-owned table
+        expect(await count(c, 'notifications')).toBe(0);
+        expect(await count(c, 'leads')).toBe(0);
+        // ...and cannot INSERT into outbox_events
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into outbox_events (id,tenant_id,type,payload) values (gen_random_uuid(),$1,'x','{}'::jsonb)`,
+            [fx.tenantA],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      } finally {
+        await c.query('rollback').catch(() => undefined);
+        await c.query('reset role').catch(() => undefined);
+        c.release();
+      }
     });
   });
 

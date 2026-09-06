@@ -7,7 +7,7 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, and EPC execution — no other business domain yet', () => {
+  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, and notifications — no other business domain yet', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
         'memberships.read',
@@ -98,6 +98,13 @@ describe('permission catalogue', () => {
         'projects.defects.read',
         'projects.defects.create',
         'projects.defects.update',
+        'notifications.read',
+        'notifications.manage',
+        'notifications.templates.read',
+        'notifications.templates.manage',
+        'notifications.deliveries.read',
+        'notifications.preferences.read',
+        'notifications.preferences.update',
       ].sort(),
     );
     for (const key of PERMISSION_KEYS) {

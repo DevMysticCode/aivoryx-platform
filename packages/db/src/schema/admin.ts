@@ -92,6 +92,10 @@ export const outboxEvents = pgTable(
     type: text('type').notNull(),
     payload: jsonb('payload').notNull(),
     correlationId: text('correlation_id'),
+    /** the membership that caused the event, when known — lets a downstream
+     *  consumer (e.g. the notification engine's ACTOR strategy) resolve the
+     *  acting user without trusting the payload. Optional; older callers omit it. */
+    actorMembershipId: uuid('actor_membership_id'),
     occurredAt: timestamp('occurred_at', { withTimezone: true })
       .notNull()
       .default(sql`now()`),

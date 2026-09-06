@@ -20,13 +20,21 @@ export class OutboxService {
    */
   async emit(
     tx: Tx,
-    event: { tenantId: string; type: string; payload: Record<string, unknown> },
+    event: {
+      tenantId: string;
+      type: string;
+      payload: Record<string, unknown>;
+      /** the membership that caused the event, when known — lets the Phase 8
+       *  notification engine resolve the ACTOR without trusting the payload */
+      actorMembershipId?: string | null;
+    },
   ): Promise<void> {
     await tx.insert(outboxEvents).values({
       tenantId: event.tenantId,
       type: event.type,
       payload: event.payload,
       correlationId: getCorrelationId() ?? null,
+      actorMembershipId: event.actorMembershipId ?? null,
     });
   }
 }

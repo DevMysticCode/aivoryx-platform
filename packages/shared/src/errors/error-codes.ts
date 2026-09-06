@@ -455,6 +455,32 @@ export const ERROR_CODES = {
     message: 'The project cannot be completed until all execution requirements are met.',
   },
 
+  // notifications & communications (Phase 8, ADR 0037)
+  NOTIFICATION_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That notification was not found.',
+  },
+  NOTIFICATION_RULE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That notification rule is not part of the catalogue.',
+  },
+  NOTIFICATION_TEMPLATE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That notification template is not part of the catalogue.',
+  },
+  NOTIFICATION_TEMPLATE_INVALID: {
+    httpStatus: 422,
+    message: 'The template refers to a variable that is not available for this notification.',
+  },
+  NOTIFICATION_CHANNEL_UNAVAILABLE: {
+    httpStatus: 409,
+    message: 'That delivery channel is not configured on this deployment.',
+  },
+  EMAIL_PROVIDER_NOT_CONFIGURED: {
+    httpStatus: 503,
+    message: 'No email provider is configured, so email notifications cannot be delivered.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

@@ -75,6 +75,7 @@ export class DefectsService {
         tenantId: scope.tenantId,
         type: 'defect.created',
         payload: { projectId, defectId: row!.id, severity: row!.severity },
+        actorMembershipId: scope.actorMembershipId,
       });
       return toDefectDto(row!, null);
     });

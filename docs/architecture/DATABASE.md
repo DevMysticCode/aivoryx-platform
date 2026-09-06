@@ -127,6 +127,22 @@ The Phase 5 `project_status` enum is unchanged — execution detail lives in
 milestones + workflow records. Completion is server-enforced
 (`PROJECT_COMPLETION_BLOCKED` with a `missing` list). See `EPC-EXECUTION.md`.
 
+## Notification entities
+
+**Implemented (Phase 8, ADR 0037):**
+
+notification_templates -- tenant override of a code default, keyed (key, channel); plain-text bodies
+notification_rules -- tenant override of a code default, keyed key; toggles is_active / narrows channels
+notification_preferences -- one row per membership: in_app_enabled / email_enabled (default true)
+notifications -- one per (event × rule × recipient); dedupe_key unique per tenant
+notification_deliveries -- per-channel delivery state; idempotency_key unique per tenant; PENDING→PROCESSING→SENT|FAILED|CANCELLED
+
+System default rules + templates live in code (`@aivoryx/api`), so the platform
+works with zero configuration; a tenant row _overrides_ a default by key. Plus
+`outbox_events.actor_membership_id` (Phase 8) for the `ACTOR` recipient
+strategy. No second event bus — the engine consumes the existing
+`outbox_events`. See `NOTIFICATIONS.md`.
+
 ## Lead ingestion entities
 
 **Implemented (Phase 3, ADR 0032):**
@@ -233,6 +249,16 @@ project_id is not null` on `quotations`. It also adds
   tenant/assignee/status indexes. It also adds `project_completed` to
   `lead_activity_type` and 15 execution values to `project_activity_type` via
   `ALTER TYPE ... ADD VALUE`.
+- Migration `0010` (Phase 8, ADR 0037) adds the 5 notification tables
+  (`notification_templates`, `notification_rules`, `notification_preferences`,
+  `notifications`, `notification_deliveries`) — all `ENABLE` + `FORCE` RLS with
+  the same hand-appended-block pattern, composite `(id, tenant_id)` FKs,
+  per-tenant unique dedupe / idempotency keys, and tenant/status indexes. It
+  also adds `outbox_events.actor_membership_id` and two **additive**
+  `outbox_events` policies — a cross-tenant `SELECT` and the `dispatched_at`
+  `UPDATE`, both gated on the server-only `app.outbox_dispatcher` GUC — used by
+  the notification worker to drain the outbox (it opens no other table and
+  cannot `INSERT`).
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

@@ -310,6 +310,7 @@ export class QcService {
         tenantId: scope.tenantId,
         type: 'qc.failed',
         payload: { projectId, inspectionId },
+        actorMembershipId: scope.actorMembershipId,
       });
     });
     return this.view(scope, projectId);

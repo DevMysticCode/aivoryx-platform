@@ -316,6 +316,7 @@ export class ExecutionService {
         tenantId: scope.tenantId,
         type: 'project.completed',
         payload: { projectId, leadId: project.leadId },
+        actorMembershipId: scope.actorMembershipId,
       });
       return { completed: true, projectStatus: 'COMPLETED', missing: [] };
     });

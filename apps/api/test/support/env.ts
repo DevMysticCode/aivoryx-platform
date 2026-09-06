@@ -12,6 +12,13 @@ export function ensureIntegrationEnv(): void {
   process.env.REDIS_URL ??= 'redis://localhost:56379';
   process.env.SESSION_SECRET ??= 'integration-test-session-secret-00000000000000';
   process.env.SESSION_COOKIE_SECURE ??= 'false';
+  // Notifications (Phase 8): never send real email in tests. The integration
+  // suite drives the dispatcher + delivery services directly for determinism,
+  // so the background worker/queue stays off here (the Playwright E2E exercises
+  // the live queue path instead).
+  process.env.EMAIL_PROVIDER ??= 'fake';
+  process.env.NOTIFICATIONS_ENABLED ??= 'false';
+  process.env.NOTIFICATIONS_POLL_MS ??= '400';
 }
 
 export const INTEGRATION_ENABLED = process.env.RUN_DB_IT === '1';

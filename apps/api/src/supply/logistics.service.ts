@@ -373,6 +373,7 @@ export class LogisticsService {
         tenantId: scope.tenantId,
         type: 'dispatch.delivered',
         payload: { dispatchId: id, projectId: d.projectId },
+        actorMembershipId: scope.actorMembershipId,
       });
     });
     return this.get(scope, id);

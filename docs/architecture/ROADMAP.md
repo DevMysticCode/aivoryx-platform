@@ -102,6 +102,22 @@ server-enforced project completion (ADR 0036, `EPC-EXECUTION.md`).
 - commissioning
 - handover ✅ (Phase 7)
 
+## Stream A3 — Notifications & Communications Engine (shared platform capability)
+
+Phase 8 (ADR 0037, `NOTIFICATIONS.md`). Provider-neutral; consumes the existing
+transactional outbox — no second event bus or queue.
+
+- outbox dispatcher + notification engine ✅
+- notification rules + templates (system defaults in code, tenant overrides) ✅
+- recipient resolution (USER / ACTOR / ASSIGNED_USER / ROLE / CUSTOMER) ✅
+- safe `{{ variable }}` templating ✅
+- in-app channel ✅ · email channel via provider abstraction ✅
+- WhatsApp / SMS channel interfaces (no vendor) ✅
+- per-user preferences ✅
+- delivery tracking + retries + idempotency ✅
+- notification bell + admin rules/templates/deliveries screens ✅
+- real WhatsApp/SMS vendors, marketing/campaigns, workflow builder — deferred
+
 ## Stream F — Finance
 
 - billing
