@@ -1,0 +1,38 @@
+flowchart TD
+    LEAD["CRM lead (qualified)"]
+    LEAD --> QUOTE["Quotation Q-xxxx<br/>current_revision_no"]
+
+    subgraph REV["quotation_revisions (immutable history)"]
+      R1["rev 1<br/>draft → sent → accepted<br/>subtotal / discount / tax / total (stored)"]
+      R2["rev 2 …<br/>created by 'revise'; rev 1 → superseded"]
+      R1 -. "revise (DRAFT|SENT only)" .-> R2
+    end
+    QUOTE --> REV
+    REV --> LINES["quotation_lines<br/>product_id? OR free-text service/custom line<br/>round(qty×price) − discount, + tax"]
+
+    QUOTE -->|"send (freezes revision — NOT an email)"| SENT["status SENT"]
+    SENT -->|"accept (internal — accepted_by/at/note; NOT e-signature)"| ACC["status ACCEPTED"]
+    SENT -.->|"validity_date passed"| EXP["status EXPIRED"]
+    QUOTE -.->|cancel| CANX["status CANCELLED"]
+
+    ACC ==>|"book — ONE atomic transaction (FOR UPDATE on the quotation)"| BOOK
+
+    subgraph BOOK["Booking transaction (no partial state)"]
+      B1["customer: link existing, else promote the lead → customers row"]
+      B2["project: activate the linked DRAFT project,<br/>else create a Phase 5 'projects' row from the lead"]
+      B3["project → APPROVED (operational activation point, ADR 0034)"]
+      B4["quotation → BOOKED (+ customer_id, project_id, booked_at)"]
+      B5["lead → CONVERTED"]
+      B1 --> B2 --> B3 --> B4 --> B5
+    end
+
+    BOOK --> PRJ["Approved project → Phase 5 procurement / inventory / logistics"]
+
+    QUOTE -.->|"customer.created / quotation.* / project.booked / project.approved"| OUT["transactional outbox (ADR 0013)"]
+    BOOK -.-> OUT
+
+    QUOTE -. "quotation_created / sent / accepted / booked" .-> LEAD
+    BOOK ==>|"quotation + project visible on the lead"| LEAD
+
+    classDef store fill:#eef,stroke:#88a;
+    class REV,LINES,OUT store;

@@ -27,7 +27,9 @@ Single database, single schema, shared tables. Every tenant-owned row carries
   `stock_movements`, `stock_levels`, `purchase_orders`,
   `purchase_order_lines`, `goods_receipts`, `goods_receipt_lines`,
   `dispatches`, `dispatch_lines`, `dispatch_attachments` (last 17: Phase 5,
-  ADR 0034). `users`, `sessions`, global `permissions` have no RLS.
+  ADR 0034), `customers`, `quotations`, `quotation_revisions`,
+  `quotation_lines`, `quotation_activities`, `quotation_attachments` (last 6:
+  Phase 6, ADR 0035). `users`, `sessions`, global `permissions` have no RLS.
 - Policy predicate:
   `tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid`, mirrored
   in `WITH CHECK`. `nullif(…, '')` because a touched custom GUC reverts to `''`

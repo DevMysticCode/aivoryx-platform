@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import { useMembers } from '@/lib/admin/use-admin';
@@ -23,8 +23,9 @@ import {
   useUpdateNote,
 } from '@/lib/crm/use-crm';
 import { useProject, useProjects } from '@/lib/supply/use-supply';
+import { useCreateQuotation, useLeadQuotations } from '@/lib/commercial/use-commercial';
 import { Card, ErrorNote, Field, PageHeader, Skeleton, StatusBadge } from '@/components/admin/ui';
-import { fmtQty, SupplyStatusBadge } from '@/components/supply/ui';
+import { fmtDate, fmtMoney, fmtQty, SupplyStatusBadge } from '@/components/supply/ui';
 
 const NEXT_STATUSES: Record<string, string[]> = {
   NEW: ['ASSIGNED', 'CONTACTED', 'QUALIFIED', 'DISQUALIFIED'],
@@ -277,6 +278,7 @@ export default function LeadDetailPage() {
         </div>
 
         <div className="space-y-6">
+          <LeadQuotationsCard leadId={id} />
           <LeadProjectCard leadId={id} />
 
           <Card className="space-y-3">
@@ -494,6 +496,67 @@ function LeadProjectCard({ leadId }: { leadId: string }) {
         <p className="text-sm text-muted-foreground">No material requirements captured yet.</p>
       )}
       <p className="text-xs text-muted-foreground">Material readiness: {readiness}%</p>
+    </Card>
+  );
+}
+
+/**
+ * The lead's commercial history (Phase 6, ADR 0035) — quotations raised against
+ * this lead, their revision, status and total, with a one-click create.
+ * Hidden entirely when the member cannot see quotations.
+ */
+function LeadQuotationsCard({ leadId }: { leadId: string }) {
+  const router = useRouter();
+  const quotes = useLeadQuotations(leadId);
+  const createQuotation = useCreateQuotation();
+
+  if (quotes.error) return null; // 403 (no quotations.read) → render nothing
+
+  return (
+    <Card className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Quotations</h2>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={createQuotation.isPending}
+          onClick={async () => {
+            const q = await createQuotation.mutateAsync({ leadId });
+            router.push(`/quotations/${q.id}`);
+          }}
+        >
+          {createQuotation.isPending ? 'Creating…' : 'New quotation'}
+        </Button>
+      </div>
+      <ErrorNote error={createQuotation.error} />
+      {quotes.isLoading ? (
+        <Skeleton rows={2} />
+      ) : quotes.data && quotes.data.items.length > 0 ? (
+        <ul className="space-y-2 text-sm">
+          {quotes.data.items.map((q) => (
+            <li
+              key={q.id}
+              className="flex items-center justify-between gap-3 border-b pb-2 last:border-b-0"
+            >
+              <div>
+                <Link
+                  href={`/quotations/${q.id}`}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {q.number}
+                </Link>
+                <div className="text-xs text-muted-foreground">
+                  rev {q.currentRevisionNo} · {fmtMoney(q.total)}
+                  {q.validityDate ? ` · valid to ${fmtDate(q.validityDate)}` : ''}
+                </div>
+              </div>
+              <SupplyStatusBadge status={q.status} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">No quotations yet.</p>
+      )}
     </Card>
   );
 }

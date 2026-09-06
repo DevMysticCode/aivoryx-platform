@@ -84,6 +84,8 @@ export const projectActivityType = pgEnum('project_activity_type', [
   'dispatch_created',
   'dispatched',
   'delivered',
+  // Phase 6 (ADR 0035): the project was activated by booking a quotation.
+  'booked',
 ]);
 
 export const warehouseType = pgEnum('warehouse_type', ['main', 'regional', 'transit', 'site']);

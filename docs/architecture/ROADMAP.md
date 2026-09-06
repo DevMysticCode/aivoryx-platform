@@ -63,6 +63,11 @@ deferred until their real API/payload capabilities are verified.
 
 ## Stream D — Field + Sales
 
+Phase 6 delivered the commercial workflow — customers (by lead promotion),
+quotations with immutable revisions, internal acceptance, and atomic booking
+that activates the Phase 5 project. See ADR 0035 and
+`docs/architecture/COMMERCIAL.md`. Field design/BOQ remains for a later phase.
+
 - field assignment
 - PWA
 - GPS
@@ -72,9 +77,9 @@ deferred until their real API/payload capabilities are verified.
 - photos
 - offline drafts
 - design/BOQ
-- quotation
-- approval
-- booking
+- quotation ✅ (Phase 6)
+- approval ✅ (Phase 6 — commercial acceptance + booking)
+- booking ✅ (Phase 6)
 
 ## Stream E — EPC
 
