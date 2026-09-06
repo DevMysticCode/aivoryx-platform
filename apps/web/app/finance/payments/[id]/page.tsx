@@ -8,7 +8,7 @@ import { Card, EmptyState, ErrorNote, Skeleton, PageHeader } from '@/components/
 import { fmtMoney, fmtDate, SupplyStatusBadge } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { usePayment, usePaymentAction, useInvoices } from '@/lib/finance/use-finance';
-import { paymentPrintUrl } from '@/lib/api/finance';
+import { paymentPrintUrl, paymentReceiptPdfUrl } from '@/lib/api/finance';
 
 export default function PaymentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +53,12 @@ export default function PaymentDetailPage() {
             className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
           >
             Receipt
+          </a>
+          <a
+            href={paymentReceiptPdfUrl(p.id)}
+            className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
+          >
+            Download PDF
           </a>
           {canAllocate && (
             <Button size="sm" variant="outline" onClick={() => setShowAlloc((v) => !v)}>

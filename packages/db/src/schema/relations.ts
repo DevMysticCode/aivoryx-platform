@@ -8,6 +8,7 @@ import {
   notifications,
 } from './notifications.js';
 import { creditNotes, invoiceLines, invoices, paymentAllocations, payments } from './finance.js';
+import { tenantAssets, tenantCompanyProfiles, tenantOnboarding } from './branding.js';
 import {
   customFieldDefinitions,
   customFieldValues,
@@ -542,4 +543,18 @@ export const creditNotesRelations = relations(creditNotes, ({ one }) => ({
   tenant: one(tenants, { fields: [creditNotes.tenantId], references: [tenants.id] }),
   customer: one(customers, { fields: [creditNotes.customerId], references: [customers.id] }),
   invoice: one(invoices, { fields: [creditNotes.invoiceId], references: [invoices.id] }),
+}));
+
+// Phase 10 — Tenant company profile, branding & onboarding (ADR 0039).
+
+export const tenantCompanyProfilesRelations = relations(tenantCompanyProfiles, ({ one }) => ({
+  tenant: one(tenants, { fields: [tenantCompanyProfiles.tenantId], references: [tenants.id] }),
+}));
+
+export const tenantAssetsRelations = relations(tenantAssets, ({ one }) => ({
+  tenant: one(tenants, { fields: [tenantAssets.tenantId], references: [tenants.id] }),
+}));
+
+export const tenantOnboardingRelations = relations(tenantOnboarding, ({ one }) => ({
+  tenant: one(tenants, { fields: [tenantOnboarding.tenantId], references: [tenants.id] }),
 }));

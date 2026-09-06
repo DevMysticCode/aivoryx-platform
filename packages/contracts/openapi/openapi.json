@@ -218,6 +218,410 @@
         ]
       }
     },
+    "/settings/company": {
+      "get": {
+        "operationId": "getCompanyProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The workspace company profile.",
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "updateCompanyProfile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfileDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Edit the company profile.",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/settings/branding": {
+      "get": {
+        "operationId": "getBranding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandingDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Compact tenant branding for the app shell (no permission required).",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/settings/company/logo": {
+      "post": {
+        "operationId": "uploadTenantLogo",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "logo",
+                "logo_light",
+                "logo_dark",
+                "favicon"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Upload a logo / favicon.",
+        "tags": [
+          "settings"
+        ]
+      },
+      "delete": {
+        "operationId": "removeTenantLogo",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "logo",
+                "logo_light",
+                "logo_dark",
+                "favicon"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove a logo / favicon.",
+        "tags": [
+          "settings"
+        ]
+      },
+      "get": {
+        "operationId": "getTenantLogo",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "logo",
+                "logo_light",
+                "logo_dark",
+                "favicon"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Stream the active workspace’s logo (no permission required).",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/onboarding": {
+      "get": {
+        "operationId": "getOnboarding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The workspace onboarding checklist for the current user.",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/onboarding/dismiss": {
+      "post": {
+        "operationId": "dismissOnboarding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Dismiss the onboarding checklist.",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
     "/admin/tenant": {
       "get": {
         "operationId": "getTenant",
@@ -7871,6 +8275,55 @@
         ]
       }
     },
+    "/quotations/{id}/pdf": {
+      "get": {
+        "operationId": "downloadQuotationPdf",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Download the branded quotation PDF.",
+        "tags": [
+          "quotations"
+        ]
+      }
+    },
     "/quotations/{id}/revise": {
       "post": {
         "operationId": "reviseQuotation",
@@ -11865,6 +12318,55 @@
         ]
       }
     },
+    "/finance/invoices/{id}/pdf": {
+      "get": {
+        "operationId": "downloadInvoicePdf",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Download the branded invoice PDF.",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
     "/finance/invoices/from-quotation": {
       "post": {
         "operationId": "createInvoiceFromQuotation",
@@ -12334,6 +12836,55 @@
         ]
       }
     },
+    "/finance/payments/{id}/receipt.pdf": {
+      "get": {
+        "operationId": "downloadPaymentReceiptPdf",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Download the branded receipt PDF.",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
     "/finance/payments/{id}/allocate": {
       "post": {
         "operationId": "allocatePayment",
@@ -12683,6 +13234,55 @@
           }
         ],
         "summary": "One credit note.",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/credit-notes/{id}/pdf": {
+      "get": {
+        "operationId": "downloadCreditNotePdf",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Download the branded credit note PDF.",
         "tags": [
           "finance"
         ]
@@ -13218,6 +13818,37 @@
           "status"
         ]
       },
+      "BrandingContextDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "Acme Solar",
+            "description": "Workspace display name for the app shell."
+          },
+          "primaryColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#1e3a8a",
+            "description": "Validated 6-digit hex primary brand colour, or null for the Aivoryx default."
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#f97316"
+          },
+          "hasLogo": {
+            "type": "boolean",
+            "description": "True when the workspace has uploaded a logo."
+          }
+        },
+        "required": [
+          "displayName",
+          "primaryColor",
+          "accentColor",
+          "hasLogo"
+        ]
+      },
       "ActiveContextDto": {
         "type": "object",
         "properties": {
@@ -13237,12 +13868,21 @@
             "items": {
               "type": "string"
             }
+          },
+          "branding": {
+            "description": "Safe tenant branding for the app shell (never a security boundary).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BrandingContextDto"
+              }
+            ]
           }
         },
         "required": [
           "membership",
           "permissions",
-          "roles"
+          "roles",
+          "branding"
         ]
       },
       "LoginResponseDto": {
@@ -13407,6 +14047,275 @@
           "memberships",
           "active",
           "sessionExpiresAt"
+        ]
+      },
+      "CompanyProfileDto": {
+        "type": "object",
+        "properties": {
+          "workspaceName": {
+            "type": "string",
+            "description": "The workspace name (from the tenant record)."
+          },
+          "legalName": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "website": {
+            "type": "string",
+            "nullable": true
+          },
+          "addressLine": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "region": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxRegistrationLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxRegistrationNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentFooter": {
+            "type": "string",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultCurrency": {
+            "type": "string",
+            "nullable": true
+          },
+          "primaryColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#1E40AF"
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#0EA5E9"
+          },
+          "hasLogo": {
+            "type": "boolean",
+            "description": "True when a primary logo is configured."
+          },
+          "hasLightLogo": {
+            "type": "boolean"
+          },
+          "hasDarkLogo": {
+            "type": "boolean"
+          },
+          "hasFavicon": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "workspaceName",
+          "legalName",
+          "displayName",
+          "email",
+          "phone",
+          "website",
+          "addressLine",
+          "city",
+          "region",
+          "country",
+          "postalCode",
+          "taxRegistrationLabel",
+          "taxRegistrationNumber",
+          "documentFooter",
+          "timezone",
+          "defaultCurrency",
+          "primaryColor",
+          "accentColor",
+          "hasLogo",
+          "hasLightLogo",
+          "hasDarkLogo",
+          "hasFavicon",
+          "updatedAt"
+        ]
+      },
+      "UpdateCompanyProfileDto": {
+        "type": "object",
+        "properties": {
+          "legalName": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          },
+          "addressLine": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "taxRegistrationLabel": {
+            "type": "string"
+          },
+          "taxRegistrationNumber": {
+            "type": "string"
+          },
+          "documentFooter": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata"
+          },
+          "defaultCurrency": {
+            "type": "string",
+            "example": "INR"
+          },
+          "primaryColor": {
+            "type": "string",
+            "example": "#1E40AF"
+          },
+          "accentColor": {
+            "type": "string",
+            "example": "#0EA5E9"
+          }
+        }
+      },
+      "BrandingDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "primaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasLogo": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "displayName",
+          "primaryColor",
+          "accentColor",
+          "hasLogo"
+        ]
+      },
+      "OnboardingStepDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "href": {
+            "type": "string",
+            "nullable": true,
+            "description": "App path to complete this step, if the caller can access it."
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "description",
+          "done",
+          "href"
+        ]
+      },
+      "OnboardingDto": {
+        "type": "object",
+        "properties": {
+          "workspaceName": {
+            "type": "string"
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "True once every visible step is done."
+          },
+          "dismissed": {
+            "type": "boolean",
+            "description": "True once an admin has dismissed the checklist."
+          },
+          "show": {
+            "type": "boolean",
+            "description": "True when the checklist should be shown to this user right now."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingStepDto"
+            }
+          }
+        },
+        "required": [
+          "workspaceName",
+          "complete",
+          "dismissed",
+          "show",
+          "steps"
         ]
       },
       "TenantMemberCountsDto": {

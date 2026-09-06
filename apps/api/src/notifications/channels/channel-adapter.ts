@@ -14,6 +14,12 @@ export interface ChannelDeliveryRequest {
   body: string;
   emailSubject?: string;
   emailBody?: string;
+  /** safe tenant branding for the email HTML shell (Phase 10) — never a boundary */
+  branding?: {
+    displayName: string;
+    brandColor: string | null;
+    footer: string | null;
+  };
   correlation: {
     tenantId: string;
     notificationId: string;

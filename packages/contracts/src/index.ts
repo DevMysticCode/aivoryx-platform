@@ -238,5 +238,13 @@ export type ReversePaymentRequest = components['schemas']['ReversePaymentDto'];
 export type CreateCreditNoteRequest = components['schemas']['CreateCreditNoteDto'];
 export type CancelCreditNoteRequest = components['schemas']['CancelCreditNoteDto'];
 
+// Phase 10 — Platform experience: tenant branding, onboarding & documents (ADR 0039).
+export type BrandingContext = components['schemas']['BrandingContextDto'];
+export type CompanyProfile = components['schemas']['CompanyProfileDto'];
+export type UpdateCompanyProfileRequest = components['schemas']['UpdateCompanyProfileDto'];
+export type Branding = components['schemas']['BrandingDto'];
+export type Onboarding = components['schemas']['OnboardingDto'];
+export type OnboardingStep = components['schemas']['OnboardingStepDto'];
+
 /** All versioned API routes are served under this prefix (ADR 0005). */
 export const API_V1_PREFIX = '/api/v1';

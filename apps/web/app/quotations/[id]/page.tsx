@@ -5,7 +5,11 @@ import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import type { QuotationLineInput } from '@aivoryx/contracts';
-import { quotationPrintUrl, fetchQuotationAttachmentBlob } from '@/lib/api/commercial';
+import {
+  quotationPdfUrl,
+  quotationPrintUrl,
+  fetchQuotationAttachmentBlob,
+} from '@/lib/api/commercial';
 import { useProducts } from '@/lib/supply/use-supply';
 import {
   useDeleteQuotationAttachment,
@@ -170,7 +174,13 @@ export default function QuotationDetailPage() {
             rel="noopener noreferrer"
             className="inline-flex h-9 items-center rounded-md border px-3 text-sm hover:bg-accent"
           >
-            Print / PDF
+            Print
+          </a>
+          <a
+            href={quotationPdfUrl(id)}
+            className="inline-flex h-9 items-center rounded-md border px-3 text-sm hover:bg-accent"
+          >
+            Download PDF
           </a>
           {isDraft && can('quotations.update') && !editing ? (
             <Button variant="outline" onClick={startEdit}>

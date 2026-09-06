@@ -8,7 +8,7 @@ import { Card, EmptyState, ErrorNote, Skeleton, PageHeader } from '@/components/
 import { fmtMoney, fmtDate, SupplyStatusBadge } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useInvoice, useInvoiceAction, useRecordPayment } from '@/lib/finance/use-finance';
-import { invoicePrintUrl } from '@/lib/api/finance';
+import { invoicePdfUrl, invoicePrintUrl } from '@/lib/api/finance';
 import type { RecordPaymentRequest } from '@aivoryx/contracts';
 
 export default function InvoiceDetailPage() {
@@ -78,6 +78,12 @@ export default function InvoiceDetailPage() {
             className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
           >
             Print
+          </a>
+          <a
+            href={invoicePdfUrl(inv.id)}
+            className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
+          >
+            Download PDF
           </a>
           {canIssue && (
             <Button

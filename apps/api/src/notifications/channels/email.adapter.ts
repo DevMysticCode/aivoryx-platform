@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { textToSafeHtml } from '../template.js';
+import { brandedEmailHtml, textToSafeHtml } from '../template.js';
 import { EMAIL_PROVIDER, type EmailProvider } from '../email/email-provider.js';
 import {
   type ChannelAdapter,
@@ -22,11 +22,18 @@ export class EmailChannelAdapter implements ChannelAdapter {
 
   async deliver(request: ChannelDeliveryRequest): Promise<ChannelDeliveryResult> {
     const text = request.emailBody ?? request.body;
+    const html = request.branding
+      ? brandedEmailHtml(text, {
+          displayName: request.branding.displayName,
+          brandColor: request.branding.brandColor,
+          footer: request.branding.footer,
+        })
+      : textToSafeHtml(text);
     const result = await this.provider.send({
       to: request.recipientRef,
       subject: request.emailSubject ?? request.title,
       text,
-      html: textToSafeHtml(text),
+      html,
       headers: {
         'X-Aivoryx-Notification': request.correlation.notificationId,
         'X-Aivoryx-Delivery': request.correlation.deliveryId,

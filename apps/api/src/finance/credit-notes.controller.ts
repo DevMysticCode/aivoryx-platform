@@ -1,8 +1,20 @@
-import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Headers,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  StreamableFile,
+} from '@nestjs/common';
 import {
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiProduces,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -41,6 +53,23 @@ export class CreditNotesController {
   @ApiOkResponse({ type: CreditNoteDto })
   get(@Security() ctx: SecurityContext, @Param('id') id: string) {
     return this.creditNotes.get(scope(ctx), id);
+  }
+
+  @Get(':id/pdf')
+  @RequirePermission('finance.credit_notes.read')
+  @Header('Content-Type', 'application/pdf')
+  @Header('Cache-Control', 'private, max-age=0, no-store')
+  @ApiProduces('application/pdf')
+  @ApiOperation({
+    operationId: 'downloadCreditNotePdf',
+    summary: 'Download the branded credit note PDF.',
+  })
+  async pdf(@Security() ctx: SecurityContext, @Param('id') id: string): Promise<StreamableFile> {
+    const { filename, body } = await this.creditNotes.renderPdf(scope(ctx), id);
+    return new StreamableFile(body, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 
   @Post()

@@ -4,6 +4,8 @@ import { and, asc, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { DocumentRenderService } from '../documents/document-render.service.js';
+import { buildQuotationDocument } from '../documents/builders.js';
 import { isValidLeadTransition } from '../crm/lead-lifecycle.js';
 import {
   OBJECT_STORAGE,
@@ -71,7 +73,14 @@ export class QuotationsService {
   constructor(
     private readonly outbox: OutboxService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorageService,
+    private readonly documents: DocumentRenderService,
   ) {}
+
+  /** Branded PDF of the quotation's current revision (Phase 10). */
+  async renderPdf(scope: TenantScope, id: string): Promise<{ filename: string; body: Buffer }> {
+    const detail = await this.get(scope, id);
+    return this.documents.render(scope, buildQuotationDocument(detail));
+  }
 
   // ---- reads ----------------------------------------------------
 

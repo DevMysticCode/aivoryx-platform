@@ -106,6 +106,94 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/settings/company': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The workspace company profile. */
+    get: operations['getCompanyProfile'];
+    /** Edit the company profile. */
+    put: operations['updateCompanyProfile'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/settings/branding': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Compact tenant branding for the app shell (no permission required). */
+    get: operations['getBranding'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/settings/company/logo': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Stream the active workspace’s logo (no permission required). */
+    get: operations['getTenantLogo'];
+    put?: never;
+    /** Upload a logo / favicon. */
+    post: operations['uploadTenantLogo'];
+    /** Remove a logo / favicon. */
+    delete: operations['removeTenantLogo'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/onboarding': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The workspace onboarding checklist for the current user. */
+    get: operations['getOnboarding'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/onboarding/dismiss': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Dismiss the onboarding checklist. */
+    post: operations['dismissOnboarding'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/tenant': {
     parameters: {
       query?: never;
@@ -1671,6 +1759,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/quotations/{id}/pdf': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download the branded quotation PDF. */
+    get: operations['downloadQuotationPdf'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/quotations/{id}/revise': {
     parameters: {
       query?: never;
@@ -2600,6 +2705,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/finance/invoices/{id}/pdf': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download the branded invoice PDF. */
+    get: operations['downloadInvoicePdf'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/finance/invoices/from-quotation': {
     parameters: {
       query?: never;
@@ -2703,6 +2825,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/finance/payments/{id}/receipt.pdf': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download the branded receipt PDF. */
+    get: operations['downloadPaymentReceiptPdf'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/finance/payments/{id}/allocate': {
     parameters: {
       query?: never;
@@ -2764,6 +2903,23 @@ export interface paths {
     };
     /** One credit note. */
     get: operations['getCreditNote'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/finance/credit-notes/{id}/pdf': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download the branded credit note PDF. */
+    get: operations['downloadCreditNotePdf'];
     put?: never;
     post?: never;
     delete?: never;
@@ -2933,12 +3089,30 @@ export interface components {
       /** @enum {string} */
       status: 'active' | 'suspended' | 'invited';
     };
+    BrandingContextDto: {
+      /**
+       * @description Workspace display name for the app shell.
+       * @example Acme Solar
+       */
+      displayName: string;
+      /**
+       * @description Validated 6-digit hex primary brand colour, or null for the Aivoryx default.
+       * @example #1e3a8a
+       */
+      primaryColor: string | null;
+      /** @example #f97316 */
+      accentColor: string | null;
+      /** @description True when the workspace has uploaded a logo. */
+      hasLogo: boolean;
+    };
     ActiveContextDto: {
       membership: components['schemas']['MembershipSummaryDto'];
       /** @description Permission keys granted in this tenant. */
       permissions: string[];
       /** @description Role keys held in this tenant. */
       roles: string[];
+      /** @description Safe tenant branding for the app shell (never a security boundary). */
+      branding: components['schemas']['BrandingContextDto'];
     };
     LoginResponseDto: {
       user: components['schemas']['AuthUserDto'];
@@ -2988,6 +3162,83 @@ export interface components {
       active: components['schemas']['ActiveContextDto'] | null;
       /** Format: date-time */
       sessionExpiresAt: string;
+    };
+    CompanyProfileDto: {
+      /** @description The workspace name (from the tenant record). */
+      workspaceName: string;
+      legalName: string | null;
+      displayName: string | null;
+      email: string | null;
+      phone: string | null;
+      website: string | null;
+      addressLine: string | null;
+      city: string | null;
+      region: string | null;
+      country: string | null;
+      postalCode: string | null;
+      taxRegistrationLabel: string | null;
+      taxRegistrationNumber: string | null;
+      documentFooter: string | null;
+      timezone: string | null;
+      defaultCurrency: string | null;
+      /** @example #1E40AF */
+      primaryColor: string | null;
+      /** @example #0EA5E9 */
+      accentColor: string | null;
+      /** @description True when a primary logo is configured. */
+      hasLogo: boolean;
+      hasLightLogo: boolean;
+      hasDarkLogo: boolean;
+      hasFavicon: boolean;
+      /** Format: date-time */
+      updatedAt: string | null;
+    };
+    UpdateCompanyProfileDto: {
+      legalName?: string;
+      displayName?: string;
+      email?: string;
+      phone?: string;
+      website?: string;
+      addressLine?: string;
+      city?: string;
+      region?: string;
+      country?: string;
+      postalCode?: string;
+      taxRegistrationLabel?: string;
+      taxRegistrationNumber?: string;
+      documentFooter?: string;
+      /** @example Asia/Kolkata */
+      timezone?: string;
+      /** @example INR */
+      defaultCurrency?: string;
+      /** @example #1E40AF */
+      primaryColor?: string;
+      /** @example #0EA5E9 */
+      accentColor?: string;
+    };
+    BrandingDto: {
+      displayName: string;
+      primaryColor: string | null;
+      accentColor: string | null;
+      hasLogo: boolean;
+    };
+    OnboardingStepDto: {
+      key: string;
+      title: string;
+      description: string;
+      done: boolean;
+      /** @description App path to complete this step, if the caller can access it. */
+      href: string | null;
+    };
+    OnboardingDto: {
+      workspaceName: string;
+      /** @description True once every visible step is done. */
+      complete: boolean;
+      /** @description True once an admin has dismissed the checklist. */
+      dismissed: boolean;
+      /** @description True when the checklist should be shown to this user right now. */
+      show: boolean;
+      steps: components['schemas']['OnboardingStepDto'][];
     };
     TenantMemberCountsDto: {
       active: number;
@@ -5356,6 +5607,290 @@ export interface operations {
         };
       };
       /** @description AUTH_MEMBERSHIP_INVALID / AUTH_MEMBERSHIP_SUSPENDED / TENANT_SUSPENDED */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getCompanyProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompanyProfileDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateCompanyProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateCompanyProfileDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompanyProfileDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getBranding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BrandingDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getTenantLogo: {
+    parameters: {
+      query?: {
+        kind?: 'logo' | 'logo_light' | 'logo_dark' | 'favicon';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadTenantLogo: {
+    parameters: {
+      query?: {
+        kind?: 'logo' | 'logo_light' | 'logo_dark' | 'favicon';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeTenantLogo: {
+    parameters: {
+      query?: {
+        kind?: 'logo' | 'logo_light' | 'logo_dark' | 'favicon';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getOnboarding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OnboardingDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  dismissOnboarding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OnboardingDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
       403: {
         headers: {
           [name: string]: unknown;
@@ -10161,6 +10696,41 @@ export interface operations {
       };
     };
   };
+  downloadQuotationPdf: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   reviseQuotation: {
     parameters: {
       query?: never;
@@ -12620,6 +13190,41 @@ export interface operations {
       };
     };
   };
+  downloadInvoicePdf: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   createInvoiceFromQuotation: {
     parameters: {
       query?: never;
@@ -12899,6 +13504,41 @@ export interface operations {
       };
     };
   };
+  downloadPaymentReceiptPdf: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   allocatePayment: {
     parameters: {
       query?: never;
@@ -13084,6 +13724,41 @@ export interface operations {
         content: {
           'application/json': components['schemas']['CreditNoteDto'];
         };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadCreditNotePdf: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       401: {
         headers: {

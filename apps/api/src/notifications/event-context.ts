@@ -66,13 +66,42 @@ function money(value: string | null | undefined): string {
   return Number.isFinite(n) ? n.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : value;
 }
 
-async function tenantName(tx: Tx, tenantId: string): Promise<string> {
+interface TenantContext {
+  name: string;
+  /** workspace display name (branding) — falls back to `name` */
+  displayName: string;
+  /** validated 6-digit hex primary brand colour, or null */
+  brandColor: string | null;
+  /** tenant document / email footer line, or null */
+  documentFooter: string | null;
+}
+
+/**
+ * Safe tenant identity + branding for templates (Phase 10, ADR 0039). Branding
+ * is white-label presentation only; it never affects tenancy or security.
+ */
+async function tenantContext(tx: Tx, tenantId: string): Promise<TenantContext> {
   const [row] = await tx
-    .select({ name: schema.tenants.name })
+    .select({
+      name: schema.tenants.name,
+      displayName: schema.tenantCompanyProfiles.displayName,
+      primaryColor: schema.tenantCompanyProfiles.primaryColor,
+      documentFooter: schema.tenantCompanyProfiles.documentFooter,
+    })
     .from(schema.tenants)
+    .leftJoin(
+      schema.tenantCompanyProfiles,
+      eq(schema.tenantCompanyProfiles.tenantId, schema.tenants.id),
+    )
     .where(eq(schema.tenants.id, tenantId))
     .limit(1);
-  return row?.name ?? 'Aivoryx';
+  const name = row?.name ?? 'Aivoryx';
+  return {
+    name,
+    displayName: row?.displayName?.trim() || name,
+    brandColor: row?.primaryColor ?? null,
+    documentFooter: row?.documentFooter ?? null,
+  };
 }
 
 async function membershipIsActive(
@@ -133,7 +162,7 @@ export async function buildEventContext(
   event: RawEvent,
 ): Promise<BuiltEventContext | null> {
   const { type, tenantId, payload } = event;
-  const tenant = { name: await tenantName(tx, tenantId) };
+  const tenant = await tenantContext(tx, tenantId);
   const baseRefs: EventRefs = {
     actorMembershipId: event.actorMembershipId,
     assignedMembershipId: null,

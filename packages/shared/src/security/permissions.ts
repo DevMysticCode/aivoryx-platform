@@ -209,6 +209,15 @@ export const PERMISSION_DEFINITIONS = [
   { key: 'finance.credit_notes.create', description: 'Create a draft credit note.' },
   { key: 'finance.credit_notes.issue', description: 'Issue a credit note.' },
   { key: 'finance.credit_notes.cancel', description: 'Cancel a credit note.' },
+
+  // Platform experience — tenant company profile & branding (Phase 10, ADR 0039).
+  // Consuming branding (app shell, documents, emails) needs no permission; these
+  // gate who may edit the workspace's company profile / branding / onboarding.
+  { key: 'settings.company.read', description: 'View the workspace company profile and branding.' },
+  {
+    key: 'settings.company.update',
+    description: 'Edit the workspace company profile, branding and logos.',
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];

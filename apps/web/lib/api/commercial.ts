@@ -96,6 +96,10 @@ export const bookQuotation = (id: string, b: BookQuotationRequest = {}) =>
 export const quotationPrintUrl = (id: string) =>
   `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/quotations/${id}/print`;
 
+/** URL of the branded, downloadable quotation PDF (Phase 10). */
+export const quotationPdfUrl = (id: string) =>
+  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/quotations/${id}/pdf`;
+
 // ---- quotation attachments (existing object storage) ------
 
 export const listQuotationAttachments = (id: string) =>

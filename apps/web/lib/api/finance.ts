@@ -73,6 +73,9 @@ export const cancelInvoice = (id: string, body: CancelInvoiceRequest = {}) =>
 export const invoicePrintUrl = (id: string) =>
   `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/invoices/${id}/print`;
 
+export const invoicePdfUrl = (id: string) =>
+  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/invoices/${id}/pdf`;
+
 // ---- payments -------------------------------------------------
 
 export const listPayments = (opts: {
@@ -97,6 +100,9 @@ export const reversePayment = (id: string, body: ReversePaymentRequest = {}) =>
 export const paymentPrintUrl = (id: string) =>
   `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/payments/${id}/print`;
 
+export const paymentReceiptPdfUrl = (id: string) =>
+  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/payments/${id}/receipt.pdf`;
+
 // ---- credit notes ------------------------------------------
 
 export const listCreditNotes = (opts: { status?: string; customerId?: string; page?: number }) =>
@@ -113,6 +119,9 @@ export const issueCreditNote = (id: string) =>
 
 export const cancelCreditNote = (id: string, body: CancelCreditNoteRequest = {}) =>
   apiFetch<CreditNote>(`/finance/credit-notes/${id}/cancel`, json(body));
+
+export const creditNotePdfUrl = (id: string) =>
+  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/credit-notes/${id}/pdf`;
 
 // ---- summaries ------------------------------------------
 

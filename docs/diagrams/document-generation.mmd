@@ -1,0 +1,34 @@
+%% Platform experience — tenant branding & the document engine (Phase 10, ADR 0039)
+flowchart TD
+    subgraph BRANDING [Tenant branding — white-label config, never a boundary]
+      CP[(tenant_company_profiles<br/>name · address · tax label · footer · colours)]
+      TA[(tenant_assets · logo/favicon<br/>bytes in object storage, key only in DB)]
+      TO[(tenant_onboarding · dismissed_at only)]
+      CP --- RLS{{ENABLE + FORCE RLS<br/>tenant_id = app.tenant_id}}
+      TA --- RLS
+      TO --- RLS
+    end
+
+    CP --> BR[/GET /settings/branding · /auth/me.active.branding/]
+    TA --> LOGO[/GET /settings/company/logo · authenticated stream/]
+    BR --> SHELL[Web app shell<br/>name + logo · Aivoryx-safe fallback]
+    BR --> TOKEN[BrandProvider<br/>--primary / --ring token override<br/>contrast-clamped · no arbitrary CSS]
+
+    CP --> OBD[GET /onboarding<br/>steps DERIVED · RBAC-filtered links]
+    OBD --> CARD[OnboardingCard · resumable · skippable]
+
+    subgraph ENGINE [Reusable document engine — implemented once]
+      DTO[Business detail DTO<br/>immutable issued snapshot] --> BLD[builders.ts<br/>build&lt;Type&gt;Document · recompute nothing]
+      BLD --> DEF[DocumentDefinition<br/>generic: title · meta · party · lines · totals]
+      DEF --> RS[DocumentRenderService.render scope, def]
+      CP --> DB2[getDocumentBranding tx, tenantId]
+      TA --> DB2
+      DB2 --> RS
+      RS --> PDF[DocumentPdfService.render<br/>*** only place PDF tech lives ***<br/>pdfmake · pure Node · no headless browser]
+    end
+
+    PDF --> DL[/GET .../pdf · .../receipt.pdf/]
+    DL --> RESP[application/pdf<br/>Content-Disposition: attachment; filename=INV-000123.pdf<br/>server-derived tenant · 404 cross-tenant · 401 anon]
+
+    CP --> EMAIL[brandedEmailHtml<br/>escaped body + accent bar + Powered by Aivoryx™]
+    EMAIL --> N[Phase 8 email channel · no tenant HTML]

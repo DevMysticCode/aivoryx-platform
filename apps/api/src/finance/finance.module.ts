@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AdminModule } from '../admin/admin.module.js';
+import { DocumentsModule } from '../documents/documents.module.js';
 import { InvoicesService } from './invoices.service.js';
 import { PaymentsService } from './payments.service.js';
 import { PaymentAllocationService } from './allocations.service.js';
@@ -19,7 +20,7 @@ import { FinanceController } from './finance.controller.js';
  * RBAC catalogue and the OpenAPI pipeline. `AdminModule` provides `OutboxService`.
  */
 @Module({
-  imports: [AdminModule],
+  imports: [AdminModule, DocumentsModule],
   controllers: [InvoicesController, PaymentsController, CreditNotesController, FinanceController],
   providers: [InvoicesService, PaymentsService, PaymentAllocationService, CreditNotesService],
   exports: [InvoicesService, PaymentsService],
