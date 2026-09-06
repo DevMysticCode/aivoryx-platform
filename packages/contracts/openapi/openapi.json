@@ -622,6 +622,304 @@
         ]
       }
     },
+    "/admin/audit": {
+      "get": {
+        "operationId": "listAuditLog",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "ISO-8601. Only entries at/after this instant.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "ISO-8601. Only entries strictly before this instant.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorMembershipId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "USER",
+                "SYSTEM"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "auth.login",
+                "auth.logout",
+                "auth.tenant_switched",
+                "tenant.updated",
+                "tenant.member.invited",
+                "tenant.member.invitation_accepted",
+                "tenant.member.suspended",
+                "tenant.member.reactivated",
+                "tenant.member.removed",
+                "tenant.member.role_added",
+                "tenant.member.role_removed",
+                "crm.lead.created",
+                "crm.lead.updated",
+                "crm.lead.assigned",
+                "crm.lead.status_changed",
+                "crm.lead.qualified",
+                "crm.lead.call_attempted",
+                "crm.lead.followup_created",
+                "crm.lead.note_created",
+                "integration.source.created",
+                "integration.source.updated",
+                "integration.source.secret_rotated",
+                "integration.source.revoked",
+                "integration.source.reactivated",
+                "integration.event.replayed",
+                "field.visit.created",
+                "field.visit.assigned",
+                "field.visit.rescheduled",
+                "field.visit.cancelled",
+                "field.visit.checked_in",
+                "field.visit.checked_out",
+                "field.visit.survey_completed",
+                "field.visit.completed",
+                "field.lead.created",
+                "project.created",
+                "project.updated",
+                "product.created",
+                "supplier.created",
+                "warehouse.created",
+                "inventory.received",
+                "inventory.allocated",
+                "inventory.dispatched",
+                "inventory.delivered",
+                "purchase_order.created",
+                "purchase_order.approved",
+                "customer.created",
+                "customer.updated",
+                "quotation.created",
+                "quotation.updated",
+                "quotation.sent",
+                "quotation.accepted",
+                "quotation.revised",
+                "quotation.booked",
+                "quotation.cancelled",
+                "quotation.expired",
+                "project.installation.assigned",
+                "project.installation.started",
+                "project.installation.completed",
+                "project.checklist.updated",
+                "project.qc.started",
+                "project.qc.passed",
+                "project.qc.failed",
+                "project.defect.created",
+                "project.defect.resolved",
+                "project.net_metering.updated",
+                "project.handover.updated",
+                "project.completed",
+                "notification.template.created",
+                "notification.template.updated",
+                "notification.rule.created",
+                "notification.rule.updated",
+                "notification.preference.updated",
+                "finance.invoice.created",
+                "finance.invoice.issued",
+                "finance.invoice.cancelled",
+                "finance.invoice.voided",
+                "finance.payment.recorded",
+                "finance.payment.allocated",
+                "finance.payment.reversed",
+                "finance.credit_note.created",
+                "finance.credit_note.issued",
+                "finance.credit_note.cancelled",
+                "settings.company.updated",
+                "settings.branding.updated",
+                "settings.logo.updated",
+                "settings.onboarding.updated"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "module",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "auth",
+                "identity",
+                "crm",
+                "integrations",
+                "field",
+                "supply",
+                "commercial",
+                "execution",
+                "notifications",
+                "finance",
+                "settings"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogListDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Search the workspace audit log.",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/admin/audit/{id}": {
+      "get": {
+        "operationId": "getAuditLogEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "One audit entry with safe detail.",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
     "/admin/tenant": {
       "get": {
         "operationId": "getTenant",
@@ -14316,6 +14614,230 @@
           "dismissed",
           "show",
           "steps"
+        ]
+      },
+      "AuditLogDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorType": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "SYSTEM"
+            ]
+          },
+          "actorMembershipId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "actorName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display name of the actor membership."
+          },
+          "actorEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorSource": {
+            "type": "string",
+            "nullable": true,
+            "description": "Subsystem, for SYSTEM actors."
+          },
+          "action": {
+            "type": "string",
+            "example": "finance.invoice.issued"
+          },
+          "module": {
+            "type": "string",
+            "enum": [
+              "auth",
+              "identity",
+              "crm",
+              "integrations",
+              "field",
+              "supply",
+              "commercial",
+              "execution",
+              "notifications",
+              "finance",
+              "settings"
+            ]
+          },
+          "entityType": {
+            "type": "string",
+            "example": "invoice"
+          },
+          "entityId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "correlationId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "actorType",
+          "actorMembershipId",
+          "actorName",
+          "actorEmail",
+          "actorSource",
+          "action",
+          "module",
+          "entityType",
+          "entityId",
+          "correlationId"
+        ]
+      },
+      "AuditLogListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "AuditLogDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorType": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "SYSTEM"
+            ]
+          },
+          "actorMembershipId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "actorName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display name of the actor membership."
+          },
+          "actorEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorSource": {
+            "type": "string",
+            "nullable": true,
+            "description": "Subsystem, for SYSTEM actors."
+          },
+          "action": {
+            "type": "string",
+            "example": "finance.invoice.issued"
+          },
+          "module": {
+            "type": "string",
+            "enum": [
+              "auth",
+              "identity",
+              "crm",
+              "integrations",
+              "field",
+              "supply",
+              "commercial",
+              "execution",
+              "notifications",
+              "finance",
+              "settings"
+            ]
+          },
+          "entityType": {
+            "type": "string",
+            "example": "invoice"
+          },
+          "entityId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "correlationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "requestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ipAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "userAgent": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Sanitised key/value context."
+          },
+          "changes": {
+            "type": "object",
+            "nullable": true,
+            "description": "Sanitised before/after for approved fields: `{ field: { from, to } }`."
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "actorType",
+          "actorMembershipId",
+          "actorName",
+          "actorEmail",
+          "actorSource",
+          "action",
+          "module",
+          "entityType",
+          "entityId",
+          "correlationId",
+          "requestId",
+          "ipAddress",
+          "userAgent",
+          "metadata",
+          "changes"
         ]
       },
       "TenantMemberCountsDto": {

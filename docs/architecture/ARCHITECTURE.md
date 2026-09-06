@@ -121,5 +121,6 @@ CRM / field / operations:
 - `FINANCE.md` — operational invoicing, payments, allocations & credit notes (ADR 0038)
 - `BRANDING.md` — tenant company profile, logo storage, brand-colour token override, onboarding & contextual help (ADR 0039)
 - `DOCUMENT-GENERATION.md` — the reusable `DocumentDefinition` → `DocumentPdfService` engine; pdfmake (pure Node), branded PDF downloads (ADR 0039)
+- `AUDIT.md` — the Global Audit Log: explicit + transactional, append-only, tenant-isolated; central `AuditService`, typed action catalogue, redaction, system actors (ADR 0040)
 
 Diagrams: `docs/diagrams/`.

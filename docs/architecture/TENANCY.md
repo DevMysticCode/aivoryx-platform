@@ -118,6 +118,17 @@ ids, database ownership, RLS policies or permission semantics; the app shell,
 documents and emails simply render the tenant's own identity instead of the
 Aivoryx default, and the Aivoryx attribution is always kept.
 
+## Audit log — tenant-owned and append-only
+
+Phase 11 (ADR 0040) adds `audit_logs` — a tenant-owned table with the same
+`tenant_id` + `ENABLE` + `FORCE` RLS boundary as every other business table
+(direct proof in `rls.int.spec.ts`), plus two extra guarantees: the runtime
+role holds **`SELECT` + `INSERT` only** (UPDATE/DELETE are REVOKEd and have no
+policy), and the actor is pinned to the tenant by a composite
+`(actor_membership_id, tenant_id)` FK so a cross-tenant actor is impossible.
+Tenant and actor are always server-derived (`scope(ctx)` / a trusted system
+context) — never a DTO field.
+
 ## Out of scope for V1
 
 Schema-per-tenant, database-per-tenant, and tenant-aware connection pooling

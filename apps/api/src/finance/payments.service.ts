@@ -3,6 +3,7 @@ import { and, desc, eq, isNull, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { DocumentRenderService } from '../documents/document-render.service.js';
 import { buildReceiptDocument } from '../documents/builders.js';
 import { pageBounds, type Paged, type TenantScope } from './common.js';
@@ -36,6 +37,7 @@ export class PaymentsService {
     private readonly outbox: OutboxService,
     private readonly allocations: PaymentAllocationService,
     private readonly documents: DocumentRenderService,
+    private readonly audit: AuditService,
   ) {}
 
   async list(scope: TenantScope, query: ListPaymentsQueryDto): Promise<Paged<PaymentDto>> {
@@ -190,6 +192,21 @@ export class PaymentsService {
             actorMembershipId: scope.actorMembershipId,
           });
 
+          await this.audit.record(tx, {
+            tenantId: scope.tenantId,
+            action: 'finance.payment.recorded',
+            entityType: 'payment',
+            entityId: payment.id,
+            actor: userActor(scope),
+            metadata: {
+              number,
+              customerId: body.customerId,
+              amount,
+              currency,
+              method: payment.method,
+            },
+          });
+
           if (body.allocations && body.allocations.length > 0) {
             await this.allocations.allocateWithin(
               tx,
@@ -197,6 +214,20 @@ export class PaymentsService {
               payment,
               body.allocations.map((a) => ({ invoiceId: a.invoiceId, amount: a.amount })),
             );
+            await this.audit.record(tx, {
+              tenantId: scope.tenantId,
+              action: 'finance.payment.allocated',
+              entityType: 'payment',
+              entityId: payment.id,
+              actor: userActor(scope),
+              metadata: {
+                number,
+                allocations: body.allocations.map((a) => ({
+                  invoiceId: a.invoiceId,
+                  amount: a.amount,
+                })),
+              },
+            });
           }
           return { id: payment.id };
         },
@@ -283,6 +314,20 @@ export class PaymentsService {
             type: 'payment.reversed',
             payload: { paymentId: id, number: payment.number, amount: payment.amount },
             actorMembershipId: scope.actorMembershipId,
+          });
+          await this.audit.record(tx, {
+            tenantId: scope.tenantId,
+            action: 'finance.payment.reversed',
+            entityType: 'payment',
+            entityId: id,
+            actor: userActor(scope),
+            metadata: {
+              number: payment.number,
+              amount: payment.amount,
+              reason: reason ?? null,
+              reversedAllocations: active.length,
+            },
+            changes: { status: { from: 'RECORDED', to: 'REVERSED' } },
           });
           return { id: payment.id };
         },

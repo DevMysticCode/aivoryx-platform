@@ -4,6 +4,7 @@ import { and, asc, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { DocumentRenderService } from '../documents/document-render.service.js';
 import { buildQuotationDocument } from '../documents/builders.js';
 import { isValidLeadTransition } from '../crm/lead-lifecycle.js';
@@ -74,6 +75,7 @@ export class QuotationsService {
     private readonly outbox: OutboxService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorageService,
     private readonly documents: DocumentRenderService,
+    private readonly audit: AuditService,
   ) {}
 
   /** Branded PDF of the quotation's current revision (Phase 10). */
@@ -286,6 +288,14 @@ export class QuotationsService {
         type: 'quotation.created',
         payload: { quotationId, leadId: body.leadId, number },
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'quotation.created',
+        entityType: 'quotation',
+        entityId: quotationId,
+        actor: userActor(scope),
+        metadata: { number, leadId: body.leadId },
+      });
       return quotationId;
     });
     return this.get(scope, id);
@@ -435,6 +445,14 @@ export class QuotationsService {
         type: 'quotation.revised',
         payload: { quotationId: id, revisionNo: nextNo },
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'quotation.revised',
+        entityType: 'quotation',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { revisionNo: nextNo, reason: body.reason ?? null },
+      });
     });
     return this.get(scope, id);
   }
@@ -485,6 +503,15 @@ export class QuotationsService {
         type: 'quotation.sent',
         payload: { quotationId: id, revisionNo: q.currentRevisionNo },
         actorMembershipId: scope.actorMembershipId,
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'quotation.sent',
+        entityType: 'quotation',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { number: q.number, revisionNo: q.currentRevisionNo },
+        changes: { status: { from: q.status, to: 'SENT' } },
       });
     });
     return this.get(scope, id);
@@ -555,6 +582,15 @@ export class QuotationsService {
         payload: { quotationId: id, revisionNo: q.currentRevisionNo },
         actorMembershipId: scope.actorMembershipId,
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'quotation.accepted',
+        entityType: 'quotation',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { number: q.number, revisionNo: q.currentRevisionNo },
+        changes: { status: { from: q.status, to: 'ACCEPTED' } },
+      });
     });
     return this.get(scope, id);
   }
@@ -583,6 +619,14 @@ export class QuotationsService {
         type: 'quotation.cancelled',
         payload: { quotationId: id },
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'quotation.cancelled',
+        entityType: 'quotation',
+        entityId: id,
+        actor: userActor(scope),
+        changes: { status: { from: q.status, to: 'CANCELLED' } },
+      });
     });
     return this.get(scope, id);
   }
@@ -610,6 +654,14 @@ export class QuotationsService {
         tenantId: scope.tenantId,
         type: 'quotation.expired',
         payload: { quotationId: id },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'quotation.expired',
+        entityType: 'quotation',
+        entityId: id,
+        actor: userActor(scope),
+        changes: { status: { from: q.status, to: 'EXPIRED' } },
       });
     });
     return this.get(scope, id);
@@ -804,6 +856,15 @@ export class QuotationsService {
         tenantId: scope.tenantId,
         type: 'project.approved',
         payload: { projectId, via: 'quotation_booking' },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'quotation.booked',
+        entityType: 'quotation',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { number: q.number, projectId, customerId },
+        changes: { status: { from: q.status, to: 'BOOKED' } },
       });
 
       return this.bookingResult(tx, scope, id);

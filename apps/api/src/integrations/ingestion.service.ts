@@ -16,6 +16,7 @@ import { hashConnectorSecret } from './connector-token.js';
 import { mapProviderFields } from './mapping.js';
 import { parsePabblyPayload } from './pabbly-adapter.js';
 import { hashRawBody } from './raw-hash.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const { canonicalLeadEvents, leadSources, leads, rawEvents } = schema;
 
@@ -58,7 +59,10 @@ export interface IngestResult {
 export class IngestionService {
   private readonly logger = new Logger(IngestionService.name);
 
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   async ingest(input: InboundRequest): Promise<IngestResult> {
     if (!input.secret) throw new AppError('CONNECTOR_INVALID');
@@ -364,7 +368,11 @@ export class IngestionService {
    * the same `canonical_lead_events` row (this transaction's own UPDATE lock
    * vs. the nested transaction's upsert on the same unique key).
    */
-  async replay(tenantId: string, canonicalEventId: string): Promise<IngestResult> {
+  async replay(
+    tenantId: string,
+    canonicalEventId: string,
+    actorMembershipId: string | null = null,
+  ): Promise<IngestResult> {
     const { source, rawEventId } = await withProgressiveContext(getDb(), async (tx, setContext) => {
       await setContext({ tenantId });
       const [current] = await tx
@@ -397,6 +405,16 @@ export class IngestionService {
         })
         .where(eq(canonicalLeadEvents.id, canonicalEventId));
 
+      if (actorMembershipId) {
+        await this.audit.record(tx, {
+          tenantId,
+          action: 'integration.event.replayed',
+          entityType: 'canonical_lead_event',
+          entityId: canonicalEventId,
+          actor: { type: 'USER', membershipId: actorMembershipId },
+          metadata: { sourceId: sourceRow.id, priorStatus: current.status },
+        });
+      }
       return { source: sourceRow, rawEventId: current.rawEventId };
     });
 

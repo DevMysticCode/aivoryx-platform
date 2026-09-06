@@ -313,6 +313,15 @@ export {
   type NewTenantOnboardingRow,
 } from './branding.js';
 
+// Phase 11 — Global Audit Log (ADR 0040).
+export {
+  auditActorType,
+  auditModule,
+  auditLogs,
+  type AuditLogRow,
+  type NewAuditLogRow,
+} from './audit.js';
+
 export {
   usersRelations,
   tenantsRelations,
@@ -381,4 +390,5 @@ export {
   tenantCompanyProfilesRelations,
   tenantAssetsRelations,
   tenantOnboardingRelations,
+  auditLogsRelations,
 } from './relations.js';

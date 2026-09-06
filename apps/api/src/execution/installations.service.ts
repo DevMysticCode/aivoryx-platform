@@ -3,6 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { isActiveFieldAgent } from '../field/field-agents.service.js';
 import { installationCanAssign } from './lifecycles.js';
 import { installationMaterialsOk } from './readiness.js';
@@ -28,7 +29,10 @@ const { projectInstallations, projectChecklistItems } = schema;
 
 @Injectable()
 export class InstallationsService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   private view(scope: TenantScope, projectId: string): Promise<ExecutionViewDto> {
     return withTenantContext(getDb(), scope, (tx) => buildView(tx, scope.tenantId, projectId));
@@ -79,6 +83,14 @@ export class InstallationsService {
         type: 'installation.assigned',
         payload: { projectId, membershipId: body.membershipId },
         actorMembershipId: scope.actorMembershipId,
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.installation.assigned',
+        entityType: 'project',
+        entityId: projectId,
+        actor: userActor(scope),
+        metadata: { membershipId: body.membershipId },
       });
     });
     return this.view(scope, projectId);
@@ -184,6 +196,13 @@ export class InstallationsService {
         type: 'installation.started',
         payload: { projectId },
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.installation.started',
+        entityType: 'project',
+        entityId: projectId,
+        actor: userActor(scope),
+      });
     });
     return this.view(scope, projectId);
   }
@@ -238,6 +257,13 @@ export class InstallationsService {
         tenantId: scope.tenantId,
         type: 'installation.completed',
         payload: { projectId },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.installation.completed',
+        entityType: 'project',
+        entityId: projectId,
+        actor: userActor(scope),
       });
     });
     return this.view(scope, projectId);

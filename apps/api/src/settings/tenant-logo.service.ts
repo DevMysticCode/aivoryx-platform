@@ -5,6 +5,7 @@ import { getDb, schema, withTenantContext } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OBJECT_STORAGE, type ObjectStorageService } from '../storage/object-storage.service.js';
 import type { TenantScope } from '../supply/common.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { ImageValidationError, readImageMeta } from './image-meta.js';
 
 const { tenantAssets } = schema;
@@ -25,7 +26,10 @@ type LogoKind = schema.TenantAssetRow['kind'];
  */
 @Injectable()
 export class TenantLogoService {
-  constructor(@Inject(OBJECT_STORAGE) private readonly storage: ObjectStorageService) {}
+  constructor(
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorageService,
+    private readonly audit: AuditService,
+  ) {}
 
   async upload(
     scope: TenantScope,
@@ -108,6 +112,21 @@ export class TenantLogoService {
           },
         });
 
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'settings.logo.updated',
+        entityType: 'tenant_asset',
+        entityId: null,
+        actor: userActor(scope),
+        metadata: {
+          kind,
+          operation: existing ? 'replaced' : 'added',
+          contentType: meta.format,
+          width: meta.width,
+          height: meta.height,
+        },
+      });
+
       // best-effort cleanup of the previous object (the DB row is authoritative)
       if (existing && existing.objectKey !== key) {
         await this.storage.deleteObject(existing.objectKey).catch(() => undefined);
@@ -127,6 +146,14 @@ export class TenantLogoService {
       await tx
         .delete(tenantAssets)
         .where(and(eq(tenantAssets.tenantId, scope.tenantId), eq(tenantAssets.kind, kind)));
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'settings.logo.updated',
+        entityType: 'tenant_asset',
+        entityId: null,
+        actor: userActor(scope),
+        metadata: { kind, operation: 'removed' },
+      });
       await this.storage.deleteObject(row.objectKey).catch(() => undefined);
     });
   }

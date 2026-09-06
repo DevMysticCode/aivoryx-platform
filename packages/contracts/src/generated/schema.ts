@@ -194,6 +194,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/audit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search the workspace audit log. */
+    get: operations['listAuditLog'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/audit/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One audit entry with safe detail. */
+    get: operations['getAuditLogEntry'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/tenant': {
     parameters: {
       query?: never;
@@ -3240,6 +3274,89 @@ export interface components {
       show: boolean;
       steps: components['schemas']['OnboardingStepDto'][];
     };
+    AuditLogDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      occurredAt: string;
+      /** @enum {string} */
+      actorType: 'USER' | 'SYSTEM';
+      /** Format: uuid */
+      actorMembershipId: string | null;
+      /** @description Display name of the actor membership. */
+      actorName: string | null;
+      actorEmail: string | null;
+      /** @description Subsystem, for SYSTEM actors. */
+      actorSource: string | null;
+      /** @example finance.invoice.issued */
+      action: string;
+      /** @enum {string} */
+      module:
+        | 'auth'
+        | 'identity'
+        | 'crm'
+        | 'integrations'
+        | 'field'
+        | 'supply'
+        | 'commercial'
+        | 'execution'
+        | 'notifications'
+        | 'finance'
+        | 'settings';
+      /** @example invoice */
+      entityType: string;
+      /** Format: uuid */
+      entityId: string | null;
+      correlationId: string | null;
+    };
+    AuditLogListDto: {
+      items: components['schemas']['AuditLogDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    AuditLogDetailDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      occurredAt: string;
+      /** @enum {string} */
+      actorType: 'USER' | 'SYSTEM';
+      /** Format: uuid */
+      actorMembershipId: string | null;
+      /** @description Display name of the actor membership. */
+      actorName: string | null;
+      actorEmail: string | null;
+      /** @description Subsystem, for SYSTEM actors. */
+      actorSource: string | null;
+      /** @example finance.invoice.issued */
+      action: string;
+      /** @enum {string} */
+      module:
+        | 'auth'
+        | 'identity'
+        | 'crm'
+        | 'integrations'
+        | 'field'
+        | 'supply'
+        | 'commercial'
+        | 'execution'
+        | 'notifications'
+        | 'finance'
+        | 'settings';
+      /** @example invoice */
+      entityType: string;
+      /** Format: uuid */
+      entityId: string | null;
+      correlationId: string | null;
+      requestId: string | null;
+      ipAddress: string | null;
+      userAgent: string | null;
+      /** @description Sanitised key/value context. */
+      metadata: Record<string, never>;
+      /** @description Sanitised before/after for approved fields: `{ field: { from, to } }`. */
+      changes: Record<string, never> | null;
+    };
     TenantMemberCountsDto: {
       active: number;
       invited: number;
@@ -5881,6 +5998,188 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['OnboardingDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listAuditLog: {
+    parameters: {
+      query?: {
+        /** @description ISO-8601. Only entries at/after this instant. */
+        from?: string;
+        /** @description ISO-8601. Only entries strictly before this instant. */
+        to?: string;
+        actorMembershipId?: string;
+        actorType?: 'USER' | 'SYSTEM';
+        action?:
+          | 'auth.login'
+          | 'auth.logout'
+          | 'auth.tenant_switched'
+          | 'tenant.updated'
+          | 'tenant.member.invited'
+          | 'tenant.member.invitation_accepted'
+          | 'tenant.member.suspended'
+          | 'tenant.member.reactivated'
+          | 'tenant.member.removed'
+          | 'tenant.member.role_added'
+          | 'tenant.member.role_removed'
+          | 'crm.lead.created'
+          | 'crm.lead.updated'
+          | 'crm.lead.assigned'
+          | 'crm.lead.status_changed'
+          | 'crm.lead.qualified'
+          | 'crm.lead.call_attempted'
+          | 'crm.lead.followup_created'
+          | 'crm.lead.note_created'
+          | 'integration.source.created'
+          | 'integration.source.updated'
+          | 'integration.source.secret_rotated'
+          | 'integration.source.revoked'
+          | 'integration.source.reactivated'
+          | 'integration.event.replayed'
+          | 'field.visit.created'
+          | 'field.visit.assigned'
+          | 'field.visit.rescheduled'
+          | 'field.visit.cancelled'
+          | 'field.visit.checked_in'
+          | 'field.visit.checked_out'
+          | 'field.visit.survey_completed'
+          | 'field.visit.completed'
+          | 'field.lead.created'
+          | 'project.created'
+          | 'project.updated'
+          | 'product.created'
+          | 'supplier.created'
+          | 'warehouse.created'
+          | 'inventory.received'
+          | 'inventory.allocated'
+          | 'inventory.dispatched'
+          | 'inventory.delivered'
+          | 'purchase_order.created'
+          | 'purchase_order.approved'
+          | 'customer.created'
+          | 'customer.updated'
+          | 'quotation.created'
+          | 'quotation.updated'
+          | 'quotation.sent'
+          | 'quotation.accepted'
+          | 'quotation.revised'
+          | 'quotation.booked'
+          | 'quotation.cancelled'
+          | 'quotation.expired'
+          | 'project.installation.assigned'
+          | 'project.installation.started'
+          | 'project.installation.completed'
+          | 'project.checklist.updated'
+          | 'project.qc.started'
+          | 'project.qc.passed'
+          | 'project.qc.failed'
+          | 'project.defect.created'
+          | 'project.defect.resolved'
+          | 'project.net_metering.updated'
+          | 'project.handover.updated'
+          | 'project.completed'
+          | 'notification.template.created'
+          | 'notification.template.updated'
+          | 'notification.rule.created'
+          | 'notification.rule.updated'
+          | 'notification.preference.updated'
+          | 'finance.invoice.created'
+          | 'finance.invoice.issued'
+          | 'finance.invoice.cancelled'
+          | 'finance.invoice.voided'
+          | 'finance.payment.recorded'
+          | 'finance.payment.allocated'
+          | 'finance.payment.reversed'
+          | 'finance.credit_note.created'
+          | 'finance.credit_note.issued'
+          | 'finance.credit_note.cancelled'
+          | 'settings.company.updated'
+          | 'settings.branding.updated'
+          | 'settings.logo.updated'
+          | 'settings.onboarding.updated';
+        module?:
+          | 'auth'
+          | 'identity'
+          | 'crm'
+          | 'integrations'
+          | 'field'
+          | 'supply'
+          | 'commercial'
+          | 'execution'
+          | 'notifications'
+          | 'finance'
+          | 'settings';
+        entityType?: string;
+        entityId?: string;
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AuditLogListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getAuditLogEntry: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AuditLogDetailDto'];
         };
       };
       401: {

@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { ensureAndLoadTemplates } from './checklist-templates.js';
 import { isValidQcTransition } from './lifecycles.js';
 import {
@@ -33,7 +34,10 @@ const {
 
 @Injectable()
 export class QcService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   private view(scope: TenantScope, projectId: string): Promise<ExecutionViewDto> {
     return withTenantContext(getDb(), scope, (tx) => buildView(tx, scope.tenantId, projectId));
@@ -273,6 +277,14 @@ export class QcService {
         type: 'qc.passed',
         payload: { projectId, inspectionId },
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.qc.passed',
+        entityType: 'qc_inspection',
+        entityId: inspectionId,
+        actor: userActor(scope),
+        metadata: { projectId, seq: insp.seq },
+      });
     });
     return this.view(scope, projectId);
   }
@@ -311,6 +323,14 @@ export class QcService {
         type: 'qc.failed',
         payload: { projectId, inspectionId },
         actorMembershipId: scope.actorMembershipId,
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.qc.failed',
+        entityType: 'qc_inspection',
+        entityId: inspectionId,
+        actor: userActor(scope),
+        metadata: { projectId, seq: insp.seq, resultNote: body.resultNote ?? null },
       });
     });
     return this.view(scope, projectId);

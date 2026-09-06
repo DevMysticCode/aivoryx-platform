@@ -11,12 +11,15 @@ import {
   type MemberView,
 } from './admin-queries.js';
 import { InvitationService } from './invitation.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 
 const { membershipRoles, userTenantMemberships } = schema;
 
 export interface TenantScope {
   tenantId: string;
   userId: string;
+  /** the acting membership — for audit attribution */
+  actorMembershipId: string;
 }
 
 /**
@@ -31,7 +34,10 @@ export interface TenantScope {
 export class MembersService {
   private readonly logger = new Logger(MembersService.name);
 
-  constructor(private readonly invitations: InvitationService) {}
+  constructor(
+    private readonly invitations: InvitationService,
+    private readonly audit: AuditService,
+  ) {}
 
   list(scope: TenantScope): Promise<MemberView[]> {
     return withTenantContext(getDb(), scope, (tx) => loadMemberViews(tx, scope.tenantId));
@@ -53,6 +59,7 @@ export class MembersService {
     const created = await this.invitations.create({
       tenantId: scope.tenantId,
       actingUserId: scope.userId,
+      actingMembershipId: scope.actorMembershipId,
       email: input.email,
       name: input.name,
       roleKeys: input.roleKeys ?? [],
@@ -92,6 +99,15 @@ export class MembersService {
         .set({ status, updatedAt: sql`now()` })
         .where(eq(userTenantMemberships.id, membershipId));
 
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: status === 'suspended' ? 'tenant.member.suspended' : 'tenant.member.reactivated',
+        entityType: 'membership',
+        entityId: membershipId,
+        actor: userActor(scope),
+        changes: { status: { from: current.status, to: status } },
+      });
+
       this.logger.log(
         { tenantId: scope.tenantId, membershipId, status },
         'membership status changed',
@@ -121,6 +137,14 @@ export class MembersService {
       }
 
       await this.invitations.revokeForMembershipTx(tx, membershipId);
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'tenant.member.removed',
+        entityType: 'membership',
+        entityId: membershipId,
+        actor: userActor(scope),
+        metadata: { priorStatus: current.status },
+      });
       await tx.delete(userTenantMemberships).where(eq(userTenantMemberships.id, membershipId));
       this.logger.log({ tenantId: scope.tenantId, membershipId }, 'membership removed');
     });
@@ -133,10 +157,22 @@ export class MembersService {
       const role = await findRoleByKey(tx, scope.tenantId, roleKey);
       if (!role) throw new AppError('ROLE_NOT_FOUND', { details: { roleKey } });
 
-      await tx
+      const inserted = await tx
         .insert(membershipRoles)
         .values({ membershipId: member.id, roleId: role.id, tenantId: scope.tenantId })
-        .onConflictDoNothing();
+        .onConflictDoNothing()
+        .returning({ membershipId: membershipRoles.membershipId });
+
+      if (inserted.length > 0) {
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'tenant.member.role_added',
+          entityType: 'membership',
+          entityId: member.id,
+          actor: userActor(scope),
+          metadata: { roleKey },
+        });
+      }
 
       this.logger.log({ tenantId: scope.tenantId, membershipId, roleKey }, 'role assigned');
       const view = await loadMemberView(tx, scope.tenantId, membershipId);
@@ -155,11 +191,23 @@ export class MembersService {
         await this.assertNotLastAdmin(tx, scope.tenantId, membershipId);
       }
 
-      await tx
+      const removed = await tx
         .delete(membershipRoles)
         .where(
           and(eq(membershipRoles.membershipId, member.id), eq(membershipRoles.roleId, role.id)),
-        );
+        )
+        .returning({ membershipId: membershipRoles.membershipId });
+
+      if (removed.length > 0) {
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'tenant.member.role_removed',
+          entityType: 'membership',
+          entityId: member.id,
+          actor: userActor(scope),
+          metadata: { roleKey },
+        });
+      }
 
       this.logger.log({ tenantId: scope.tenantId, membershipId, roleKey }, 'role removed');
       const view = await loadMemberView(tx, scope.tenantId, membershipId);

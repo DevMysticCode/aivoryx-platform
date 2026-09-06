@@ -3,6 +3,7 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { isValidDefectTransition } from './lifecycles.js';
 import {
   loadExecProject,
@@ -17,7 +18,10 @@ const { projectDefects, userTenantMemberships, users } = schema;
 
 @Injectable()
 export class DefectsService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(
     scope: TenantScope,
@@ -76,6 +80,14 @@ export class DefectsService {
         type: 'defect.created',
         payload: { projectId, defectId: row!.id, severity: row!.severity },
         actorMembershipId: scope.actorMembershipId,
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'project.defect.created',
+        entityType: 'project_defect',
+        entityId: row!.id,
+        actor: userActor(scope),
+        metadata: { projectId, severity: row!.severity },
       });
       return toDefectDto(row!, null);
     });
@@ -144,6 +156,14 @@ export class DefectsService {
           tenantId: scope.tenantId,
           type: 'defect.resolved',
           payload: { projectId, defectId, status: nextStatus },
+        });
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'project.defect.resolved',
+          entityType: 'project_defect',
+          entityId: defectId,
+          actor: userActor(scope),
+          metadata: { projectId, status: nextStatus },
         });
       }
       await refreshMilestones(tx, scope, projectId);

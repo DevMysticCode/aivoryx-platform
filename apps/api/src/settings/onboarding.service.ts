@@ -5,6 +5,7 @@ import type { SecurityContext } from '../security/security-context.js';
 import type { TenantScope } from '../supply/common.js';
 import type { OnboardingDto, OnboardingStepDto } from './settings.dto.js';
 import { CompanyProfileService } from './company-profile.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 
 const { tenants, tenantOnboarding, tenantAssets, userTenantMemberships, customers, leadSources } =
   schema;
@@ -66,7 +67,10 @@ const STEPS: StepSpec[] = [
  */
 @Injectable()
 export class OnboardingService {
-  constructor(private readonly profiles: CompanyProfileService) {}
+  constructor(
+    private readonly profiles: CompanyProfileService,
+    private readonly audit: AuditService,
+  ) {}
 
   async get(scope: TenantScope, ctx: SecurityContext): Promise<OnboardingDto> {
     return withTenantContext(getDb(), scope, async (tx) => {
@@ -158,6 +162,15 @@ export class OnboardingService {
             updatedAt: new Date(),
           },
         });
+
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'settings.onboarding.updated',
+        entityType: 'onboarding',
+        entityId: null,
+        actor: userActor(scope),
+        metadata: { dismissed: true },
+      });
     });
   }
 }

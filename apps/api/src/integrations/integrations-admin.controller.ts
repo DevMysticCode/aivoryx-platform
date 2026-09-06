@@ -134,13 +134,17 @@ export class IntegrationsAdminController {
   })
   replay(@Security() ctx: SecurityContext, @Param('id') id: string) {
     const tenantId = requireTenant(ctx);
-    return this.ingestion.replay(tenantId, id);
+    return this.ingestion.replay(tenantId, id, ctx.membership?.id ?? null);
   }
 }
 
-function scope(ctx: SecurityContext): { tenantId: string; userId: string } {
-  if (!ctx.tenantId) throw new AppError('AUTH_NO_ACTIVE_TENANT');
-  return { tenantId: ctx.tenantId, userId: ctx.user.id };
+function scope(ctx: SecurityContext): {
+  tenantId: string;
+  userId: string;
+  actorMembershipId: string;
+} {
+  if (!ctx.tenantId || !ctx.membership) throw new AppError('AUTH_NO_ACTIVE_TENANT');
+  return { tenantId: ctx.tenantId, userId: ctx.user.id, actorMembershipId: ctx.membership.id };
 }
 
 function requireTenant(ctx: SecurityContext): string {

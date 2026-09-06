@@ -293,6 +293,18 @@ project_id is not null` on `quotations`. It also adds
   rows, `#rrggbb` / ISO-currency CHECKs on the colour + currency columns, a
   positive `size_bytes` CHECK on `tenant_assets`, and one enum
   (`tenant_asset_kind`). Logo bytes live in object storage, never in a column.
+- Migration `0013` (Phase 11, ADR 0040) adds the append-only `audit_logs` table.
+  Unlike every other tenant table it is **`SELECT` + `INSERT` only** for
+  `aivoryx_app` — the hand-appended block `REVOKE`s `UPDATE, DELETE` (which the
+  schema-wide default privileges would otherwise grant) and the RLS block has a
+  tenant `SELECT` policy and a tenant `INSERT` `WITH CHECK` policy but
+  **deliberately no `UPDATE` or `DELETE` policy**. Composite actor FK
+  `(actor_membership_id, tenant_id) → user_tenant_memberships` with
+  `ON DELETE SET NULL (actor_membership_id)` (PG 15+ column list, so the
+  `NOT NULL tenant_id` is preserved); CHECKs on the action-key format and the
+  actor shape; 5 `(tenant_id, …, occurred_at)` indexes; 2 enums
+  (`audit_actor_type`, `audit_module`). No application code path can edit or
+  delete an audit row.
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

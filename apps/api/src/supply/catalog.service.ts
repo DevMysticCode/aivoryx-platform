@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, eq, ilike, or, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { AppError } from '@aivoryx/shared';
 import { isUniqueViolation, pageBounds, type Paged, type TenantScope } from './common.js';
 import type {
@@ -23,6 +24,8 @@ const { units, productCategories, products, suppliers, warehouses } = schema;
 
 @Injectable()
 export class CatalogService {
+  constructor(private readonly audit: AuditService) {}
+
   // ---- units ------------------------------------------------------
 
   listUnits(scope: TenantScope): Promise<UnitDto[]> {
@@ -175,6 +178,14 @@ export class CatalogService {
             isActive: body.isActive ?? true,
           })
           .returning({ id: products.id });
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'product.created',
+          entityType: 'product',
+          entityId: row!.id,
+          actor: userActor(scope),
+          metadata: { sku: body.sku, name: body.name },
+        });
         return (await loadProduct(tx, scope.tenantId, row!.id))!;
       } catch (err) {
         if (isUniqueViolation(err))
@@ -249,6 +260,14 @@ export class CatalogService {
             name: body.name,
           })
           .returning();
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'supplier.created',
+          entityType: 'supplier',
+          entityId: row!.id,
+          actor: userActor(scope),
+          metadata: { code: body.code, name: body.name },
+        });
         return toSupplierDto(row!);
       } catch (err) {
         if (isUniqueViolation(err))
@@ -319,6 +338,14 @@ export class CatalogService {
             type: body.type,
           })
           .returning();
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'warehouse.created',
+          entityType: 'warehouse',
+          entityId: row!.id,
+          actor: userActor(scope),
+          metadata: { code: body.code, name: body.name, type: body.type },
+        });
         return toWarehouseDto(row!);
       } catch (err) {
         if (isUniqueViolation(err))

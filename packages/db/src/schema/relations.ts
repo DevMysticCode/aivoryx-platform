@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { outboxEvents, tenantInvitations } from './admin.js';
+import { auditLogs } from './audit.js';
 import {
   notificationDeliveries,
   notificationPreferences,
@@ -557,4 +558,14 @@ export const tenantAssetsRelations = relations(tenantAssets, ({ one }) => ({
 
 export const tenantOnboardingRelations = relations(tenantOnboarding, ({ one }) => ({
   tenant: one(tenants, { fields: [tenantOnboarding.tenantId], references: [tenants.id] }),
+}));
+
+// Phase 11 — Global Audit Log (ADR 0040).
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  tenant: one(tenants, { fields: [auditLogs.tenantId], references: [tenants.id] }),
+  actorMembership: one(userTenantMemberships, {
+    fields: [auditLogs.actorMembershipId],
+    references: [userTenantMemberships.id],
+  }),
 }));

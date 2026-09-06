@@ -61,21 +61,36 @@ test.describe('Platform experience golden path', () => {
     await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD);
 
     // ---- 1. company profile & branding -------------------------
+    // wait for the profile GET to land so the form's initial-state effect does
+    // not overwrite what we type
+    const profileLoaded = page.waitForResponse(
+      (r) => r.url().includes('/api/v1/settings/company') && r.request().method() === 'GET',
+    );
     await page.goto('/settings/company');
-    await expect(page.getByRole('heading', { name: 'Company profile & branding' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Company profile & branding', level: 1 }),
+    ).toBeVisible();
+    await profileLoaded;
 
     const displayName = page.getByLabel('Display name');
     await displayName.fill(companyName);
+    await expect(displayName).toHaveValue(companyName);
     await page.getByLabel('Primary brand colour').last().fill('#0f766e');
     await page
       .getByPlaceholder('Bank details, payment terms, registration lines…')
       .fill(`Pay to Clans Renewables ${stamp}`);
+
+    const saved = page.waitForResponse(
+      (r) => r.url().includes('/api/v1/settings/company') && r.request().method() === 'PUT',
+    );
     await page.getByRole('button', { name: 'Save changes' }).click();
+    expect((await saved).status()).toBe(200);
 
     // ---- 2. it reaches the app shell after reload --------------
     await page.reload();
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('aside').getByText(companyName)).toBeVisible();
+    // the desktop sidebar is the first <aside> in the DOM (before <main>).
+    await expect(page.locator('aside').first().getByText(companyName)).toBeVisible();
 
     // ---- 3. branded PDFs ------------------------------------
     // pick the first quotation + invoice from the list APIs, then download.
@@ -97,15 +112,19 @@ test.describe('Platform experience golden path', () => {
     await expect(page.getByRole('link', { name: 'Download PDF' })).toBeVisible();
 
     // ---- 4. a regular member sees branding but cannot edit -----
-    test.skip(!MEMBER_EMAIL || !MEMBER_PASSWORD, 'set E2E_MEMBER_* for the member check');
-    const memberCtx = await browser.newContext();
-    const memberPage = await memberCtx.newPage();
-    await signIn(memberPage, MEMBER_EMAIL, MEMBER_PASSWORD);
-    await memberPage.goto('/settings/company');
-    await expect(
-      memberPage.getByText(/don’t have access|workspace is ready|Company profile/i),
-    ).toBeVisible();
-    await expect(memberPage.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
-    await memberCtx.close();
+    if (MEMBER_EMAIL && MEMBER_PASSWORD) {
+      const memberCtx = await browser.newContext();
+      const memberPage = await memberCtx.newPage();
+      await signIn(memberPage, MEMBER_EMAIL, MEMBER_PASSWORD);
+      // the member still sees the tenant's branding in the app shell
+      await expect(memberPage.locator('aside').first().getByText(companyName)).toBeVisible();
+      // …but cannot open or edit the company settings
+      await memberPage.goto('/settings/company');
+      await expect(
+        memberPage.getByText(/access to company settings|Company profile & branding/i),
+      ).toBeVisible();
+      await expect(memberPage.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
+      await memberCtx.close();
+    }
   });
 });

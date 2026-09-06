@@ -1,0 +1,31 @@
+%% Global Audit & Activity Logging (Phase 11, ADR 0040)
+flowchart TD
+    subgraph WRITE [Write path — explicit + transactional]
+      MUT[Business mutation<br/>e.g. invoices.issue] --> TX{{withTenantContext scope<br/>ONE transaction}}
+      TX --> ST[state change]
+      ST --> OBX[outbox.emit tx<br/>async propagation · ADR 0013]
+      OBX --> AUD[audit.record tx<br/>*** authoritative · synchronous ***]
+      AUD --> CAT[catalogue check<br/>AUDIT_ACTION_UNKNOWN]
+      AUD --> ACT[resolve actor server-side<br/>userActor scope · or withSystemAuditActor]
+      AUD --> RED[sanitizeMetadata / sanitizeChanges<br/>strip secrets · bound size]
+      AUD --> CTX[correlation id · request id · ip · ua<br/>from ALS · occurred_at = DB clock]
+      CAT --> INS[(INSERT audit_logs)]
+      ACT --> INS
+      RED --> INS
+      CTX --> INS
+      INS --> CM{{COMMIT — state + audit together, or neither}}
+    end
+
+    INS --- G{{aivoryx_app: SELECT + INSERT only<br/>UPDATE / DELETE REVOKEd}}
+    INS --- R{{ENABLE + FORCE RLS<br/>tenant SELECT policy · tenant INSERT WITH CHECK<br/>NO update/delete policy}}
+    INS --- FK{{composite FK actor,tenant<br/>ON DELETE SET NULL actor_membership_id}}
+
+    subgraph READ [Read path — audit.read only]
+      API[/GET /admin/audit  ·  /admin/audit/:id/] --> QS[server-side filters<br/>from/to · actor · action · module · entity · page]
+      QS --> SEL[(SELECT audit_logs<br/>RLS-scoped to tenant)]
+      SEL --> JN[LEFT JOIN membership -> user<br/>actor name/email · no N+1]
+      JN --> DTO[AuditLogDto / AuditLogDetailDto<br/>never the raw row]
+      DTO --> UI[/admin/audit console<br/>table + filters + detail drawer<br/>changes: from -> to · metadata k/v]
+    end
+
+    CM -.->|append-only history| SEL

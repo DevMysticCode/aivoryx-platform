@@ -71,7 +71,14 @@ export default function CompanySettingsPage() {
 
   const patch = useMemo<UpdateCompanyProfileRequest>(() => {
     const body: Draft = {};
-    for (const { key } of TEXT_FIELDS) body[key] = draft[key]?.trim() ?? '';
+    // Only send fields that have a value — the API validates each supplied
+    // field (e.g. `email` must be a valid address), so an empty string would be
+    // rejected. `documentFooter` has no format rules, so an empty value there
+    // is allowed through to clear it.
+    for (const { key } of TEXT_FIELDS) {
+      const v = draft[key]?.trim() ?? '';
+      if (v) body[key] = v;
+    }
     return {
       ...(body as unknown as UpdateCompanyProfileRequest),
       documentFooter: footer.trim(),

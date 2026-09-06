@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
+import { AuditService, userActor } from '../audit/audit.service.js';
 
 const { tenants, userTenantMemberships } = schema;
 
 export interface TenantScope {
   tenantId: string;
   userId: string;
+  /** the acting membership — for audit attribution (optional on read paths) */
+  actorMembershipId?: string;
 }
 
 export interface TenantView {
@@ -26,6 +29,8 @@ export interface TenantView {
  */
 @Injectable()
 export class TenantService {
+  constructor(private readonly audit: AuditService) {}
+
   async get(scope: TenantScope): Promise<TenantView> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const [tenant] = await tx
@@ -70,12 +75,28 @@ export class TenantService {
   async update(scope: TenantScope, patch: { name?: string }): Promise<TenantView> {
     if (patch.name !== undefined) {
       await withTenantContext(getDb(), scope, async (tx) => {
+        const [before] = await tx
+          .select({ name: tenants.name })
+          .from(tenants)
+          .where(eq(tenants.id, scope.tenantId))
+          .limit(1);
         const result = await tx
           .update(tenants)
           .set({ name: patch.name!, updatedAt: sql`now()` })
           .where(eq(tenants.id, scope.tenantId))
           .returning({ id: tenants.id });
         if (result.length === 0) throw new AppError('AUTH_NO_ACTIVE_TENANT');
+
+        if (scope.actorMembershipId && before && before.name !== patch.name) {
+          await this.audit.record(tx, {
+            tenantId: scope.tenantId,
+            action: 'tenant.updated',
+            entityType: 'tenant',
+            entityId: scope.tenantId,
+            actor: userActor({ actorMembershipId: scope.actorMembershipId }),
+            changes: { name: { from: before.name, to: patch.name } },
+          });
+        }
       });
     }
     return this.get(scope);

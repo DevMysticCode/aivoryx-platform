@@ -4,6 +4,7 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import {
   buildEntityAttachmentKey,
   OBJECT_STORAGE,
@@ -53,6 +54,7 @@ export class LogisticsService {
   constructor(
     private readonly outbox: OutboxService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorageService,
+    private readonly audit: AuditService,
   ) {}
 
   async list(scope: TenantScope, filter: ListDispatchesQueryDto): Promise<Paged<DispatchDto>> {
@@ -145,6 +147,15 @@ export class LogisticsService {
           tenantId: scope.tenantId,
           type: 'dispatch.created',
           payload: { dispatchId, projectId: body.projectId, number },
+        });
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'project.updated',
+          module: 'supply',
+          entityType: 'dispatch',
+          entityId: dispatchId,
+          actor: userActor(scope),
+          metadata: { operation: 'dispatch_created', number, projectId: body.projectId },
         });
         return dispatchId;
       } catch (err) {
@@ -294,6 +305,14 @@ export class LogisticsService {
         type: 'inventory.dispatched',
         payload: { dispatchId: id, warehouseId: d.warehouseId },
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'inventory.dispatched',
+        entityType: 'dispatch',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { projectId: d.projectId, warehouseId: d.warehouseId },
+      });
     });
     return this.get(scope, id);
   }
@@ -374,6 +393,14 @@ export class LogisticsService {
         type: 'dispatch.delivered',
         payload: { dispatchId: id, projectId: d.projectId },
         actorMembershipId: scope.actorMembershipId,
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'inventory.delivered',
+        entityType: 'dispatch',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { projectId: d.projectId },
       });
     });
     return this.get(scope, id);

@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { recordActivity } from './activities.js';
+import { AuditService, userActor } from '../audit/audit.service.js';
 import { isValidLeadTransition, type LeadStatus } from './lead-lifecycle.js';
 import { normalizeEmail, normalizePhone } from './lead-normalization.js';
 import {
@@ -41,6 +42,8 @@ export interface LeadContactInput {
 @Injectable()
 export class LeadsService {
   private readonly logger = new Logger(LeadsService.name);
+
+  constructor(private readonly audit: AuditService) {}
 
   list(scope: TenantScope, filter: ListLeadsFilter): Promise<ListLeadsResult> {
     return withTenantContext(getDb(), scope, (tx) => listLeads(tx, scope.tenantId, filter));
@@ -85,6 +88,15 @@ export class LeadsService {
         actorMembershipId: scope.actorMembershipId,
         payload: {},
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: input.origin === 'field_agent' ? 'field.lead.created' : 'crm.lead.created',
+        module: input.origin === 'field_agent' ? 'field' : 'crm',
+        entityType: 'lead',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { origin: input.origin ?? 'manual' },
+      });
       return id;
     });
     return this.get(scope, leadId);
@@ -116,6 +128,29 @@ export class LeadsService {
       if (patch.customFields) {
         await writeCustomFieldValues(tx, scope.tenantId, leadId, patch.customFields);
       }
+
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'crm.lead.updated',
+        entityType: 'lead',
+        entityId: leadId,
+        actor: userActor(scope),
+        metadata: {
+          fields: (
+            [
+              'name',
+              'phone',
+              'email',
+              'addressLine',
+              'city',
+              'state',
+              'postalCode',
+              'country',
+            ] as const
+          ).filter((k) => patch[k] !== undefined),
+          customFields: patch.customFields ? Object.keys(patch.customFields) : [],
+        },
+      });
     });
     return this.get(scope, leadId);
   }
@@ -151,6 +186,14 @@ export class LeadsService {
           payload: { from: current.status, to: nextStatus },
         });
       }
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'crm.lead.assigned',
+        entityType: 'lead',
+        entityId: leadId,
+        actor: userActor(scope),
+        changes: { assignedMembershipId: { from: fromMembershipId, to: membershipId } },
+      });
     });
     return this.get(scope, leadId);
   }
@@ -178,6 +221,14 @@ export class LeadsService {
         type: 'status_changed',
         actorMembershipId: scope.actorMembershipId,
         payload: { from: current.status, to: toStatus },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'crm.lead.status_changed',
+        entityType: 'lead',
+        entityId: leadId,
+        actor: userActor(scope),
+        changes: { status: { from: current.status, to: toStatus } },
       });
     });
     return this.get(scope, leadId);
@@ -207,6 +258,15 @@ export class LeadsService {
         actorMembershipId: scope.actorMembershipId,
         payload: { from: current.status, note: note ?? null },
       });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: outcome === 'QUALIFIED' ? 'crm.lead.qualified' : 'crm.lead.status_changed',
+        entityType: 'lead',
+        entityId: leadId,
+        actor: userActor(scope),
+        changes: { status: { from: current.status, to: outcome } },
+        metadata: note ? { note } : undefined,
+      });
     });
     return this.get(scope, leadId);
   }
@@ -226,6 +286,14 @@ export class LeadsService {
         type: 'call_attempt',
         actorMembershipId: scope.actorMembershipId,
         payload: { outcome, note: note ?? null },
+      });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'crm.lead.call_attempted',
+        entityType: 'lead',
+        entityId: leadId,
+        actor: userActor(scope),
+        metadata: { outcome },
       });
     });
     return this.get(scope, leadId);
