@@ -286,6 +286,13 @@ project_id is not null` on `quotations`. It also adds
   `allocated_amount <= amount`, plus 6 enums
   (`invoice_status`, `invoice_source`, `line_discount_type`, `payment_status`,
   `payment_method`, `credit_note_status`).
+- Migration `0012` (Phase 10, ADR 0039) adds the 3 tenant-branding tables
+  (`tenant_company_profiles`, `tenant_assets`, `tenant_onboarding`) — all
+  `ENABLE` + `FORCE` RLS with the same hand-appended-block pattern, composite
+  `(id, tenant_id)` FKs for the `*_by_membership_id` columns, per-tenant unique
+  rows, `#rrggbb` / ISO-currency CHECKs on the colour + currency columns, a
+  positive `size_bytes` CHECK on `tenant_assets`, and one enum
+  (`tenant_asset_kind`). Logo bytes live in object storage, never in a column.
 - The API `SET ROLE`s to `aivoryx_app` per connection and sets `app.tenant_id` /
   `app.user_id` per transaction (`withTenantContext` in `@aivoryx/db`). Migrator
   / seed run as the DB owner. Migrations run before the API starts.

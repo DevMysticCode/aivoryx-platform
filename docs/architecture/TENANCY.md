@@ -108,6 +108,16 @@ mailbox rule resolved. Payload contents never determine tenant.
   container to run them always-on is a follow-up; likewise a CI check that every
   new tenant-owned table has an RLS policy + `rls.test.ts` coverage.
 
+## Tenant branding is not a tenancy boundary
+
+Phase 10 (ADR 0039) adds per-tenant company profile, logo and colour
+configuration (`tenant_company_profiles`, `tenant_assets`, `tenant_onboarding`
+— all `tenant_id` + ENABLE/FORCE RLS, covered by `rls.int.spec.ts`). This is
+**white-label presentation only**. It never changes tenant resolution, tenant
+ids, database ownership, RLS policies or permission semantics; the app shell,
+documents and emails simply render the tenant's own identity instead of the
+Aivoryx default, and the Aivoryx attribution is always kept.
+
 ## Out of scope for V1
 
 Schema-per-tenant, database-per-tenant, and tenant-aware connection pooling

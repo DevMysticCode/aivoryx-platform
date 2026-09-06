@@ -55,6 +55,25 @@ export class AuthUserDto {
   status!: 'active' | 'disabled';
 }
 
+export class BrandingContextDto {
+  @ApiProperty({ example: 'Acme Solar', description: 'Workspace display name for the app shell.' })
+  displayName!: string;
+
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    example: '#1e3a8a',
+    description: 'Validated 6-digit hex primary brand colour, or null for the Aivoryx default.',
+  })
+  primaryColor!: string | null;
+
+  @ApiProperty({ nullable: true, type: String, example: '#f97316' })
+  accentColor!: string | null;
+
+  @ApiProperty({ description: 'True when the workspace has uploaded a logo.' })
+  hasLogo!: boolean;
+}
+
 export class ActiveContextDto {
   @ApiProperty({ type: MembershipSummaryDto })
   membership!: MembershipSummaryDto;
@@ -64,6 +83,12 @@ export class ActiveContextDto {
 
   @ApiProperty({ type: [String], description: 'Role keys held in this tenant.' })
   roles!: string[];
+
+  @ApiProperty({
+    type: BrandingContextDto,
+    description: 'Safe tenant branding for the app shell (never a security boundary).',
+  })
+  branding!: BrandingContextDto;
 }
 
 // ---- endpoint responses ---------------------------------------------------

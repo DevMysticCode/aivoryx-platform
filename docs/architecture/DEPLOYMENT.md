@@ -32,6 +32,18 @@ Covers decisions 14, 15 and 16.
 - R2 access uses scoped API tokens stored in the secret manager; browser
   uploads/downloads use short-TTL presigned URLs.
 
+## PDF / document generation (Phase 10, ADR 0039)
+
+- PDF rendering (`DocumentPdfService`) uses **pdfmake** — pure JavaScript with
+  built-in AFM fonts. It needs **no headless browser, no system libraries
+  (`libnss3` / `libgbm` / fontconfig etc.), no font files, and no separate
+  service**. It runs on the standard Railway Node API container as-is.
+- PDFs are generated per request and streamed; they are **not** persisted to
+  disk or object storage, so no bucket, lifecycle rule or cleanup job is
+  required.
+- **No new environment variables** are introduced by Phase 10. Tenant logos
+  reuse the existing object-storage config (`OBJECT_STORAGE_*` / R2).
+
 ## Environments
 
 `development` (local) -> `staging` (Vercel preview + Railway staging project)

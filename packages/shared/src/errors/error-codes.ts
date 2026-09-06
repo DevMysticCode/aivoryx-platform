@@ -552,6 +552,28 @@ export const ERROR_CODES = {
     message: 'That idempotency key was already used for a different operation.',
   },
 
+  // platform experience — branding & documents (Phase 10, ADR 0039)
+  COMPANY_PROFILE_INVALID: {
+    httpStatus: 422,
+    message: 'One or more company-profile values are not valid.',
+  },
+  BRAND_COLOR_INVALID: {
+    httpStatus: 422,
+    message: 'Brand colours must be a 6-digit hex value such as #1E40AF.',
+  },
+  LOGO_INVALID: {
+    httpStatus: 422,
+    message: 'That file could not be used as a logo — check the format, size and dimensions.',
+  },
+  LOGO_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'No logo of that kind is configured for this workspace.',
+  },
+  DOCUMENT_RENDER_FAILED: {
+    httpStatus: 500,
+    message: 'The document could not be generated. Please try again.',
+  },
+
   // health / infra
   HEALTHCHECK_FAILED: {
     httpStatus: 503,

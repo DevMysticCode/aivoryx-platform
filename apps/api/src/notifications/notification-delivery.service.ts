@@ -9,7 +9,7 @@ import { EmailChannelAdapter } from './channels/email.adapter.js';
 import { SmsChannelAdapter, WhatsAppChannelAdapter } from './channels/stub-channels.js';
 import type { ChannelAdapter, ChannelDeliveryRequest } from './channels/channel-adapter.js';
 
-const { notificationDeliveries, notifications } = schema;
+const { notificationDeliveries, notifications, tenants, tenantCompanyProfiles } = schema;
 
 /**
  * Processes one `notification_deliveries` row (ADR 0037). Idempotent: a row
@@ -98,6 +98,7 @@ export class NotificationDeliveryService {
         body: record.body,
         emailSubject: meta.emailSubject,
         emailBody: meta.emailBody,
+        branding: record.channel === 'email' ? await this.loadBranding(tx, tenantId) : undefined,
         correlation: {
           tenantId,
           notificationId: record.notificationId,
@@ -165,6 +166,30 @@ export class NotificationDeliveryService {
         updatedAt: new Date(),
       })
       .where(eq(notificationDeliveries.id, deliveryId));
+  }
+
+  /** Safe tenant branding for the email HTML shell (Phase 10). White-label
+   *  configuration only — never a security or tenancy boundary. */
+  private async loadBranding(
+    tx: Tx,
+    tenantId: string,
+  ): Promise<{ displayName: string; brandColor: string | null; footer: string | null }> {
+    const [row] = await tx
+      .select({
+        name: tenants.name,
+        displayName: tenantCompanyProfiles.displayName,
+        primaryColor: tenantCompanyProfiles.primaryColor,
+        documentFooter: tenantCompanyProfiles.documentFooter,
+      })
+      .from(tenants)
+      .leftJoin(tenantCompanyProfiles, eq(tenantCompanyProfiles.tenantId, tenants.id))
+      .where(eq(tenants.id, tenantId))
+      .limit(1);
+    return {
+      displayName: row?.displayName?.trim() || row?.name || 'Aivoryx',
+      brandColor: row?.primaryColor ?? null,
+      footer: row?.documentFooter ?? null,
+    };
   }
 
   private async load(tx: Tx, deliveryId: string, tenantId: string) {

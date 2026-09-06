@@ -7,6 +7,7 @@ import { Card, EmptyState, ErrorNote, Skeleton, PageHeader } from '@/components/
 import { fmtMoney, fmtDate, SupplyStatusBadge } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useCreditNote, useCreditNoteAction } from '@/lib/finance/use-finance';
+import { creditNotePdfUrl } from '@/lib/api/finance';
 
 export default function CreditNoteDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,12 @@ export default function CreditNoteDetailPage() {
       <PageHeader title={cn.number} description={cn.customerName ?? undefined}>
         <div className="flex flex-wrap items-center gap-2">
           <SupplyStatusBadge status={cn.status} />
+          <a
+            href={creditNotePdfUrl(cn.id)}
+            className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
+          >
+            Download PDF
+          </a>
           {canIssue && (
             <Button
               size="sm"

@@ -299,6 +299,20 @@ export {
   type NewCreditNoteRow,
 } from './finance.js';
 
+// Phase 10 — Tenant company profile, branding & onboarding (ADR 0039).
+export {
+  tenantAssetKind,
+  tenantCompanyProfiles,
+  tenantAssets,
+  tenantOnboarding,
+  type TenantCompanyProfileRow,
+  type NewTenantCompanyProfileRow,
+  type TenantAssetRow,
+  type NewTenantAssetRow,
+  type TenantOnboardingRow,
+  type NewTenantOnboardingRow,
+} from './branding.js';
+
 export {
   usersRelations,
   tenantsRelations,
@@ -364,4 +378,7 @@ export {
   paymentsRelations,
   paymentAllocationsRelations,
   creditNotesRelations,
+  tenantCompanyProfilesRelations,
+  tenantAssetsRelations,
+  tenantOnboardingRelations,
 } from './relations.js';

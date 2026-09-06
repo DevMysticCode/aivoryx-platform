@@ -13,6 +13,7 @@ import { AuthOnly, Public, Security } from '../security/security.decorators.js';
 import type { SecurityContext } from '../security/security-context.js';
 import { AuthService, type MembershipView } from './auth.service.js';
 import { RbacService } from './rbac.service.js';
+import { CompanyProfileService } from '../settings/company-profile.service.js';
 import {
   ActiveContextDto,
   ApiErrorDto,
@@ -32,6 +33,7 @@ export class AuthController {
     @Inject(SERVER_ENV) private readonly env: ServerEnv,
     private readonly auth: AuthService,
     private readonly rbac: RbacService,
+    private readonly companyProfiles: CompanyProfileService,
   ) {}
 
   @Post('login')
@@ -170,10 +172,15 @@ export class AuthController {
         tenantId: membership.tenantId,
         userId,
       }));
+    const branding = await this.companyProfiles.getBranding({
+      tenantId: membership.tenantId,
+      userId,
+    });
     return {
       membership: toSummary(membership),
       permissions: [...permissions].sort(),
       roles: roles.map((r) => r.key).sort(),
+      branding,
     };
   }
 

@@ -123,3 +123,39 @@ export function textToSafeHtml(text: string): string {
     .map((block) => `<p>${escapeHtml(block).replace(/\n/g, '<br>')}</p>`);
   return blocks.join('\n');
 }
+
+export interface EmailBrandingContext {
+  /** workspace display name — shown in the header, escaped */
+  displayName: string;
+  /** validated 6-digit hex, or null for the Aivoryx default */
+  brandColor: string | null;
+  /** optional tenant footer line, escaped */
+  footer: string | null;
+}
+
+const DEFAULT_BRAND = '#1e3a8a';
+
+/**
+ * Wrap an already-interpolated plain-text notification body in a minimal,
+ * safe branded HTML email shell (Phase 10, ADR 0039): a tenant-coloured accent
+ * bar, the workspace display name, the escaped body and a subtle
+ * "Powered by Aivoryx™" footer. Every tenant-supplied value is HTML-escaped and
+ * the brand colour is format-validated — there is no arbitrary tenant markup,
+ * so the safe plain-text → escaped-HTML guarantee is preserved.
+ */
+export function brandedEmailHtml(text: string, branding: EmailBrandingContext): string {
+  const accent = /^#[0-9a-fA-F]{6}$/.test(branding.brandColor ?? '')
+    ? branding.brandColor!.toLowerCase()
+    : DEFAULT_BRAND;
+  const name = escapeHtml(branding.displayName || 'Aivoryx');
+  const footerLine = branding.footer?.trim() ? `${escapeHtml(branding.footer.trim())} · ` : '';
+  return [
+    '<div style="font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;max-width:560px;margin:0 auto">',
+    `<div style="height:4px;background:${accent}"></div>`,
+    `<div style="padding:16px 4px"><strong style="font-size:15px">${name}</strong></div>`,
+    `<div style="font-size:14px;line-height:1.5">${textToSafeHtml(text)}</div>`,
+    `<hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 8px">`,
+    `<p style="font-size:11px;color:#6b7280">${footerLine}Powered by Aivoryx&#8482;</p>`,
+    '</div>',
+  ].join('');
+}

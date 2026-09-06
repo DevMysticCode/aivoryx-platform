@@ -118,5 +118,8 @@ CRM / field / operations:
 - `COMMERCIAL.md` — customers, quotations, revisions & atomic project booking
 - `EPC-EXECUTION.md` — milestones, installation, checklists, QC, defects, net metering, handover, completion
 - `NOTIFICATIONS.md` — event → rule → recipient → template → channel, delivery tracking, preferences (ADR 0037)
+- `FINANCE.md` — operational invoicing, payments, allocations & credit notes (ADR 0038)
+- `BRANDING.md` — tenant company profile, logo storage, brand-colour token override, onboarding & contextual help (ADR 0039)
+- `DOCUMENT-GENERATION.md` — the reusable `DocumentDefinition` → `DocumentPdfService` engine; pdfmake (pure Node), branded PDF downloads (ADR 0039)
 
 Diagrams: `docs/diagrams/`.

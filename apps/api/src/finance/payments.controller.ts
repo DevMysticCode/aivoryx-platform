@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Query,
+  StreamableFile,
 } from '@nestjs/common';
 import {
   ApiForbiddenResponse,
@@ -67,6 +68,26 @@ export class PaymentsController {
   @ApiOperation({ operationId: 'printPaymentReceipt', summary: 'Printable payment receipt.' })
   print(@Security() ctx: SecurityContext, @Param('id') id: string): Promise<string> {
     return this.payments.renderReceipt(scope(ctx), id);
+  }
+
+  @Get(':id/receipt.pdf')
+  @RequirePermission('finance.payments.read')
+  @Header('Content-Type', 'application/pdf')
+  @Header('Cache-Control', 'private, max-age=0, no-store')
+  @ApiProduces('application/pdf')
+  @ApiOperation({
+    operationId: 'downloadPaymentReceiptPdf',
+    summary: 'Download the branded receipt PDF.',
+  })
+  async receiptPdf(
+    @Security() ctx: SecurityContext,
+    @Param('id') id: string,
+  ): Promise<StreamableFile> {
+    const { filename, body } = await this.payments.renderReceiptPdf(scope(ctx), id);
+    return new StreamableFile(body, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 
   @Post()

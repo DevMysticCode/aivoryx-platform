@@ -3,6 +3,8 @@ import { and, desc, eq, gt, ilike, inArray, isNull, lte, sql, type SQL } from 'd
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { DocumentRenderService } from '../documents/document-render.service.js';
+import { buildInvoiceDocument } from '../documents/builders.js';
 import { pageBounds, type Paged, type TenantScope } from './common.js';
 import { guardMoney, isCheckViolation, isUniqueViolation, normaliseCurrency } from './common.js';
 import {
@@ -67,7 +69,10 @@ interface LineDraft {
  */
 @Injectable()
 export class InvoicesService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly documents: DocumentRenderService,
+  ) {}
 
   // ---- reads -----------------------------------------------------
 
@@ -177,6 +182,12 @@ export class InvoicesService {
         customer: cust ?? null,
       });
     });
+  }
+
+  /** Branded PDF of the invoice (Phase 10). Tenant-scoped load + tenant branding. */
+  async renderPdf(scope: TenantScope, id: string): Promise<{ filename: string; body: Buffer }> {
+    const detail = await this.get(scope, id);
+    return this.documents.render(scope, buildInvoiceDocument(detail));
   }
 
   // ---- writes ---------------------------------------------------

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AppError } from '@aivoryx/shared';
 import {
+  brandedEmailHtml,
   collectVariables,
   escapeHtml,
   lookupPath,
@@ -76,5 +77,41 @@ describe('notification template renderer', () => {
     const html = textToSafeHtml(text);
     expect(html).not.toContain('<img');
     expect(html).toContain('&lt;img');
+  });
+
+  describe('brandedEmailHtml (Phase 10 — tenant branding in emails)', () => {
+    it('wraps the escaped body with the workspace name, brand accent and Aivoryx attribution', () => {
+      const html = brandedEmailHtml('Your invoice INV-1 is ready.', {
+        displayName: 'Aurora Renewables',
+        brandColor: '#1E40AF',
+        footer: 'Pay within 30 days',
+      });
+      expect(html).toContain('Aurora Renewables');
+      expect(html).toContain('background:#1e40af'); // normalised, format-validated
+      expect(html).toContain('Pay within 30 days');
+      expect(html).toContain('Powered by Aivoryx&#8482;');
+      expect(html).toContain('Your invoice INV-1 is ready.');
+    });
+
+    it('rejects a malformed brand colour and falls back to the default (no raw value passes through)', () => {
+      const html = brandedEmailHtml('Body', {
+        displayName: 'X',
+        brandColor: 'red; } body { display:none',
+        footer: null,
+      });
+      expect(html).not.toContain('display:none');
+      expect(html).toContain('background:#1e3a8a');
+    });
+
+    it('escapes tenant-supplied display name and footer — no arbitrary markup', () => {
+      const html = brandedEmailHtml('Body', {
+        displayName: '<script>alert(1)</script>',
+        brandColor: null,
+        footer: '<img src=x onerror=alert(1)>',
+      });
+      expect(html).not.toContain('<script>');
+      expect(html).not.toContain('<img');
+      expect(html).toContain('&lt;script&gt;');
+    });
   });
 });

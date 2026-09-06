@@ -3,6 +3,8 @@ import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { DocumentRenderService } from '../documents/document-render.service.js';
+import { buildCreditNoteDocument } from '../documents/builders.js';
 import { pageBounds, type Paged, type TenantScope } from './common.js';
 import { guardMoney, isCheckViolation, isUniqueViolation, normaliseCurrency } from './common.js';
 import { assertPositiveMoney, dec, invoiceOutstanding } from './money.js';
@@ -24,7 +26,16 @@ const { creditNotes, invoices, customers } = schema;
  */
 @Injectable()
 export class CreditNotesService {
-  constructor(private readonly outbox: OutboxService) {}
+  constructor(
+    private readonly outbox: OutboxService,
+    private readonly documents: DocumentRenderService,
+  ) {}
+
+  /** Branded PDF of the credit note (Phase 10). Tenant-scoped load + branding. */
+  async renderPdf(scope: TenantScope, id: string): Promise<{ filename: string; body: Buffer }> {
+    const detail = await this.get(scope, id);
+    return this.documents.render(scope, buildCreditNoteDocument(detail));
+  }
 
   async list(scope: TenantScope, query: ListCreditNotesQueryDto): Promise<Paged<CreditNoteDto>> {
     const { page, pageSize } = pageBounds(query.page, query.pageSize);

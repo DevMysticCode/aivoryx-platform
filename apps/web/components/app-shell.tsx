@@ -12,12 +12,16 @@ import {
   FolderKanban,
   LayoutDashboard,
   Send,
+  Settings,
   ShieldCheck,
   Users,
   Wallet,
 } from 'lucide-react';
 import { webEnv } from '@/lib/env';
 import { NotificationBell } from '@/components/notification-bell';
+import { BrandProvider } from '@/components/brand-provider';
+import { useMe } from '@/lib/admin/use-admin';
+import { useLogoObjectUrl } from '@/lib/settings/use-settings';
 
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
@@ -30,13 +34,16 @@ const NAV = [
   { href: '/logistics/dispatches', label: 'Logistics', icon: Send },
   { href: '/finance', label: 'Finance', icon: Wallet },
   { href: '/admin', label: 'Administration', icon: ShieldCheck },
+  { href: '/settings/company', label: 'Settings', icon: Settings },
   { href: '/health', label: 'System health', icon: Activity },
 ];
 
 /**
  * Production-quality application shell: a fixed sidebar on desktop, a top bar on
- * mobile, and a constrained content column. Domain navigation is added per
- * module in later phases.
+ * mobile, and a constrained content column. The workspace identity (name + logo)
+ * comes from the tenant company profile (Phase 10, ADR 0039), falling back to
+ * the Aivoryx mark when a workspace has not set its own — Aivoryx branding is
+ * never fully removed.
  *
  * `/field/*` is a genuinely mobile-first PWA surface for field agents (Phase 4,
  * ADR 0033) with its own bottom-nav chrome (`app/field/layout.tsx`) — it opts
@@ -50,6 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
+      <BrandProvider />
       <header className="flex items-center justify-between border-b px-4 py-3 md:hidden">
         <Brand />
         <NotificationBell />
@@ -76,8 +84,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NotificationBell />
         </div>
         <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 md:px-8">{children}</main>
-        <footer className="border-t px-4 py-3 text-xs text-muted-foreground md:px-8">
-          Aivoryx Platform · {webEnv.NEXT_PUBLIC_APP_ENV}
+        <footer className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-3 text-xs text-muted-foreground md:px-8">
+          <span>Aivoryx Platform · {webEnv.NEXT_PUBLIC_APP_ENV}</span>
+          <span>Powered by Aivoryx™</span>
         </footer>
       </div>
     </div>
@@ -85,12 +94,29 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function Brand() {
+  const me = useMe();
+  const branding = me.data?.active?.branding;
+  const name = branding?.displayName?.trim() || 'Aivoryx';
+  const logoUrl = useLogoObjectUrl(!!branding?.hasLogo, branding?.displayName ?? null);
+
   return (
     <div className="flex items-center gap-2">
-      <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground">
-        <span className="text-sm font-bold">A</span>
-      </span>
-      <span className="text-sm font-semibold tracking-tight">Aivoryx</span>
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logoUrl}
+          alt={`${name} logo`}
+          className="size-7 shrink-0 rounded-md object-contain"
+        />
+      ) : (
+        <span
+          className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground"
+          aria-hidden
+        >
+          <span className="text-sm font-bold">{name.charAt(0).toUpperCase()}</span>
+        </span>
+      )}
+      <span className="truncate text-sm font-semibold tracking-tight">{name}</span>
     </div>
   );
 }

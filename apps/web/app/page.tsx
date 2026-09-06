@@ -1,9 +1,12 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { OnboardingCard } from '@/components/onboarding-card';
 
 export default function OverviewPage() {
   return (
     <section className="space-y-6">
+      <OnboardingCard />
+
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Platform foundation</h1>
         <p className="text-sm text-muted-foreground">

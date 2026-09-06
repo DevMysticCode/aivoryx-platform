@@ -29,6 +29,9 @@ const TENANT_OWNED_TABLES = [
   'raw_events',
   'canonical_lead_events',
   'integration_event_log',
+  'tenant_company_profiles',
+  'tenant_assets',
+  'tenant_onboarding',
 ];
 
 const NON_TENANT_TABLES = ['users', 'sessions', 'permissions'];

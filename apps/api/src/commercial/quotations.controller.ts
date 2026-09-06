@@ -91,6 +91,23 @@ export class QuotationsController {
     return this.quotations.renderPrintable(scope(ctx), id);
   }
 
+  @Get(':id/pdf')
+  @RequirePermission('quotations.read')
+  @Header('Content-Type', 'application/pdf')
+  @Header('Cache-Control', 'private, max-age=0, no-store')
+  @ApiProduces('application/pdf')
+  @ApiOperation({
+    operationId: 'downloadQuotationPdf',
+    summary: 'Download the branded quotation PDF.',
+  })
+  async pdf(@Security() ctx: SecurityContext, @Param('id') id: string): Promise<StreamableFile> {
+    const { filename, body } = await this.quotations.renderPdf(scope(ctx), id);
+    return new StreamableFile(body, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${filename}"`,
+    });
+  }
+
   @Post()
   @HttpCode(200)
   @RequirePermission('quotations.create')

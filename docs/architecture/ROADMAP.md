@@ -140,6 +140,33 @@ an operational receivables capability, not an accounting system.
   future integration layer
 - project costing · commissions · profitability — deferred
 
+## Stream H — Platform experience
+
+Phase 10 (ADR 0039, `BRANDING.md`, `DOCUMENT-GENERATION.md`) delivered
+**tenant branding, onboarding and a reusable branded document engine** without
+redesigning the product.
+
+- tenant company profile & branding (generic tax label, not GST-specific) ✅
+- logo storage on the existing object store · content-sniffed validation
+  (PNG/JPEG/WebP only, no SVG) · authenticated logo stream ✅
+- brand colour as a validated `--primary` / `--ring` token override, contrast
+  clamped — never arbitrary CSS ✅
+- branding in the app shell + `/auth/me`; Aivoryx-safe fallback + subtle
+  "Powered by Aivoryx™" attribution kept everywhere ✅
+- resumable, skippable, role-aware onboarding checklist (typed model, derived
+  step state, permission-filtered links) ✅
+- one reusable guidance component set + versioned in-code help copy + read-only
+  lifecycle trails ✅
+- reusable document engine (`DocumentDefinition` → `DocumentPdfService`) —
+  **pdfmake, pure Node, no headless browser** (isolated behind one service) ✅
+- real downloadable branded PDFs for quotation / invoice / receipt / credit
+  note · authenticated · tenant-scoped · `application/pdf` + filename ✅
+- branded notification-email wrapper (safe escaped body only, no tenant HTML) ✅
+- 2 permissions (`settings.company.read` / `settings.company.update`) · direct
+  RLS tests for the 3 new tables ✅
+- help CMS, drag-drop document designer, custom tenant CSS/JS, customer portal,
+  custom domains / white-label DNS, PDF archival, e-signatures — out of scope
+
 ## Stream G — Service
 
 - warranty

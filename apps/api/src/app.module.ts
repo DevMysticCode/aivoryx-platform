@@ -18,6 +18,8 @@ import { CommercialModule } from './commercial/commercial.module.js';
 import { ExecutionModule } from './execution/execution.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { FinanceModule } from './finance/finance.module.js';
+import { SettingsModule } from './settings/settings.module.js';
+import { DocumentsModule } from './documents/documents.module.js';
 
 /**
  * Composition root.
@@ -52,6 +54,8 @@ import { FinanceModule } from './finance/finance.module.js';
     ExecutionModule,
     NotificationsModule,
     FinanceModule,
+    SettingsModule,
+    DocumentsModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: AllExceptionsFilter }],
 })

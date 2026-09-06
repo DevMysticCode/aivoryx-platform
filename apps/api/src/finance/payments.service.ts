@@ -3,6 +3,8 @@ import { and, desc, eq, isNull, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
+import { DocumentRenderService } from '../documents/document-render.service.js';
+import { buildReceiptDocument } from '../documents/builders.js';
 import { pageBounds, type Paged, type TenantScope } from './common.js';
 import { guardMoney, isCheckViolation, isUniqueViolation, normaliseCurrency } from './common.js';
 import { assertPositiveMoney } from './money.js';
@@ -33,6 +35,7 @@ export class PaymentsService {
   constructor(
     private readonly outbox: OutboxService,
     private readonly allocations: PaymentAllocationService,
+    private readonly documents: DocumentRenderService,
   ) {}
 
   async list(scope: TenantScope, query: ListPaymentsQueryDto): Promise<Paged<PaymentDto>> {
@@ -113,6 +116,15 @@ export class PaymentsService {
         customer: cust ?? null,
       });
     });
+  }
+
+  /** Branded PDF receipt (Phase 10). Tenant-scoped load + tenant branding. */
+  async renderReceiptPdf(
+    scope: TenantScope,
+    id: string,
+  ): Promise<{ filename: string; body: Buffer }> {
+    const detail = await this.get(scope, id);
+    return this.documents.render(scope, buildReceiptDocument(detail));
   }
 
   async record(

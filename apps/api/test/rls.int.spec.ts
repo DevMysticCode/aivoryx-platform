@@ -81,6 +81,9 @@ const RLS_TABLES = [
   'payments',
   'payment_allocations',
   'credit_notes',
+  'tenant_company_profiles',
+  'tenant_assets',
+  'tenant_onboarding',
 ] as const;
 
 const TENANT_TID_TABLES = [
@@ -1579,6 +1582,101 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         ).rejects.toMatchObject({ code: '23514' });
         await c.query('rollback to savepoint sp');
       });
+    });
+  });
+
+  describe('Platform experience — tenant branding & onboarding (Phase 10, ADR 0039)', () => {
+    const P10_TABLES = ['tenant_company_profiles', 'tenant_assets', 'tenant_onboarding'];
+    const pids: Record<'A' | 'B', Record<string, string>> = { A: {}, B: {} };
+
+    beforeAll(async () => {
+      for (const [key, tenantId, membershipId] of [
+        ['A', fx.tenantA, fx.admin.membershipId],
+        ['B', fx.tenantB, fx.adminB.membershipId],
+      ] as const) {
+        const g = pids[key];
+        g.profile = randomUUID();
+        g.asset = randomUUID();
+        g.onboarding = randomUUID();
+        await pool.query(
+          `insert into tenant_company_profiles (id, tenant_id, display_name, primary_color, updated_by_membership_id)
+           values ($1,$2,$3,'#1e40af',$4)`,
+          [g.profile, tenantId, `RLS Brand ${key}`, membershipId],
+        );
+        await pool.query(
+          `insert into tenant_assets (id, tenant_id, kind, object_key, content_type, size_bytes, uploaded_by_membership_id)
+           values ($1,$2,'logo',$3,'image/png',1024,$4)`,
+          [g.asset, tenantId, `tenants/${tenantId}/branding/logo/${key}.png`, membershipId],
+        );
+        await pool.query(
+          `insert into tenant_onboarding (id, tenant_id, dismissed_at, dismissed_by_membership_id)
+           values ($1,$2,null,null)`,
+          [g.onboarding, tenantId],
+        );
+      }
+    });
+
+    it('every Phase 10 table has RLS ENABLED and FORCED', async () => {
+      const { rows } = await pool.query<{ relname: string; a: boolean; f: boolean }>(
+        `select relname, relrowsecurity as a, relforcerowsecurity as f
+           from pg_class where relnamespace='public'::regnamespace and relname = any($1)`,
+        [P10_TABLES],
+      );
+      expect(rows.length).toBe(P10_TABLES.length);
+      for (const r of rows) {
+        expect(r.a, `${r.relname} ENABLE`).toBe(true);
+        expect(r.f, `${r.relname} FORCE`).toBe(true);
+      }
+    });
+
+    it('tenant A cannot READ tenant B branding / onboarding rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        for (const table of P10_TABLES) {
+          expect(await count(c, table, `where tenant_id = '${fx.tenantB}'`), `read ${table}`).toBe(
+            0,
+          );
+        }
+        expect(await count(c, 'tenant_company_profiles', `where id = '${pids.B.profile}'`)).toBe(0);
+        expect(await count(c, 'tenant_assets', `where id = '${pids.B.asset}'`)).toBe(0);
+      });
+    });
+
+    it('tenant A sees exactly its own branding / onboarding rows', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'tenant_company_profiles', `where id = '${pids.A.profile}'`)).toBe(1);
+        expect(await count(c, 'tenant_assets', `where id = '${pids.A.asset}'`)).toBe(1);
+        expect(await count(c, 'tenant_onboarding', `where id = '${pids.A.onboarding}'`)).toBe(1);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B branding (update/delete 0, insert rejected)', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(
+          (
+            await c.query(
+              "update tenant_company_profiles set primary_color='#000000' where id=$1",
+              [pids.B.profile],
+            )
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from tenant_assets where tenant_id=$1', [fx.tenantB])).rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into tenant_company_profiles (id,tenant_id,display_name,updated_by_membership_id)
+             values (gen_random_uuid(),$1,'X',$2)`,
+            [fx.tenantB, fx.adminB.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query(
+        'select primary_color from tenant_company_profiles where id=$1',
+        [pids.B.profile],
+      );
+      expect(rows[0]?.primary_color).toBe('#1e40af');
     });
   });
 
