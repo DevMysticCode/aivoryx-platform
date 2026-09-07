@@ -78,11 +78,22 @@ export class ActiveContextDto {
   @ApiProperty({ type: MembershipSummaryDto })
   membership!: MembershipSummaryDto;
 
-  @ApiProperty({ type: [String], description: 'Permission keys granted in this tenant.' })
+  @ApiProperty({
+    type: [String],
+    description:
+      'Effective permission keys: granted in this tenant AND belonging to an entitled module ' +
+      '(or a platform permission). Entitlement always precedes permission (ADR 0042).',
+  })
   permissions!: string[];
 
   @ApiProperty({ type: [String], description: 'Role keys held in this tenant.' })
   roles!: string[];
+
+  @ApiProperty({
+    type: [String],
+    description: 'Module keys this workspace is entitled to (e.g. ["CRM","HR"]).',
+  })
+  entitledModules!: string[];
 
   @ApiProperty({
     type: BrandingContextDto,
@@ -96,6 +107,11 @@ export class ActiveContextDto {
 export class MeResponseDto {
   @ApiProperty({ type: AuthUserDto })
   user!: AuthUserDto;
+
+  @ApiProperty({
+    description: 'True if this user is an Aivoryx platform administrator (not tenant-scoped).',
+  })
+  isPlatformAdmin!: boolean;
 
   @ApiProperty({ type: [MembershipSummaryDto] })
   memberships!: MembershipSummaryDto[];

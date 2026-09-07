@@ -34,6 +34,19 @@ export const PERMISSION_DEFINITIONS = [
   { key: 'tenants.read', description: 'View the current workspace settings.' },
   { key: 'tenants.update', description: 'Edit the current workspace settings.' },
 
+  // Platform access & module entitlements (Phase 13, ADR 0042). These are
+  // platform-layer permissions owned by no business module (always available to
+  // whoever holds them). `access.read` gates the tenant-side effective-access
+  // summary; `platform.*` are held only by Aivoryx platform administrators
+  // (the `platform_admins` table is the authoritative gate — see ADR 0042).
+  { key: 'access.read', description: 'View a member’s effective access summary.' },
+  { key: 'platform.tenants.read', description: 'Aivoryx platform: view workspaces.' },
+  { key: 'platform.tenants.manage', description: 'Aivoryx platform: manage workspace lifecycle.' },
+  {
+    key: 'platform.modules.provision',
+    description: 'Aivoryx platform: enable or disable a module for a workspace.',
+  },
+
   // CRM core (Phase 3, ADR 0031/0032) — the reusable Lead domain.
   { key: 'crm.leads.read', description: 'View leads in the workspace.' },
   { key: 'crm.leads.create', description: 'Create leads manually.' },
@@ -284,9 +297,34 @@ export type PermissionKey = (typeof PERMISSION_DEFINITIONS)[number]['key'];
 export const PERMISSION_KEYS: readonly PermissionKey[] = PERMISSION_DEFINITIONS.map((p) => p.key);
 
 const PERMISSION_KEY_SET: ReadonlySet<string> = new Set(PERMISSION_KEYS);
+const PERMISSION_DESCRIPTION: ReadonlyMap<string, string> = new Map(
+  PERMISSION_DEFINITIONS.map((p) => [p.key, p.description]),
+);
 
 export function isPermissionKey(value: unknown): value is PermissionKey {
   return typeof value === 'string' && PERMISSION_KEY_SET.has(value);
+}
+
+export interface PermissionDescriptor {
+  key: string;
+  /** the resource segment, e.g. `leads` for `crm.leads.read`; `roles` for `roles.read` */
+  resource: string;
+  /** the action segment, e.g. `read` */
+  action: string;
+  description: string;
+}
+
+/**
+ * Parse a permission key into its human-friendly parts for an access-summary
+ * UI. `<domain>.<resource>.<action>` → resource/action from the last two
+ * segments; `<resource>.<action>` → those two. The owning module is resolved
+ * separately via `moduleForPermission` (module catalogue).
+ */
+export function describePermission(key: string): PermissionDescriptor {
+  const parts = key.split('.');
+  const action = parts[parts.length - 1] ?? key;
+  const resource = parts.length >= 2 ? parts[parts.length - 2]! : key;
+  return { key, resource, action, description: PERMISSION_DESCRIPTION.get(key) ?? key };
 }
 
 /**

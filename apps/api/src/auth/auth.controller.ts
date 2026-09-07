@@ -14,6 +14,9 @@ import type { SecurityContext } from '../security/security-context.js';
 import { AuthService, type MembershipView } from './auth.service.js';
 import { RbacService } from './rbac.service.js';
 import { CompanyProfileService } from '../settings/company-profile.service.js';
+import { EntitlementService } from '../entitlements/entitlement.service.js';
+import { PlatformAdminService } from '../entitlements/platform-admin.service.js';
+import { moduleForPermission } from '@aivoryx/shared';
 import {
   ActiveContextDto,
   ApiErrorDto,
@@ -34,6 +37,8 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly rbac: RbacService,
     private readonly companyProfiles: CompanyProfileService,
+    private readonly entitlements: EntitlementService,
+    private readonly platformAdmins: PlatformAdminService,
   ) {}
 
   @Post('login')
@@ -67,6 +72,7 @@ export class AuthController {
 
     return {
       user: { id: result.userId, email: result.email, status: 'active' },
+      isPlatformAdmin: await this.platformAdmins.isPlatformAdmin(result.userId),
       memberships: result.memberships.map(toSummary),
       active,
       sessionExpiresAt: result.expiresAt.toISOString(),
@@ -133,6 +139,7 @@ export class AuthController {
     );
     return {
       user: ctx.user,
+      isPlatformAdmin: ctx.isPlatformAdmin,
       memberships: memberships.map(toSummary),
       active,
       sessionExpiresAt: ctx.session.expiresAt.toISOString(),
@@ -149,10 +156,12 @@ export class AuthController {
             ctx.user.id,
             memberships.find((m) => m.id === ctx.membership!.id) ?? null,
             ctx.permissions,
+            ctx.entitledModules,
           )
         : null;
     return {
       user: ctx.user,
+      isPlatformAdmin: ctx.isPlatformAdmin,
       memberships: memberships.map(toSummary),
       active,
       sessionExpiresAt: ctx.session.expiresAt.toISOString(),
@@ -163,28 +172,42 @@ export class AuthController {
     userId: string,
     membership: MembershipView | null,
     knownPermissions?: ReadonlySet<string>,
+    knownEntitledModules?: ReadonlySet<string>,
   ): Promise<ActiveContextDto | null> {
     if (!membership) return null;
-    const roles = await this.rbac.rolesForMembership({
-      membershipId: membership.id,
-      tenantId: membership.tenantId,
-      userId,
-    });
-    const permissions =
-      knownPermissions ??
-      (await this.rbac.permissionsForMembership({
+    const [roles, rawPermissions, entitledModules] = await Promise.all([
+      this.rbac.rolesForMembership({
         membershipId: membership.id,
         tenantId: membership.tenantId,
         userId,
-      }));
+      }),
+      knownPermissions
+        ? Promise.resolve(knownPermissions)
+        : this.rbac.permissionsForMembership({
+            membershipId: membership.id,
+            tenantId: membership.tenantId,
+            userId,
+          }),
+      knownEntitledModules
+        ? Promise.resolve(knownEntitledModules)
+        : this.entitlements.getEnabledModules({ tenantId: membership.tenantId, userId }),
+    ]);
     const branding = await this.companyProfiles.getBranding({
       tenantId: membership.tenantId,
       userId,
     });
+    // effective permissions: entitlement always precedes permission (ADR 0042).
+    const effective = [...rawPermissions]
+      .filter((k) => {
+        const m = moduleForPermission(k);
+        return m === null || entitledModules.has(m);
+      })
+      .sort();
     return {
       membership: toSummary(membership),
-      permissions: [...permissions].sort(),
+      permissions: effective,
       roles: roles.map((r) => r.key).sort(),
+      entitledModules: [...entitledModules].sort(),
       branding,
     };
   }

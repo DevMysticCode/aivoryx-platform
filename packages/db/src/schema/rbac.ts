@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   foreignKey,
   index,
+  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -11,6 +12,23 @@ import {
 } from 'drizzle-orm/pg-core';
 import { newUuidV7 } from '../id.js';
 import { tenants, userTenantMemberships } from './identity.js';
+
+/**
+ * Phase 13 (ADR 0042) extends this model additively — no second authorization
+ * system:
+ *
+ * - `roles.kind` distinguishes a **profile** (a baseline capability set, one
+ *   per member), a **permission_set** (additive, a member may hold several),
+ *   and a plain **custom** role (the pre-Phase-13 default). Resolution is
+ *   unchanged: a member's effective permissions are the union across every
+ *   assigned role regardless of kind.
+ * - `membership_roles.data_scope` records how wide a role assignment reaches
+ *   (OWN / TEAM / DEPARTMENT / COMPANY). Modules that honour a scope (CRM
+ *   first) read it; modules with their own access boundary (Field, HR
+ *   self-service) are unaffected.
+ */
+export const roleKind = pgEnum('role_kind', ['profile', 'permission_set', 'custom']);
+export const dataScope = pgEnum('data_scope', ['OWN', 'TEAM', 'DEPARTMENT', 'COMPANY']);
 
 /**
  * RBAC data model (Phase 2, Task 1) — schema only. No enforcement, no seed data.
@@ -74,6 +92,8 @@ export const roles = pgTable(
     key: text('key').notNull(),
     name: text('name').notNull(),
     description: text('description'),
+    /** profile | permission_set | custom (Phase 13, ADR 0042) */
+    kind: roleKind('kind').notNull().default('custom'),
     ...entityTimestamps,
   },
   (t) => [
@@ -116,6 +136,8 @@ export const membershipRoles = pgTable(
     membershipId: uuid('membership_id').notNull(),
     roleId: uuid('role_id').notNull(),
     tenantId: uuid('tenant_id').notNull(),
+    /** how wide this assignment reaches (Phase 13, ADR 0042). COMPANY = tenant-wide. */
+    dataScope: dataScope('data_scope').notNull().default('COMPANY'),
     createdAt,
   },
   (t) => [
@@ -135,6 +157,8 @@ export const membershipRoles = pgTable(
   ],
 );
 
+export type RoleKind = (typeof roleKind.enumValues)[number];
+export type DataScope = (typeof dataScope.enumValues)[number];
 export type PermissionRow = typeof permissions.$inferSelect;
 export type NewPermissionRow = typeof permissions.$inferInsert;
 export type RoleRow = typeof roles.$inferSelect;

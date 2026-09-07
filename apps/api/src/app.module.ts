@@ -10,6 +10,9 @@ import { HealthModule } from './health/health.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { SecurityModule } from './security/security.module.js';
 import { AuditModule } from './audit/audit.module.js';
+import { EntitlementsModule } from './entitlements/entitlements.module.js';
+import { PlatformModule } from './platform/platform.module.js';
+import { AccessModule } from './access/access.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { CrmModule } from './crm/crm.module.js';
 import { IntegrationsModule } from './integrations/integrations.module.js';
@@ -46,8 +49,11 @@ import { HrModule } from './hr/hr.module.js';
     QueueModule,
     HealthModule,
     AuthModule,
-    SecurityModule,
     AuditModule,
+    EntitlementsModule,
+    SecurityModule,
+    PlatformModule,
+    AccessModule,
     AdminModule,
     CrmModule,
     IntegrationsModule,
