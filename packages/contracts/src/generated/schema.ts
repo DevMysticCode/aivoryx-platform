@@ -5007,6 +5007,18 @@ export interface components {
       description?: string | null;
       permissionKeys?: string[];
     };
+    EffectiveProfileDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** @enum {string} */
+      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY';
+    };
+    EffectivePermissionSetDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+    };
     EffectiveModulePermissionDto: {
       key: string;
       resource: string;
@@ -5028,19 +5040,8 @@ export interface components {
       membershipId: string;
       userName: string | null;
       userEmail: string;
-      /** @example {
-       *       "id": "uuid",
-       *       "name": "Sales Executive",
-       *       "dataScope": "TEAM"
-       *     } */
-      profile: Record<string, never> | null;
-      /** @example [
-       *       {
-       *         "id": "uuid",
-       *         "name": "CRM Manager"
-       *       }
-       *     ] */
-      permissionSets: Record<string, never>[];
+      profile: components['schemas']['EffectiveProfileDto'] | null;
+      permissionSets: components['schemas']['EffectivePermissionSetDto'][];
       modules: components['schemas']['EffectiveModuleAccessDto'][];
       platformPermissions: string[];
     };

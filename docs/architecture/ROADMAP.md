@@ -259,11 +259,47 @@ layer above a tenant. Authorization order is fixed: **tenant module entitlement
 - integration + RLS + concurrency coverage: `platform.int.spec.ts` (20),
   `access.int.spec.ts` (12, full §50 matrix), `rls.int.spec.ts` Phase 13 block
   (+9) ✅
-- **13B — NOT done:** application shell, module-aware navigation registry,
-  role-aware dashboards, CRM flagship rebuild, the `/platform` and
-  `/admin/access` web UIs, command palette, `packages/ui` design system.
 - billing / metering / Stripe, microservices, SSO / SAML / SCIM, MFA, a runtime
   platform-admin API, ABAC, a dashboard builder — out of scope
+
+### Phase 13B — Premium product experience & CRM flagship (`PRODUCT-UX.md`)
+
+- adaptive **application shell** (desktop sidebar / tablet / mobile bottom-nav +
+  "More" sheet); `/field/*` keeps its own PWA chrome, untouched ✅
+- **centralized module-aware navigation registry**
+  (`apps/web/lib/navigation/registry.ts`) filtered by platform role + tenant
+  entitlements + effective permissions; unauthorised links are never rendered
+  (nav, command palette, search, quick actions all consult one `useAccess()`) ✅
+- **account menu + company switcher** — secure `switch-tenant`, full query-cache
+  reset on switch; logout always visible ✅
+- **platform-admin console** — `/platform` overview, `/platform/tenants` table
+  (search/sort/filter, mobile cards), `/platform/tenants/:id` module management
+  with dependency-aware enable/disable + confirmation + verbatim rejection
+  messages, `/platform/modules` catalogue ✅
+- **tenant access UX** — `/admin/access`: Users (profile + data scope + permission
+  sets + effective access), Profiles, Permission Sets, module-grouped permission
+  picker limited to entitled modules, plain-language helper text ✅
+- **⌘/Ctrl-K command palette** — navigate / create / search leads + customers,
+  every command permission- and module-gated; debounced, keyboard-navigable ✅
+- **notification bell** — the Phase 8 bell integrated into the shell top bar ✅
+- **CRM flagship (reference UX)** — `/crm` overview with real KPIs (leads by
+  status, open, qualified, conversion) from the existing endpoint, module
+  sub-nav, `?new=1` quick-create, `?status=` deep links ✅
+- shared UI kit (`components/ui/*`: overlays, toast, command palette, kit) on the
+  existing tokens; no second styling system; Radix adoption recommended, not
+  taken, in 13B ✅
+- one minimal API refinement: `EffectiveAccessDto` gained typed nested
+  `profile` / `permissionSets` DTOs so the contract is usable client-side ✅
+- Playwright: `platform.spec.ts` (§64) + `crm-ux.spec.ts` (§65); full existing
+  suite green (17/17) ✅
+- **NOT done (deferred):** role-aware dashboard framework at `/` (still the
+  Phase-1 placeholder); CRM lead-list rebuild (kanban / saved-view persistence /
+  bulk actions / mobile cards) and the lead-detail workspace redesign; per-module
+  entitlement-aware empty states beyond the stable API message; promoting the
+  shared kit into `packages/ui`; per-module mobile refinement for HR/Field/etc.
+- out of scope (unchanged): billing, dashboard builder, arbitrary themes/nav
+  builder, ABAC / field-level security, universal search engine, CRM automation /
+  marketing automation, BI platform, separate frontend apps
 
 ## Stream G — Service
 

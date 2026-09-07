@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 
@@ -34,16 +34,15 @@ export function Card({ children, className }: { children: ReactNode; className?:
   return <div className={cn('rounded-lg border p-4', className)}>{children}</div>;
 }
 
-export function Field({
-  label,
-  hint,
-  className,
-  ...props
-}: { label: string; hint?: string } & InputHTMLAttributes<HTMLInputElement>) {
+export const Field = forwardRef<
+  HTMLInputElement,
+  { label: string; hint?: string } & InputHTMLAttributes<HTMLInputElement>
+>(function Field({ label, hint, className, ...props }, ref) {
   return (
     <label className="block space-y-1.5">
       <span className="text-sm font-medium">{label}</span>
       <input
+        ref={ref}
         className={cn(
           'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
@@ -55,7 +54,7 @@ export function Field({
       {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
     </label>
   );
-}
+});
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-primary/10 text-primary',

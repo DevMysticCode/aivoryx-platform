@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import { useMembers } from '@/lib/admin/use-admin';
 import { useCreateLead, useLeads } from '@/lib/crm/use-crm';
@@ -20,8 +20,18 @@ const STATUSES = ['NEW', 'ASSIGNED', 'CONTACTED', 'QUALIFIED', 'DISQUALIFIED', '
 
 export default function LeadsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const quickCreateRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(() => searchParams.get('status') ?? '');
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      quickCreateRef.current?.focus();
+      quickCreateRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, [searchParams]);
+
   const [assignedMembershipId, setAssignedMembershipId] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 20;
@@ -60,7 +70,12 @@ export default function LeadsPage() {
           }}
           className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-          <Field label="Name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+          <Field
+            ref={quickCreateRef}
+            label="Name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+          />
           <Field label="Phone" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
           <Button type="submit" disabled={createLead.isPending || (!newName && !newPhone)}>
             {createLead.isPending ? 'Creating…' : 'Add lead'}

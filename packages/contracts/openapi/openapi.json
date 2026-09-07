@@ -22467,6 +22467,48 @@
           }
         }
       },
+      "EffectiveProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dataScope": {
+            "type": "string",
+            "enum": [
+              "OWN",
+              "TEAM",
+              "DEPARTMENT",
+              "COMPANY"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dataScope"
+        ]
+      },
+      "EffectivePermissionSetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
       "EffectiveModulePermissionDto": {
         "type": "object",
         "properties": {
@@ -22547,24 +22589,17 @@
             "type": "string"
           },
           "profile": {
-            "type": "object",
             "nullable": true,
-            "example": {
-              "id": "uuid",
-              "name": "Sales Executive",
-              "dataScope": "TEAM"
-            }
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EffectiveProfileDto"
+              }
+            ]
           },
           "permissionSets": {
-            "example": [
-              {
-                "id": "uuid",
-                "name": "CRM Manager"
-              }
-            ],
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/EffectivePermissionSetDto"
             }
           },
           "modules": {

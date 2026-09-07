@@ -86,18 +86,25 @@ export class EffectiveModuleAccessDto {
   permissions!: EffectiveModulePermissionDto[];
 }
 
+export class EffectiveProfileDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() name!: string;
+  @ApiProperty({ enum: SCOPES }) dataScope!: string;
+}
+
+export class EffectivePermissionSetDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() name!: string;
+}
+
 export class EffectiveAccessDto {
   @ApiProperty({ format: 'uuid' }) membershipId!: string;
   @ApiProperty({ nullable: true, type: String }) userName!: string | null;
   @ApiProperty() userEmail!: string;
-  @ApiProperty({
-    nullable: true,
-    type: Object,
-    example: { id: 'uuid', name: 'Sales Executive', dataScope: 'TEAM' },
-  })
-  profile!: { id: string; name: string; dataScope: string } | null;
-  @ApiProperty({ type: Object, isArray: true, example: [{ id: 'uuid', name: 'CRM Manager' }] })
-  permissionSets!: { id: string; name: string }[];
+  @ApiProperty({ nullable: true, type: EffectiveProfileDto })
+  profile!: EffectiveProfileDto | null;
+  @ApiProperty({ type: [EffectivePermissionSetDto] })
+  permissionSets!: EffectivePermissionSetDto[];
   @ApiProperty({ type: [EffectiveModuleAccessDto] }) modules!: EffectiveModuleAccessDto[];
   @ApiProperty({ type: [String] }) platformPermissions!: string[];
 }

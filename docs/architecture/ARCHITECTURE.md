@@ -116,6 +116,16 @@ allow / deny**.
   existing route; `ENTITLEMENT_MODULE_NOT_ENABLED` is distinct from
   `AUTH_FORBIDDEN`.
 
+Phase 13B (`PRODUCT-UX.md`) builds the **access-aware product experience** on
+that foundation: one adaptive application shell, a **centralized module-aware
+navigation registry** (`apps/web/lib/navigation/registry.ts`, filtered by
+platform role + entitlements + effective permissions from `/auth/me`), a
+distinct platform-admin console (`/platform/*`), the tenant access UX
+(`/admin/access` — profiles, permission sets, effective access), a
+permission-aware ⌘K command palette + CRM search, and **CRM as the flagship /
+reference UX** that later modules follow. The web layer invents no
+authorization — the backend guard + RLS stay authoritative.
+
 ## Future productization
 
 The client is the first implementation. Generic capabilities should be configurable, not tenant-hard-coded. Client-specific behavior belongs in configuration or a clearly isolated vertical extension. No client-specific or provider-specific logic may leak into a reusable core module (ADR 0024).

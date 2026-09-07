@@ -26,8 +26,10 @@ test.describe('CRM smoke', () => {
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL('**/admin');
 
-    // 2. navigate to CRM
-    await page.getByRole('link', { name: 'CRM' }).click();
+    // 2. navigate to CRM → the overview, then into Leads
+    await page.getByRole('link', { name: 'CRM' }).first().click();
+    await page.waitForURL('**/crm');
+    await page.getByRole('link', { name: 'Leads' }).first().click();
     await page.waitForURL('**/crm/leads');
     await expect(page.getByRole('heading', { name: 'Leads' })).toBeVisible();
 
