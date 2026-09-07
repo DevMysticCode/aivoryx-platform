@@ -81,6 +81,13 @@ async function pw(): Promise<{ plain: string; hash: string }> {
 /** Build a fresh fixture set. Assumes `resetDatabase()` has run. */
 export async function makeFixtures(): Promise<Fixtures> {
   const db = await import('@aivoryx/db');
+  const { MODULE_KEYS } = await import('@aivoryx/shared');
+  // The shared fixtures deliberately entitle tenant A and tenant B to EVERY
+  // module — the pre-Phase-13 business suites (CRM/Field/Supply/…/HR) assume it.
+  // This is stated explicitly rather than left to a provisioning default; a
+  // spec that needs a "not entitled" state uses `setTenantModules` /
+  // `disableModule` / `createTenantWithModules` from this file (ADR 0042).
+  const allModules = [...MODULE_KEYS];
   // Owner/superuser handle for setup — RLS is bypassed only for seeding.
   const handle = db.createDb({ poolMax: 3 });
   const c = await handle.pool.connect();
@@ -153,17 +160,20 @@ export async function makeFixtures(): Promise<Fixtures> {
       tenantId: tenantA,
       actingUserId: adminU.userId,
       membershipId: adminMembershipA,
+      moduleKeys: allModules,
     });
     // second TENANT_ADMIN in A (idempotent role create, extra assignment)
     await db.provisionTenantAdmin(handle, {
       tenantId: tenantA,
       actingUserId: adminU.userId,
       membershipId: secondAdminMembershipA,
+      moduleKeys: allModules,
     });
     const adminInB = await db.provisionTenantAdmin(handle, {
       tenantId: tenantB,
       actingUserId: adminBU.userId,
       membershipId: adminBMembershipB,
+      moduleKeys: allModules,
     });
 
     const membersOnlyRoleA = uuid();
@@ -244,4 +254,142 @@ export async function makeFixtures(): Promise<Fixtures> {
 export async function rawPool(): Promise<pg.Pool> {
   ensureIntegrationEnv();
   return new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
+}
+
+// ── Phase 13 (ADR 0042) — module-entitlement fixture helpers ──────────
+//
+// Tests must be able to arrange BOTH "entitled" and "not entitled" states, so
+// nothing here assumes a tenant has every module. These helpers write the
+// `tenant_module_entitlements` row directly on a superuser connection — pure
+// test *arrangement*. Dependency-rule and audit behaviour is exercised through
+// the real platform API in `platform.int.spec.ts`, not here.
+
+async function withSuperuser<T>(fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
+  ensureIntegrationEnv();
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+  const c = await pool.connect();
+  try {
+    return await fn(c);
+  } finally {
+    c.release();
+    await pool.end();
+  }
+}
+
+/** Force a tenant's entitlement for `moduleKey` to ENABLED or DISABLED (upsert). */
+export async function setModuleState(
+  tenantId: string,
+  moduleKey: string,
+  state: 'ENABLED' | 'DISABLED',
+): Promise<void> {
+  const isEnabled = state === 'ENABLED';
+  await withSuperuser((c) =>
+    c.query(
+      `insert into tenant_module_entitlements
+         (id, tenant_id, module_key, state, enabled_at, disabled_at)
+       values (gen_random_uuid(), $1, $2, $3::module_entitlement_state,
+               case when $4::boolean then now() else null end,
+               case when $4::boolean then null else now() end)
+       on conflict (tenant_id, module_key) do update
+         set state = excluded.state,
+             enabled_at = case when $4::boolean then now()
+                               else tenant_module_entitlements.enabled_at end,
+             disabled_at = case when $4::boolean then tenant_module_entitlements.disabled_at
+                                else now() end,
+             updated_at = now()`,
+      [tenantId, moduleKey, state, isEnabled],
+    ),
+  );
+}
+
+export async function enableModule(tenantId: string, moduleKey: string): Promise<void> {
+  await setModuleState(tenantId, moduleKey, 'ENABLED');
+}
+
+export async function disableModule(tenantId: string, moduleKey: string): Promise<void> {
+  await setModuleState(tenantId, moduleKey, 'DISABLED');
+}
+
+export async function enableModules(
+  tenantId: string,
+  moduleKeys: readonly string[],
+): Promise<void> {
+  for (const k of moduleKeys) await setModuleState(tenantId, k, 'ENABLED');
+}
+
+/** Replace a tenant's entitlement set: `moduleKeys` ENABLED, every other DISABLED. */
+export async function setTenantModules(
+  tenantId: string,
+  moduleKeys: readonly string[],
+): Promise<void> {
+  const { MODULE_KEYS } = await import('@aivoryx/shared');
+  const wanted = new Set(moduleKeys);
+  for (const k of MODULE_KEYS) {
+    await setModuleState(tenantId, k, wanted.has(k) ? 'ENABLED' : 'DISABLED');
+  }
+}
+
+/** Grant a user a global `platform_admins` row (idempotent). */
+export async function grantPlatformAdmin(userId: string, note = 'integration-test'): Promise<void> {
+  await withSuperuser((c) =>
+    c.query(
+      `insert into platform_admins (id, user_id, note) values (gen_random_uuid(), $1, $2)
+       on conflict (user_id) do nothing`,
+      [userId, note],
+    ),
+  );
+}
+
+/**
+ * Create a self-contained tenant with a TENANT_ADMIN user + one plain member,
+ * entitled to exactly `moduleKeys`. Independent of `makeFixtures` state.
+ */
+export async function createTenantWithModules(input: {
+  name: string;
+  moduleKeys: readonly string[];
+}): Promise<{
+  tenantId: string;
+  admin: UserFixture;
+  member: UserFixture;
+}> {
+  const db = await import('@aivoryx/db');
+  const handle = db.createDb({ poolMax: 2 });
+  const c = await handle.pool.connect();
+  try {
+    const tenantId = uuid();
+    await c.query('insert into tenants (id, slug, name) values ($1,$2,$3)', [
+      tenantId,
+      `t-${tenantId.slice(0, 8)}`,
+      input.name,
+    ]);
+
+    const mk = async (): Promise<UserFixture> => {
+      const userId = uuid();
+      const email = `u-${userId.slice(0, 8)}@example.test`;
+      const { plain, hash } = await pw();
+      await c.query(
+        'insert into users (id, email, password_hash, password_updated_at) values ($1,$2,$3, now())',
+        [userId, email, hash],
+      );
+      const membershipId = uuid();
+      await c.query(
+        `insert into user_tenant_memberships (id, user_id, tenant_id, status) values ($1,$2,$3,'active')`,
+        [membershipId, userId, tenantId],
+      );
+      return { userId, email, password: plain, membershipId };
+    };
+
+    const admin = await mk();
+    const member = await mk();
+    await db.provisionTenantAdmin(handle, {
+      tenantId,
+      actingUserId: admin.userId,
+      membershipId: admin.membershipId,
+      moduleKeys: input.moduleKeys,
+    });
+    return { tenantId, admin, member };
+  } finally {
+    c.release();
+    await handle.close();
+  }
 }

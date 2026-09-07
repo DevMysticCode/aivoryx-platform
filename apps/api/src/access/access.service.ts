@@ -82,9 +82,7 @@ export class AccessService {
 
   /** The permissions a tenant may configure: platform permissions + every
    *  permission of an entitled module. */
-  async availablePermissions(
-    scope: TenantScope,
-  ): Promise<
+  async availablePermissions(scope: TenantScope): Promise<
     {
       key: string;
       module: ModuleKey | null;

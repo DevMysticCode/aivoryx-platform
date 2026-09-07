@@ -19,7 +19,8 @@
     "seed:execution-demo": "tsx --env-file-if-exists=../../.env scripts/seed-execution-demo.ts",
     "seed:notifications-demo": "tsx --env-file-if-exists=../../.env scripts/seed-notifications-demo.ts",
     "seed:finance-demo": "tsx --env-file-if-exists=../../.env scripts/seed-finance-demo.ts",
-    "seed:hr-demo": "tsx --env-file-if-exists=../../.env scripts/seed-hr-demo.ts"
+    "seed:hr-demo": "tsx --env-file-if-exists=../../.env scripts/seed-hr-demo.ts",
+    "seed:platform-demo": "tsx --env-file-if-exists=../../.env scripts/seed-platform-demo.ts"
   },
   "dependencies": {
     "@aivoryx/config": "workspace:*",

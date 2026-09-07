@@ -49,6 +49,13 @@ export interface ProvisionTenantAdminInput {
   actingUserId: string;
   /** if given, the TENANT_ADMIN role is assigned to this membership */
   membershipId?: string;
+  /**
+   * Module keys to ENABLE for the tenant (Phase 13, ADR 0042). Defaults to the
+   * full catalogue so existing seeds/fixtures keep every module. A platform
+   * demo can pass a narrower set to model a workspace that only bought some
+   * modules — dependency-consistent sets only (the caller owns that).
+   */
+  moduleKeys?: readonly string[];
 }
 
 export interface ProvisionTenantAdminResult {
@@ -108,6 +115,7 @@ export async function provisionTenantAdmin(
   await provisionModuleEntitlements(handle, {
     tenantId: input.tenantId,
     actingUserId: input.actingUserId,
+    moduleKeys: input.moduleKeys,
   });
   return withTenantContext(
     handle,

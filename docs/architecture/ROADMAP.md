@@ -227,6 +227,44 @@ into.
 - retention / archival, tamper-evident export, event-sourcing, search engine,
   trigger-based universal auditing — out of scope
 
+## Stream J — Platform Access & Module Entitlements
+
+Phase 13A (ADR 0042, `PLATFORM-ACCESS.md` / `MODULE-ENTITLEMENTS.md` /
+`AUTHORIZATION.md`) delivered the **platform-access foundation** — the product
+layer above a tenant. Authorization order is fixed: **tenant module entitlement
+→ profile / permission set → data scope → allow / deny**.
+
+- **code** module catalogue (`@aivoryx/shared` `MODULE_DEFINITIONS`, 7 modules)
+  with a dependency model (`COMMERCIAL → CRM+SUPPLY`, `EPC → COMMERCIAL+SUPPLY+FIELD`)
+  and `moduleForPermission` (every business key → one module; platform keys → none) ✅
+- `tenant_module_entitlements` (migration 0015) — tenant-owned, ENABLE + FORCE
+  RLS, additive `*_platform_read` SELECT policy (migration 0017); central
+  `EntitlementService` (tenant-scoped in the query, RLS the backstop) ✅
+- global `platform_admins` (migration 0015) — SELECT-only to `aivoryx_app`,
+  self-read; `PlatformAdminService`; `@PlatformAdmin()` boundary, tenant-less;
+  grant/revoke is seed/migration only ✅
+- `roles.kind` (`profile|permission_set|custom`) + `membership_roles.data_scope`
+  (`OWN|TEAM|DEPARTMENT|COMPANY`) — Profiles / Permission Sets / Data Scopes on
+  the **existing** RBAC machinery, no second model; `AccessService` +
+  `/admin/access`, `/admin/profiles`, `/admin/permission-sets`, effective-access
+  read ✅
+- `SecurityGuard` checks module entitlement **before** the permission for every
+  route with zero per-controller changes; `ENTITLEMENT_MODULE_NOT_ENABLED` is a
+  distinct code from `AUTH_FORBIDDEN` ✅
+- `/platform/*` API (overview, catalogue, workspaces, dependency-checked
+  enable/disable) · 4 new permissions (148 total) · 11 new error codes ·
+  `platform.module.*` + access-config audit actions ✅
+- `pnpm --filter @aivoryx/api run seed:platform-demo` — Company A (all 7),
+  Company B (CRM + SUPPLY), a global platform admin; deterministic, rerunnable ✅
+- integration + RLS + concurrency coverage: `platform.int.spec.ts` (20),
+  `access.int.spec.ts` (12, full §50 matrix), `rls.int.spec.ts` Phase 13 block
+  (+9) ✅
+- **13B — NOT done:** application shell, module-aware navigation registry,
+  role-aware dashboards, CRM flagship rebuild, the `/platform` and
+  `/admin/access` web UIs, command palette, `packages/ui` design system.
+- billing / metering / Stripe, microservices, SSO / SAML / SCIM, MFA, a runtime
+  platform-admin API, ABAC, a dashboard builder — out of scope
+
 ## Stream G — Service
 
 - warranty

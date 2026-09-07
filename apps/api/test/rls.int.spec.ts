@@ -85,6 +85,8 @@ const RLS_TABLES = [
   'tenant_assets',
   'tenant_onboarding',
   'audit_logs',
+  // Phase 13 — Platform access & module entitlements (ADR 0042)
+  'tenant_module_entitlements',
   // Phase 12 — HR & Workforce (ADR 0041)
   'hr_counters',
   'hr_departments',
@@ -2032,6 +2034,201 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         expect(await count(c, 'hr_employees', `where tenant_id='${fx.tenantA}'`)).toBe(0);
         expect(await count(c, 'hr_expense_claims', `where id='${hr.claimA}'`)).toBe(0);
       });
+    });
+  });
+
+  describe('Platform access & module entitlements (Phase 13, ADR 0042)', () => {
+    // A user who exists only to hold a `platform_admins` row — kept separate
+    // from `fx.limited` / `fx.admin` so the additive `*_platform_read` SELECT
+    // policies (migration 0017) cannot muddy the other suites' assertions.
+    let platformAdminUserId: string;
+    let strangerUserId: string;
+
+    beforeAll(async () => {
+      platformAdminUserId = randomUUID();
+      strangerUserId = randomUUID();
+      for (const [id, label] of [
+        [platformAdminUserId, 'pa'],
+        [strangerUserId, 'stranger'],
+      ] as const) {
+        await pool.query(
+          `insert into users (id, email, password_hash, password_updated_at)
+           values ($1, $2, 'x', now())`,
+          [id, `${label}-${id.slice(0, 8)}@example.test`],
+        );
+      }
+      await pool.query(
+        `insert into platform_admins (id, user_id, note) values (gen_random_uuid(), $1, 'rls-spec')`,
+        [platformAdminUserId],
+      );
+      // Ensure both fixture tenants have a known entitlement row to probe.
+      for (const t of [fx.tenantA, fx.tenantB]) {
+        await pool.query(
+          `insert into tenant_module_entitlements (id, tenant_id, module_key, state, enabled_at)
+           values (gen_random_uuid(), $1, 'CRM', 'ENABLED', now())
+           on conflict (tenant_id, module_key) do update set state = 'ENABLED'`,
+          [t],
+        );
+      }
+    });
+
+    it('platform_admins + tenant_module_entitlements have RLS ENABLED and FORCED', async () => {
+      const { rows } = await pool.query<{
+        relname: string;
+        relrowsecurity: boolean;
+        relforcerowsecurity: boolean;
+      }>(
+        `select relname, relrowsecurity, relforcerowsecurity from pg_class
+          where relnamespace='public'::regnamespace
+            and relname = any($1)`,
+        [['platform_admins', 'tenant_module_entitlements']],
+      );
+      expect(rows.length).toBe(2);
+      for (const r of rows) {
+        expect(r.relrowsecurity, `${r.relname} ENABLE`).toBe(true);
+        expect(r.relforcerowsecurity, `${r.relname} FORCE`).toBe(true);
+      }
+    });
+
+    it('grants: tenant_module_entitlements = full DML, platform_admins = SELECT only', async () => {
+      const grant = async (table: string): Promise<string[]> => {
+        const { rows } = await pool.query<{ privilege_type: string }>(
+          `select privilege_type from information_schema.role_table_grants
+            where table_name = $1 and grantee = 'aivoryx_app' order by 1`,
+          [table],
+        );
+        return rows.map((r) => r.privilege_type);
+      };
+      expect(await grant('tenant_module_entitlements')).toEqual([
+        'DELETE',
+        'INSERT',
+        'SELECT',
+        'UPDATE',
+      ]);
+      expect(await grant('platform_admins')).toEqual(['SELECT']);
+    });
+
+    it('tenant A (not a platform admin) cannot READ tenant B entitlements', async () => {
+      await asApp(fx.tenantA, fx.limited.userId, async (c) => {
+        expect(
+          await count(c, 'tenant_module_entitlements', `where tenant_id = '${fx.tenantB}'`),
+        ).toBe(0);
+        // its own tenant's row IS visible
+        expect(
+          await count(c, 'tenant_module_entitlements', `where tenant_id = '${fx.tenantA}'`),
+        ).toBeGreaterThan(0);
+      });
+    });
+
+    it('tenant A cannot MUTATE tenant B entitlements (update/delete 0, insert rejected)', async () => {
+      await asApp(fx.tenantA, fx.limited.userId, async (c) => {
+        expect(
+          (
+            await c.query(
+              "update tenant_module_entitlements set state='DISABLED' where tenant_id=$1",
+              [fx.tenantB],
+            )
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from tenant_module_entitlements where tenant_id=$1', [fx.tenantB]))
+            .rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into tenant_module_entitlements (id, tenant_id, module_key, state)
+             values (gen_random_uuid(), $1, 'HR', 'ENABLED')`,
+            [fx.tenantB],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      // tenant B genuinely untouched
+      const { rows } = await pool.query(
+        "select state from tenant_module_entitlements where tenant_id=$1 and module_key='CRM'",
+        [fx.tenantB],
+      );
+      expect(rows[0]?.state).toBe('ENABLED');
+    });
+
+    it('a platform admin may SELECT entitlements across tenants (additive policy) but NOT write them', async () => {
+      await asUser(platformAdminUserId, async (c) => {
+        // the *_platform_read policy is intentionally not tenant-scoped
+        expect(
+          await count(c, 'tenant_module_entitlements', `where tenant_id = '${fx.tenantA}'`),
+        ).toBeGreaterThan(0);
+        expect(
+          await count(c, 'tenant_module_entitlements', `where tenant_id = '${fx.tenantB}'`),
+        ).toBeGreaterThan(0);
+        // …read only: no INSERT/UPDATE/DELETE policy applies on this path
+        expect(
+          (
+            await c.query(
+              "update tenant_module_entitlements set state='DISABLED' where tenant_id=$1",
+              [fx.tenantA],
+            )
+          ).rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into tenant_module_entitlements (id, tenant_id, module_key, state)
+             values (gen_random_uuid(), $1, 'FINANCE', 'ENABLED')`,
+            [fx.tenantA],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+    });
+
+    it('platform_admins: a user sees only their own row, and cannot write the table', async () => {
+      await asUser(platformAdminUserId, async (c) => {
+        expect(await count(c, 'platform_admins')).toBe(1);
+        expect(await count(c, 'platform_admins', `where user_id = '${platformAdminUserId}'`)).toBe(
+          1,
+        );
+      });
+      // a non-admin sees nothing
+      await asUser(strangerUserId, async (c) => {
+        expect(await count(c, 'platform_admins')).toBe(0);
+      });
+      // even the admin cannot INSERT/UPDATE/DELETE (privilege revoked → 42501)
+      await asUser(platformAdminUserId, async (c) => {
+        await c.query('savepoint sp');
+        await expect(
+          c.query(`insert into platform_admins (id, user_id) values (gen_random_uuid(), $1)`, [
+            strangerUserId,
+          ]),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+        await expect(
+          c.query("update platform_admins set note='x' where user_id=$1", [platformAdminUserId]),
+        ).rejects.toMatchObject({ code: '42501' });
+      });
+    });
+
+    it('missing context fails closed for both Phase 13 tables', async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('set role aivoryx_app');
+        await c.query('begin');
+        expect(await count(c, 'tenant_module_entitlements')).toBe(0);
+        expect(await count(c, 'platform_admins')).toBe(0);
+      } finally {
+        await c.query('rollback').catch(() => undefined);
+        await c.query('reset role').catch(() => undefined);
+        c.release();
+      }
+    });
+
+    it('the module catalogue is code, not a writable table', async () => {
+      const { rows } = await pool.query<{ relname: string }>(
+        `select relname from pg_class
+          where relnamespace='public'::regnamespace and relkind='r'
+            and relname in ('modules','module_catalogue','module_definitions')`,
+      );
+      expect(rows).toEqual([]);
     });
   });
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import {
   AppError,
@@ -49,14 +49,9 @@ export class EntitlementService {
   /** The set of module keys currently `ENABLED` for a tenant. */
   async getEnabledModules(scope: TenantScopeLike): Promise<Set<ModuleKey>> {
     const rows = await withTenantContext(getDb(), scope, (tx) =>
-      tx
-        .select({ moduleKey: tenantModuleEntitlements.moduleKey })
-        .from(tenantModuleEntitlements)
-        .where(eq(tenantModuleEntitlements.state, 'ENABLED')),
+      this.readEnabled(tx, scope.tenantId),
     );
-    const set = new Set<ModuleKey>();
-    for (const r of rows) if (isModuleKey(r.moduleKey)) set.add(r.moduleKey);
-    return set;
+    return new Set(rows);
   }
 
   async hasModule(scope: TenantScopeLike, moduleKey: ModuleKey): Promise<boolean> {
@@ -116,7 +111,7 @@ export class EntitlementService {
       getDb(),
       { tenantId: input.tenantId, userId: input.platformUserId },
       async (tx) => {
-        const current = await this.readEnabled(tx);
+        const current = await this.readEnabled(tx, input.tenantId);
         const currentlyEnabled = current.includes(input.moduleKey);
 
         if (input.state === 'ENABLED' && !currentlyEnabled) {
@@ -175,11 +170,24 @@ export class EntitlementService {
     return this.listForTenant({ tenantId: input.tenantId, userId: input.platformUserId });
   }
 
-  private async readEnabled(tx: Tx): Promise<ModuleKey[]> {
+  /**
+   * The `ENABLED` module keys for one tenant. The `tenant_id` predicate is
+   * explicit and NOT left to RLS: the additive `*_platform_read` SELECT policy
+   * (migration 0017) is deliberately not tenant-scoped, so a platform admin (or
+   * a user who is also a platform admin) reading through RLS alone would see
+   * every tenant's rows. Tenant scoping is enforced here in the query, per
+   * CLAUDE.md §5 — RLS is the backstop, not the only guard.
+   */
+  private async readEnabled(tx: Tx, tenantId: string): Promise<ModuleKey[]> {
     const rows = await tx
       .select({ moduleKey: tenantModuleEntitlements.moduleKey })
       .from(tenantModuleEntitlements)
-      .where(eq(tenantModuleEntitlements.state, 'ENABLED'));
+      .where(
+        and(
+          eq(tenantModuleEntitlements.tenantId, tenantId),
+          eq(tenantModuleEntitlements.state, 'ENABLED'),
+        ),
+      );
     return rows.map((r) => r.moduleKey).filter(isModuleKey);
   }
 }
