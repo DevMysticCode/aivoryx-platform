@@ -228,6 +228,265 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/platform/overview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Platform-level counts + module catalogue. */
+    get: operations['platformOverview'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/modules': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The product module catalogue. */
+    get: operations['listPlatformModules'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** All workspaces. */
+    get: operations['listPlatformTenants'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants/{tenantId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One workspace with its module entitlements. */
+    get: operations['getPlatformTenant'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants/{tenantId}/modules': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A workspace’s module entitlements. */
+    get: operations['getPlatformTenantModules'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants/{tenantId}/modules/{moduleKey}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Enable or disable a module for a workspace (dependency-checked). */
+    put: operations['setPlatformTenantModule'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/access/available-permissions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Permissions the workspace may configure (entitled modules + platform). */
+    get: operations['listAvailablePermissions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/profiles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Security profiles (baseline capability sets). */
+    get: operations['listProfiles'];
+    put?: never;
+    /** Create a security profile. */
+    post: operations['createProfile'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/profiles/{roleId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete an unused security profile. */
+    delete: operations['deleteProfile'];
+    options?: never;
+    head?: never;
+    /** Update a security profile. */
+    patch: operations['updateProfile'];
+    trace?: never;
+  };
+  '/admin/permission-sets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Additive permission sets. */
+    get: operations['listPermissionSets'];
+    put?: never;
+    /** Create an additive permission set. */
+    post: operations['createPermissionSet'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/permission-sets/{roleId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete an unused permission set. */
+    delete: operations['deletePermissionSet'];
+    options?: never;
+    head?: never;
+    /** Update a permission set. */
+    patch: operations['updatePermissionSet'];
+    trace?: never;
+  };
+  '/admin/access/{membershipId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A member’s effective access — per module, entitlement-aware, with data scope. */
+    get: operations['getEffectiveAccess'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/access/{membershipId}/profile': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Assign a member’s profile + data scope. */
+    post: operations['assignProfile'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/access/{membershipId}/permission-sets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Add a permission set to a member. */
+    post: operations['addMemberPermissionSet'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/access/{membershipId}/permission-sets/{roleId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a permission set from a member. */
+    delete: operations['removeMemberPermissionSet'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/tenant': {
     parameters: {
       query?: never;
@@ -610,6 +869,42 @@ export interface paths {
     head?: never;
     /** Retire a lead custom field. */
     patch: operations['deprecateCustomField'];
+    trace?: never;
+  };
+  '/crm/saved-views': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The caller’s CRM saved views. */
+    get: operations['listSavedViews'];
+    put?: never;
+    /** Save a lead-list view. */
+    post: operations['createSavedView'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/crm/saved-views/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete a saved view. */
+    delete: operations['deleteSavedView'];
+    options?: never;
+    head?: never;
+    /** Rename or re-scope a saved view. */
+    patch: operations['updateSavedView'];
     trace?: never;
   };
   '/integrations/webhooks/pabbly/{sourceKey}': {
@@ -4420,15 +4715,19 @@ export interface components {
     };
     ActiveContextDto: {
       membership: components['schemas']['MembershipSummaryDto'];
-      /** @description Permission keys granted in this tenant. */
+      /** @description Effective permission keys: granted in this tenant AND belonging to an entitled module (or a platform permission). Entitlement always precedes permission (ADR 0042). */
       permissions: string[];
       /** @description Role keys held in this tenant. */
       roles: string[];
+      /** @description Module keys this workspace is entitled to (e.g. ["CRM","HR"]). */
+      entitledModules: string[];
       /** @description Safe tenant branding for the app shell (never a security boundary). */
       branding: components['schemas']['BrandingContextDto'];
     };
     LoginResponseDto: {
       user: components['schemas']['AuthUserDto'];
+      /** @description True if this user is an Aivoryx platform administrator (not tenant-scoped). */
+      isPlatformAdmin: boolean;
       memberships: components['schemas']['MembershipSummaryDto'][];
       /** @description Null until the session has a usable active tenant. */
       active: components['schemas']['ActiveContextDto'] | null;
@@ -4455,6 +4754,8 @@ export interface components {
     };
     MeResponseDto: {
       user: components['schemas']['AuthUserDto'];
+      /** @description True if this user is an Aivoryx platform administrator (not tenant-scoped). */
+      isPlatformAdmin: boolean;
       memberships: components['schemas']['MembershipSummaryDto'][];
       /** @description Null until the session has a usable active tenant. */
       active: components['schemas']['ActiveContextDto'] | null;
@@ -4470,6 +4771,8 @@ export interface components {
     };
     SwitchTenantResponseDto: {
       user: components['schemas']['AuthUserDto'];
+      /** @description True if this user is an Aivoryx platform administrator (not tenant-scoped). */
+      isPlatformAdmin: boolean;
       memberships: components['schemas']['MembershipSummaryDto'][];
       /** @description Null until the session has a usable active tenant. */
       active: components['schemas']['ActiveContextDto'] | null;
@@ -4582,7 +4885,8 @@ export interface components {
         | 'notifications'
         | 'finance'
         | 'settings'
-        | 'hr';
+        | 'hr'
+        | 'platform';
       /** @example invoice */
       entityType: string;
       /** Format: uuid */
@@ -4624,7 +4928,8 @@ export interface components {
         | 'notifications'
         | 'finance'
         | 'settings'
-        | 'hr';
+        | 'hr'
+        | 'platform';
       /** @example invoice */
       entityType: string;
       /** Format: uuid */
@@ -4637,6 +4942,157 @@ export interface components {
       metadata: Record<string, never>;
       /** @description Sanitised before/after for approved fields: `{ field: { from, to } }`. */
       changes: Record<string, never> | null;
+    };
+    PlatformModuleCatalogueDto: {
+      /** @example CRM */
+      key: string;
+      displayName: string;
+      description: string;
+      capabilitySummary: string;
+      icon: string;
+      /** @example sales */
+      category: string;
+      order: number;
+      /** @example [
+       *       "CRM",
+       *       "SUPPLY"
+       *     ] */
+      dependencies: string[];
+      available: boolean;
+    };
+    PlatformOverviewDto: {
+      tenantCount: number;
+      activeTenantCount: number;
+      moduleCount: number;
+      modules: components['schemas']['PlatformModuleCatalogueDto'][];
+    };
+    PlatformTenantSummaryDto: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      name: string;
+      /** @enum {string} */
+      status: 'active' | 'suspended';
+      memberCount: number;
+      enabledModuleCount: number;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    PlatformTenantModuleDto: {
+      /** @example HR */
+      key: string;
+      displayName: string;
+      description: string;
+      capabilitySummary: string;
+      category: string;
+      order: number;
+      dependencies: string[];
+      /** @enum {string} */
+      state: 'ENABLED' | 'DISABLED';
+      /** Format: date-time */
+      enabledAt: string | null;
+      /** Format: date-time */
+      disabledAt: string | null;
+      /** Format: uuid */
+      provisionedByUserId: string | null;
+    };
+    PlatformTenantDetailDto: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      name: string;
+      /** @enum {string} */
+      status: 'active' | 'suspended';
+      memberCount: number;
+      enabledModuleCount: number;
+      /** Format: date-time */
+      createdAt: string;
+      modules: components['schemas']['PlatformTenantModuleDto'][];
+    };
+    SetTenantModuleRequestDto: {
+      /** @enum {string} */
+      state: 'ENABLED' | 'DISABLED';
+      note?: string;
+    };
+    AvailablePermissionDto: {
+      key: string;
+      /** @example CRM */
+      module: string | null;
+      resource: string;
+      action: string;
+      description: string;
+    };
+    AccessRoleDto: {
+      /** Format: uuid */
+      id: string;
+      key: string;
+      name: string;
+      description: string | null;
+      /** @enum {string} */
+      kind: 'profile' | 'permission_set';
+      permissionKeys: string[];
+      assignedCount: number;
+    };
+    CreateAccessRoleDto: {
+      name: string;
+      description?: string;
+      permissionKeys: string[];
+    };
+    UpdateAccessRoleDto: {
+      name?: string;
+      description?: string | null;
+      permissionKeys?: string[];
+    };
+    EffectiveProfileDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** @enum {string} */
+      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY';
+    };
+    EffectivePermissionSetDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+    };
+    EffectiveModulePermissionDto: {
+      key: string;
+      resource: string;
+      action: string;
+      description: string;
+      granted: boolean;
+    };
+    EffectiveModuleAccessDto: {
+      /** @example CRM */
+      moduleKey: string;
+      displayName: string;
+      entitled: boolean;
+      /** @enum {string|null} */
+      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY' | null;
+      permissions: components['schemas']['EffectiveModulePermissionDto'][];
+    };
+    EffectiveAccessDto: {
+      /** Format: uuid */
+      membershipId: string;
+      userName: string | null;
+      userEmail: string;
+      profile: components['schemas']['EffectiveProfileDto'] | null;
+      permissionSets: components['schemas']['EffectivePermissionSetDto'][];
+      modules: components['schemas']['EffectiveModuleAccessDto'][];
+      platformPermissions: string[];
+    };
+    AssignProfileDto: {
+      /** Format: uuid */
+      roleId: string;
+      /**
+       * @default COMPANY
+       * @enum {string}
+       */
+      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY';
+    };
+    AddPermissionSetDto: {
+      /** Format: uuid */
+      roleId: string;
     };
     TenantMemberCountsDto: {
       active: number;
@@ -4914,6 +5370,28 @@ export interface components {
        * @enum {string}
        */
       entity: 'lead' | 'visit';
+    };
+    SavedViewDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      config: {
+        [key: string]: unknown;
+      };
+      createdAt: string;
+      updatedAt: string;
+    };
+    CreateSavedViewDto: {
+      name: string;
+      config: {
+        [key: string]: unknown;
+      };
+    };
+    UpdateSavedViewDto: {
+      name?: string;
+      config?: {
+        [key: string]: unknown;
+      };
     };
     IngestAcceptedResponseDto: {
       accepted: boolean;
@@ -8274,6 +8752,15 @@ export interface operations {
           | 'tenant.member.removed'
           | 'tenant.member.role_added'
           | 'tenant.member.role_removed'
+          | 'tenant.member.profile_assigned'
+          | 'tenant.member.scope_changed'
+          | 'identity.role.created'
+          | 'identity.role.updated'
+          | 'identity.role.deleted'
+          | 'platform.module.enabled'
+          | 'platform.module.disabled'
+          | 'platform.admin.granted'
+          | 'platform.admin.revoked'
           | 'crm.lead.created'
           | 'crm.lead.updated'
           | 'crm.lead.assigned'
@@ -8403,7 +8890,8 @@ export interface operations {
           | 'notifications'
           | 'finance'
           | 'settings'
-          | 'hr';
+          | 'hr'
+          | 'platform';
         entityType?: string;
         entityId?: string;
         page?: number;
@@ -8458,6 +8946,719 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['AuditLogDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  platformOverview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformOverviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listPlatformModules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformModuleCatalogueDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listPlatformTenants: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformTenantSummaryDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPlatformTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformTenantDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPlatformTenantModules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformTenantDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  setPlatformTenantModule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+        moduleKey: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetTenantModuleRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformTenantDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listAvailablePermissions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AvailablePermissionDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listProfiles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AccessRoleDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateAccessRoleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AccessRoleDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deleteProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        roleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        roleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateAccessRoleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AccessRoleDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listPermissionSets: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AccessRoleDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createPermissionSet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateAccessRoleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AccessRoleDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deletePermissionSet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        roleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updatePermissionSet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        roleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateAccessRoleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AccessRoleDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getEffectiveAccess: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EffectiveAccessDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  assignProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignProfileDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EffectiveAccessDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  addMemberPermissionSet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddPermissionSetDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EffectiveAccessDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeMemberPermissionSet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+        roleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EffectiveAccessDto'];
         };
       };
       401: {
@@ -9699,6 +10900,124 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listSavedViews: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SavedViewDto'][];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createSavedView: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateSavedViewDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SavedViewDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deleteSavedView: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateSavedView: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSavedViewDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SavedViewDto'];
         };
       };
       403: {

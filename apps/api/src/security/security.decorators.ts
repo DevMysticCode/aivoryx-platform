@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ApiCookieAuth } from '@nestjs/swagger';
 import type { Request } from 'express';
-import type { PermissionKey } from '@aivoryx/shared';
+import type { ModuleKey, PermissionKey } from '@aivoryx/shared';
 import type {
   SecurityContext,
   SecurityMembership,
@@ -26,6 +26,8 @@ import type {
 export const IS_PUBLIC_KEY = 'security:isPublic';
 export const AUTH_ONLY_KEY = 'security:authOnly';
 export const PERMISSION_KEY = 'security:permission';
+export const MODULE_KEY = 'security:module';
+export const PLATFORM_ADMIN_KEY = 'security:platformAdmin';
 
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
@@ -33,6 +35,22 @@ export const AuthOnly = () => applyDecorators(SetMetadata(AUTH_ONLY_KEY, true), 
 
 export const RequirePermission = (permission: PermissionKey) =>
   applyDecorators(SetMetadata(PERMISSION_KEY, permission), ApiCookieAuth());
+
+/**
+ * Require the active tenant to be ENTITLED to `moduleKey` (Phase 13, ADR 0042).
+ * `@RequirePermission` already enforces the entitlement of the permission's own
+ * module; use `@RequireModule` for the rare route that gates a module without a
+ * specific permission.
+ */
+export const RequireModule = (moduleKey: ModuleKey) =>
+  applyDecorators(SetMetadata(MODULE_KEY, moduleKey), ApiCookieAuth());
+
+/**
+ * Require the caller to be an Aivoryx platform administrator. Tenant-less: a
+ * platform route operates above every tenant. Denies with `PLATFORM_ADMIN_REQUIRED`.
+ */
+export const PlatformAdmin = () =>
+  applyDecorators(SetMetadata(PLATFORM_ADMIN_KEY, true), ApiCookieAuth());
 
 function contextFromRequest(ctx: ExecutionContext): SecurityContext {
   const req = ctx.switchToHttp().getRequest<Request & { securityContext?: SecurityContext }>();

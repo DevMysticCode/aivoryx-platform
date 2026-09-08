@@ -682,6 +682,15 @@
                 "tenant.member.removed",
                 "tenant.member.role_added",
                 "tenant.member.role_removed",
+                "tenant.member.profile_assigned",
+                "tenant.member.scope_changed",
+                "identity.role.created",
+                "identity.role.updated",
+                "identity.role.deleted",
+                "platform.module.enabled",
+                "platform.module.disabled",
+                "platform.admin.granted",
+                "platform.admin.revoked",
                 "crm.lead.created",
                 "crm.lead.updated",
                 "crm.lead.assigned",
@@ -820,7 +829,8 @@
                 "notifications",
                 "finance",
                 "settings",
-                "hr"
+                "hr",
+                "platform"
               ],
               "type": "string"
             }
@@ -960,6 +970,1077 @@
         "summary": "One audit entry with safe detail.",
         "tags": [
           "audit"
+        ]
+      }
+    },
+    "/platform/overview": {
+      "get": {
+        "operationId": "platformOverview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformOverviewDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Platform-level counts + module catalogue.",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/platform/modules": {
+      "get": {
+        "operationId": "listPlatformModules",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlatformModuleCatalogueDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The product module catalogue.",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/platform/tenants": {
+      "get": {
+        "operationId": "listPlatformTenants",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlatformTenantSummaryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "All workspaces.",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/platform/tenants/{tenantId}": {
+      "get": {
+        "operationId": "getPlatformTenant",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformTenantDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "One workspace with its module entitlements.",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/platform/tenants/{tenantId}/modules": {
+      "get": {
+        "operationId": "getPlatformTenantModules",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformTenantDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "A workspace’s module entitlements.",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/platform/tenants/{tenantId}/modules/{moduleKey}": {
+      "put": {
+        "operationId": "setPlatformTenantModule",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "moduleKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTenantModuleRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformTenantDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Enable or disable a module for a workspace (dependency-checked).",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/admin/access/available-permissions": {
+      "get": {
+        "operationId": "listAvailablePermissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvailablePermissionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Permissions the workspace may configure (entitled modules + platform).",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/admin/profiles": {
+      "get": {
+        "operationId": "listProfiles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccessRoleDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Security profiles (baseline capability sets).",
+        "tags": [
+          "access"
+        ]
+      },
+      "post": {
+        "operationId": "createProfile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccessRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRoleDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create a security profile.",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/admin/profiles/{roleId}": {
+      "patch": {
+        "operationId": "updateProfile",
+        "parameters": [
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccessRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRoleDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update a security profile.",
+        "tags": [
+          "access"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteProfile",
+        "parameters": [
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Delete an unused security profile.",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/admin/permission-sets": {
+      "get": {
+        "operationId": "listPermissionSets",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccessRoleDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Additive permission sets.",
+        "tags": [
+          "access"
+        ]
+      },
+      "post": {
+        "operationId": "createPermissionSet",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccessRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRoleDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Create an additive permission set.",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/admin/permission-sets/{roleId}": {
+      "patch": {
+        "operationId": "updatePermissionSet",
+        "parameters": [
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccessRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRoleDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update a permission set.",
+        "tags": [
+          "access"
+        ]
+      },
+      "delete": {
+        "operationId": "deletePermissionSet",
+        "parameters": [
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Delete an unused permission set.",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/admin/access/{membershipId}": {
+      "get": {
+        "operationId": "getEffectiveAccess",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveAccessDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "A member’s effective access — per module, entitlement-aware, with data scope.",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/admin/access/{membershipId}/profile": {
+      "post": {
+        "operationId": "assignProfile",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveAccessDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Assign a member’s profile + data scope.",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/admin/access/{membershipId}/permission-sets": {
+      "post": {
+        "operationId": "addMemberPermissionSet",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPermissionSetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveAccessDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Add a permission set to a member.",
+        "tags": [
+          "access"
+        ]
+      }
+    },
+    "/admin/access/{membershipId}/permission-sets/{roleId}": {
+      "delete": {
+        "operationId": "removeMemberPermissionSet",
+        "parameters": [
+          {
+            "name": "membershipId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveAccessDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove a permission set from a member.",
+        "tags": [
+          "access"
         ]
       }
     },
@@ -2900,6 +3981,184 @@
           }
         ],
         "summary": "Retire a lead custom field.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/saved-views": {
+      "get": {
+        "operationId": "listSavedViews",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavedViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The caller’s CRM saved views.",
+        "tags": [
+          "crm"
+        ]
+      },
+      "post": {
+        "operationId": "createSavedView",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSavedViewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedViewDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Save a lead-list view.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
+    "/crm/saved-views/{id}": {
+      "patch": {
+        "operationId": "updateSavedView",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSavedViewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedViewDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Rename or re-scope a saved view.",
+        "tags": [
+          "crm"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteSavedView",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Delete a saved view.",
         "tags": [
           "crm"
         ]
@@ -20309,7 +21568,7 @@
             "$ref": "#/components/schemas/MembershipSummaryDto"
           },
           "permissions": {
-            "description": "Permission keys granted in this tenant.",
+            "description": "Effective permission keys: granted in this tenant AND belonging to an entitled module (or a platform permission). Entitlement always precedes permission (ADR 0042).",
             "type": "array",
             "items": {
               "type": "string"
@@ -20317,6 +21576,13 @@
           },
           "roles": {
             "description": "Role keys held in this tenant.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "entitledModules": {
+            "description": "Module keys this workspace is entitled to (e.g. [\"CRM\",\"HR\"]).",
             "type": "array",
             "items": {
               "type": "string"
@@ -20335,6 +21601,7 @@
           "membership",
           "permissions",
           "roles",
+          "entitledModules",
           "branding"
         ]
       },
@@ -20343,6 +21610,10 @@
         "properties": {
           "user": {
             "$ref": "#/components/schemas/AuthUserDto"
+          },
+          "isPlatformAdmin": {
+            "type": "boolean",
+            "description": "True if this user is an Aivoryx platform administrator (not tenant-scoped)."
           },
           "memberships": {
             "type": "array",
@@ -20370,6 +21641,7 @@
         },
         "required": [
           "user",
+          "isPlatformAdmin",
           "memberships",
           "active",
           "sessionExpiresAt",
@@ -20429,6 +21701,10 @@
           "user": {
             "$ref": "#/components/schemas/AuthUserDto"
           },
+          "isPlatformAdmin": {
+            "type": "boolean",
+            "description": "True if this user is an Aivoryx platform administrator (not tenant-scoped)."
+          },
           "memberships": {
             "type": "array",
             "items": {
@@ -20451,6 +21727,7 @@
         },
         "required": [
           "user",
+          "isPlatformAdmin",
           "memberships",
           "active",
           "sessionExpiresAt"
@@ -20475,6 +21752,10 @@
           "user": {
             "$ref": "#/components/schemas/AuthUserDto"
           },
+          "isPlatformAdmin": {
+            "type": "boolean",
+            "description": "True if this user is an Aivoryx platform administrator (not tenant-scoped)."
+          },
           "memberships": {
             "type": "array",
             "items": {
@@ -20497,6 +21778,7 @@
         },
         "required": [
           "user",
+          "isPlatformAdmin",
           "memberships",
           "active",
           "sessionExpiresAt"
@@ -20826,7 +22108,8 @@
               "notifications",
               "finance",
               "settings",
-              "hr"
+              "hr",
+              "platform"
             ]
           },
           "entityType": {
@@ -20939,7 +22222,8 @@
               "notifications",
               "finance",
               "settings",
-              "hr"
+              "hr",
+              "platform"
             ]
           },
           "entityType": {
@@ -20995,6 +22279,563 @@
           "userAgent",
           "metadata",
           "changes"
+        ]
+      },
+      "PlatformModuleCatalogueDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "CRM"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "capabilitySummary": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "example": "sales"
+          },
+          "order": {
+            "type": "number"
+          },
+          "dependencies": {
+            "example": [
+              "CRM",
+              "SUPPLY"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "available": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "displayName",
+          "description",
+          "capabilitySummary",
+          "icon",
+          "category",
+          "order",
+          "dependencies",
+          "available"
+        ]
+      },
+      "PlatformOverviewDto": {
+        "type": "object",
+        "properties": {
+          "tenantCount": {
+            "type": "number"
+          },
+          "activeTenantCount": {
+            "type": "number"
+          },
+          "moduleCount": {
+            "type": "number"
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformModuleCatalogueDto"
+            }
+          }
+        },
+        "required": [
+          "tenantCount",
+          "activeTenantCount",
+          "moduleCount",
+          "modules"
+        ]
+      },
+      "PlatformTenantSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ]
+          },
+          "memberCount": {
+            "type": "number"
+          },
+          "enabledModuleCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "status",
+          "memberCount",
+          "enabledModuleCount",
+          "createdAt"
+        ]
+      },
+      "PlatformTenantModuleDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "HR"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "capabilitySummary": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ENABLED",
+              "DISABLED"
+            ]
+          },
+          "enabledAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "disabledAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "provisionedByUserId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "key",
+          "displayName",
+          "description",
+          "capabilitySummary",
+          "category",
+          "order",
+          "dependencies",
+          "state",
+          "enabledAt",
+          "disabledAt",
+          "provisionedByUserId"
+        ]
+      },
+      "PlatformTenantDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ]
+          },
+          "memberCount": {
+            "type": "number"
+          },
+          "enabledModuleCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformTenantModuleDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "status",
+          "memberCount",
+          "enabledModuleCount",
+          "createdAt",
+          "modules"
+        ]
+      },
+      "SetTenantModuleRequestDto": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "ENABLED",
+              "DISABLED"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "AvailablePermissionDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string",
+            "nullable": true,
+            "example": "CRM"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "module",
+          "resource",
+          "action",
+          "description"
+        ]
+      },
+      "AccessRoleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "profile",
+              "permission_set"
+            ]
+          },
+          "permissionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assignedCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name",
+          "description",
+          "kind",
+          "permissionKeys",
+          "assignedCount"
+        ]
+      },
+      "CreateAccessRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "permissionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "permissionKeys"
+        ]
+      },
+      "UpdateAccessRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "permissionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EffectiveProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dataScope": {
+            "type": "string",
+            "enum": [
+              "OWN",
+              "TEAM",
+              "DEPARTMENT",
+              "COMPANY"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dataScope"
+        ]
+      },
+      "EffectivePermissionSetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "EffectiveModulePermissionDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "granted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "resource",
+          "action",
+          "description",
+          "granted"
+        ]
+      },
+      "EffectiveModuleAccessDto": {
+        "type": "object",
+        "properties": {
+          "moduleKey": {
+            "type": "string",
+            "example": "CRM"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "entitled": {
+            "type": "boolean"
+          },
+          "dataScope": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "OWN",
+              "TEAM",
+              "DEPARTMENT",
+              "COMPANY"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EffectiveModulePermissionDto"
+            }
+          }
+        },
+        "required": [
+          "moduleKey",
+          "displayName",
+          "entitled",
+          "dataScope",
+          "permissions"
+        ]
+      },
+      "EffectiveAccessDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "userEmail": {
+            "type": "string"
+          },
+          "profile": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EffectiveProfileDto"
+              }
+            ]
+          },
+          "permissionSets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EffectivePermissionSetDto"
+            }
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EffectiveModuleAccessDto"
+            }
+          },
+          "platformPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "membershipId",
+          "userName",
+          "userEmail",
+          "profile",
+          "permissionSets",
+          "modules",
+          "platformPermissions"
+        ]
+      },
+      "AssignProfileDto": {
+        "type": "object",
+        "properties": {
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dataScope": {
+            "type": "string",
+            "enum": [
+              "OWN",
+              "TEAM",
+              "DEPARTMENT",
+              "COMPANY"
+            ],
+            "default": "COMPANY"
+          }
+        },
+        "required": [
+          "roleId",
+          "dataScope"
+        ]
+      },
+      "AddPermissionSetDto": {
+        "type": "object",
+        "properties": {
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "roleId"
         ]
       },
       "TenantMemberCountsDto": {
@@ -21899,6 +23740,63 @@
           "label",
           "dataType"
         ]
+      },
+      "SavedViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "config",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateSavedViewDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "name",
+          "config"
+        ]
+      },
+      "UpdateSavedViewDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
       },
       "IngestAcceptedResponseDto": {
         "type": "object",

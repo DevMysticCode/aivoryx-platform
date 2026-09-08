@@ -96,6 +96,45 @@ Field PWA uses to raise a claim through the same HR expense domain via the
 exported `ExpensesService`. Not a statutory payroll / tax-filing / accounting
 system.
 
+## Platform access & module entitlements
+
+Phase 13A (ADR 0042, `PLATFORM-ACCESS.md` / `MODULE-ENTITLEMENTS.md` /
+`AUTHORIZATION.md`) adds the product-access layer **above** a tenant, without
+inverting or duplicating RBAC (ADR 0029). The authorization order is fixed:
+**tenant module entitlement → user profile / permission set → data scope →
+allow / deny**.
+
+- A **code** module catalogue (`@aivoryx/shared` `MODULE_DEFINITIONS`, 7 modules
+  with dependencies), a tenant-owned `tenant_module_entitlements` table, and a
+  central `EntitlementService`.
+- A global `platform_admins` identity (not a membership) and a `@PlatformAdmin()`
+  boundary for `/platform/*`.
+- Profiles / Permission Sets / Data Scopes as `roles.kind` +
+  `membership_roles.data_scope` — the same audited, RLS-scoped `roles` machinery,
+  **no second authorization model**.
+- `SecurityGuard` checks module entitlement **before** the permission for every
+  existing route; `ENTITLEMENT_MODULE_NOT_ENABLED` is distinct from
+  `AUTH_FORBIDDEN`.
+
+Phase 13B (`PRODUCT-UX.md`) builds the **access-aware product experience** on
+that foundation: one adaptive application shell, a **centralized module-aware
+navigation registry** (`apps/web/lib/navigation/registry.ts`, filtered by
+platform role + entitlements + effective permissions from `/auth/me`), a
+distinct platform-admin console (`/platform/*`), the tenant access UX
+(`/admin/access` — profiles, permission sets, effective access), a
+permission-aware ⌘K command palette + CRM search, and **CRM as the flagship /
+reference UX** that later modules follow. The web layer invents no
+authorization — the backend guard + RLS stay authoritative.
+
+Phase 13C completes it: a **role/module/permission-aware dashboard** built from
+a reusable **widget registry** (`apps/web/lib/dashboard/`, pure filter,
+widgets fetch their own module data), and the premium CRM workspace — lead list
+with removable-chip filters, **persistent saved views** (`crm_saved_views`,
+per-membership, RLS-isolated), a kanban board over the existing lifecycle,
+lifecycle-safe bulk actions, mobile cards, and a tabbed lead-detail record
+workspace. Every one of those is now a copy-me pattern for HR / Field / Finance
+/ Commercial / Supply / EPC.
+
 ## Future productization
 
 The client is the first implementation. Generic capabilities should be configurable, not tenant-hard-coded. Client-specific behavior belongs in configuration or a clearly isolated vertical extension. No client-specific or provider-specific logic may leak into a reusable core module (ADR 0024).
@@ -106,6 +145,9 @@ Cross-cutting:
 
 - `TENANCY.md` — RLS + application tenant guards
 - `AUTH.md` — cookie sessions, Argon2id, scope-aware RBAC
+- `AUTHORIZATION.md` — the fixed order: identity → tenant → platform/tenant boundary → module entitlement → permission → data scope → RLS; Profiles / Permission Sets / Data Scopes as an entitlement-aware extension of RBAC (ADR 0042)
+- `PLATFORM-ACCESS.md` — Platform Admin vs Tenant Admin, the global `platform_admins` identity, the `@PlatformAdmin()` boundary, the `:tenantId` selection contract (ADR 0042)
+- `MODULE-ENTITLEMENTS.md` — the code module catalogue, `tenant_module_entitlements`, dependency rules, `EntitlementService`, `seed:platform-demo` (ADR 0042)
 - `DEPLOYMENT.md` — Vercel + Railway topology and private networking
 - `OBSERVABILITY.md` — correlation ids, log fields, error codes
 - `QUALITY-GATES.md` — PR and pre-pilot gates

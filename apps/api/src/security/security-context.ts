@@ -36,6 +36,14 @@ export interface SecurityContext {
   tenantId: string | null;
   /** permission keys granted to the active membership; empty until a tenant is resolved */
   permissions: ReadonlySet<string>;
+  /**
+   * module keys the active tenant is ENTITLED to (Phase 13, ADR 0042). Empty
+   * until a tenant is resolved. A permission is only effective if its owning
+   * module is in this set — the guard enforces entitlement BEFORE permission.
+   */
+  entitledModules: ReadonlySet<string>;
+  /** true if this user is an Aivoryx platform administrator (not tenant-scoped) */
+  isPlatformAdmin: boolean;
 }
 
 const storage = new AsyncLocalStorage<SecurityContext>();

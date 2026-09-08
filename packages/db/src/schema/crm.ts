@@ -336,6 +336,45 @@ export const customFieldValues = pgTable(
   ],
 );
 
+// --- crm_saved_views (Phase 13C) --------------------------------------
+//
+// A named lead-list filter configuration, owned by one membership within one
+// tenant. Tenant-owned (RLS isolates by `tenant_id`); per-user isolation is a
+// `membership_id = <actor>` predicate in the service (the established pattern —
+// RLS has no membership binding). `config` is an opaque JSON blob the CRM UI
+// owns; the server validates only its shape (an object), never its keys.
+
+export const crmSavedViews = pgTable(
+  'crm_saved_views',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => newUuidV7()),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /** the membership that owns this view */
+    membershipId: uuid('membership_id').notNull(),
+    name: text('name').notNull(),
+    /** UI-owned filter/sort/view blob, e.g. { status, assignedMembershipId, source, followup, q, board } */
+    config: jsonb('config').notNull().default({}),
+    sortOrder: numeric('sort_order').notNull().default('0'),
+    ...entityTimestamps,
+  },
+  (t) => [
+    unique('crm_saved_views_owner_name_uq').on(t.tenantId, t.membershipId, t.name),
+    index('crm_saved_views_tenant_member_idx').on(t.tenantId, t.membershipId),
+    foreignKey({
+      name: 'crm_saved_views_member_fk',
+      columns: [t.membershipId, t.tenantId],
+      foreignColumns: [userTenantMemberships.id, userTenantMemberships.tenantId],
+    }).onDelete('cascade'),
+  ],
+);
+
+export type CrmSavedViewRow = typeof crmSavedViews.$inferSelect;
+export type NewCrmSavedViewRow = typeof crmSavedViews.$inferInsert;
+
 export type LeadRow = typeof leads.$inferSelect;
 export type NewLeadRow = typeof leads.$inferInsert;
 export type LeadActivityRow = typeof leadActivities.$inferSelect;

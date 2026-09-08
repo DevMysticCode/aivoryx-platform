@@ -46,9 +46,10 @@ test.describe('Field operations golden path', () => {
     await page.waitForURL('**/admin');
 
     await page.goto('/crm/leads');
+    await page.getByRole('button', { name: 'New lead' }).click();
     await page.getByLabel('Name').first().fill(leadName);
     await page.getByLabel('Phone').first().fill(phone);
-    await page.getByRole('button', { name: 'Add lead' }).click();
+    await page.getByRole('button', { name: 'Create lead' }).click();
     await page.waitForURL(/\/crm\/leads\/[0-9a-f-]+$/);
     const leadId = page.url().split('/').pop()!;
 
@@ -170,16 +171,18 @@ test.describe('Field operations golden path', () => {
 
     // ---- 6. admin: verify the completed visit from the CRM lead -------
     await page.goto(`/crm/leads/${leadId}`);
+    await page.getByRole('button', { name: 'Related' }).click();
     // match by href rather than the locale-formatted date text, which can
     // render slightly differently between Node's Intl and the browser's.
     const visitLink = page.locator(`a[href="/crm/visits/${visitId}"]`);
     await expect(visitLink).toBeVisible();
     await expect(page.getByText('COMPLETED', { exact: true }).first()).toBeVisible();
 
-    const timeline = page.locator('text=Timeline').locator('..');
-    await expect(timeline.getByText('visit scheduled', { exact: true }).first()).toBeVisible();
-    await expect(timeline.getByText('visit checked in', { exact: true }).first()).toBeVisible();
-    await expect(timeline.getByText('visit completed', { exact: true }).first()).toBeVisible();
+    await page.getByRole('button', { name: 'Activity' }).click();
+    const timeline = page.getByRole('list').filter({ hasText: 'Visit completed' });
+    await expect(timeline.getByText('Visit scheduled').first()).toBeVisible();
+    await expect(timeline.getByText('Checked in on site').first()).toBeVisible();
+    await expect(timeline.getByText('Visit completed').first()).toBeVisible();
   });
 
   test('a field agent can create a lead from the field app', async ({ page }) => {

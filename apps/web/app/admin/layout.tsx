@@ -3,7 +3,16 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
-import { Bell, Building2, MapPin, Plug, ScrollText, ShieldCheck, Users } from 'lucide-react';
+import {
+  Bell,
+  Building2,
+  KeyRound,
+  MapPin,
+  Plug,
+  ScrollText,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
@@ -12,6 +21,7 @@ import { Skeleton } from '@/components/admin/ui';
 const NAV = [
   { href: '/admin', label: 'Overview', icon: ShieldCheck },
   { href: '/admin/members', label: 'Members', icon: Users },
+  { href: '/admin/access', label: 'Access', icon: KeyRound },
   { href: '/admin/field-agents', label: 'Field agents', icon: MapPin },
   { href: '/admin/settings', label: 'Workspace settings', icon: Building2 },
   { href: '/admin/integrations', label: 'Integrations', icon: Plug },

@@ -189,6 +189,7 @@ describe('roles + permissions', () => {
       'description',
       'id',
       'key',
+      'kind', // Phase 13 (ADR 0042): 'profile' | 'permission_set' | 'custom'
       'name',
       'tenant_id',
       'updated_at',
@@ -234,6 +235,7 @@ describe('membership_roles', () => {
   it('is a composite-PK join carrying tenant_id for cross-tenant integrity', () => {
     expect(colNames(membershipRoles)).toEqual([
       'created_at',
+      'data_scope', // Phase 13 (ADR 0042): OWN | TEAM | DEPARTMENT | COMPANY
       'membership_id',
       'role_id',
       'tenant_id',

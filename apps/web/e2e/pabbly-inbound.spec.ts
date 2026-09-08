@@ -58,7 +58,7 @@ test.describe('Pabbly inbound connector', () => {
 
     // 3. the resulting lead is visible in the CRM
     await page.goto('/crm/leads');
-    await page.getByLabel('Search').fill(leadName);
+    await page.getByPlaceholder(/Search name/).fill(leadName);
     await expect(page.getByRole('link', { name: leadName })).toBeVisible();
   });
 });

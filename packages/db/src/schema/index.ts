@@ -24,6 +24,8 @@ export {
   roles,
   rolePermissions,
   membershipRoles,
+  roleKind,
+  dataScope,
   type PermissionRow,
   type NewPermissionRow,
   type RoleRow,
@@ -32,7 +34,20 @@ export {
   type NewRolePermissionRow,
   type MembershipRoleRow,
   type NewMembershipRoleRow,
+  type RoleKind,
+  type DataScope,
 } from './rbac.js';
+
+// Phase 13 — Platform access & module entitlements (ADR 0042).
+export {
+  platformAdmins,
+  moduleEntitlementState,
+  tenantModuleEntitlements,
+  type PlatformAdminRow,
+  type NewPlatformAdminRow,
+  type TenantModuleEntitlementRow,
+  type NewTenantModuleEntitlementRow,
+} from './platform.js';
 
 // Phase 2, Task 3 — tenant administration & user lifecycle (ADR 0030).
 export {
@@ -60,6 +75,9 @@ export {
   leadFollowups,
   customFieldDefinitions,
   customFieldValues,
+  crmSavedViews,
+  type CrmSavedViewRow,
+  type NewCrmSavedViewRow,
   type LeadRow,
   type NewLeadRow,
   type LeadActivityRow,

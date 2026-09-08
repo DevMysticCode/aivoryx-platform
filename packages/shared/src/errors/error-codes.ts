@@ -148,6 +148,14 @@ export const ERROR_CODES = {
     httpStatus: 404,
     message: 'That custom field does not exist in this workspace.',
   },
+  SAVED_VIEW_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That saved view was not found.',
+  },
+  SAVED_VIEW_DUPLICATE_NAME: {
+    httpStatus: 409,
+    message: 'You already have a saved view with that name.',
+  },
   CUSTOM_FIELD_INVALID_VALUE: {
     httpStatus: 400,
     message: 'That value is not valid for this custom field.',
@@ -691,6 +699,52 @@ export const ERROR_CODES = {
   HR_ATTACHMENT_INVALID: {
     httpStatus: 422,
     message: 'That file could not be attached — check the format and size.',
+  },
+
+  // platform access & module entitlements (Phase 13, ADR 0042)
+  ENTITLEMENT_MODULE_NOT_ENABLED: {
+    httpStatus: 403,
+    message: 'This module is not enabled for your workspace. Contact your administrator.',
+  },
+  ENTITLEMENT_DEPENDENCY_UNMET: {
+    httpStatus: 422,
+    message: 'That module requires another module that is not enabled.',
+  },
+  ENTITLEMENT_DEPENDANT_ENABLED: {
+    httpStatus: 422,
+    message: 'Another enabled module depends on this one. Disable it first.',
+  },
+  ENTITLEMENT_UNKNOWN_MODULE: {
+    httpStatus: 404,
+    message: 'That module does not exist in the catalogue.',
+  },
+  PLATFORM_ADMIN_REQUIRED: {
+    httpStatus: 403,
+    message: 'This action requires Aivoryx platform administration.',
+  },
+  PLATFORM_TENANT_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That workspace does not exist.',
+  },
+  ACCESS_PROFILE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That profile does not exist in this workspace.',
+  },
+  ACCESS_PERMISSION_SET_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That permission set does not exist in this workspace.',
+  },
+  ACCESS_PERMISSION_NOT_AVAILABLE: {
+    httpStatus: 422,
+    message: 'That permission belongs to a module your workspace is not entitled to.',
+  },
+  ACCESS_ROLE_KIND_INVALID: {
+    httpStatus: 422,
+    message: 'That action is not valid for this kind of role.',
+  },
+  ACCESS_PROFILE_IN_USE: {
+    httpStatus: 409,
+    message: 'That profile is assigned to members and cannot be deleted.',
   },
 
   // health / infra

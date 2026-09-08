@@ -23,6 +23,7 @@ export const AUDIT_MODULES = [
   'finance',
   'settings',
   'hr',
+  'platform',
 ] as const;
 
 export type AuditModule = (typeof AUDIT_MODULES)[number];
@@ -43,6 +44,17 @@ export const AUDIT_ACTION_MODULE = {
   'tenant.member.removed': 'identity',
   'tenant.member.role_added': 'identity',
   'tenant.member.role_removed': 'identity',
+  'tenant.member.profile_assigned': 'identity',
+  'tenant.member.scope_changed': 'identity',
+  'identity.role.created': 'identity',
+  'identity.role.updated': 'identity',
+  'identity.role.deleted': 'identity',
+
+  // --- Aivoryx platform administration (Phase 13, ADR 0042) -------
+  'platform.module.enabled': 'platform',
+  'platform.module.disabled': 'platform',
+  'platform.admin.granted': 'platform',
+  'platform.admin.revoked': 'platform',
 
   // --- CRM ---------------------------------------------------------
   'crm.lead.created': 'crm',

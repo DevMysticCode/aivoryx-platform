@@ -51,6 +51,11 @@ export type Followup = components['schemas']['FollowupDto'];
 export type CreateCustomFieldRequest = components['schemas']['CreateCustomFieldRequestDto'];
 export type CustomFieldDefinition = components['schemas']['CustomFieldDefinitionDto'];
 
+// Phase 13C — CRM lead-list saved views (ADR 0031, persisted).
+export type SavedView = components['schemas']['SavedViewDto'];
+export type CreateSavedViewRequest = components['schemas']['CreateSavedViewDto'];
+export type UpdateSavedViewRequest = components['schemas']['UpdateSavedViewDto'];
+
 // Phase 3 — inbound integration engine (ADR 0032).
 export type CreateSourceRequest = components['schemas']['CreateSourceRequestDto'];
 export type CreateSourceResponse = components['schemas']['CreateSourceResponseDto'];
@@ -286,6 +291,23 @@ export type HrPerformanceGoal = components['schemas']['PerformanceGoalDto'];
 export type HrPerformanceReview = components['schemas']['PerformanceReviewDto'];
 export type HrMe = components['schemas']['HrMeDto'];
 export type HrDashboard = components['schemas']['HrDashboardDto'];
+
+// ── Platform Access, Module Entitlements & Effective Authorization (Phase 13A, ADR 0042) ──
+export type PlatformModuleCatalogue = components['schemas']['PlatformModuleCatalogueDto'];
+export type PlatformOverview = components['schemas']['PlatformOverviewDto'];
+export type PlatformTenantSummary = components['schemas']['PlatformTenantSummaryDto'];
+export type PlatformTenantModule = components['schemas']['PlatformTenantModuleDto'];
+export type PlatformTenantDetail = components['schemas']['PlatformTenantDetailDto'];
+export type SetTenantModuleRequest = components['schemas']['SetTenantModuleRequestDto'];
+export type AvailablePermission = components['schemas']['AvailablePermissionDto'];
+export type AccessRole = components['schemas']['AccessRoleDto'];
+export type CreateAccessRoleRequest = components['schemas']['CreateAccessRoleDto'];
+export type UpdateAccessRoleRequest = components['schemas']['UpdateAccessRoleDto'];
+export type AssignProfileRequest = components['schemas']['AssignProfileDto'];
+export type AddPermissionSetRequest = components['schemas']['AddPermissionSetDto'];
+export type EffectiveModulePermission = components['schemas']['EffectiveModulePermissionDto'];
+export type EffectiveModuleAccess = components['schemas']['EffectiveModuleAccessDto'];
+export type EffectiveAccess = components['schemas']['EffectiveAccessDto'];
 
 /** All versioned API routes are served under this prefix (ADR 0005). */
 export const API_V1_PREFIX = '/api/v1';

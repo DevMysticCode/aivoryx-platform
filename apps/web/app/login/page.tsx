@@ -19,13 +19,19 @@ export default function LoginPage() {
     setError(null);
     try {
       const me = await login(email.trim(), password);
-      if (!me.active) {
+      let hasWorkspace = !!me.active;
+      if (!hasWorkspace) {
         const usable = me.memberships.find(
           (m) => m.status === 'active' && m.tenantStatus === 'active',
         );
-        if (usable) await switchTenant(usable.id);
+        if (usable) {
+          await switchTenant(usable.id);
+          hasWorkspace = true;
+        }
       }
-      router.replace('/admin');
+      // A platform admin with no workspace lands in the platform console;
+      // every tenant user continues to the workspace administration home.
+      router.replace(!hasWorkspace && me.isPlatformAdmin ? '/platform' : '/admin');
     } catch (err) {
       setError(err);
       setBusy(false);

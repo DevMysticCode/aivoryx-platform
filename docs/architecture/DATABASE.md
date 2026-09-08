@@ -48,6 +48,18 @@ lead_followups
 `customers` (a lead graduating to an account) remains future work — Phase 3
 stops at qualification/conversion of the lead itself (CLAUDE.md §28).
 
+**Phase 13C — `crm_saved_views`** (migration `0018`): a named lead-list filter
+configuration, tenant-owned and **owned per membership**. Columns: `tenant_id`,
+`membership_id` (composite FK → `user_tenant_memberships (id, tenant_id)`,
+`on delete cascade`), `name`, `config` (JSONB — a UI-owned `{ q, status,
+assignedMembershipId, board }` blob; the server validates only that it is an
+object), `sort_order`, timestamps; unique `(tenant_id, membership_id, name)`.
+RLS ENABLE + FORCE, full DML to `aivoryx_app`, standard
+`tenant_id = app.tenant_id` isolation. Per-user isolation is a
+`membership_id = <actor>` predicate in `SavedViewsService` (RLS has no
+membership binding — the same pattern as `lead_notes` /
+`notification_preferences`); views never leak between users or tenants.
+
 ## Field/Sales entities
 
 **Implemented (Phase 4, ADR 0033):**
@@ -236,6 +248,8 @@ adjusted − consumed) STORED` — it cannot drift.
 sessions
 tenant_invitations
 audit_logs
+platform_admins
+tenant_module_entitlements
 workflow_definitions
 workflow_runs
 outbox_events
@@ -243,6 +257,37 @@ job_runs
 
 `integration_connections` / `integration_events` from the earlier draft are
 superseded by the lead-ingestion entities above.
+
+## Platform access & module entitlements
+
+**Implemented (Phase 13A, ADR 0042, `MODULE-ENTITLEMENTS.md` /
+`PLATFORM-ACCESS.md` / `AUTHORIZATION.md`) — migrations `0015`–`0017`.**
+
+- `platform_admins` — **global** (no `tenant_id`): `user_id` unique,
+  `granted_by_user_id`, `note`. RLS ENABLE + FORCE; `aivoryx_app` has
+  **`SELECT` only** (INSERT/UPDATE/DELETE revoked); `platform_admins_self_read`
+  policy (`user_id = app.user_id`). Grant/revoke is seed/migration only.
+- `tenant_module_entitlements` — tenant-owned: `(tenant_id, module_key)` unique,
+  `state` (`module_entitlement_state`: `ENABLED` | `DISABLED`),
+  `enabled_at` / `disabled_at`, `provisioned_by_user_id`, `note`. RLS ENABLE +
+  FORCE, full DML to `aivoryx_app`, `tenant_id = app.tenant_id` isolation, plus
+  an **additive `tenant_module_entitlements_platform_read` FOR SELECT** policy
+  gated on a `platform_admins` row. `EntitlementService` still filters by
+  `tenant_id` in the query — RLS is the backstop, not the only guard
+  (CLAUDE.md §5).
+- `roles.kind` — `role_kind` enum (`profile` | `permission_set` | `custom`,
+  default `custom`). Profiles / Permission Sets reuse the existing `roles`
+  machinery — **no second authorization model**.
+- `membership_roles.data_scope` — `data_scope` enum
+  (`OWN` | `TEAM` | `DEPARTMENT` | `COMPANY`, default `COMPANY`). Per-assignment
+  scope; stored and reported in effective access; consumed only by modules that
+  already implement scope filtering.
+- Migration `0016` adds `'platform'` to the `audit_module` enum. Migration
+  `0017` (hand-authored — additive SELECT policies) adds `tenants_platform_read`,
+  `utm_platform_read` and `tenant_module_entitlements_platform_read`, each
+  `USING (EXISTS (SELECT 1 FROM platform_admins WHERE user_id = app.user_id))`.
+- The **module catalogue itself is code** (`@aivoryx/shared`
+  `MODULE_DEFINITIONS`), not a table — nothing about it is tenant-configurable.
 
 ## Rules
 
@@ -333,6 +378,26 @@ project_id is not null` on `quotations`. It also adds
   rows, `#rrggbb` / ISO-currency CHECKs on the colour + currency columns, a
   positive `size_bytes` CHECK on `tenant_assets`, and one enum
   (`tenant_asset_kind`). Logo bytes live in object storage, never in a column.
+- Migration `0018` (Phase 13C) adds `crm_saved_views` (see "CRM entities"). The
+  hand-appended block applies the standard `GRANT`, `ENABLE` + `FORCE ROW LEVEL
+SECURITY` and the `tenant_id = app.tenant_id` isolation policy;
+  `meta/0018_snapshot.json` is unchanged, so `db:generate` reports no drift.
+- Migrations `0015`–`0017` (Phase 13A, ADR 0042) add the platform-access
+  foundation. `0015`: `platform_admins` (global — `aivoryx_app` gets `SELECT`
+  only, INSERT/UPDATE/DELETE `REVOKE`d, `platform_admins_self_read` policy
+  `user_id = app.user_id`), `tenant_module_entitlements` (tenant-owned, full
+  DML, `tenant_id = app.tenant_id` isolation), and the additive columns
+  `roles.kind` (`role_kind` enum) + `membership_roles.data_scope` (`data_scope`
+  enum), each with a default so existing rows are valid. `0016`:
+  `ALTER TYPE audit_module ADD VALUE 'platform'` (its own migration — the value
+  is not used in the same transaction). `0017` (hand-authored, snapshot copied
+  from `0016` with a fresh id — `db:generate` reports no drift): three
+  **additive `FOR SELECT`** policies (`tenants_platform_read`,
+  `utm_platform_read`, `tenant_module_entitlements_platform_read`), each
+  `USING (EXISTS (SELECT 1 FROM platform_admins pa WHERE pa.user_id =
+nullif(current_setting('app.user_id', true), '')::uuid))` — a platform admin
+  may read workspace / membership-count / entitlement data across tenants,
+  never write it.
 - Migration `0014` (Phase 12, ADR 0041) adds the 29 `hr_*` tables and their
   enums. First statement is `ALTER TYPE audit_module ADD VALUE 'hr'` (safe in a
   migration transaction on PG 12+ because the new value is not used in the same

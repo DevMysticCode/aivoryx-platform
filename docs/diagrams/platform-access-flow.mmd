@@ -1,0 +1,29 @@
+%% Phase 13A (ADR 0042) — the fixed authorization order.
+%% TENANT MODULE ENTITLEMENT -> USER PROFILE/PERMISSION SET -> DATA SCOPE -> ALLOW/DENY
+flowchart TD
+    req[["Authenticated request"]] --> guard{{SecurityGuard}}
+
+    guard --> id{"valid session?"}
+    id -- no --> e401["401 AUTH_UNAUTHENTICATED / SESSION_*"]
+
+    id -- yes --> pa{"@PlatformAdmin() route?"}
+    pa -- yes --> paCheck{"platform_admins row?<br/>(app.user_id self-read)"}
+    paCheck -- no --> ePA["403 PLATFORM_ADMIN_REQUIRED"]
+    paCheck -- yes --> platform["/platform/* — tenant-less<br/>list workspaces, set entitlements"]
+
+    pa -- no --> tenant{"active membership resolves?<br/>withTenantContext(app.tenant_id, app.user_id)"}
+    tenant -- no --> eTenant["403 AUTH_NO_ACTIVE_TENANT / *_SUSPENDED"]
+
+    tenant -- yes --> ent{"module entitled?<br/>moduleForPermission(required) or @RequireModule<br/>EntitlementService.getEnabledModules (tenant-scoped)"}
+    ent -- "no (null module = always ok)" --> eEnt["403 ENTITLEMENT_MODULE_NOT_ENABLED"]
+
+    ent -- yes --> perm{"effective permission held?<br/>profile ∪ permission sets, ∩ entitled modules"}
+    perm -- no --> ePerm["403 AUTH_FORBIDDEN"]
+
+    perm -- yes --> scope["data scope applied by the module<br/>OWN / TEAM / DEPARTMENT / COMPANY<br/>(membership_roles.data_scope)"]
+    scope --> rls[("PostgreSQL RLS — authoritative<br/>aivoryx_app, FORCE, tenant_id = app.tenant_id")]
+    rls --> allow(["ALLOW"])
+
+    subgraph provisioning [Platform provisioning write path]
+        platform --> setE["EntitlementService.setEntitlement<br/>dependency-checked (ENABLE/DISABLE)<br/>re-enters TARGET tenant RLS context<br/>audits platform.module.enabled/disabled (SYSTEM)"]
+    end

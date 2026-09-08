@@ -7,12 +7,16 @@ import {
 } from './permissions.js';
 
 describe('permission catalogue', () => {
-  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, notifications, finance, platform settings, the audit log, and HR & workforce — no other business domain yet', () => {
+  it('is the identity/admin set plus CRM, field operations, supply chain, commercial, EPC execution, notifications, finance, platform settings, the audit log, HR & workforce, and platform access & entitlements', () => {
     expect([...PERMISSION_KEYS].sort()).toEqual(
       [
+        'access.read',
         'memberships.read',
         'memberships.update',
         'permissions.read',
+        'platform.modules.provision',
+        'platform.tenants.manage',
+        'platform.tenants.read',
         'roles.create',
         'roles.delete',
         'roles.read',

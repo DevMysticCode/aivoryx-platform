@@ -5,7 +5,15 @@ import type { ServerEnv } from '@aivoryx/config';
 import type { AuthService } from '../auth/auth.service.js';
 import type { RbacService } from '../auth/rbac.service.js';
 import type { SessionService } from '../auth/session.service.js';
-import { AUTH_ONLY_KEY, IS_PUBLIC_KEY, PERMISSION_KEY } from './security.decorators.js';
+import type { EntitlementService } from '../entitlements/entitlement.service.js';
+import type { PlatformAdminService } from '../entitlements/platform-admin.service.js';
+import {
+  AUTH_ONLY_KEY,
+  IS_PUBLIC_KEY,
+  MODULE_KEY,
+  PERMISSION_KEY,
+  PLATFORM_ADMIN_KEY,
+} from './security.decorators.js';
 import { SecurityGuard } from './security.guard.js';
 
 const COOKIE = 'aivoryx_session';
@@ -29,10 +37,15 @@ interface Stubs {
   resolve?: () => Promise<{ session: typeof baseSession; user: typeof baseUser }>;
   resolveActiveTenant?: () => Promise<typeof activeMembership>;
   permissions?: Set<string>;
+  /** module keys the tenant is entitled to; defaults to every module */
+  entitledModules?: Set<string>;
+  isPlatformAdmin?: boolean;
   memberships?: Array<{ id: string; tenantSlug: string; tenantStatus: string; status: string }>;
   noCookie?: boolean;
   activeMembershipId?: string | null;
 }
+
+const ALL_MODULES = new Set(['CRM', 'FIELD', 'SUPPLY', 'COMMERCIAL', 'EPC', 'FINANCE', 'HR']);
 
 function makeGuard(stubs: Stubs = {}) {
   const req = {
@@ -57,9 +70,23 @@ function makeGuard(stubs: Stubs = {}) {
   const rbac = {
     permissionsForMembership: async () => stubs.permissions ?? new Set<string>(),
   } as unknown as RbacService;
+  const entitlements = {
+    getEnabledModules: async () => stubs.entitledModules ?? new Set(ALL_MODULES),
+  } as unknown as EntitlementService;
+  const platformAdmins = {
+    isPlatformAdmin: async () => stubs.isPlatformAdmin ?? false,
+  } as unknown as PlatformAdminService;
   const env = { SESSION_COOKIE_NAME: COOKIE } as ServerEnv;
 
-  const guard = new SecurityGuard(reflector as never, sessions, auth, rbac, env);
+  const guard = new SecurityGuard(
+    reflector as never,
+    sessions,
+    auth,
+    rbac,
+    entitlements,
+    platformAdmins,
+    env,
+  );
   const ctx = {
     getHandler: () => () => undefined,
     getClass: () => class {},
@@ -157,5 +184,102 @@ describe('SecurityGuard', () => {
       permissions: new Set<string>(),
     });
     await expectCode(authed.guard.canActivate(authed.ctx), 'AUTH_FORBIDDEN');
+  });
+
+  // --- Phase 13 (ADR 0042): module entitlement + platform admin -----
+
+  it('denies a module permission the tenant is NOT entitled to, BEFORE the permission check', async () => {
+    const { guard, ctx } = makeGuard({
+      meta: { [PERMISSION_KEY]: 'hr.employee.read' },
+      activeMembershipId: 'mem-1',
+      permissions: new Set(['hr.employee.read']), // user HAS the permission
+      entitledModules: new Set(['CRM']), // …but HR is not entitled
+    });
+    await expectCode(guard.canActivate(ctx), 'ENTITLEMENT_MODULE_NOT_ENABLED');
+  });
+
+  it('allows a module permission when the module IS entitled and the permission is held', async () => {
+    const { guard, ctx, req } = makeGuard({
+      meta: { [PERMISSION_KEY]: 'crm.leads.read' },
+      activeMembershipId: 'mem-1',
+      permissions: new Set(['crm.leads.read']),
+      entitledModules: new Set(['CRM']),
+    });
+    await expect(guard.canActivate(ctx)).resolves.toBe(true);
+    expect([...(req.securityContext as { entitledModules: Set<string> }).entitledModules]).toEqual([
+      'CRM',
+    ]);
+  });
+
+  it('entitlement failure is distinguishable from permission failure', async () => {
+    // entitled, but no permission -> AUTH_FORBIDDEN
+    const noPerm = makeGuard({
+      meta: { [PERMISSION_KEY]: 'crm.leads.read' },
+      activeMembershipId: 'mem-1',
+      permissions: new Set<string>(),
+      entitledModules: new Set(['CRM']),
+    });
+    await expectCode(noPerm.guard.canActivate(noPerm.ctx), 'AUTH_FORBIDDEN');
+    // has permission, but not entitled -> ENTITLEMENT_MODULE_NOT_ENABLED
+    const noEnt = makeGuard({
+      meta: { [PERMISSION_KEY]: 'crm.leads.read' },
+      activeMembershipId: 'mem-1',
+      permissions: new Set(['crm.leads.read']),
+      entitledModules: new Set<string>(),
+    });
+    await expectCode(noEnt.guard.canActivate(noEnt.ctx), 'ENTITLEMENT_MODULE_NOT_ENABLED');
+  });
+
+  it('platform / identity permissions are never gated by entitlement', async () => {
+    const { guard, ctx } = makeGuard({
+      meta: { [PERMISSION_KEY]: 'roles.read' },
+      activeMembershipId: 'mem-1',
+      permissions: new Set(['roles.read']),
+      entitledModules: new Set<string>(), // nothing entitled
+    });
+    await expect(guard.canActivate(ctx)).resolves.toBe(true);
+  });
+
+  it('@RequireModule() gates a route by entitlement alone', async () => {
+    const denied = makeGuard({
+      meta: { [MODULE_KEY]: 'FINANCE' },
+      activeMembershipId: 'mem-1',
+      entitledModules: new Set(['CRM']),
+    });
+    await expectCode(denied.guard.canActivate(denied.ctx), 'ENTITLEMENT_MODULE_NOT_ENABLED');
+
+    const allowed = makeGuard({
+      meta: { [MODULE_KEY]: 'FINANCE' },
+      activeMembershipId: 'mem-1',
+      entitledModules: new Set(['CRM', 'FINANCE']),
+    });
+    await expect(allowed.guard.canActivate(allowed.ctx)).resolves.toBe(true);
+  });
+
+  it('@PlatformAdmin() denies a non-platform-admin and needs no tenant', async () => {
+    const denied = makeGuard({
+      meta: { [PLATFORM_ADMIN_KEY]: true },
+      isPlatformAdmin: false,
+    });
+    await expectCode(denied.guard.canActivate(denied.ctx), 'PLATFORM_ADMIN_REQUIRED');
+
+    const allowed = makeGuard({
+      meta: { [PLATFORM_ADMIN_KEY]: true },
+      isPlatformAdmin: true, // no active membership at all
+    });
+    await expect(allowed.guard.canActivate(allowed.ctx)).resolves.toBe(true);
+    expect((allowed.req.securityContext as { isPlatformAdmin: boolean }).isPlatformAdmin).toBe(
+      true,
+    );
+  });
+
+  it('a tenant user cannot reach a @PlatformAdmin() route even with every permission', async () => {
+    const { guard, ctx } = makeGuard({
+      meta: { [PLATFORM_ADMIN_KEY]: true },
+      isPlatformAdmin: false,
+      activeMembershipId: 'mem-1',
+      permissions: new Set(['platform.modules.provision', 'roles.read']),
+    });
+    await expectCode(guard.canActivate(ctx), 'PLATFORM_ADMIN_REQUIRED');
   });
 });

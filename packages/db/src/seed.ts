@@ -1,9 +1,15 @@
 import { fileURLToPath } from 'node:url';
 import { eq, inArray, sql } from 'drizzle-orm';
-import { PERMISSION_DEFINITIONS, PLATFORM_ROLE_KEYS } from '@aivoryx/shared';
+import { MODULE_KEYS, PERMISSION_DEFINITIONS, PLATFORM_ROLE_KEYS } from '@aivoryx/shared';
 import { createDb, type DbHandle } from './client.js';
 import { newUuidV7 } from './id.js';
-import { membershipRoles, permissions, rolePermissions, roles } from './schema/index.js';
+import {
+  membershipRoles,
+  permissions,
+  rolePermissions,
+  roles,
+  tenantModuleEntitlements,
+} from './schema/index.js';
 import { withTenantContext, type Tx } from './tx.js';
 
 /**
@@ -43,6 +49,13 @@ export interface ProvisionTenantAdminInput {
   actingUserId: string;
   /** if given, the TENANT_ADMIN role is assigned to this membership */
   membershipId?: string;
+  /**
+   * Module keys to ENABLE for the tenant (Phase 13, ADR 0042). Defaults to the
+   * full catalogue so existing seeds/fixtures keep every module. A platform
+   * demo can pass a narrower set to model a workspace that only bought some
+   * modules — dependency-consistent sets only (the caller owns that).
+   */
+  moduleKeys?: readonly string[];
 }
 
 export interface ProvisionTenantAdminResult {
@@ -50,12 +63,60 @@ export interface ProvisionTenantAdminResult {
   permissionCount: number;
 }
 
+/**
+ * Enable a set of product modules for a tenant (Phase 13, ADR 0042). Defaults
+ * to the full catalogue — used by `provisionTenantAdmin` so every seeded /
+ * newly provisioned workspace keeps working. A demo seed can pass a narrower
+ * `moduleKeys` to model a tenant that only bought some modules. Idempotent.
+ */
+export async function provisionModuleEntitlements(
+  handle: DbHandle,
+  input: {
+    tenantId: string;
+    actingUserId: string;
+    /** module keys to ENABLE; defaults to every module in the catalogue */
+    moduleKeys?: readonly string[];
+    provisionedByUserId?: string | null;
+  },
+): Promise<{ enabled: string[] }> {
+  const keys = input.moduleKeys ?? MODULE_KEYS;
+  return withTenantContext(
+    handle,
+    { tenantId: input.tenantId, userId: input.actingUserId },
+    async (tx) => {
+      const now = new Date();
+      for (const moduleKey of keys) {
+        await tx
+          .insert(tenantModuleEntitlements)
+          .values({
+            tenantId: input.tenantId,
+            moduleKey,
+            state: 'ENABLED',
+            enabledAt: now,
+            provisionedByUserId: input.provisionedByUserId ?? null,
+          })
+          .onConflictDoUpdate({
+            target: [tenantModuleEntitlements.tenantId, tenantModuleEntitlements.moduleKey],
+            set: { state: 'ENABLED', enabledAt: now, disabledAt: null, updatedAt: now },
+          });
+      }
+      return { enabled: [...keys] };
+    },
+  );
+}
+
 /** Create (or update) the generic `TENANT_ADMIN` role for a tenant and grant it
- *  the full permission catalogue. Idempotent. */
+ *  the full permission catalogue, and enable every module for the tenant.
+ *  Idempotent. */
 export async function provisionTenantAdmin(
   handle: DbHandle,
   input: ProvisionTenantAdminInput,
 ): Promise<ProvisionTenantAdminResult> {
+  await provisionModuleEntitlements(handle, {
+    tenantId: input.tenantId,
+    actingUserId: input.actingUserId,
+    moduleKeys: input.moduleKeys,
+  });
   return withTenantContext(
     handle,
     { tenantId: input.tenantId, userId: input.actingUserId },

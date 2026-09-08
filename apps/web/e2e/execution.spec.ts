@@ -62,9 +62,10 @@ test.describe('EPC execution golden path', () => {
 
     const leadName = `Exec E2E ${Date.now()}`;
     await page.goto('/crm/leads');
+    await page.getByRole('button', { name: 'New lead' }).click();
     await page.getByLabel('Name').first().fill(leadName);
     await page.getByLabel('Phone').first().fill(`9${Date.now()}`.slice(0, 10));
-    await page.getByRole('button', { name: 'Add lead' }).click();
+    await page.getByRole('button', { name: 'Create lead' }).click();
     await page.waitForURL(/\/crm\/leads\/[0-9a-f-]+$/);
     const leadId = page.url().split('/').pop()!;
 
@@ -199,6 +200,7 @@ test.describe('EPC execution golden path', () => {
 
     // ---- 8. CRM lead timeline shows project completion ----
     await page.goto(`/crm/leads/${leadId}`);
+    await page.getByRole('button', { name: 'Activity' }).click();
     await expect(page.getByText(/project completed/i).first()).toBeVisible();
   });
 });

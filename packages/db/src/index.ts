@@ -1,4 +1,5 @@
 export * as schema from './schema/index.js';
+export type { RoleKind, DataScope } from './schema/rbac.js';
 export {
   createDb,
   getDb,
@@ -23,6 +24,7 @@ export {
 export {
   seedPermissions,
   provisionTenantAdmin,
+  provisionModuleEntitlements,
   provisionFieldAgentRole,
   provisionFieldAgentRoleTx,
   revokePermissionFromRole,
