@@ -39,9 +39,10 @@ test.describe('Commercial golden path', () => {
     // ---- 2. create a CRM lead -----------------------------------
     const leadName = `Commercial E2E ${Date.now()}`;
     await page.goto('/crm/leads');
+    await page.getByRole('button', { name: 'New lead' }).click();
     await page.getByLabel('Name').first().fill(leadName);
     await page.getByLabel('Phone').first().fill(`9${Date.now()}`.slice(0, 10));
-    await page.getByRole('button', { name: 'Add lead' }).click();
+    await page.getByRole('button', { name: 'Create lead' }).click();
     await page.waitForURL(/\/crm\/leads\/[0-9a-f-]+$/);
     const leadId = page.url().split('/').pop()!;
 
@@ -98,6 +99,7 @@ test.describe('Commercial golden path', () => {
 
     // ---- 6. CRM lead shows the quotation + the project -------
     await page.goto(`/crm/leads/${leadId}`);
+    await page.getByRole('button', { name: 'Related' }).click();
     await expect(page.getByRole('heading', { name: 'Quotations' })).toBeVisible();
     await expect(page.getByRole('link', { name: quotationNumber })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Project / operations' })).toBeVisible();

@@ -42,9 +42,10 @@ test.describe('Supply chain golden path', () => {
     // ---- 2. create a CRM lead ------------------------------------
     const leadName = `Supply E2E ${Date.now()}`;
     await page.goto('/crm/leads');
+    await page.getByRole('button', { name: 'New lead' }).click();
     await page.getByLabel('Name').first().fill(leadName);
     await page.getByLabel('Phone').first().fill(`9${Date.now()}`.slice(0, 10));
-    await page.getByRole('button', { name: 'Add lead' }).click();
+    await page.getByRole('button', { name: 'Create lead' }).click();
     await page.waitForURL(/\/crm\/leads\/[0-9a-f-]+$/);
     const leadId = page.url().split('/').pop()!;
 
@@ -129,8 +130,9 @@ test.describe('Supply chain golden path', () => {
 
     // ---- 12. CRM lead shows the linked project + readiness --
     await page.goto(`/crm/leads/${leadId}`);
+    await page.getByRole('button', { name: 'Related' }).click();
     await expect(page.getByRole('heading', { name: 'Project / operations' })).toBeVisible();
     await expect(page.getByRole('link', { name: projectNumber })).toBeVisible();
-    await expect(page.getByText('Material readiness: 100%')).toBeVisible();
+    await expect(page.getByText(/material readiness 100%/i)).toBeVisible();
   });
 });

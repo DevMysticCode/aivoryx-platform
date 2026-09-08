@@ -871,6 +871,42 @@ export interface paths {
     patch: operations['deprecateCustomField'];
     trace?: never;
   };
+  '/crm/saved-views': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The caller’s CRM saved views. */
+    get: operations['listSavedViews'];
+    put?: never;
+    /** Save a lead-list view. */
+    post: operations['createSavedView'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/crm/saved-views/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete a saved view. */
+    delete: operations['deleteSavedView'];
+    options?: never;
+    head?: never;
+    /** Rename or re-scope a saved view. */
+    patch: operations['updateSavedView'];
+    trace?: never;
+  };
   '/integrations/webhooks/pabbly/{sourceKey}': {
     parameters: {
       query?: never;
@@ -5334,6 +5370,28 @@ export interface components {
        * @enum {string}
        */
       entity: 'lead' | 'visit';
+    };
+    SavedViewDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      config: {
+        [key: string]: unknown;
+      };
+      createdAt: string;
+      updatedAt: string;
+    };
+    CreateSavedViewDto: {
+      name: string;
+      config: {
+        [key: string]: unknown;
+      };
+    };
+    UpdateSavedViewDto: {
+      name?: string;
+      config?: {
+        [key: string]: unknown;
+      };
     };
     IngestAcceptedResponseDto: {
       accepted: boolean;
@@ -10842,6 +10900,124 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listSavedViews: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SavedViewDto'][];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  createSavedView: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateSavedViewDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SavedViewDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  deleteSavedView: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateSavedView: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSavedViewDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SavedViewDto'];
         };
       };
       403: {

@@ -48,6 +48,18 @@ lead_followups
 `customers` (a lead graduating to an account) remains future work — Phase 3
 stops at qualification/conversion of the lead itself (CLAUDE.md §28).
 
+**Phase 13C — `crm_saved_views`** (migration `0018`): a named lead-list filter
+configuration, tenant-owned and **owned per membership**. Columns: `tenant_id`,
+`membership_id` (composite FK → `user_tenant_memberships (id, tenant_id)`,
+`on delete cascade`), `name`, `config` (JSONB — a UI-owned `{ q, status,
+assignedMembershipId, board }` blob; the server validates only that it is an
+object), `sort_order`, timestamps; unique `(tenant_id, membership_id, name)`.
+RLS ENABLE + FORCE, full DML to `aivoryx_app`, standard
+`tenant_id = app.tenant_id` isolation. Per-user isolation is a
+`membership_id = <actor>` predicate in `SavedViewsService` (RLS has no
+membership binding — the same pattern as `lead_notes` /
+`notification_preferences`); views never leak between users or tenants.
+
 ## Field/Sales entities
 
 **Implemented (Phase 4, ADR 0033):**
@@ -366,6 +378,10 @@ project_id is not null` on `quotations`. It also adds
   rows, `#rrggbb` / ISO-currency CHECKs on the colour + currency columns, a
   positive `size_bytes` CHECK on `tenant_assets`, and one enum
   (`tenant_asset_kind`). Logo bytes live in object storage, never in a column.
+- Migration `0018` (Phase 13C) adds `crm_saved_views` (see "CRM entities"). The
+  hand-appended block applies the standard `GRANT`, `ENABLE` + `FORCE ROW LEVEL
+SECURITY` and the `tenant_id = app.tenant_id` isolation policy;
+  `meta/0018_snapshot.json` is unchanged, so `db:generate` reports no drift.
 - Migrations `0015`–`0017` (Phase 13A, ADR 0042) add the platform-access
   foundation. `0015`: `platform_admins` (global — `aivoryx_app` gets `SELECT`
   only, INSERT/UPDATE/DELETE `REVOKE`d, `platform_admins_self_read` policy

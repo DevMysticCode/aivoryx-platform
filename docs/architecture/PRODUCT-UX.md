@@ -92,19 +92,74 @@ primary surface):
   non-entitled module cannot be selected, and the API's
   `ACCESS_PERMISSION_NOT_AVAILABLE` is surfaced inline.
 
+## Dashboard framework (Phase 13C)
+
+`/` is a **composition of widgets**, not seven hand-built dashboards.
+
+- `apps/web/lib/dashboard/registry.tsx` — the widget registry. Each entry:
+  `{ key, module?, permissions?, title, span, priority, Component }`. Each
+  business module contributes entries here; this is the single cross-module
+  composition point.
+- `apps/web/lib/dashboard/select.ts` — `selectDashboardWidgets(widgets, access)`
+  is a **pure** function (unit-tested): a widget shows iff its `module` is
+  entitled **and** every `permission` is held. Role-awareness is emergent — a
+  Sales user only holds `crm.*`, so only CRM widgets pass; a Tenant Admin sees
+  the full board. Widgets are sorted by `priority`.
+- `apps/web/components/dashboard/*-widgets.tsx` — one file per module concern
+  (`crm-`, `hr-`, `finance-`, `field-`, `common-`). Each widget owns its own
+  data fetch via that module's existing hooks (`useCrmOverview`,
+  `useHrDashboard`, `useFinanceOverview`, `useVisits`) — the dashboard framework
+  and `/` page import **no** business service.
+- Widgets have their own loading / error / empty states (`WidgetSkeleton`,
+  `WidgetError`, `WidgetStat`). No widget fetches data for a module the user
+  cannot access; §36 verified by `dashboard.spec.ts` (a CRM+Supply tenant never
+  renders HR / Finance / Field widgets, even with the permissions).
+- Responsive: a 12-column grid on `md+`, single column on mobile;
+  `data-testid="widget-<key>"` on each cell.
+
+A future module contributes a dashboard widget by pushing one registry entry —
+the page does not change.
+
 ## CRM flagship (the standard)
 
 - **`/crm` overview** — real KPIs from the existing `GET /crm/leads` endpoint
   (total, open, qualified, conversion), a leads-by-status bar chart that links
   into filtered lists, and recent leads. Quick "New lead" action.
+- **`/crm/leads` — premium workspace (Phase 13C):**
+  - toolbar: debounced search, status + assignee filters that render as
+    **removable chips** with "Clear all", a **Saved views** menu, and a
+    **Table / Board** toggle.
+  - **Saved views** are server-persisted (`crm_saved_views`, owned per
+    membership — never shared across users or tenants, RLS + query-scoped).
+    The UI stores a small `{ q, status, assignedMembershipId, board }` config;
+    `serializeViewConfig` / `parseViewConfig` are pure and unit-tested.
+  - **Board view** — kanban columns by the existing lead lifecycle
+    (`NEW → … → CONVERTED`); cards open the workspace. No second status model.
+  - **Bulk actions** — select rows → assign / change status. Each row goes
+    through the existing per-lead endpoint, so the CRM lifecycle rules still
+    apply to every lead; a status transition that isn't allowed leaves that
+    lead unchanged and the toast reports "N updated, M could not be changed".
+    High-impact bulk status changes are confirmed.
+  - **Mobile** — the table is `hidden md:block`; a **card list** renders below
+    it on small screens. Quick create is a full dialog.
+- **`/crm/leads/:id` — record workspace (Phase 13C):** a strong header (name,
+  status, phone/email/owner/source, prominent **Call / Follow-up / Edit**
+  actions) over a tab bar — **Overview** (contact + custom fields + "move the
+  lead forward" + log-a-call), **Activity** (a real vertical timeline with
+  per-type labels), **Follow-ups** (grouped overdue / upcoming / completed with
+  quick actions), **Notes** (inline add/edit/delete), **Related** (site visits,
+  quotations, project — each hidden when the member lacks that module's read
+  permission). Editing is a grouped dialog (Contact / Location); industry
+  specifics stay in custom fields.
 - **Module sub-nav** — Overview · Leads · Customers · Visits, itself
   entitlement/permission-filtered.
 - **Command palette (⌘/Ctrl-K)** — navigate, create (only commands the user is
   authorised for — "Create Lead" needs CRM + `crm.leads.read`/`crm.leads.create`),
   and debounced search over leads + customers, grouped by type, full keyboard
   nav.
-- **Quick create** — `/crm/leads?new=1` focuses the inline create form;
-  `?status=` deep-links a filtered list.
+- **Quick create** — a fast dialog from the dashboard, the list, and the
+  command palette; `/crm/leads?new=1` opens it, `?status=` deep-links a filtered
+  list.
 
 ## Feedback, states, motion
 
@@ -139,8 +194,12 @@ module. The backend guard + RLS remain authoritative.
 ## Future UX rollout
 
 Apply the CRM standard, in order, to: HR self-service → Field → Finance →
-Commercial → Supply → EPC. Each module gets: an overview with real KPIs, an
-entitlement/permission-filtered sub-nav, list→detail with a mobile card view, a
-consistent detail workspace, and command-palette create actions. A role-aware
-dashboard framework (`/`) and CRM saved-views/kanban/bulk are the first
-follow-ups (see ROADMAP "Deferred UX work").
+Commercial → Supply → EPC. Each module gets: a dashboard widget (one registry
+entry), an overview with real KPIs, an entitlement/permission-filtered sub-nav,
+a list with removable-chip filters + saved views + mobile cards, a tabbed
+record workspace, and command-palette create actions. Phase 13C established
+every one of those patterns on the dashboard and CRM; later modules copy them.
+
+Deferred within CRM (see ROADMAP): drag-and-drop board transitions, date /
+source / follow-up-state list filters (need extra `GET /crm/leads` params),
+column show/hide, and promoting `components/ui/*` into `packages/ui`.

@@ -1,43 +1,89 @@
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { OnboardingCard } from '@/components/onboarding-card';
+'use client';
 
-export default function OverviewPage() {
-  return (
-    <section className="space-y-6">
-      <OnboardingCard />
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { cn } from '@aivoryx/ui';
+import { ApiError } from '@/lib/api/client';
+import { useMe } from '@/lib/admin/use-admin';
+import { useAccess } from '@/lib/navigation/use-access';
+import { useDashboardWidgets } from '@/lib/dashboard/use-dashboard';
+import { LoadingBlock } from '@/components/ui/kit';
 
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Platform foundation</h1>
-        <p className="text-sm text-muted-foreground">
-          Phase 1 is the reusable technical foundation only — no business modules yet. The API,
-          database, Redis/queue, logging, error handling and CI are wired and verifiable.
+const SPAN_CLASS: Record<number, string> = {
+  3: 'md:col-span-3',
+  4: 'md:col-span-4',
+  6: 'md:col-span-6',
+  12: 'md:col-span-12',
+};
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const me = useMe();
+  const access = useAccess();
+  const { isLoading, widgets } = useDashboardWidgets();
+
+  const unauthenticated = me.error instanceof ApiError && me.error.status === 401;
+
+  useEffect(() => {
+    if (unauthenticated) router.replace('/login');
+    // a platform admin with no workspace belongs in the platform console
+    else if (me.data && !me.data.active && me.data.isPlatformAdmin) router.replace('/platform');
+  }, [unauthenticated, me.data, router]);
+
+  if (me.isLoading || unauthenticated) return <LoadingBlock />;
+
+  if (me.data && !me.data.active) {
+    return (
+      <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+        <p className="font-medium">No active workspace</p>
+        <p className="mt-1 text-muted-foreground">
+          Your account is signed in but has no usable workspace membership. Ask an administrator to
+          add you to a workspace, then sign in again.
         </p>
       </div>
+    );
+  }
 
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {[
-          ['Next.js + PWA shell', 'apps/web'],
-          ['NestJS REST API · /api/v1', 'apps/api'],
-          ['PostgreSQL + Drizzle (UUIDv7)', 'packages/db'],
-          ['Redis + BullMQ infrastructure', 'apps/api/src/queue'],
-          ['Pino logs + correlation IDs', 'apps/api/src/observability'],
-          ['Zod-validated config', 'packages/config'],
-        ].map(([title, path]) => (
-          <li key={path} className="rounded-lg border p-4">
-            <p className="text-sm font-medium">{title}</p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">{path}</p>
-          </li>
-        ))}
-      </ul>
+  const firstName = (me.data?.user.email ?? '').split('@')[0]?.split(/[.\-_]/)[0] ?? '';
 
-      <Link
-        href="/health"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-      >
-        Check system health
-        <ArrowRight className="size-4" aria-hidden />
-      </Link>
-    </section>
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">
+            {firstName
+              ? `Welcome back, ${firstName[0]!.toUpperCase()}${firstName.slice(1)}`
+              : 'Dashboard'}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {access.tenantName ?? 'Your workspace'} · {widgets.length} widget
+            {widgets.length === 1 ? '' : 's'} available to you
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <LoadingBlock />
+      ) : widgets.length === 0 ? (
+        <div className="rounded-lg border p-8 text-center text-sm">
+          <p className="font-medium">Nothing to show yet</p>
+          <p className="mt-1 text-muted-foreground">
+            Your dashboard fills in as your workspace enables modules and your access is configured.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+          {widgets.map((w) => (
+            <div
+              key={w.key}
+              data-testid={`widget-${w.key}`}
+              className={cn('min-w-0', SPAN_CLASS[w.span])}
+            >
+              <w.Component />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

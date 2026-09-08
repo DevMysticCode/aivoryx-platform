@@ -126,6 +126,15 @@ permission-aware ⌘K command palette + CRM search, and **CRM as the flagship /
 reference UX** that later modules follow. The web layer invents no
 authorization — the backend guard + RLS stay authoritative.
 
+Phase 13C completes it: a **role/module/permission-aware dashboard** built from
+a reusable **widget registry** (`apps/web/lib/dashboard/`, pure filter,
+widgets fetch their own module data), and the premium CRM workspace — lead list
+with removable-chip filters, **persistent saved views** (`crm_saved_views`,
+per-membership, RLS-isolated), a kanban board over the existing lifecycle,
+lifecycle-safe bulk actions, mobile cards, and a tabbed lead-detail record
+workspace. Every one of those is now a copy-me pattern for HR / Field / Finance
+/ Commercial / Supply / EPC.
+
 ## Future productization
 
 The client is the first implementation. Generic capabilities should be configurable, not tenant-hard-coded. Client-specific behavior belongs in configuration or a clearly isolated vertical extension. No client-specific or provider-specific logic may leak into a reusable core module (ADR 0024).

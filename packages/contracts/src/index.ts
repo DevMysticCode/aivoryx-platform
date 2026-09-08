@@ -51,6 +51,11 @@ export type Followup = components['schemas']['FollowupDto'];
 export type CreateCustomFieldRequest = components['schemas']['CreateCustomFieldRequestDto'];
 export type CustomFieldDefinition = components['schemas']['CustomFieldDefinitionDto'];
 
+// Phase 13C — CRM lead-list saved views (ADR 0031, persisted).
+export type SavedView = components['schemas']['SavedViewDto'];
+export type CreateSavedViewRequest = components['schemas']['CreateSavedViewDto'];
+export type UpdateSavedViewRequest = components['schemas']['UpdateSavedViewDto'];
+
 // Phase 3 — inbound integration engine (ADR 0032).
 export type CreateSourceRequest = components['schemas']['CreateSourceRequestDto'];
 export type CreateSourceResponse = components['schemas']['CreateSourceResponseDto'];

@@ -87,6 +87,8 @@ const RLS_TABLES = [
   'audit_logs',
   // Phase 13 — Platform access & module entitlements (ADR 0042)
   'tenant_module_entitlements',
+  // Phase 13C — CRM lead-list saved views
+  'crm_saved_views',
   // Phase 12 — HR & Workforce (ADR 0041)
   'hr_counters',
   'hr_departments',
@@ -2229,6 +2231,82 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
             and relname in ('modules','module_catalogue','module_definitions')`,
       );
       expect(rows).toEqual([]);
+    });
+  });
+
+  describe('CRM saved views (Phase 13C)', () => {
+    beforeAll(async () => {
+      // one saved view per tenant, owned by that tenant's admin membership
+      for (const [tenantId, membershipId] of [
+        [fx.tenantA, fx.admin.membershipId],
+        [fx.tenantB, fx.adminB.membershipId],
+      ] as const) {
+        await pool.query(
+          `insert into crm_saved_views (id, tenant_id, membership_id, name, config)
+           values (gen_random_uuid(), $1, $2, 'rls-view', '{"status":"NEW"}'::jsonb)
+           on conflict do nothing`,
+          [tenantId, membershipId],
+        );
+      }
+    });
+
+    it('crm_saved_views has RLS ENABLED + FORCED and full DML for aivoryx_app', async () => {
+      const { rows } = await pool.query<{ a: boolean; f: boolean }>(
+        `select relrowsecurity a, relforcerowsecurity f from pg_class
+          where relname='crm_saved_views' and relnamespace='public'::regnamespace`,
+      );
+      expect(rows[0]).toMatchObject({ a: true, f: true });
+      const grant = await pool.query<{ privilege_type: string }>(
+        `select privilege_type from information_schema.role_table_grants
+          where table_name='crm_saved_views' and grantee='aivoryx_app' order by 1`,
+      );
+      expect(grant.rows.map((g) => g.privilege_type)).toEqual([
+        'DELETE',
+        'INSERT',
+        'SELECT',
+        'UPDATE',
+      ]);
+    });
+
+    it('tenant A cannot READ or MUTATE tenant B saved views', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'crm_saved_views', `where tenant_id = '${fx.tenantB}'`)).toBe(0);
+        expect(await count(c, 'crm_saved_views', `where tenant_id = '${fx.tenantA}'`)).toBe(1);
+        expect(
+          (await c.query("update crm_saved_views set name='HACK' where tenant_id=$1", [fx.tenantB]))
+            .rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from crm_saved_views where tenant_id=$1', [fx.tenantB])).rowCount,
+        ).toBe(0);
+        await c.query('savepoint sp');
+        await expect(
+          c.query(
+            `insert into crm_saved_views (id, tenant_id, membership_id, name, config)
+             values (gen_random_uuid(), $1, $2, 'x', '{}'::jsonb)`,
+            [fx.tenantB, fx.adminB.membershipId],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+        await c.query('rollback to savepoint sp');
+      });
+      const { rows } = await pool.query<{ name: string }>(
+        'select name from crm_saved_views where tenant_id=$1',
+        [fx.tenantB],
+      );
+      expect(rows.every((r) => r.name !== 'HACK')).toBe(true);
+    });
+
+    it('missing tenant context fails closed', async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('set role aivoryx_app');
+        await c.query('begin');
+        expect(await count(c, 'crm_saved_views')).toBe(0);
+      } finally {
+        await c.query('rollback').catch(() => undefined);
+        await c.query('reset role').catch(() => undefined);
+        c.release();
+      }
     });
   });
 

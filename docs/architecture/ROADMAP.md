@@ -292,14 +292,48 @@ layer above a tenant. Authorization order is fixed: **tenant module entitlement
   `profile` / `permissionSets` DTOs so the contract is usable client-side ✅
 - Playwright: `platform.spec.ts` (§64) + `crm-ux.spec.ts` (§65); full existing
   suite green (17/17) ✅
-- **NOT done (deferred):** role-aware dashboard framework at `/` (still the
-  Phase-1 placeholder); CRM lead-list rebuild (kanban / saved-view persistence /
-  bulk actions / mobile cards) and the lead-detail workspace redesign; per-module
-  entitlement-aware empty states beyond the stable API message; promoting the
-  shared kit into `packages/ui`; per-module mobile refinement for HR/Field/etc.
+- 13B did **not** ship: the dashboard framework and the CRM list/detail rebuild
+  — those are Phase 13C, below.
 - out of scope (unchanged): billing, dashboard builder, arbitrary themes/nav
   builder, ABAC / field-level security, universal search engine, CRM automation /
   marketing automation, BI platform, separate frontend apps
+
+### Phase 13C — Dashboard framework + premium CRM workspace (`PRODUCT-UX.md`)
+
+- **role/module/permission-aware dashboard** replacing the `/` placeholder — a
+  reusable **widget registry** (`apps/web/lib/dashboard/registry.tsx`) + a pure,
+  unit-tested `selectDashboardWidgets` filter; widgets for CRM pipeline / recent
+  leads, field visits, receivables, workforce, and quick actions, each fetching
+  its own data via its module's hooks (the framework imports no business
+  service); responsive 12-col grid ✅
+- **premium CRM lead list** — debounced search, status + assignee filters as
+  removable chips + "Clear all", **Table / Board (kanban by the existing
+  lifecycle)** toggle, **bulk assign / status** (per-lead endpoints, lifecycle
+  rules still apply, confirmed), **mobile card list**, full loading / empty
+  (with "clear filters") / error (with retry) states ✅
+- **persistent saved views** — `crm_saved_views` (migration `0018`): tenant-owned,
+  **owned per membership**, RLS ENABLE+FORCE + query-scoped so views never leak
+  between users or tenants; `GET/POST/PATCH/DELETE /crm/saved-views` gated by
+  `crm.leads.read`; pure `serialize/parseViewConfig` (unit-tested) ✅
+- **premium CRM lead detail workspace** — header (name / status / contact /
+  owner / source) with prominent Call / Follow-up / Edit, over tabs Overview ·
+  Activity (real vertical timeline, per-type labels) · Follow-ups (overdue /
+  upcoming / completed) · Notes · Related (visits / quotations / project, each
+  hidden without that module's read permission); grouped edit dialog ✅
+- 2 new stable error codes (`SAVED_VIEW_NOT_FOUND`, `SAVED_VIEW_DUPLICATE_NAME`);
+  `SavedViewDto` contract types; OpenAPI regenerated, no unrelated drift ✅
+- tests: web unit (dashboard select ×5, saved-view config ×5),
+  `crm-saved-views.int.spec.ts` (×5 — CRUD, per-user + per-tenant isolation,
+  permission gate), `rls.int.spec.ts` +3 (`crm_saved_views` RLS block),
+  Playwright `dashboard.spec.ts` + `crm-premium.spec.ts` + updated
+  `smoke.spec.ts` / `crm.spec.ts` ✅
+- **deferred (documented):** drag-and-drop board transitions; date / source /
+  follow-up-state list filters (need extra `GET /crm/leads` params); column
+  show/hide; promoting `components/ui/*` into `packages/ui`; the same standard
+  rolled out to HR / Field / Finance / Commercial / Supply / EPC.
+
+**Phase 13 is complete** with the above deferrals recorded. Do not merge — the
+branch stays for review.
 
 ## Stream G — Service
 

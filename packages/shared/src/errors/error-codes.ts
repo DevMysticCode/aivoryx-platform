@@ -148,6 +148,14 @@ export const ERROR_CODES = {
     httpStatus: 404,
     message: 'That custom field does not exist in this workspace.',
   },
+  SAVED_VIEW_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That saved view was not found.',
+  },
+  SAVED_VIEW_DUPLICATE_NAME: {
+    httpStatus: 409,
+    message: 'You already have a saved view with that name.',
+  },
   CUSTOM_FIELD_INVALID_VALUE: {
     httpStatus: 400,
     message: 'That value is not valid for this custom field.',
