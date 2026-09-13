@@ -40,9 +40,10 @@ test.describe('CRM flagship UX', () => {
     // 8. create a lead via quick create
     const name = `E2E Lead ${Date.now()}`;
     await page.getByRole('button', { name: 'New lead' }).click();
-    await page.getByLabel('Name').first().fill(name);
-    await page.getByLabel('Phone').first().fill('9800000123');
-    await page.getByRole('button', { name: 'Create lead' }).click();
+    const dialog = page.getByRole('dialog', { name: 'New lead' });
+    await dialog.getByLabel('Name').fill(name);
+    await dialog.getByLabel('Phone').fill('9800000123');
+    await dialog.getByRole('button', { name: 'Create lead' }).click();
 
     // 9–10. land on the lead detail and change status through a valid transition
     await page.waitForURL('**/crm/leads/**');

@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ChevronRight, Search } from 'lucide-react';
+import { ChevronRight, Plus, Search } from 'lucide-react';
 import { PageHeader, StatusBadge } from '@/components/admin/ui';
 import { ErrorBlock, LoadingBlock } from '@/components/ui/kit';
 import { usePlatformTenants } from '@/lib/platform/use-platform';
 
 type SortKey = 'name' | 'members' | 'modules' | 'created';
+type StatusFilter = 'all' | 'provisioning' | 'active' | 'suspended' | 'archived';
 
 export default function PlatformTenantsPage() {
   const tenants = usePlatformTenants();
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState<'all' | 'active' | 'suspended'>('all');
+  const [status, setStatus] = useState<StatusFilter>('all');
   const [sort, setSort] = useState<SortKey>('name');
 
   const rows = useMemo(() => {
@@ -34,7 +35,14 @@ export default function PlatformTenantsPage() {
       <PageHeader
         title="Companies"
         description="Every Aivoryx workspace. Open one to manage its module entitlements."
-      />
+      >
+        <Link
+          href="/platform/tenants/new"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+        >
+          <Plus className="size-4" aria-hidden /> Create company
+        </Link>
+      </PageHeader>
 
       <div className="flex flex-wrap items-center gap-2">
         <label className="relative flex-1 sm:max-w-xs">
@@ -53,8 +61,10 @@ export default function PlatformTenantsPage() {
           aria-label="Status filter"
         >
           <option value="all">All statuses</option>
+          <option value="provisioning">Provisioning</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
+          <option value="archived">Archived</option>
         </select>
         <select
           value={sort}

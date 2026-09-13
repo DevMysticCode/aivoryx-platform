@@ -4,6 +4,16 @@ import { newUuidV7 } from '../id.js';
 import { tenants, users } from './identity.js';
 
 /**
+ * Subscription abstraction (Phase 14 §29-31) — architectural readiness for
+ * future billing, not billing itself. `plan_key` / a plan's `solution_key`
+ * are code-defined catalogues (`@aivoryx/shared`), never rows in this table.
+ * `tenant_subscriptions` records only which plan a tenant currently has and
+ * its commercial status; it is NOT consulted for authorization — that stays
+ * `tenant_module_entitlements`, set once during provisioning from the plan's
+ * solution and independently adjustable afterwards.
+ */
+
+/**
  * Platform access & module entitlements (Phase 13, ADR 0042).
  *
  * Two new concepts, plus small additive columns on the existing RBAC tables
@@ -82,9 +92,44 @@ export const tenantModuleEntitlements = pgTable(
   ],
 );
 
+// --- tenant_subscriptions (TENANT-OWNED) -----------------------------
+
+export const subscriptionStatus = pgEnum('subscription_status', ['active', 'canceled', 'expired']);
+
+export const tenantSubscriptions = pgTable(
+  'tenant_subscriptions',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => newUuidV7()),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    /** stable plan key from the code catalogue (`@aivoryx/shared` PLAN_DEFINITIONS) */
+    planKey: text('plan_key').notNull(),
+    status: subscriptionStatus('status').notNull().default('active'),
+    startedAt: timestamp('started_at', { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+    renewsAt: timestamp('renews_at', { withTimezone: true }),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    /** opaque reference into a future billing provider — never interpreted here */
+    billingProviderRef: text('billing_provider_ref'),
+    ...entityTimestamps,
+  },
+  (t) => [
+    // One subscription row per tenant for now — a history table is future work
+    // if/when actual plan changes over time need to be tracked (§30).
+    unique('tenant_subscriptions_tenant_uq').on(t.tenantId),
+    index('tenant_subscriptions_tenant_idx').on(t.tenantId),
+  ],
+);
+
 // --- row types --------------------------------------------------------
 
 export type PlatformAdminRow = typeof platformAdmins.$inferSelect;
 export type NewPlatformAdminRow = typeof platformAdmins.$inferInsert;
 export type TenantModuleEntitlementRow = typeof tenantModuleEntitlements.$inferSelect;
 export type NewTenantModuleEntitlementRow = typeof tenantModuleEntitlements.$inferInsert;
+export type TenantSubscriptionRow = typeof tenantSubscriptions.$inferSelect;
+export type NewTenantSubscriptionRow = typeof tenantSubscriptions.$inferInsert;

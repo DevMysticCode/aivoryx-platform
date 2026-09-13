@@ -8,7 +8,7 @@ import { PasswordService } from '../auth/password.service.js';
 import { generateInvitationToken, hashInvitationToken } from './invitation-token.js';
 import { OutboxService } from './outbox.service.js';
 import { resolveRoleKeys } from './admin-queries.js';
-import { AuditService } from '../audit/audit.service.js';
+import { AuditService, type AuditActor } from '../audit/audit.service.js';
 
 const { membershipRoles, tenantInvitations, userTenantMemberships, users } = schema;
 
@@ -17,8 +17,15 @@ export const INVITATION_CREATED_EVENT = 'user.invitation.created';
 export interface CreateInvitationInput {
   tenantId: string;
   actingUserId: string;
-  /** the acting admin's membership — for audit attribution */
-  actingMembershipId: string;
+  /**
+   * The acting tenant admin's membership, for audit attribution. Omit only
+   * when the caller has no membership in this tenant — e.g. a platform admin
+   * provisioning a brand-new tenant (Phase 14 §15) — in which case pass
+   * `actor` explicitly instead.
+   */
+  actingMembershipId?: string;
+  /** overrides the default USER actor; required when `actingMembershipId` is omitted */
+  actor?: AuditActor;
   email: string;
   name?: string;
   roleKeys: string[];
@@ -173,12 +180,17 @@ export class InvitationService {
         });
 
         // 6. audit — same transaction, so a failed audit rolls the invite back
+        const actor: AuditActor =
+          input.actor ??
+          (input.actingMembershipId
+            ? { type: 'USER', membershipId: input.actingMembershipId }
+            : { type: 'SYSTEM', source: 'invitation-service' });
         await this.audit.record(tx, {
           tenantId: input.tenantId,
           action: 'tenant.member.invited',
           entityType: 'membership',
           entityId: membershipId,
-          actor: { type: 'USER', membershipId: input.actingMembershipId },
+          actor,
           metadata: { email, roleKeys: input.roleKeys, reinvite: Boolean(existingMembership) },
         });
 

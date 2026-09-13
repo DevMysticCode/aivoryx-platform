@@ -4,12 +4,27 @@ import Link from 'next/link';
 import { use, useState } from 'react';
 import { ArrowLeft, Check, Lock } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
+import { nextTenantStatuses, type TenantStatus } from '@aivoryx/shared';
 import { ApiError } from '@/lib/api/client';
 import { PageHeader, StatusBadge } from '@/components/admin/ui';
 import { StatCard, ErrorBlock, LoadingBlock, Confirm } from '@/components/ui/kit';
 import { useToast } from '@/components/ui/toast';
-import { usePlatformTenant, useSetTenantModule } from '@/lib/platform/use-platform';
+import {
+  useActivateTenant,
+  useArchiveTenant,
+  usePlatformTenant,
+  useSetTenantModule,
+  useSuspendTenant,
+  useTenantUsage,
+} from '@/lib/platform/use-platform';
 import type { PlatformTenantModule } from '@aivoryx/contracts';
+
+/** A tenant never transitions back to 'provisioning' — only forward actions apply. */
+const LIFECYCLE_ACTION_LABEL: Partial<Record<TenantStatus, string>> = {
+  active: 'Activate',
+  suspended: 'Suspend',
+  archived: 'Archive',
+};
 
 export default function PlatformTenantDetailPage({
   params,
@@ -18,12 +33,17 @@ export default function PlatformTenantDetailPage({
 }) {
   const { tenantId } = use(params);
   const tenant = usePlatformTenant(tenantId);
+  const usage = useTenantUsage(tenantId);
   const setModule = useSetTenantModule(tenantId);
+  const activate = useActivateTenant(tenantId);
+  const suspend = useSuspendTenant(tenantId);
+  const archive = useArchiveTenant(tenantId);
   const toast = useToast();
   const [confirm, setConfirm] = useState<{
     module: PlatformTenantModule;
     next: 'ENABLED' | 'DISABLED';
   } | null>(null);
+  const [lifecycleConfirm, setLifecycleConfirm] = useState<TenantStatus | null>(null);
 
   const modules = (tenant.data?.modules ?? []).slice().sort((a, b) => a.order - b.order);
   const enabledKeys = new Set(modules.filter((m) => m.state === 'ENABLED').map((m) => m.key));
@@ -62,6 +82,28 @@ export default function PlatformTenantDetailPage({
     }
   };
 
+  const lifecycleMutation = (to: TenantStatus) =>
+    to === 'active' ? activate : to === 'suspended' ? suspend : archive;
+
+  const applyLifecycle = async (to: TenantStatus) => {
+    try {
+      await lifecycleMutation(to).mutateAsync(undefined);
+      toast.success(`${tenant.data?.name} is now ${to}.`);
+      setLifecycleConfirm(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not change the workspace status.');
+      setLifecycleConfirm(null);
+    }
+  };
+
+  const onLifecycleAction = (to: TenantStatus) => {
+    if (to === 'suspended' || to === 'archived') {
+      setLifecycleConfirm(to);
+    } else {
+      void applyLifecycle(to);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Link
@@ -78,7 +120,27 @@ export default function PlatformTenantDetailPage({
       ) : tenant.data ? (
         <>
           <PageHeader title={tenant.data.name} description={tenant.data.slug}>
-            <StatusBadge status={tenant.data.status} />
+            <div className="flex items-center gap-2">
+              <StatusBadge status={tenant.data.status} />
+              {nextTenantStatuses(tenant.data.status)
+                .filter((s) => s !== 'provisioning')
+                .map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => onLifecycleAction(s)}
+                    disabled={activate.isPending || suspend.isPending || archive.isPending}
+                    className={cn(
+                      'rounded-md border px-3 py-1.5 text-sm font-medium disabled:opacity-50',
+                      s === 'archived'
+                        ? 'hover:bg-destructive/10 hover:text-destructive'
+                        : 'hover:bg-primary/10 hover:text-primary',
+                    )}
+                  >
+                    {LIFECYCLE_ACTION_LABEL[s]}
+                  </button>
+                ))}
+            </div>
           </PageHeader>
 
           <div className="grid gap-3 sm:grid-cols-3">
@@ -92,6 +154,47 @@ export default function PlatformTenantDetailPage({
               label="Created"
               value={new Date(tenant.data.createdAt).toLocaleDateString()}
             />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <section className="rounded-lg border p-4">
+              <h2 className="text-sm font-semibold">Subscription</h2>
+              {tenant.data.subscription ? (
+                <div className="mt-2 space-y-1 text-sm">
+                  <p className="font-medium">{tenant.data.subscription.planKey}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {tenant.data.subscription.status} · since{' '}
+                    {new Date(tenant.data.subscription.startedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">No subscription on record.</p>
+              )}
+            </section>
+            <section className="rounded-lg border p-4">
+              <h2 className="text-sm font-semibold">Usage</h2>
+              {usage.isLoading ? (
+                <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
+              ) : usage.data ? (
+                <dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                  {(
+                    [
+                      ['Leads', usage.data.leads],
+                      ['Projects', usage.data.projects],
+                      ['Invoices', usage.data.invoices],
+                      ['Employees', usage.data.employees],
+                    ] as const
+                  ).map(([label, value]) =>
+                    value === null ? null : (
+                      <div key={label}>
+                        <dt className="text-xs text-muted-foreground">{label}</dt>
+                        <dd className="font-medium tabular-nums">{value}</dd>
+                      </div>
+                    ),
+                  )}
+                </dl>
+              ) : null}
+            </section>
           </div>
 
           <section className="rounded-lg border">
@@ -194,6 +297,29 @@ export default function PlatformTenantDetailPage({
             {confirm?.module.displayName} features and its API. Their profiles and permission sets
             are kept — re-enabling restores access.
           </>
+        }
+      />
+
+      <Confirm
+        open={!!lifecycleConfirm}
+        onClose={() => setLifecycleConfirm(null)}
+        onConfirm={() => lifecycleConfirm && applyLifecycle(lifecycleConfirm)}
+        title={`${lifecycleConfirm ? LIFECYCLE_ACTION_LABEL[lifecycleConfirm] : ''} ${tenant.data?.name}?`}
+        confirmLabel={lifecycleConfirm ? LIFECYCLE_ACTION_LABEL[lifecycleConfirm] : 'Confirm'}
+        danger
+        pending={suspend.isPending || archive.isPending}
+        body={
+          lifecycleConfirm === 'archived' ? (
+            <>
+              Users in <strong>{tenant.data?.name}</strong> will no longer be able to sign in or use
+              the workspace. Data is preserved — this is not reversible from here yet.
+            </>
+          ) : (
+            <>
+              Users in <strong>{tenant.data?.name}</strong> will no longer be able to sign in or use
+              the workspace until it is reactivated. Data is preserved.
+            </>
+          )
         }
       />
     </div>

@@ -34,7 +34,16 @@ import { newUuidV7 } from '../id.js';
 // Minimal platform-lifecycle states that authentication must consult. Not
 // business status. New values are added by migration when a flow needs them.
 
-export const tenantStatus = pgEnum('tenant_status', ['active', 'suspended']);
+// Phase 14 (§14): extended from ['active','suspended'] to the full tenant
+// lifecycle. New Postgres enum values are appended, never removed/reordered
+// (ALTER TYPE ... ADD VALUE in migration 0019) — existing 'active'/'suspended'
+// rows and their meaning are unchanged.
+export const tenantStatus = pgEnum('tenant_status', [
+  'active',
+  'suspended',
+  'provisioning',
+  'archived',
+]);
 export const userStatus = pgEnum('user_status', ['active', 'disabled']);
 // `invited` (Phase 2 Task 3): a membership created by an admin invitation that
 // the user has not accepted yet. It is not a usable membership until accepted.

@@ -89,6 +89,8 @@ const RLS_TABLES = [
   'tenant_module_entitlements',
   // Phase 13C — CRM lead-list saved views
   'crm_saved_views',
+  // Phase 14 — SaaS platform operations: subscription abstraction
+  'tenant_subscriptions',
   // Phase 12 — HR & Workforce (ADR 0041)
   'hr_counters',
   'hr_departments',
@@ -2302,6 +2304,85 @@ describe.skipIf(!INTEGRATION_ENABLED)('PostgreSQL Row Level Security', () => {
         await c.query('set role aivoryx_app');
         await c.query('begin');
         expect(await count(c, 'crm_saved_views')).toBe(0);
+      } finally {
+        await c.query('rollback').catch(() => undefined);
+        await c.query('reset role').catch(() => undefined);
+        c.release();
+      }
+    });
+  });
+
+  describe('tenant_subscriptions (Phase 14)', () => {
+    beforeAll(async () => {
+      for (const [tenantId, planKey] of [
+        [fx.tenantA, 'AIVORYX_BUSINESS'],
+        [fx.tenantB, 'AIVORYX_FIELD_SERVICE'],
+      ] as const) {
+        await pool.query(
+          `insert into tenant_subscriptions (id, tenant_id, plan_key)
+           values (gen_random_uuid(), $1, $2)
+           on conflict (tenant_id) do nothing`,
+          [tenantId, planKey],
+        );
+      }
+    });
+
+    it('tenant_subscriptions has RLS ENABLED + FORCED and full DML for aivoryx_app', async () => {
+      const { rows } = await pool.query<{ a: boolean; f: boolean }>(
+        `select relrowsecurity a, relforcerowsecurity f from pg_class
+          where relname='tenant_subscriptions' and relnamespace='public'::regnamespace`,
+      );
+      expect(rows[0]).toMatchObject({ a: true, f: true });
+      const grant = await pool.query<{ privilege_type: string }>(
+        `select privilege_type from information_schema.role_table_grants
+          where table_name='tenant_subscriptions' and grantee='aivoryx_app' order by 1`,
+      );
+      expect(grant.rows.map((g) => g.privilege_type)).toEqual([
+        'DELETE',
+        'INSERT',
+        'SELECT',
+        'UPDATE',
+      ]);
+    });
+
+    it('tenant A cannot READ or MUTATE tenant B’s subscription', async () => {
+      await asApp(fx.tenantA, fx.admin.userId, async (c) => {
+        expect(await count(c, 'tenant_subscriptions', `where tenant_id = '${fx.tenantB}'`)).toBe(0);
+        expect(await count(c, 'tenant_subscriptions', `where tenant_id = '${fx.tenantA}'`)).toBe(1);
+        expect(
+          (
+            await c.query("update tenant_subscriptions set plan_key='HACKED' where tenant_id=$1", [
+              fx.tenantB,
+            ])
+          ).rowCount,
+        ).toBe(0);
+        expect(
+          (await c.query('delete from tenant_subscriptions where tenant_id=$1', [fx.tenantB]))
+            .rowCount,
+        ).toBe(0);
+      });
+      const { rows } = await pool.query<{ plan_key: string }>(
+        'select plan_key from tenant_subscriptions where tenant_id=$1',
+        [fx.tenantB],
+      );
+      expect(rows.every((r) => r.plan_key !== 'HACKED')).toBe(true);
+    });
+
+    it('a normal tenant user cannot read another tenant’s subscription via the platform-read policy', async () => {
+      // the platform-read policy on tenant_subscriptions matches ONLY a
+      // platform_admins row — fx.admin holds no such row, so app.user_id
+      // alone (no app.tenant_id) must still return nothing for them.
+      await asUser(fx.admin.userId, async (c) => {
+        expect(await count(c, 'tenant_subscriptions')).toBe(0);
+      });
+    });
+
+    it('missing tenant context fails closed', async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('set role aivoryx_app');
+        await c.query('begin');
+        expect(await count(c, 'tenant_subscriptions')).toBe(0);
       } finally {
         await c.query('rollback').catch(() => undefined);
         await c.query('reset role').catch(() => undefined);

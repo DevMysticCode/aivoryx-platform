@@ -1,12 +1,20 @@
 # Product UX
 
-_Phase 13B–13D · ADR 0031, ADR 0042. See also `PLATFORM-ACCESS.md`,
+_Phase 13B–14 · ADR 0031, ADR 0042, ADR 0043. See also `PLATFORM-ACCESS.md`,
 `AUTHORIZATION.md`, `MODULE-ENTITLEMENTS.md`, `BRANDING.md`, `FRONTEND.md`._
 
 Phase 13D refined the Global Dashboard and rebuilt the CRM dashboard into the
 sales command center described below, added the dashboard section-grouping
 mechanism, and added a small dedicated CRM analytics endpoint — all on the
 Phase 13B/13C shell, widget-registry and authorization architecture, unchanged.
+
+Phase 14 established the Aivoryx Design System principles and semantic status
+tokens below, and built the SaaS platform operations layer — tenant lifecycle,
+a code-defined solution/plan catalogue, a real provisioning workflow, and
+basic tenant usage — documented in its own section further down and in
+ADR 0043. It did not rewrite CRM or the Global Dashboard again; the platform
+tenant list/detail screens and the new provisioning wizard are the phase's
+concrete demonstration of the design principles.
 
 Phase 13B makes Aivoryx feel like one **premium, fast, access-aware SaaS
 product** rather than a set of CRUD screens. CRM is the **reference
@@ -275,3 +283,124 @@ was reviewed and kept — CRM already groups via `children`, and restructuring
 risked churn across the existing Playwright suite for a vertical-space gain
 that is currently marginal); a genuinely cross-module "main trend" chart on
 `/` beyond the CRM lead-activity trend and each module's own widget.
+
+## Aivoryx Design System (Phase 14)
+
+Twelve standing principles — every new screen is reviewed against these, not
+just told to "look nice":
+
+1. **Information first** — the data is the interface; chrome earns its place.
+2. **Action over decoration** — a button exists to be pressed, not to fill space.
+3. **Density without clutter** — compact tables and tight vertical rhythm, but
+   never two unrelated facts sharing one line.
+4. **Whitespace with purpose** — spacing marks a boundary or a hierarchy, not a
+   default gap.
+5. **Minimal unnecessary borders** — prefer a divider or a shift in surface
+   tone; reserve a full border for something that needs to look separable
+   (a card that can be dragged, compared, or removed).
+6. **Strong typography** — weight and size carry hierarchy so fewer boxes are
+   needed to say "this is a heading."
+7. **Restrained colour** — colour is a signal (primary action, success,
+   warning, destructive), never a decoration repeated on every card.
+8. **Fast interaction** — see the "Fast and calm" principle above; unchanged.
+9. **Mobile-first behaviour** — every new pattern is designed at 390px first,
+   then expanded, not shrunk.
+10. **Accessible by default** — semantic HTML, visible focus, real
+    button/menu semantics; see "Feedback, states, motion" above.
+11. **Consistent across modules** — one component vocabulary; a new module
+    reuses `PageHeader`/`StatCard`/`StatusBadge`/`WidgetCard`/`Confirm`, never
+    invents its own card/badge/dialog.
+12. **Tenant branding without destroying usability** — a tenant's brand colour
+    replaces exactly `--primary`/`--ring` (contrast-clamped); it never touches
+    layout, spacing, or type scale.
+
+### Design tokens
+
+`packages/ui/src/styles.css` (imported once by the web app) — HSL triplets
+consumed via Tailwind's `hsl(var(--x))` convention, extended by
+`packages/ui/src/tailwind-preset.ts`:
+
+- **Surfaces**: `--background`, `--foreground`, `--secondary`, `--accent`,
+  `--muted` (+ each `-foreground` pair).
+- **Semantic status** (Phase 14 addition): `--success`, `--warning`, `--info`,
+  alongside the pre-existing `--destructive` — each with a `-foreground` pair,
+  exposed as Tailwind's `success`/`warning`/`info`/`destructive` colour
+  utilities (`bg-warning/10 text-warning`, etc.). Added because "success"
+  and "warning" previously had no token at all — every module reached for a
+  literal `emerald-500`/`amber-500`/`blue-500` Tailwind colour instead, three
+  different shades of each across CRM/visits/HR. **This phase does not
+  retroactively repaint every existing badge** — that is a real, deliberate,
+  visually-risky change of its own and is called out as deferred work, not an
+  oversight. New status colouring (the tenant lifecycle badges below) uses the
+  new tokens; existing CRM/visit-lifecycle colours are untouched.
+- **Interactive**: `--border`, `--input`, `--ring` (focus).
+- **Radius**: one `--radius` (0.5rem), with `sm`/`md`/`lg` derived from it in
+  the Tailwind preset — a single scale, not a token per component.
+- **Typography**: no new custom tokens — Tailwind's default type scale
+  (`text-xs` → `text-2xl`) is the scale. The hierarchy discipline is in how
+  it's used: page title `text-xl font-semibold`, section heading
+  `text-sm font-semibold`, primary data `text-2xl font-semibold tabular-nums`
+  (KPIs), supporting data `text-sm`, metadata/helper text
+  `text-xs text-muted-foreground`. Adding a parallel set of `--font-size-*`
+  CSS variables was considered and rejected — it would duplicate Tailwind's
+  own scale for no behavioural gain (the explicit "do not create unnecessary
+  token complexity" guidance).
+- **Shadows**: none added. The existing restrained, mostly-borderless surface
+  language (principle 5) means Tailwind's default `shadow-sm` is already
+  reserved for the few truly-elevated surfaces (dialogs, sheets, the command
+  palette); a bespoke elevation scale would only invite more shadow use, which
+  principle 5 explicitly argues against.
+
+### Applying the system
+
+The Global Dashboard, CRM (`/crm`, `/crm/leads`, `/crm/leads/:id`), and the
+application shell remain the reference implementation (Phase 13B/13C/13D).
+Phase 14's own new surfaces — the platform tenant list, tenant detail page,
+and the tenant-provisioning wizard (`/platform/tenants/new`) — were built
+directly against these principles and the new semantic tokens, and are the
+concrete demonstration of the system for platform-admin screens specifically.
+No other module's pages were rewritten this phase (see "Deferred" below).
+
+## Platform SaaS operations (Phase 14, ADR 0043)
+
+`/platform/tenants/new` — a four-step wizard (company information → choose
+solution → review modules → provisioned) that is the **only** way a tenant now
+gets created outside a seed script:
+
+- **Solutions** (`GET /platform/solutions`) are code-defined presets
+  (`@aivoryx/shared` `SOLUTION_DEFINITIONS`) — Solar & EPC, Field Service,
+  Business — each a recommended module set. Selecting one pre-checks its
+  modules in the review step; the platform admin can still toggle any module
+  on or off before provisioning (dependency-checked either way). **A solution
+  key is never read for authorization** — only the resulting
+  `tenant_module_entitlements` rows are.
+- **Plans** (`GET /platform/plans`) are the commercial-packaging layer, each
+  resolving to one solution; a real `tenant_subscriptions` row is created
+  during provisioning (`planKey`, `status`, `startedAt`) — architectural
+  readiness for future billing, not billing itself.
+- Provisioning also creates the tenant's generic `TENANT_ADMIN` role (the same
+  mechanism every seeded tenant already uses) and an admin invitation — no
+  email provider is configured, so the one-time invitation link is shown
+  directly to the platform admin to relay out of band, exactly like the
+  existing tenant-admin "invite a member" flow already does.
+- **Tenant lifecycle** — `provisioning → active → suspended/archived`, with
+  `suspended → active` reachable again but `archived` terminal (no
+  un-archiving, no destructive deletion, yet). The tenant detail page exposes
+  the legal next actions only (`Activate`/`Suspend`/`Archive`), each a
+  confirmed, audited action; a suspended or archived tenant's own users get a
+  specific, correctly-worded `TENANT_SUSPENDED`/`TENANT_PROVISIONING`/
+  `TENANT_ARCHIVED` error the moment they try to use the workspace — enforced
+  once, at the existing tenant-context-resolution point, not a new guard.
+- **Usage** (`GET /platform/tenants/:id/usage`) shows real counts (leads,
+  projects, invoices, employees) — `null`, not `0`, for a module the tenant
+  doesn't have. No storage metric (nothing tracks it yet); no analytics
+  engine.
+
+Deferred from Phase 14 (see ROADMAP): pagination on `GET /platform/tenants`
+(loads every tenant into the browser — acceptable at today's scale); default
+per-solution profile sets beyond the generic `TENANT_ADMIN` role (a company
+still builds its own Sales Manager/Field Agent/etc. profiles via the existing
+Phase 13A Profiles UI); a single ACID transaction across the whole
+provisioning sequence (each reused primitive keeps its own transaction —
+idempotency is instead guaranteed by the deterministic tenant slug); support
+impersonation tooling (documented as future work, not built).

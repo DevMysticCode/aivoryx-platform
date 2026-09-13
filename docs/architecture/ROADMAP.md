@@ -376,6 +376,78 @@ layer above a tenant. Authorization order is fixed: **tenant module entitlement
 **Phase 13 is complete** with the above deferrals recorded. Do not merge — the
 branch stays for review.
 
+### Phase 14 — Platform experience & SaaS operations (`PRODUCT-UX.md`, ADR 0043)
+
+- **Aivoryx Design System** — twelve documented UX principles, three new
+  semantic status tokens (`--success`/`--warning`/`--info`, alongside the
+  existing `--destructive`) in `packages/ui`, applied to the phase's own new
+  surfaces (platform tenant list/detail, provisioning wizard) — a full repaint
+  of every existing status badge across CRM/HR/Field was deliberately not
+  attempted (documented, not an oversight) ✅
+- **tenant lifecycle** — `tenants.status` extended to
+  `provisioning/active/suspended/archived` (migration 0019, `ALTER TYPE ADD
+VALUE` — additive, no data migration); `canTransitionTenantStatus` (pure,
+  unit-tested) is the one place transition legality is decided; a non-active
+  tenant fails closed at the existing `AuthService.resolveActiveTenant` check
+  with a status-specific error code (`TENANT_PROVISIONING`/
+  `TENANT_SUSPENDED`/`TENANT_ARCHIVED`) ✅
+- **solution + plan catalogue** — code-defined in `@aivoryx/shared`
+  (`SOLUTION_DEFINITIONS`: Solar & EPC / Field Service / Business;
+  `PLAN_DEFINITIONS`, one per solution); `validateModuleSet` (pure,
+  unit-tested) proves every solution is dependency-consistent. Solution/plan
+  keys are never read for authorization — only the
+  `tenant_module_entitlements` rows they seed are ✅
+- **subscription abstraction** — new tenant-owned `tenant_subscriptions` table
+  (migration 0019, RLS ENABLE+FORCE+tenant-isolation policy +
+  platform-admin-read policy, same template as migration 0017/0018); records
+  `planKey`/`status`/`startedAt`/`billingProviderRef` — architectural
+  readiness only, no billing/Stripe/payment processing ✅
+- **platform-admin tenant provisioning** — `POST /platform/tenants`
+  (`TenantProvisioningService`): resolves solution → validates module set →
+  creates the tenant (RLS-aware insert — `tenants` has carried FORCE RLS since
+  migration 0003 with no INSERT policy; the service pre-generates the tenant's
+  UUID so `app.tenant_id` can be bound before the insert) → enables modules +
+  seeds the generic `TENANT_ADMIN` role (reusing `provisionTenantAdmin`) →
+  records the subscription → creates the admin invitation (`InvitationService`
+  extended to accept a `SYSTEM` actor, since a platform admin holds no
+  membership in the new tenant) → activates the tenant. Idempotency: the
+  tenant slug is derived deterministically from its name with no
+  silent-suffix fallback, so a retried identical request fails closed on
+  `PLATFORM_TENANT_SLUG_TAKEN` rather than duplicating the tenant ✅
+- **lifecycle + usage routes** — `POST /platform/tenants/:id/{activate,
+suspend,archive}`, `GET /platform/tenants/:id/usage` (real counts —
+  leads/projects/invoices/employees — `null` rather than `0` for a disabled
+  module; no storage metric, no analytics engine) ✅
+- **onboarding module-awareness fix** — `OnboardingService` now also checks
+  `moduleForPermission` against the tenant's entitled modules, not just the
+  permission itself — closing a real gap where a step tied to a disabled
+  module (e.g. CRM's "configure a lead source") could show for a TENANT_ADMIN
+  role, which always holds the full permission catalogue regardless of
+  entitlement ✅
+- **frontend** — `/platform/tenants/new` (4-step wizard: company info →
+  solution → review/adjust modules → provisioned, showing the one-time
+  invitation link), tenant detail page gets lifecycle action buttons + a
+  Subscription card + a Usage card, tenant list gets a "Create company" entry
+  point and provisioning/archived status filters ✅
+- tests: unit — `lifecycle.test.ts` (5), `solutions.test.ts` (5),
+  `plans.test.ts` (2); integration —
+  `platform-provisioning.int.spec.ts` (6: solutions/plans listing,
+  authorization boundary, full provision→accept-invitation→login round trip,
+  unknown-solution/plan/invalid-module-set rejection, retry idempotency,
+  full active→suspended→active→archived lifecycle with the archived-is-terminal
+  check); RLS — `tenant_subscriptions` added to the generic
+  ENABLE+FORCE/no-context/cross-tenant suite (`rls.int.spec.ts`, now 88
+  passing); Playwright — `platform-provisioning.spec.ts` (2, the golden path
+  above plus a rejected-invalid-provisioning case); full existing regression
+  re-run and green (24 specs) ✅
+- **deferred (documented):** pagination on `GET /platform/tenants` (loads
+  every tenant into the browser); default per-solution profile sets beyond the
+  generic `TENANT_ADMIN` role; a single ACID transaction across the whole
+  provisioning sequence; support-impersonation tooling.
+
+**Phase 14 is complete** with the above deferrals recorded. Do not merge — the
+branch stays for review.
+
 ## Stream G — Service
 
 - warranty

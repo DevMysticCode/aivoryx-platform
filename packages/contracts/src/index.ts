@@ -319,5 +319,15 @@ export type EffectiveModulePermission = components['schemas']['EffectiveModulePe
 export type EffectiveModuleAccess = components['schemas']['EffectiveModuleAccessDto'];
 export type EffectiveAccess = components['schemas']['EffectiveAccessDto'];
 
+// ── Platform SaaS Operations: solutions, plans, provisioning, lifecycle, usage (Phase 14) ──
+export type Solution = components['schemas']['SolutionDto'];
+export type Plan = components['schemas']['PlanDto'];
+export type CreateTenantRequest = components['schemas']['CreateTenantRequestDto'];
+export type CreateTenantResponse = components['schemas']['CreateTenantResponseDto'];
+export type ProvisioningInvitation = components['schemas']['ProvisioningInvitationDto'];
+export type SetTenantLifecycleRequest = components['schemas']['SetTenantLifecycleRequestDto'];
+export type TenantUsage = components['schemas']['TenantUsageDto'];
+export type TenantSubscription = components['schemas']['TenantSubscriptionDto'];
+
 /** All versioned API routes are served under this prefix (ADR 0005). */
 export const API_V1_PREFIX = '/api/v1';

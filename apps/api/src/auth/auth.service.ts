@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { getDb, schema, withAppTransaction, withTenantContext, withUserContext } from '@aivoryx/db';
-import { AppError } from '@aivoryx/shared';
+import { AppError, type TenantStatus } from '@aivoryx/shared';
 import type { ServerEnv } from '@aivoryx/config';
 import { SERVER_ENV } from '../config/config.module.js';
 import type { SecurityMembership } from '../security/security-context.js';
@@ -21,7 +21,7 @@ export interface MembershipView {
   tenantId: string;
   tenantSlug: string;
   tenantName: string;
-  tenantStatus: 'active' | 'suspended';
+  tenantStatus: TenantStatus;
   status: 'active' | 'suspended' | 'invited';
 }
 
@@ -228,7 +228,13 @@ export class AuthService {
 
     if (!row) throw new AppError('AUTH_MEMBERSHIP_INVALID');
     if (row.status !== 'active') throw new AppError('AUTH_MEMBERSHIP_SUSPENDED');
-    if (row.tenantStatus !== 'active') throw new AppError('TENANT_SUSPENDED');
+    // Phase 14 §34: any non-active tenant status blocks normal operation —
+    // each gets its own stable error code/message (a code's meaning never
+    // changes once shipped, so 'suspended' keeps TENANT_SUSPENDED and the two
+    // new statuses get their own codes rather than overloading it).
+    if (row.tenantStatus === 'suspended') throw new AppError('TENANT_SUSPENDED');
+    if (row.tenantStatus === 'provisioning') throw new AppError('TENANT_PROVISIONING');
+    if (row.tenantStatus === 'archived') throw new AppError('TENANT_ARCHIVED');
 
     return {
       id: row.id,

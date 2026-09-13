@@ -30,3 +30,27 @@ export {
   type EntitlementValidationResult,
   type DisableValidationResult,
 } from './modules/catalogue.js';
+export {
+  TENANT_STATUSES,
+  isTenantStatus,
+  canTransitionTenantStatus,
+  nextTenantStatuses,
+  type TenantStatus,
+} from './tenancy/lifecycle.js';
+export {
+  SOLUTION_DEFINITIONS,
+  isSolutionKey,
+  getSolution,
+  validateModuleSet,
+  type SolutionDefinition,
+  type SolutionKey,
+  type ModuleSetValidationResult,
+} from './tenancy/solutions.js';
+export {
+  PLAN_DEFINITIONS,
+  isPlanKey,
+  getPlan,
+  assertPlanCatalogueConsistent,
+  type PlanDefinition,
+  type PlanKey,
+} from './tenancy/plans.js';

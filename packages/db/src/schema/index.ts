@@ -39,14 +39,19 @@ export {
 } from './rbac.js';
 
 // Phase 13 — Platform access & module entitlements (ADR 0042).
+// Phase 14 — subscription abstraction (§29-31).
 export {
   platformAdmins,
   moduleEntitlementState,
   tenantModuleEntitlements,
+  subscriptionStatus,
+  tenantSubscriptions,
   type PlatformAdminRow,
   type NewPlatformAdminRow,
   type TenantModuleEntitlementRow,
   type NewTenantModuleEntitlementRow,
+  type TenantSubscriptionRow,
+  type NewTenantSubscriptionRow,
 } from './platform.js';
 
 // Phase 2, Task 3 — tenant administration & user lifecycle (ADR 0030).
