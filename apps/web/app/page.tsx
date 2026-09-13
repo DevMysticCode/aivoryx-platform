@@ -7,6 +7,7 @@ import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
 import { useAccess } from '@/lib/navigation/use-access';
 import { useDashboardWidgets } from '@/lib/dashboard/use-dashboard';
+import { groupWidgetsBySection } from '@/lib/dashboard/select';
 import { LoadingBlock } from '@/components/ui/kit';
 
 const SPAN_CLASS: Record<number, string> = {
@@ -72,14 +73,25 @@ export default function DashboardPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-          {widgets.map((w) => (
-            <div
-              key={w.key}
-              data-testid={`widget-${w.key}`}
-              className={cn('min-w-0', SPAN_CLASS[w.span])}
-            >
-              <w.Component />
+        <div className="space-y-6">
+          {groupWidgetsBySection(widgets).map((group, i) => (
+            <div key={group.section ?? `_${i}`} className="space-y-3">
+              {group.section ? (
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {group.section}
+                </h2>
+              ) : null}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+                {group.widgets.map((w) => (
+                  <div
+                    key={w.key}
+                    data-testid={`widget-${w.key}`}
+                    className={cn('min-w-0', SPAN_CLASS[w.span])}
+                  >
+                    <w.Component />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>

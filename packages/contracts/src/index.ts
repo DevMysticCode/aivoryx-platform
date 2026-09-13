@@ -56,6 +56,16 @@ export type SavedView = components['schemas']['SavedViewDto'];
 export type CreateSavedViewRequest = components['schemas']['CreateSavedViewDto'];
 export type UpdateSavedViewRequest = components['schemas']['UpdateSavedViewDto'];
 
+// Phase 13D — CRM analytics (pipeline, trend, sources, funnel, follow-ups, activity).
+export type CrmAnalyticsOverview = components['schemas']['CrmAnalyticsOverviewDto'];
+export type CrmTrendPoint = components['schemas']['TrendPointDto'];
+export type CrmFunnelStage = components['schemas']['FunnelStageDto'];
+export type CrmSourcePerformance = components['schemas']['SourcePerformanceDto'];
+export type CrmFollowupItem = components['schemas']['FollowupItemDto'];
+export type CrmRecentLeadItem = components['schemas']['RecentLeadItemDto'];
+export type CrmRecentActivityItem = components['schemas']['RecentActivityItemDto'];
+export type CrmTeamPerformanceRow = components['schemas']['TeamPerformanceRowDto'];
+
 // Phase 3 — inbound integration engine (ADR 0032).
 export type CreateSourceRequest = components['schemas']['CreateSourceRequestDto'];
 export type CreateSourceResponse = components['schemas']['CreateSourceResponseDto'];

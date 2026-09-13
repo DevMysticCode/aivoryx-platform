@@ -907,6 +907,23 @@ export interface paths {
     patch: operations['updateSavedView'];
     trace?: never;
   };
+  '/crm/analytics/overview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Pipeline, trend, source, funnel, follow-up and activity analytics for the CRM dashboard. */
+    get: operations['crmAnalyticsOverview'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/integrations/webhooks/pabbly/{sourceKey}': {
     parameters: {
       query?: never;
@@ -5392,6 +5409,101 @@ export interface components {
       config?: {
         [key: string]: unknown;
       };
+    };
+    TotalsDto: {
+      total: number;
+      open: number;
+      unassigned: number;
+      byStatus: {
+        [key: string]: number;
+      };
+    };
+    TrendPointDto: {
+      date: string;
+      count: number;
+    };
+    TrendDeltaDto: {
+      thisWeek: number;
+      previousWeek: number;
+      changePct: number | null;
+    };
+    FunnelStageDto: {
+      /** @enum {string} */
+      stage: 'NEW' | 'ASSIGNED' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED';
+      count: number;
+      conversionFromStart: number | null;
+      conversionFromPrevious: number | null;
+    };
+    SourcePerformanceDto: {
+      sourceId: string | null;
+      sourceName: string;
+      total: number;
+      qualified: number;
+      converted: number;
+      qualificationRate: number | null;
+      conversionRate: number | null;
+    };
+    FollowupItemDto: {
+      /** Format: uuid */
+      followupId: string;
+      /** Format: uuid */
+      leadId: string;
+      leadName: string | null;
+      dueAt: string;
+      note: string | null;
+    };
+    FollowupSummaryDto: {
+      overdueCount: number;
+      dueTodayCount: number;
+      upcomingCount: number;
+      overdue: components['schemas']['FollowupItemDto'][];
+      dueToday: components['schemas']['FollowupItemDto'][];
+      upcoming: components['schemas']['FollowupItemDto'][];
+    };
+    RecentLeadItemDto: {
+      /** Format: uuid */
+      id: string;
+      name: string | null;
+      phone: string | null;
+      status: string;
+      sourceName: string | null;
+      assigneeName: string | null;
+      updatedAt: string;
+    };
+    RecentActivityItemDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      leadId: string;
+      leadName: string | null;
+      type: string;
+      actorName: string | null;
+      createdAt: string;
+    };
+    TeamPerformanceRowDto: {
+      /** Format: uuid */
+      membershipId: string;
+      name: string | null;
+      email: string;
+      leads: number;
+      qualified: number;
+      converted: number;
+      pendingFollowups: number;
+    };
+    CrmAnalyticsOverviewDto: {
+      generatedAt: string;
+      rangeDays: number;
+      /** @enum {string} */
+      scope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY';
+      totals: components['schemas']['TotalsDto'];
+      trend: components['schemas']['TrendPointDto'][];
+      trendDelta: components['schemas']['TrendDeltaDto'] | null;
+      funnel: components['schemas']['FunnelStageDto'][];
+      sources: components['schemas']['SourcePerformanceDto'][];
+      followups: components['schemas']['FollowupSummaryDto'];
+      recent: components['schemas']['RecentLeadItemDto'][];
+      recentActivity: components['schemas']['RecentActivityItemDto'][];
+      team: components['schemas']['TeamPerformanceRowDto'][] | null;
     };
     IngestAcceptedResponseDto: {
       accepted: boolean;
@@ -11018,6 +11130,43 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SavedViewDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  crmAnalyticsOverview: {
+    parameters: {
+      query?: {
+        days?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CrmAnalyticsOverviewDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
         };
       };
       403: {

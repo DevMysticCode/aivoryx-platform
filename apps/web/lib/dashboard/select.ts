@@ -18,3 +18,30 @@ export function selectDashboardWidgets(
     .slice()
     .sort((a, b) => a.priority - b.priority);
 }
+
+export interface DashboardSectionGroup {
+  /** undefined for widgets with no `section` (rendered without a heading) */
+  section: string | undefined;
+  widgets: DashboardWidget[];
+}
+
+/**
+ * Group an already-selected, already-sorted widget list into visual sections
+ * (Phase 13D §4), preserving priority order. A section heading only ever
+ * appears when at least one of its widgets survived `selectDashboardWidgets` —
+ * there is no separate "is this section visible" check to keep in sync.
+ */
+export function groupWidgetsBySection(
+  widgets: readonly DashboardWidget[],
+): DashboardSectionGroup[] {
+  const groups: DashboardSectionGroup[] = [];
+  for (const widget of widgets) {
+    const last = groups[groups.length - 1];
+    if (last && last.section === widget.section) {
+      last.widgets.push(widget);
+    } else {
+      groups.push({ section: widget.section, widgets: [widget] });
+    }
+  }
+  return groups;
+}

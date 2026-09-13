@@ -28,8 +28,9 @@ test.describe('CRM flagship UX', () => {
     await page.goto('/crm');
     await expect(page.getByRole('heading', { name: 'CRM overview' })).toBeVisible();
     await expect(page.getByText('Total leads')).toBeVisible();
-    await expect(page.getByText('Conversion')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Leads by status' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pipeline' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Follow-up action center' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lead activity trend' })).toBeVisible();
 
     // 4–5. open Leads and search/filter
     await page.getByRole('link', { name: 'Leads' }).first().click();

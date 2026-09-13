@@ -1,7 +1,12 @@
 # Product UX
 
-_Phase 13B · ADR 0042. See also `PLATFORM-ACCESS.md`, `AUTHORIZATION.md`,
-`MODULE-ENTITLEMENTS.md`, `BRANDING.md`, `FRONTEND.md`._
+_Phase 13B–13D · ADR 0031, ADR 0042. See also `PLATFORM-ACCESS.md`,
+`AUTHORIZATION.md`, `MODULE-ENTITLEMENTS.md`, `BRANDING.md`, `FRONTEND.md`._
+
+Phase 13D refined the Global Dashboard and rebuilt the CRM dashboard into the
+sales command center described below, added the dashboard section-grouping
+mechanism, and added a small dedicated CRM analytics endpoint — all on the
+Phase 13B/13C shell, widget-registry and authorization architecture, unchanged.
 
 Phase 13B makes Aivoryx feel like one **premium, fast, access-aware SaaS
 product** rather than a set of CRUD screens. CRM is the **reference
@@ -92,39 +97,77 @@ primary surface):
   non-entitled module cannot be selected, and the API's
   `ACCESS_PERMISSION_NOT_AVAILABLE` is surfaced inline.
 
-## Dashboard framework (Phase 13C)
+## Dashboard framework (Phase 13C, sectioned in 13D)
 
-`/` is a **composition of widgets**, not seven hand-built dashboards.
+`/` is a **composition of widgets**, not seven hand-built dashboards. Its
+information architecture (Phase 13D §5) is: greeting + quick actions → key
+business metrics → attention required + upcoming work → module insights →
+recent activity. `/` answers "what's happening across my company?"; `/crm`
+(below) answers "what's happening with my sales pipeline?" — the two are
+deliberately not duplicated.
 
 - `apps/web/lib/dashboard/registry.tsx` — the widget registry. Each entry:
-  `{ key, module?, permissions?, title, span, priority, Component }`. Each
-  business module contributes entries here; this is the single cross-module
-  composition point.
+  `{ key, module?, permissions?, title, span, priority, section?, Component }`.
+  Each business module contributes entries here; this is the single
+  cross-module composition point.
 - `apps/web/lib/dashboard/select.ts` — `selectDashboardWidgets(widgets, access)`
   is a **pure** function (unit-tested): a widget shows iff its `module` is
   entitled **and** every `permission` is held. Role-awareness is emergent — a
   Sales user only holds `crm.*`, so only CRM widgets pass; a Tenant Admin sees
-  the full board. Widgets are sorted by `priority`.
+  the full board. Widgets are sorted by `priority`. `groupWidgetsBySection`
+  (also pure, unit-tested) then groups the already-selected, already-sorted
+  list into contiguous same-`section` runs for the page to render as headed
+  groups — a section heading appears only when at least one of its widgets
+  survived selection; there is no separate "is this section visible" flag to
+  keep in sync.
 - `apps/web/components/dashboard/*-widgets.tsx` — one file per module concern
-  (`crm-`, `hr-`, `finance-`, `field-`, `common-`). Each widget owns its own
-  data fetch via that module's existing hooks (`useCrmOverview`,
-  `useHrDashboard`, `useFinanceOverview`, `useVisits`) — the dashboard framework
-  and `/` page import **no** business service.
+  (`crm-`, `hr-`, `finance-`, `field-`, `common-`), plus two **cross-module
+  composition widgets** added in 13D: `key-metrics-widget.tsx` (Leads /
+  Projects / Outstanding / Pending approvals) and `attention-widgets.tsx`
+  (Attention required: CRM overdue follow-ups, HR leave/expense approvals,
+  Finance overdue invoices; Upcoming work: CRM follow-ups due today, Field
+  visits scheduled). These composition widgets are themselves registered
+  module-less (like `QuickActionsWidget`) and re-check module + permission
+  access **per tile** internally — one module's absence never hides the tiles
+  other modules are entitled to, and a query is only `enabled` when its tile
+  would actually show (a Sales-only user never fires a Finance or HR request).
+  Every widget owns its own data fetch via that module's existing hooks
+  (`useCrmAnalytics`, `useHrDashboard`, `useFinanceOverview`, `useVisits`,
+  `useProjects`) — the dashboard framework and `/` page import **no** business
+  service directly.
 - Widgets have their own loading / error / empty states (`WidgetSkeleton`,
   `WidgetError`, `WidgetStat`). No widget fetches data for a module the user
-  cannot access; §36 verified by `dashboard.spec.ts` (a CRM+Supply tenant never
-  renders HR / Finance / Field widgets, even with the permissions).
+  cannot access; verified by `dashboard.spec.ts` (a CRM+Supply tenant never
+  renders HR / Finance / Field widgets or tiles, even with the permissions).
 - Responsive: a 12-column grid on `md+`, single column on mobile;
   `data-testid="widget-<key>"` on each cell.
 
-A future module contributes a dashboard widget by pushing one registry entry —
-the page does not change.
+A future module contributes a dashboard widget (and, if relevant, a tile in
+the two composition widgets) by editing the registry / those two files — the
+page does not change.
 
 ## CRM flagship (the standard)
 
-- **`/crm` overview** — real KPIs from the existing `GET /crm/leads` endpoint
-  (total, open, qualified, conversion), a leads-by-status bar chart that links
-  into filtered lists, and recent leads. Quick "New lead" action.
+- **`/crm` overview — the sales command center (Phase 13D §6):** rebuilt on a
+  dedicated read-only aggregation endpoint, `GET /crm/analytics/overview`
+  (`analytics.controller.ts` / `.service.ts` / `.dto.ts`, gated by the existing
+  `crm.leads.read` — no new permission), rather than the client-side per-status
+  polling loop from Phase 13B. Sections: key metrics (total / open /
+  unassigned / new-this-week, with a week-over-week delta), a clickable
+  **pipeline visualization** (stage widths proportional to count, each stage
+  linking to `/crm/leads?status=X`), a **follow-up action center**
+  (overdue / due today / upcoming, each item opens its lead), a **lead
+  activity trend** (inline SVG line chart, 7/30/90-day toggle — no charting
+  library; none exists in this repo and the phase asked for a strong reason
+  before adding one), **lead source performance** (driven entirely by the
+  tenant's own `lead_sources` — never a hardcoded source name), a
+  **conversion funnel** (stage-to-stage %, documented inline: "from start" is
+  a stage's share of New leads, "from previous" is the share that advanced
+  from the prior stage; `DISQUALIFIED` is excluded as a terminal branch, not a
+  funnel stage), **team performance** (rendered only when the backend returns
+  a non-null `team` array — see Analytics below), recent leads, and an
+  activity feed. **Every rate or delta is either backed by a real
+  denominator or rendered as `—`/omitted — never a 0% or an invented number.**
 - **`/crm/leads` — premium workspace (Phase 13C):**
   - toolbar: debounced search, status + assignee filters that render as
     **removable chips** with "Clear all", a **Saved views** menu, and a
@@ -160,6 +203,28 @@ the page does not change.
 - **Quick create** — a fast dialog from the dashboard, the list, and the
   command palette; `/crm/leads?new=1` opens it, `?status=` deep-links a filtered
   list.
+
+## Analytics principles (Phase 13D)
+
+- **One dedicated, small, read-only endpoint per real need** — `CrmAnalyticsService.overview` reads existing tables only (`leads`, `lead_followups`, `lead_activities`, `lead_sources`); no new persistence, no generic analytics engine, no BI subsystem.
+- **Never fabricate a number.** Every percentage/delta calculation
+  (`apps/api/src/crm/analytics-calc.ts` — pure, unit-tested) returns `null`
+  rather than `0`/`NaN` when the sample is insufficient: a week-over-week
+  delta needs 14 days of trend data or it's `null`; a stage conversion needs a
+  non-zero denominator or it's `null`. The frontend renders `null` as `—` or
+  omits it — it never substitutes a guess.
+- **Reuse the existing data-scope model — never a second authorization
+  system.** Team-level visibility is resolved by
+  `CrmAnalyticsService.resolveDataScope`, a small query mirroring
+  `AccessService.effectiveAccess`'s own logic (`membership_roles.data_scope` on
+  the caller's `roles.kind='profile'` role, defaulting to `COMPANY`). When the
+  caller's scope is `OWN`, the team-performance query is **never executed** —
+  `team` comes back `null`, not merely hidden by the frontend. A salesperson
+  cannot see a teammate's metrics by inspecting the page; the backend never
+  computed them for that request.
+- **Tenant-scoped and permission-gated like everything else** — RLS
+  (`withTenantContext`) plus the existing `crm.leads.read` permission; no new
+  "analytics" permission was introduced.
 
 ## Feedback, states, motion
 
@@ -203,3 +268,10 @@ every one of those patterns on the dashboard and CRM; later modules copy them.
 Deferred within CRM (see ROADMAP): drag-and-drop board transitions, date /
 source / follow-up-state list filters (need extra `GET /crm/leads` params),
 column show/hide, and promoting `components/ui/*` into `packages/ui`.
+
+Deferred from Phase 13D (see ROADMAP): a full sidebar re-grouping into
+Operations/Finance/People/Administration parents (the current flat structure
+was reviewed and kept — CRM already groups via `children`, and restructuring
+risked churn across the existing Playwright suite for a vertical-space gain
+that is currently marginal); a genuinely cross-module "main trend" chart on
+`/` beyond the CRM lead-activity trend and each module's own widget.
