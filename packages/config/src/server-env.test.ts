@@ -47,6 +47,54 @@ describe('parseServerEnv', () => {
       } as NodeJS.ProcessEnv),
     ).toThrow(/SESSION_SECRET/);
   });
+
+  it('defaults OBJECT_STORAGE_PROVIDER to local, with no S3 config required', () => {
+    const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
+    expect(env.OBJECT_STORAGE_PROVIDER).toBe('local');
+    expect(env.OBJECT_STORAGE_LOCAL_DIR).toBe('.data/object-storage');
+  });
+
+  it('accepts OBJECT_STORAGE_PROVIDER=s3 with every required S3 variable set', () => {
+    const env = parseServerEnv({
+      ...baseValid,
+      OBJECT_STORAGE_PROVIDER: 's3',
+      OBJECT_STORAGE_ENDPOINT: 'https://abc123.r2.cloudflarestorage.com',
+      OBJECT_STORAGE_BUCKET: 'aivoryx-staging',
+      OBJECT_STORAGE_ACCESS_KEY_ID: 'key-id',
+      OBJECT_STORAGE_SECRET_ACCESS_KEY: 'secret',
+    } as NodeJS.ProcessEnv);
+    expect(env.OBJECT_STORAGE_PROVIDER).toBe('s3');
+    expect(env.OBJECT_STORAGE_REGION).toBe('auto');
+  });
+
+  it('rejects OBJECT_STORAGE_PROVIDER=s3 with no S3 configuration at all', () => {
+    expect(() =>
+      parseServerEnv({ ...baseValid, OBJECT_STORAGE_PROVIDER: 's3' } as NodeJS.ProcessEnv),
+    ).toThrow(
+      /OBJECT_STORAGE_ENDPOINT.*OBJECT_STORAGE_BUCKET.*OBJECT_STORAGE_ACCESS_KEY_ID.*OBJECT_STORAGE_SECRET_ACCESS_KEY/s,
+    );
+  });
+
+  it('rejects OBJECT_STORAGE_PROVIDER=s3 missing just the bucket, naming exactly that field', () => {
+    expect(() =>
+      parseServerEnv({
+        ...baseValid,
+        OBJECT_STORAGE_PROVIDER: 's3',
+        OBJECT_STORAGE_ENDPOINT: 'https://abc123.r2.cloudflarestorage.com',
+        OBJECT_STORAGE_ACCESS_KEY_ID: 'key-id',
+        OBJECT_STORAGE_SECRET_ACCESS_KEY: 'secret',
+      } as NodeJS.ProcessEnv),
+    ).toThrow(/OBJECT_STORAGE_BUCKET is required when OBJECT_STORAGE_PROVIDER=s3/);
+  });
+
+  it('never requires S3 configuration when the provider stays local', () => {
+    const env = parseServerEnv({
+      ...baseValid,
+      OBJECT_STORAGE_PROVIDER: 'local',
+    } as NodeJS.ProcessEnv);
+    expect(env.OBJECT_STORAGE_ENDPOINT).toBeUndefined();
+    expect(env.OBJECT_STORAGE_BUCKET).toBeUndefined();
+  });
 });
 
 describe('parseWebEnv', () => {
