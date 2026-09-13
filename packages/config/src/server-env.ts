@@ -83,7 +83,17 @@ export const serverEnvSchema = z
       .max(24 * 30)
       .default(168),
 
-    // Object storage is optional in Phase 1 (local storage deferred).
+    /**
+     * Which `ObjectStorageService` implementation to wire up (deployment
+     * hardening, ADR 0015/0033). `local` (default) is the filesystem adapter —
+     * correct for local dev, wrong for Railway (ephemeral, not shared across
+     * replicas). `s3` is any S3-compatible provider (Cloudflare R2 is the
+     * first target) via `@aws-sdk/client-s3`. The mapping from environment to
+     * provider is never hardcoded here — a deployment sets this explicitly.
+     */
+    OBJECT_STORAGE_PROVIDER: z.enum(['local', 's3']).default('local'),
+
+    // Required only when OBJECT_STORAGE_PROVIDER=s3 — validated below.
     OBJECT_STORAGE_ENDPOINT: z
       .string()
       .url()
@@ -104,8 +114,9 @@ export const serverEnvSchema = z
       .or(z.literal('').transform(() => undefined)),
 
     /** Local-filesystem object storage adapter (Phase 4, ADR 0033/ADR 0015). Used
-     *  whenever OBJECT_STORAGE_ENDPOINT is unset — an S3/R2 adapter can be swapped
-     *  in later behind the same `ObjectStorageService` interface. */
+     *  whenever OBJECT_STORAGE_PROVIDER=local (the default) — a real S3/R2
+     *  adapter is used instead when OBJECT_STORAGE_PROVIDER=s3, behind the same
+     *  `ObjectStorageService` interface. */
     OBJECT_STORAGE_LOCAL_DIR: z.string().default('.data/object-storage'),
 
     // --- Notifications & Communications Engine (Phase 8, ADR 0037) ---------
@@ -143,6 +154,23 @@ export const serverEnvSchema = z
         path: ['SESSION_SECRET'],
         message: 'SESSION_SECRET is still the placeholder value in a production environment',
       });
+    }
+    if (env.OBJECT_STORAGE_PROVIDER === 's3') {
+      const required = [
+        ['OBJECT_STORAGE_ENDPOINT', env.OBJECT_STORAGE_ENDPOINT],
+        ['OBJECT_STORAGE_BUCKET', env.OBJECT_STORAGE_BUCKET],
+        ['OBJECT_STORAGE_ACCESS_KEY_ID', env.OBJECT_STORAGE_ACCESS_KEY_ID],
+        ['OBJECT_STORAGE_SECRET_ACCESS_KEY', env.OBJECT_STORAGE_SECRET_ACCESS_KEY],
+      ] as const;
+      for (const [path, value] of required) {
+        if (!value) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [path],
+            message: `${path} is required when OBJECT_STORAGE_PROVIDER=s3`,
+          });
+        }
+      }
     }
   });
 
