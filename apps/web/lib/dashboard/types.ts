@@ -24,4 +24,12 @@ export interface DashboardWidget {
   /** ascending — lower renders first */
   priority: number;
   Component: ComponentType;
+  /**
+   * The visual section a widget belongs to (Phase 13D §4) — e.g. "Key Metrics",
+   * "Attention Required". Widgets are grouped by this label, in the order the
+   * first widget of each section appears once sorted by `priority`; a section
+   * with no surviving widgets (after entitlement/permission filtering) simply
+   * does not render its heading. Omit for a widget that stands alone.
+   */
+  section?: string;
 }

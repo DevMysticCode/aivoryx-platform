@@ -332,6 +332,47 @@ layer above a tenant. Authorization order is fixed: **tenant module entitlement
   show/hide; promoting `components/ui/*` into `packages/ui`; the same standard
   rolled out to HR / Field / Finance / Commercial / Supply / EPC.
 
+### Phase 13D — UX refinement & CRM analytics (`PRODUCT-UX.md`)
+
+- **CRM analytics backend** — one dedicated read-only aggregation endpoint,
+  `GET /crm/analytics/overview?days=7|30|90` (`apps/api/src/crm/analytics.{service,controller,dto}.ts`),
+  gated by the existing `crm.leads.read` (no new permission). Reads existing
+  tables only (`leads`, `lead_followups`, `lead_activities`, `lead_sources`) —
+  no new persistence. Pure calculation core (`analytics-calc.ts`: trend
+  bucketing, week-over-week delta, funnel conversion %, source performance,
+  follow-up bucketing) is unit-tested (13 cases) and never returns a fabricated
+  percentage — every rate is `null` when its denominator/sample is
+  insufficient. Team-level rows reuse the **existing** data-scope model
+  (`membership_roles.data_scope` on a `roles.kind='profile'` role) rather than
+  a second authorization system; when the caller's scope is `OWN`, the team
+  query is never executed and `team` comes back `null` ✅
+- **`/crm` rebuilt into the sales command center** — pipeline visualization
+  (clickable, existing lifecycle), follow-up action center, lead activity
+  trend (inline SVG, 7/30/90 toggle — no new chart library), lead source
+  performance (generic, driven by tenant `lead_sources`), conversion funnel
+  (documented calculation, `DISQUALIFIED` excluded), team performance
+  (scope-gated), recent leads, activity feed ✅
+- **dashboard section grouping** — `DashboardWidget.section?` +
+  `groupWidgetsBySection` (pure, unit-tested, `apps/web/lib/dashboard/select.ts`)
+  groups the Global Dashboard into headed sections without changing the
+  entitlement/permission selection logic ✅
+- **Global Dashboard (`/`) key-metrics + attention/upcoming widgets** — two new
+  cross-module composition widgets (`key-metrics-widget.tsx`,
+  `attention-widgets.tsx`), each internally re-checking module + permission
+  per tile (a missing module never hides another module's tile) and only
+  querying a module's data when that tile would show ✅
+- tests: `analytics-calc.spec.ts` (13), `crm-analytics.int.spec.ts` (4 —
+  COMPANY-scope + team, OWN-scope + team=null, empty-tenant zero-bucketed
+  trend, tenant isolation), `select.test.ts` +3 (`groupWidgetsBySection`);
+  full existing Playwright suite re-run and green (22 specs, including the two
+  `dashboard.spec.ts` role-aware cases) ✅
+- **deferred (documented):** a full sidebar re-grouping into
+  Operations/Finance/People/Administration parents (reviewed, kept flat — see
+  PRODUCT-UX.md); a cross-module "main trend" chart on `/` beyond CRM's own and
+  each module's widget; new Playwright specs targeting the rebuilt `/crm`
+  page's specific new sections beyond the existing `crm-ux.spec.ts` heading
+  assertions.
+
 **Phase 13 is complete** with the above deferrals recorded. Do not merge — the
 branch stays for review.
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { selectDashboardWidgets } from './select';
+import { groupWidgetsBySection, selectDashboardWidgets } from './select';
 import type { DashboardWidget } from './types';
 
 const noop = () => null;
@@ -63,5 +63,33 @@ describe('selectDashboardWidgets', () => {
       ]),
     });
     expect(out.some((x) => x.key === 'hr' || x.key === 'finance')).toBe(false);
+  });
+});
+
+describe('groupWidgetsBySection', () => {
+  const sectioned: DashboardWidget[] = [
+    w({ key: 'a', priority: 0, section: 'Key Metrics' }),
+    w({ key: 'b', priority: 1, section: 'Key Metrics' }),
+    w({ key: 'c', priority: 2, section: 'Attention' }),
+    w({ key: 'lonely', priority: 3 }),
+  ];
+
+  it('groups consecutive same-section widgets under one heading, preserving order', () => {
+    const groups = groupWidgetsBySection(sectioned);
+    expect(groups.map((g) => [g.section, g.widgets.map((x) => x.key)])).toEqual([
+      ['Key Metrics', ['a', 'b']],
+      ['Attention', ['c']],
+      [undefined, ['lonely']],
+    ]);
+  });
+
+  it('a section with zero surviving widgets never appears (filter first, then group)', () => {
+    const survivors = sectioned.filter((x) => x.key !== 'c'); // "Attention" entirely filtered out
+    const groups = groupWidgetsBySection(survivors);
+    expect(groups.some((g) => g.section === 'Attention')).toBe(false);
+  });
+
+  it('an empty widget list groups to an empty array', () => {
+    expect(groupWidgetsBySection([])).toEqual([]);
   });
 });

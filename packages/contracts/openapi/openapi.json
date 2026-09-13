@@ -4164,6 +4164,65 @@
         ]
       }
     },
+    "/crm/analytics/overview": {
+      "get": {
+        "operationId": "crmAnalyticsOverview",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 7,
+              "maximum": 90,
+              "default": 30,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrmAnalyticsOverviewDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Pipeline, trend, source, funnel, follow-up and activity analytics for the CRM dashboard.",
+        "tags": [
+          "crm"
+        ]
+      }
+    },
     "/integrations/webhooks/pabbly/{sourceKey}": {
       "post": {
         "operationId": "ingestPabblyWebhook",
@@ -23797,6 +23856,405 @@
             "additionalProperties": true
           }
         }
+      },
+      "TotalsDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "unassigned": {
+            "type": "number"
+          },
+          "byStatus": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "open",
+          "unassigned",
+          "byStatus"
+        ]
+      },
+      "TrendPointDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "count"
+        ]
+      },
+      "TrendDeltaDto": {
+        "type": "object",
+        "properties": {
+          "thisWeek": {
+            "type": "number"
+          },
+          "previousWeek": {
+            "type": "number"
+          },
+          "changePct": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "thisWeek",
+          "previousWeek",
+          "changePct"
+        ]
+      },
+      "FunnelStageDto": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "ASSIGNED",
+              "CONTACTED",
+              "QUALIFIED",
+              "CONVERTED"
+            ]
+          },
+          "count": {
+            "type": "number"
+          },
+          "conversionFromStart": {
+            "type": "number",
+            "nullable": true
+          },
+          "conversionFromPrevious": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "stage",
+          "count",
+          "conversionFromStart",
+          "conversionFromPrevious"
+        ]
+      },
+      "SourcePerformanceDto": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceName": {
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "qualified": {
+            "type": "number"
+          },
+          "converted": {
+            "type": "number"
+          },
+          "qualificationRate": {
+            "type": "number",
+            "nullable": true
+          },
+          "conversionRate": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "sourceId",
+          "sourceName",
+          "total",
+          "qualified",
+          "converted",
+          "qualificationRate",
+          "conversionRate"
+        ]
+      },
+      "FollowupItemDto": {
+        "type": "object",
+        "properties": {
+          "followupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadName": {
+            "type": "string",
+            "nullable": true
+          },
+          "dueAt": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "followupId",
+          "leadId",
+          "leadName",
+          "dueAt",
+          "note"
+        ]
+      },
+      "FollowupSummaryDto": {
+        "type": "object",
+        "properties": {
+          "overdueCount": {
+            "type": "number"
+          },
+          "dueTodayCount": {
+            "type": "number"
+          },
+          "upcomingCount": {
+            "type": "number"
+          },
+          "overdue": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowupItemDto"
+            }
+          },
+          "dueToday": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowupItemDto"
+            }
+          },
+          "upcoming": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowupItemDto"
+            }
+          }
+        },
+        "required": [
+          "overdueCount",
+          "dueTodayCount",
+          "upcomingCount",
+          "overdue",
+          "dueToday",
+          "upcoming"
+        ]
+      },
+      "RecentLeadItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "sourceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assigneeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "status",
+          "sourceName",
+          "assigneeName",
+          "updatedAt"
+        ]
+      },
+      "RecentActivityItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadName": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          },
+          "actorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "leadId",
+          "leadName",
+          "type",
+          "actorName",
+          "createdAt"
+        ]
+      },
+      "TeamPerformanceRowDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string"
+          },
+          "leads": {
+            "type": "number"
+          },
+          "qualified": {
+            "type": "number"
+          },
+          "converted": {
+            "type": "number"
+          },
+          "pendingFollowups": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "membershipId",
+          "name",
+          "email",
+          "leads",
+          "qualified",
+          "converted",
+          "pendingFollowups"
+        ]
+      },
+      "CrmAnalyticsOverviewDto": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string"
+          },
+          "rangeDays": {
+            "type": "number"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "OWN",
+              "TEAM",
+              "DEPARTMENT",
+              "COMPANY"
+            ]
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "trend": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrendPointDto"
+            }
+          },
+          "trendDelta": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrendDeltaDto"
+              }
+            ]
+          },
+          "funnel": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FunnelStageDto"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourcePerformanceDto"
+            }
+          },
+          "followups": {
+            "$ref": "#/components/schemas/FollowupSummaryDto"
+          },
+          "recent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecentLeadItemDto"
+            }
+          },
+          "recentActivity": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecentActivityItemDto"
+            }
+          },
+          "team": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamPerformanceRowDto"
+            }
+          }
+        },
+        "required": [
+          "generatedAt",
+          "rangeDays",
+          "scope",
+          "totals",
+          "trend",
+          "trendDelta",
+          "funnel",
+          "sources",
+          "followups",
+          "recent",
+          "recentActivity",
+          "team"
+        ]
       },
       "IngestAcceptedResponseDto": {
         "type": "object",
