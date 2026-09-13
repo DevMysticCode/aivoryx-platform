@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext } from '@aivoryx/db';
+import { moduleForPermission } from '@aivoryx/shared';
 import type { SecurityContext } from '../security/security-context.js';
 import type { TenantScope } from '../supply/common.js';
 import type { OnboardingDto, OnboardingStepDto } from './settings.dto.js';
@@ -123,15 +124,22 @@ export class OnboardingService {
         first_lead_source: (sourceRow?.n ?? 0) > 0,
       };
 
-      const steps: OnboardingStepDto[] = STEPS.filter((s) => ctx.permissions.has(s.permission)).map(
-        (s) => ({
-          key: s.key,
-          title: s.title,
-          description: s.description,
-          done: done[s.key] ?? false,
-          href: s.href,
-        }),
-      );
+      // Phase 14 §24: a step must also belong to an entitled module — a role's
+      // permission grant (e.g. TENANT_ADMIN's full catalogue) is NOT itself
+      // proof the tenant bought that module. `moduleForPermission` returns
+      // null for core/always-available permissions (company profile, users),
+      // which are never module-gated.
+      const steps: OnboardingStepDto[] = STEPS.filter((s) => {
+        if (!ctx.permissions.has(s.permission)) return false;
+        const module = moduleForPermission(s.permission);
+        return module === null || ctx.entitledModules.has(module);
+      }).map((s) => ({
+        key: s.key,
+        title: s.title,
+        description: s.description,
+        done: done[s.key] ?? false,
+        href: s.href,
+      }));
 
       const complete = steps.length > 0 && steps.every((s) => s.done);
       const dismissed = !!ob?.dismissedAt;

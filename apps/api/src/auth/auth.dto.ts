@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { TENANT_STATUSES, type TenantStatus } from '@aivoryx/shared';
 
 // ---- requests -------------------------------------------------------------
 
@@ -37,8 +38,8 @@ export class MembershipSummaryDto {
   @ApiProperty({ example: 'Acme Inc.' })
   tenantName!: string;
 
-  @ApiProperty({ enum: ['active', 'suspended'] })
-  tenantStatus!: 'active' | 'suspended';
+  @ApiProperty({ enum: TENANT_STATUSES })
+  tenantStatus!: TenantStatus;
 
   @ApiProperty({ enum: ['active', 'suspended', 'invited'] })
   status!: 'active' | 'suspended' | 'invited';

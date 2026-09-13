@@ -9,6 +9,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { TENANT_STATUSES, type TenantStatus } from '@aivoryx/shared';
 
 // ---- tenant --------------------------------------------------------------
 
@@ -29,8 +30,8 @@ export class TenantDto {
   @ApiProperty({ example: 'Acme Inc.' })
   name!: string;
 
-  @ApiProperty({ enum: ['active', 'suspended'] })
-  status!: 'active' | 'suspended';
+  @ApiProperty({ enum: TENANT_STATUSES })
+  status!: TenantStatus;
 
   @ApiProperty({ format: 'date-time' })
   createdAt!: string;

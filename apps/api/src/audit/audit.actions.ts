@@ -56,6 +56,13 @@ export const AUDIT_ACTION_MODULE = {
   'platform.admin.granted': 'platform',
   'platform.admin.revoked': 'platform',
 
+  // --- Aivoryx SaaS platform operations (Phase 14 §36) -------------
+  'platform.tenant.created': 'platform',
+  'platform.tenant.activated': 'platform',
+  'platform.tenant.suspended': 'platform',
+  'platform.tenant.archived': 'platform',
+  'platform.tenant.subscription_set': 'platform',
+
   // --- CRM ---------------------------------------------------------
   'crm.lead.created': 'crm',
   'crm.lead.updated': 'crm',

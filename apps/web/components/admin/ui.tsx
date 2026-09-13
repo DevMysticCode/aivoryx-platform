@@ -72,6 +72,13 @@ const STATUS_STYLES: Record<string, string> = {
   in_progress: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
   completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   cancelled: 'bg-destructive/10 text-destructive',
+  // tenant lifecycle (Phase 14 §14) — using the new semantic warning/success
+  // tokens (packages/ui styles.css) rather than another ad hoc amber literal;
+  // pre-existing statuses above are left as-is (see PRODUCT-UX.md "Design
+  // tokens" — a full repaint of every existing badge is deliberately out of
+  // scope for this phase, not an oversight).
+  provisioning: 'bg-warning/10 text-warning',
+  archived: 'bg-secondary text-muted-foreground',
 };
 
 export function StatusBadge({ status }: { status: string }) {

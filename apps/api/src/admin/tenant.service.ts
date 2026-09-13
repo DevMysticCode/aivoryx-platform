@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext } from '@aivoryx/db';
-import { AppError } from '@aivoryx/shared';
+import { AppError, type TenantStatus } from '@aivoryx/shared';
 import { AuditService, userActor } from '../audit/audit.service.js';
 
 const { tenants, userTenantMemberships } = schema;
@@ -17,7 +17,7 @@ export interface TenantView {
   id: string;
   slug: string;
   name: string;
-  status: 'active' | 'suspended';
+  status: TenantStatus;
   createdAt: string;
   memberCounts: { active: number; invited: number; suspended: number; total: number };
 }

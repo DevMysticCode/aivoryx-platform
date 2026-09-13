@@ -16,6 +16,16 @@
   --muted-foreground: 215 16% 47%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 210 40% 98%;
+  /* Phase 14 — semantic status tokens (success/warning/info), matching the
+     existing --destructive pair. Consolidates the emerald-500/amber-500/blue-500
+     literals used ad hoc across modules; not yet a mass find-replace (Phase 14
+     applies them only to what it touches — see PRODUCT-UX.md "Design tokens"). */
+  --success: 152 69% 31%;
+  --success-foreground: 210 40% 98%;
+  --warning: 32 95% 44%;
+  --warning-foreground: 210 40% 98%;
+  --info: 217 91% 45%;
+  --info-foreground: 210 40% 98%;
   --radius: 0.5rem;
 }
 
@@ -35,4 +45,10 @@
   --muted-foreground: 215 20% 65%;
   --destructive: 0 63% 45%;
   --destructive-foreground: 210 40% 96%;
+  --success: 152 55% 42%;
+  --success-foreground: 222 47% 11%;
+  --warning: 38 92% 55%;
+  --warning-foreground: 222 47% 11%;
+  --info: 213 90% 62%;
+  --info-foreground: 222 47% 11%;
 }

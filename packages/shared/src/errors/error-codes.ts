@@ -726,6 +726,36 @@ export const ERROR_CODES = {
     httpStatus: 404,
     message: 'That workspace does not exist.',
   },
+
+  // tenant provisioning & lifecycle (Phase 14 §14-16)
+  TENANT_PROVISIONING: {
+    httpStatus: 403,
+    message: 'This workspace is still being set up.',
+  },
+  TENANT_ARCHIVED: {
+    httpStatus: 403,
+    message: 'This workspace has been archived.',
+  },
+  PLATFORM_TENANT_SLUG_TAKEN: {
+    httpStatus: 409,
+    message: 'That workspace address is already in use. Choose another.',
+  },
+  PLATFORM_TENANT_INVALID_MODULES: {
+    httpStatus: 422,
+    message: 'The selected modules are not a valid, dependency-consistent set.',
+  },
+  PLATFORM_UNKNOWN_SOLUTION: {
+    httpStatus: 404,
+    message: 'That solution does not exist in the catalogue.',
+  },
+  PLATFORM_UNKNOWN_PLAN: {
+    httpStatus: 404,
+    message: 'That plan does not exist in the catalogue.',
+  },
+  PLATFORM_TENANT_LIFECYCLE_INVALID: {
+    httpStatus: 409,
+    message: 'That workspace cannot move to the requested status from its current one.',
+  },
   ACCESS_PROFILE_NOT_FOUND: {
     httpStatus: 404,
     message: 'That profile does not exist in this workspace.',

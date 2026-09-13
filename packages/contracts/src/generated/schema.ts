@@ -272,7 +272,8 @@ export interface paths {
     /** All workspaces. */
     get: operations['listPlatformTenants'];
     put?: never;
-    post?: never;
+    /** Provision a new workspace: modules, TENANT_ADMIN role, subscription, and an admin invitation. */
+    post: operations['createPlatformTenant'];
     delete?: never;
     options?: never;
     head?: never;
@@ -324,6 +325,248 @@ export interface paths {
     /** Enable or disable a module for a workspace (dependency-checked). */
     put: operations['setPlatformTenantModule'];
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/solutions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Solution presets (Phase 14) — recommended module sets, not an authorization boundary. */
+    get: operations['listPlatformSolutions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/plans': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Commercial plan catalogue (Phase 14). */
+    get: operations['listPlatformPlans'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants/{tenantId}/activate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Activate a provisioning or suspended workspace. */
+    post: operations['activatePlatformTenant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants/{tenantId}/suspend': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Suspend an active workspace. */
+    post: operations['suspendPlatformTenant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants/{tenantId}/archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Archive a workspace (terminal — no destructive deletion). */
+    post: operations['archivePlatformTenant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants/{tenantId}/usage': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Basic tenant usage — counts only, from existing data. */
+    get: operations['getPlatformTenantUsage'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/tenant': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The current workspace. */
+    get: operations['getTenant'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit the current workspace. */
+    patch: operations['updateTenant'];
+    trace?: never;
+  };
+  '/admin/members': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Members of the current workspace. */
+    get: operations['listMembers'];
+    put?: never;
+    /** Invite a person into the workspace. Returns a one-time invitation token. */
+    post: operations['inviteMember'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/members/{membershipId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A single member. */
+    get: operations['getMember'];
+    put?: never;
+    post?: never;
+    /** Remove a membership from the workspace. */
+    delete: operations['removeMember'];
+    options?: never;
+    head?: never;
+    /** Suspend or reactivate a membership. */
+    patch: operations['updateMember'];
+    trace?: never;
+  };
+  '/admin/members/{membershipId}/roles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Assign a generic role to a member. */
+    post: operations['assignMemberRole'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/members/{membershipId}/roles/{roleKey}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a role from a member. */
+    delete: operations['removeMemberRole'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/roles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Generic roles available in the workspace. */
+    get: operations['listRoles'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/permissions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The global permission catalogue. */
+    get: operations['listCataloguePermissions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/accept-invitation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept a workspace invitation and finish account setup. */
+    post: operations['acceptInvitation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -482,146 +725,6 @@ export interface paths {
     post?: never;
     /** Remove a permission set from a member. */
     delete: operations['removeMemberPermissionSet'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/tenant': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** The current workspace. */
-    get: operations['getTenant'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Edit the current workspace. */
-    patch: operations['updateTenant'];
-    trace?: never;
-  };
-  '/admin/members': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Members of the current workspace. */
-    get: operations['listMembers'];
-    put?: never;
-    /** Invite a person into the workspace. Returns a one-time invitation token. */
-    post: operations['inviteMember'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/members/{membershipId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** A single member. */
-    get: operations['getMember'];
-    put?: never;
-    post?: never;
-    /** Remove a membership from the workspace. */
-    delete: operations['removeMember'];
-    options?: never;
-    head?: never;
-    /** Suspend or reactivate a membership. */
-    patch: operations['updateMember'];
-    trace?: never;
-  };
-  '/admin/members/{membershipId}/roles': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Assign a generic role to a member. */
-    post: operations['assignMemberRole'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/members/{membershipId}/roles/{roleKey}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    /** Remove a role from a member. */
-    delete: operations['removeMemberRole'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/roles': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Generic roles available in the workspace. */
-    get: operations['listRoles'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/permissions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** The global permission catalogue. */
-    get: operations['listCataloguePermissions'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/accept-invitation': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Accept a workspace invitation and finish account setup. */
-    post: operations['acceptInvitation'];
-    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -4710,7 +4813,7 @@ export interface components {
       /** @example Acme Inc. */
       tenantName: string;
       /** @enum {string} */
-      tenantStatus: 'active' | 'suspended';
+      tenantStatus: 'provisioning' | 'active' | 'suspended' | 'archived';
       /** @enum {string} */
       status: 'active' | 'suspended' | 'invited';
     };
@@ -4989,7 +5092,7 @@ export interface components {
       slug: string;
       name: string;
       /** @enum {string} */
-      status: 'active' | 'suspended';
+      status: 'provisioning' | 'active' | 'suspended' | 'archived';
       memberCount: number;
       enabledModuleCount: number;
       /** Format: date-time */
@@ -5013,103 +5116,97 @@ export interface components {
       /** Format: uuid */
       provisionedByUserId: string | null;
     };
+    TenantSubscriptionDto: {
+      /** @example AIVORYX_SOLAR */
+      planKey: string;
+      /** @enum {string} */
+      status: 'active' | 'canceled' | 'expired';
+      /** Format: date-time */
+      startedAt: string;
+    };
     PlatformTenantDetailDto: {
       /** Format: uuid */
       id: string;
       slug: string;
       name: string;
       /** @enum {string} */
-      status: 'active' | 'suspended';
+      status: 'provisioning' | 'active' | 'suspended' | 'archived';
       memberCount: number;
       enabledModuleCount: number;
       /** Format: date-time */
       createdAt: string;
       modules: components['schemas']['PlatformTenantModuleDto'][];
+      subscription: components['schemas']['TenantSubscriptionDto'] | null;
     };
     SetTenantModuleRequestDto: {
       /** @enum {string} */
       state: 'ENABLED' | 'DISABLED';
       note?: string;
     };
-    AvailablePermissionDto: {
+    SolutionDto: {
+      /** @example SOLAR_EPC */
       key: string;
-      /** @example CRM */
-      module: string | null;
-      resource: string;
-      action: string;
-      description: string;
-    };
-    AccessRoleDto: {
-      /** Format: uuid */
-      id: string;
-      key: string;
-      name: string;
-      description: string | null;
-      /** @enum {string} */
-      kind: 'profile' | 'permission_set';
-      permissionKeys: string[];
-      assignedCount: number;
-    };
-    CreateAccessRoleDto: {
-      name: string;
-      description?: string;
-      permissionKeys: string[];
-    };
-    UpdateAccessRoleDto: {
-      name?: string;
-      description?: string | null;
-      permissionKeys?: string[];
-    };
-    EffectiveProfileDto: {
-      /** Format: uuid */
-      id: string;
-      name: string;
-      /** @enum {string} */
-      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY';
-    };
-    EffectivePermissionSetDto: {
-      /** Format: uuid */
-      id: string;
-      name: string;
-    };
-    EffectiveModulePermissionDto: {
-      key: string;
-      resource: string;
-      action: string;
-      description: string;
-      granted: boolean;
-    };
-    EffectiveModuleAccessDto: {
-      /** @example CRM */
-      moduleKey: string;
       displayName: string;
-      entitled: boolean;
-      /** @enum {string|null} */
-      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY' | null;
-      permissions: components['schemas']['EffectiveModulePermissionDto'][];
+      description: string;
+      /** @example [
+       *       "CRM",
+       *       "FIELD",
+       *       "SUPPLY"
+       *     ] */
+      moduleKeys: string[];
     };
-    EffectiveAccessDto: {
+    PlanDto: {
+      /** @example AIVORYX_SOLAR */
+      key: string;
+      displayName: string;
+      /** @example SOLAR_EPC */
+      solutionKey: string;
+    };
+    CreateTenantRequestDto: {
+      /** @example Acme Field Services */
+      name: string;
+      primaryContactName?: string;
+      /** @example Asia/Kolkata */
+      timezone?: string;
+      /** @example INR */
+      currency?: string;
+      /** @example SOLAR_EPC */
+      solutionKey: string;
+      /** @description Override the solution's recommended modules (still dependency-checked). */
+      moduleKeys?: string[];
+      /** @example AIVORYX_SOLAR */
+      planKey?: string;
+      /**
+       * Format: email
+       * @example admin@acme-field.test
+       */
+      adminEmail: string;
+      adminName?: string;
+    };
+    ProvisioningInvitationDto: {
       /** Format: uuid */
       membershipId: string;
-      userName: string | null;
-      userEmail: string;
-      profile: components['schemas']['EffectiveProfileDto'] | null;
-      permissionSets: components['schemas']['EffectivePermissionSetDto'][];
-      modules: components['schemas']['EffectiveModuleAccessDto'][];
-      platformPermissions: string[];
-    };
-    AssignProfileDto: {
       /** Format: uuid */
-      roleId: string;
-      /**
-       * @default COMPANY
-       * @enum {string}
-       */
-      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY';
+      invitationId: string;
+      /** @description One-time invitation token. Returned ONLY here (no email provider is configured); relay it to the new admin out of band. */
+      token: string;
+      /** Format: date-time */
+      expiresAt: string;
     };
-    AddPermissionSetDto: {
-      /** Format: uuid */
-      roleId: string;
+    CreateTenantResponseDto: {
+      tenant: components['schemas']['PlatformTenantDetailDto'];
+      invitation: components['schemas']['ProvisioningInvitationDto'];
+    };
+    SetTenantLifecycleRequestDto: {
+      note?: string;
+    };
+    TenantUsageDto: {
+      members: number;
+      leads: number | null;
+      projects: number | null;
+      invoices: number | null;
+      employees: number | null;
+      enabledModules: number;
     };
     TenantMemberCountsDto: {
       active: number;
@@ -5125,7 +5222,7 @@ export interface components {
       /** @example Acme Inc. */
       name: string;
       /** @enum {string} */
-      status: 'active' | 'suspended';
+      status: 'provisioning' | 'active' | 'suspended' | 'archived';
       /** Format: date-time */
       createdAt: string;
       memberCounts: components['schemas']['TenantMemberCountsDto'];
@@ -5214,6 +5311,86 @@ export interface components {
       email: string;
       /** @example acme */
       tenantSlug: string;
+    };
+    AvailablePermissionDto: {
+      key: string;
+      /** @example CRM */
+      module: string | null;
+      resource: string;
+      action: string;
+      description: string;
+    };
+    AccessRoleDto: {
+      /** Format: uuid */
+      id: string;
+      key: string;
+      name: string;
+      description: string | null;
+      /** @enum {string} */
+      kind: 'profile' | 'permission_set';
+      permissionKeys: string[];
+      assignedCount: number;
+    };
+    CreateAccessRoleDto: {
+      name: string;
+      description?: string;
+      permissionKeys: string[];
+    };
+    UpdateAccessRoleDto: {
+      name?: string;
+      description?: string | null;
+      permissionKeys?: string[];
+    };
+    EffectiveProfileDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** @enum {string} */
+      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY';
+    };
+    EffectivePermissionSetDto: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+    };
+    EffectiveModulePermissionDto: {
+      key: string;
+      resource: string;
+      action: string;
+      description: string;
+      granted: boolean;
+    };
+    EffectiveModuleAccessDto: {
+      /** @example CRM */
+      moduleKey: string;
+      displayName: string;
+      entitled: boolean;
+      /** @enum {string|null} */
+      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY' | null;
+      permissions: components['schemas']['EffectiveModulePermissionDto'][];
+    };
+    EffectiveAccessDto: {
+      /** Format: uuid */
+      membershipId: string;
+      userName: string | null;
+      userEmail: string;
+      profile: components['schemas']['EffectiveProfileDto'] | null;
+      permissionSets: components['schemas']['EffectivePermissionSetDto'][];
+      modules: components['schemas']['EffectiveModuleAccessDto'][];
+      platformPermissions: string[];
+    };
+    AssignProfileDto: {
+      /** Format: uuid */
+      roleId: string;
+      /**
+       * @default COMPANY
+       * @enum {string}
+       */
+      dataScope: 'OWN' | 'TEAM' | 'DEPARTMENT' | 'COMPANY';
+    };
+    AddPermissionSetDto: {
+      /** Format: uuid */
+      roleId: string;
     };
     LeadAssigneeDto: {
       /** Format: uuid */
@@ -8873,6 +9050,11 @@ export interface operations {
           | 'platform.module.disabled'
           | 'platform.admin.granted'
           | 'platform.admin.revoked'
+          | 'platform.tenant.created'
+          | 'platform.tenant.activated'
+          | 'platform.tenant.suspended'
+          | 'platform.tenant.archived'
+          | 'platform.tenant.subscription_set'
           | 'crm.lead.created'
           | 'crm.lead.updated'
           | 'crm.lead.assigned'
@@ -9183,6 +9365,45 @@ export interface operations {
       };
     };
   };
+  createPlatformTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTenantRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreateTenantResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   getPlatformTenant: {
     parameters: {
       query?: never;
@@ -9290,6 +9511,678 @@ export interface operations {
         };
       };
       403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listPlatformSolutions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SolutionDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listPlatformPlans: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlanDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  activatePlatformTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetTenantLifecycleRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformTenantDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  suspendPlatformTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetTenantLifecycleRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformTenantDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  archivePlatformTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetTenantLifecycleRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformTenantDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPlatformTenantUsage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TenantUsageDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TenantDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTenantRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TenantDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listMembers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  inviteMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InviteMemberRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InviteMemberResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateMemberRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  assignMemberRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignRoleRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeMemberRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        membershipId: string;
+        roleKey: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listRoles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminRoleDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listCataloguePermissions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CataloguePermissionDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  acceptInvitation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AcceptInvitationRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AcceptInvitationResponseDto'];
+        };
+      };
+      /** @description INVITATION_INVALID / INVITATION_EXPIRED / INVITATION_REVOKED / INVITATION_ALREADY_USED / INVITATION_PASSWORD_REQUIRED */
+      400: {
         headers: {
           [name: string]: unknown;
         };
@@ -9782,448 +10675,6 @@ export interface operations {
         };
       };
       403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  getTenant: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['TenantDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  updateTenant: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateTenantRequestDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['TenantDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  listMembers: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['MemberDto'][];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  inviteMember: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['InviteMemberRequestDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['InviteMemberResponseDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  getMember: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        membershipId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['MemberDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  removeMember: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        membershipId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  updateMember: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        membershipId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateMemberRequestDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['MemberDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  assignMemberRole: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        membershipId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AssignRoleRequestDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['MemberDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  removeMemberRole: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        membershipId: string;
-        roleKey: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['MemberDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  listRoles: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['AdminRoleDto'][];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  listCataloguePermissions: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CataloguePermissionDto'][];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  acceptInvitation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AcceptInvitationRequestDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['AcceptInvitationResponseDto'];
-        };
-      };
-      /** @description INVITATION_INVALID / INVITATION_EXPIRED / INVITATION_REVOKED / INVITATION_ALREADY_USED / INVITATION_PASSWORD_REQUIRED */
-      400: {
         headers: {
           [name: string]: unknown;
         };

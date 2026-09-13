@@ -1,16 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import { eq, inArray, sql } from 'drizzle-orm';
-import { getDb, schema, withUserContext } from '@aivoryx/db';
-import { AppError, MODULE_DEFINITIONS, isModuleKey, type ModuleKey } from '@aivoryx/shared';
+import { getDb, schema, withTenantContext, withUserContext } from '@aivoryx/db';
+import {
+  AppError,
+  MODULE_DEFINITIONS,
+  isModuleKey,
+  type ModuleKey,
+  type TenantStatus,
+} from '@aivoryx/shared';
 import { EntitlementService } from '../entitlements/entitlement.service.js';
 
-const { tenants, userTenantMemberships, tenantModuleEntitlements } = schema;
+const {
+  tenants,
+  userTenantMemberships,
+  tenantModuleEntitlements,
+  tenantSubscriptions,
+  leads,
+  projects,
+  invoices,
+  employees,
+} = schema;
+
+export interface TenantUsage {
+  members: number;
+  leads: number | null;
+  projects: number | null;
+  invoices: number | null;
+  employees: number | null;
+  enabledModules: number;
+}
 
 export interface PlatformTenantSummary {
   id: string;
   slug: string;
   name: string;
-  status: 'active' | 'suspended';
+  status: TenantStatus;
   memberCount: number;
   enabledModuleCount: number;
   createdAt: string;
@@ -30,6 +54,8 @@ export interface PlatformTenantDetail extends PlatformTenantSummary {
     disabledAt: string | null;
     provisionedByUserId: string | null;
   }[];
+  /** null when the tenant has no subscription row yet (pre-Phase-14 tenants) */
+  subscription: { planKey: string; status: string; startedAt: string } | null;
 }
 
 /**
@@ -116,7 +142,16 @@ export class PlatformService {
         .select({ n: sql<number>`count(*)::int` })
         .from(userTenantMemberships)
         .where(eq(userTenantMemberships.tenantId, tenantId));
-      return { ...t, memberCount: mc?.n ?? 0 };
+      const [sub] = await tx
+        .select({
+          planKey: tenantSubscriptions.planKey,
+          status: tenantSubscriptions.status,
+          startedAt: tenantSubscriptions.startedAt,
+        })
+        .from(tenantSubscriptions)
+        .where(eq(tenantSubscriptions.tenantId, tenantId))
+        .limit(1);
+      return { ...t, memberCount: mc?.n ?? 0, subscription: sub ?? null };
     });
     if (!row) throw new AppError('PLATFORM_TENANT_NOT_FOUND');
 
@@ -152,7 +187,66 @@ export class PlatformService {
       enabledModuleCount: modules.filter((m) => m.state === 'ENABLED').length,
       createdAt: row.createdAt.toISOString(),
       modules,
+      subscription: row.subscription
+        ? {
+            planKey: row.subscription.planKey,
+            status: row.subscription.status,
+            startedAt: row.subscription.startedAt.toISOString(),
+          }
+        : null,
     };
+  }
+
+  /**
+   * Basic, efficiently-computed tenant usage (Phase 14 §31-32) — counts only,
+   * from data that already exists. A metric is `null` (not 0) when its module
+   * isn't enabled for the tenant, so the UI never implies a capability the
+   * tenant doesn't have. Storage usage is deliberately omitted: there is no
+   * real usage-tracking infrastructure to source it from yet (documented as
+   * deferred rather than fabricated).
+   */
+  async usage(platformUserId: string, tenantId: string): Promise<TenantUsage> {
+    // ensure the tenant exists / is visible to this platform admin, and get
+    // its enabled modules
+    const detail = await this.getTenant(platformUserId, tenantId);
+    const enabled = new Set(detail.modules.filter((m) => m.state === 'ENABLED').map((m) => m.key));
+
+    return withTenantContext(getDb(), { tenantId, userId: platformUserId }, async (tx) => {
+      const [leadCount] = enabled.has('CRM')
+        ? await tx
+            .select({ n: sql<number>`count(*)::int` })
+            .from(leads)
+            .where(eq(leads.tenantId, tenantId))
+        : [];
+      const [projectCount] =
+        enabled.has('SUPPLY') || enabled.has('EPC')
+          ? await tx
+              .select({ n: sql<number>`count(*)::int` })
+              .from(projects)
+              .where(eq(projects.tenantId, tenantId))
+          : [];
+      const [invoiceCount] = enabled.has('FINANCE')
+        ? await tx
+            .select({ n: sql<number>`count(*)::int` })
+            .from(invoices)
+            .where(eq(invoices.tenantId, tenantId))
+        : [];
+      const [employeeCount] = enabled.has('HR')
+        ? await tx
+            .select({ n: sql<number>`count(*)::int` })
+            .from(employees)
+            .where(eq(employees.tenantId, tenantId))
+        : [];
+
+      return {
+        members: detail.memberCount,
+        leads: enabled.has('CRM') ? (leadCount?.n ?? 0) : null,
+        projects: enabled.has('SUPPLY') || enabled.has('EPC') ? (projectCount?.n ?? 0) : null,
+        invoices: enabled.has('FINANCE') ? (invoiceCount?.n ?? 0) : null,
+        employees: enabled.has('HR') ? (employeeCount?.n ?? 0) : null,
+        enabledModules: detail.enabledModuleCount,
+      };
+    });
   }
 
   async setModule(input: {
