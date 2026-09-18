@@ -1,5 +1,6 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@aivoryx/ui';
+import type { InactiveMembership, MembershipSummary } from '@aivoryx/contracts';
 import { ApiError } from '@/lib/api/client';
 import { getErrorMessage } from '@/lib/api/error-message';
 
@@ -7,6 +8,59 @@ import { getErrorMessage } from '@/lib/api/error-message';
  * Small presentational primitives for the admin surface, built only from
  * Tailwind + the shared design tokens (no new component library — CLAUDE.md §12).
  */
+
+const INACTIVE_REASON_COPY: Record<string, { title: string; body: string }> = {
+  AUTH_MEMBERSHIP_SUSPENDED: {
+    title: 'Your access has been suspended',
+    body: 'A workspace administrator suspended your membership here. Contact them to restore your access.',
+  },
+  TENANT_SUSPENDED: {
+    title: 'This workspace is suspended',
+    body: 'This workspace has been suspended. Contact your workspace administrator, or Aivoryx support if you believe this is a mistake.',
+  },
+  TENANT_PROVISIONING: {
+    title: 'This workspace is still being set up',
+    body: 'Your workspace is being provisioned — this usually only takes a few minutes. Try again shortly.',
+  },
+  TENANT_ARCHIVED: {
+    title: 'This workspace has been archived',
+    body: 'This workspace has been archived and is no longer available.',
+  },
+};
+
+/**
+ * The "you have no usable tenant right now" screen every top-level layout
+ * shows in place of its content (Phase 16 §2/§8/§18). Distinguishes a
+ * specific, known reason (membership suspended, tenant suspended/
+ * provisioning/archived — from `/auth/me`'s `inactiveMembership`) from the
+ * generic case of a user with no membership at all, rather than showing the
+ * same "no active workspace" message for every one of those situations.
+ */
+export function WorkspaceUnavailable({
+  inactiveMembership,
+  memberships,
+}: {
+  inactiveMembership?: InactiveMembership | null;
+  /** Pass `me.data?.memberships` so a user with another usable workspace is told to switch. */
+  memberships?: MembershipSummary[];
+}) {
+  const copy = inactiveMembership ? INACTIVE_REASON_COPY[inactiveMembership.reason] : undefined;
+  const hasOtherUsable = (memberships ?? []).some(
+    (m) => m.status === 'active' && m.tenantStatus === 'active',
+  );
+  return (
+    <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
+      <p className="font-medium">{copy?.title ?? 'No active workspace selected'}</p>
+      <p className="mt-1 text-muted-foreground">
+        {copy?.body ??
+          'Your account is signed in but has no usable workspace membership. Ask an administrator to add you to a workspace, then sign in again.'}
+        {hasOtherUsable
+          ? ' You have another workspace available — use the account menu to switch.'
+          : ''}
+      </p>
+    </div>
+  );
+}
 
 export function PageHeader({
   title,

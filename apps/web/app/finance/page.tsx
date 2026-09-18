@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { PageHeader, ErrorNote, Skeleton } from '@/components/admin/ui';
+import { PageHeader, Skeleton } from '@/components/admin/ui';
+import { ErrorBlock } from '@/components/ui/kit';
 import { fmtMoney } from '@/components/supply/ui';
 import { useFinanceOverview } from '@/lib/finance/use-finance';
 
@@ -16,7 +17,7 @@ export default function FinanceOverviewPage() {
         description="Invoiced, paid and outstanding across the workspace."
       />
       {q.isLoading && <Skeleton rows={3} />}
-      {q.error && <ErrorNote error={q.error} />}
+      {q.error && <ErrorBlock error={q.error} onRetry={() => q.refetch()} />}
 
       {q.data && q.data.byCurrency.length === 0 && (
         <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">

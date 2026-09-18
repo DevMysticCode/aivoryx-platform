@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { useTenant, useUpdateTenant } from '@/lib/admin/use-admin';
 import { Card, ErrorNote, Field, PageHeader, Skeleton } from '@/components/admin/ui';
@@ -38,6 +39,7 @@ export default function WorkspaceSettingsPage() {
           <form onSubmit={onSubmit} className="max-w-md space-y-4">
             <Field
               label="Workspace name"
+              hint="An internal identifier, shown to Aivoryx platform administrators — not the name your team sees in the app."
               required
               minLength={1}
               maxLength={200}
@@ -47,6 +49,14 @@ export default function WorkspaceSettingsPage() {
                 setSaved(false);
               }}
             />
+            <p className="text-xs text-muted-foreground">
+              Looking to change the name and logo your team sees throughout the app? That's set
+              separately under{' '}
+              <Link href="/settings/company" className="text-primary hover:underline">
+                Settings → Company profile &amp; branding
+              </Link>
+              .
+            </p>
             <ErrorNote error={update.error} />
             <div className="flex items-center gap-3">
               <Button

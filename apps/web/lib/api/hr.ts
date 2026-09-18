@@ -128,6 +128,8 @@ export const uploadEmployeeDocument = (id: string, form: FormData) =>
   apiFetch<HrEmployeeDocument[]>(`/hr/employees/${id}/documents`, { method: 'POST', body: form });
 export const employeeDocumentUrl = (id: string, documentId: string) =>
   `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/hr/employees/${id}/documents/${documentId}/download`;
+export const deleteEmployeeDocument = (id: string, documentId: string) =>
+  apiFetch<void>(`/hr/employees/${id}/documents/${documentId}`, { method: 'DELETE' });
 
 // compensation (sensitive)
 export const compensationHistory = (id: string) =>

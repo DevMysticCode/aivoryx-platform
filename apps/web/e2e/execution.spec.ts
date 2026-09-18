@@ -105,12 +105,12 @@ test.describe('EPC execution golden path', () => {
     // ---- 3. admin: start execution, assign the installation ----------
     await page.goto(`/projects/${projectId}/execution`);
     await page.getByRole('button', { name: 'Start execution' }).click();
-    await expect(page.getByRole('button', { name: 'Materials' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Materials' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Materials' }).click();
+    await page.getByRole('tab', { name: 'Materials' }).click();
     await expect(page.getByText('Material readiness')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Installation', exact: true }).click();
+    await page.getByRole('tab', { name: 'Installation', exact: true }).click();
     const assignSelect = page.getByLabel('Assign to field agent');
     const agentSlug = AGENT_EMAIL.split('@')[0];
     let picked = false;
@@ -167,7 +167,7 @@ test.describe('EPC execution golden path', () => {
 
     // ---- 5. admin: QC -----------------------------------------
     await page.goto(`/projects/${projectId}/execution`);
-    await page.getByRole('button', { name: 'QC', exact: true }).click();
+    await page.getByRole('tab', { name: 'QC', exact: true }).click();
     await page.getByRole('button', { name: 'Open QC inspection' }).click();
     await expect(page.getByText(/QC checklist/)).toBeVisible();
     await expect(page.locator('input[type="checkbox"]:not(:disabled)').first()).toBeVisible();
@@ -178,11 +178,11 @@ test.describe('EPC execution golden path', () => {
     await expect(page.getByText('passed', { exact: false }).first()).toBeVisible();
 
     // ---- 6. admin: net metering + handover ------------------
-    await page.getByRole('button', { name: 'Net Metering' }).click();
+    await page.getByRole('tab', { name: 'Net Metering' }).click();
     await page.getByLabel('Status').selectOption('COMPLETED');
     await expect(page.getByText('completed', { exact: false }).first()).toBeVisible();
 
-    await page.getByRole('button', { name: 'Handover', exact: true }).click();
+    await page.getByRole('tab', { name: 'Handover', exact: true }).click();
     await tickAll(page, 'input[type="checkbox"]');
     await page.getByLabel('Acknowledged by (name)').fill('Site Owner');
     await page.getByRole('button', { name: 'Save acknowledgement' }).click();
@@ -190,7 +190,7 @@ test.describe('EPC execution golden path', () => {
     await expect(page.getByText('completed', { exact: false }).first()).toBeVisible();
 
     // ---- 7. admin: complete the project -------------------
-    await page.getByRole('button', { name: 'Overview' }).click();
+    await page.getByRole('tab', { name: 'Overview' }).click();
     await expect(page.getByText('All requirements met', { exact: false })).toBeVisible();
     await page.getByRole('button', { name: 'Complete project' }).click();
     await expect(page.getByText('completed', { exact: false }).first()).toBeVisible();
@@ -200,7 +200,7 @@ test.describe('EPC execution golden path', () => {
 
     // ---- 8. CRM lead timeline shows project completion ----
     await page.goto(`/crm/leads/${leadId}`);
-    await page.getByRole('button', { name: 'Activity' }).click();
+    await page.getByRole('tab', { name: 'Activity' }).click();
     await expect(page.getByText(/project completed/i).first()).toBeVisible();
   });
 });

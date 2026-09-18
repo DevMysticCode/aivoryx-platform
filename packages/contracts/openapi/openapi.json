@@ -218,6 +218,53 @@
         ]
       }
     },
+    "/settings/plan": {
+      "get": {
+        "operationId": "getTenantPlan",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantPlanDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "This workspace’s solution, plan, subscription status, and real usage counts.",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
     "/settings/company": {
       "get": {
         "operationId": "getCompanyProfile",
@@ -780,6 +827,7 @@
                 "hr.employee.membership_linked",
                 "hr.employee.membership_unlinked",
                 "hr.employee.document_added",
+                "hr.employee.document_deleted",
                 "hr.bank_details.updated",
                 "hr.organization.department_created",
                 "hr.organization.designation_created",
@@ -7891,6 +7939,63 @@
         ]
       }
     },
+    "/hr/employees/{id}/documents/{documentId}": {
+      "delete": {
+        "operationId": "deleteHrEmployeeDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove an employee document.",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
     "/hr/employees/{id}/compensation": {
       "get": {
         "operationId": "hrEmployeeCompensationHistory",
@@ -14552,6 +14657,14 @@
             "in": "query",
             "schema": {
               "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
               "type": "string"
             }
           },
@@ -22080,6 +22193,24 @@
           "branding"
         ]
       },
+      "InactiveMembershipDto": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "example": "TENANT_SUSPENDED",
+            "description": "A stable AppError code: AUTH_MEMBERSHIP_SUSPENDED | TENANT_SUSPENDED | TENANT_PROVISIONING | TENANT_ARCHIVED."
+          }
+        },
+        "required": [
+          "membershipId",
+          "reason"
+        ]
+      },
       "LoginResponseDto": {
         "type": "object",
         "properties": {
@@ -22105,6 +22236,15 @@
               }
             ]
           },
+          "inactiveMembership": {
+            "nullable": true,
+            "description": "Set only when `active` is null because a specific membership failed to resolve (e.g. it is suspended, or its tenant is suspended/provisioning/archived) — as opposed to the user simply having no membership at all. Lets the frontend show a specific, correct message instead of a generic \"no workspace\" one.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InactiveMembershipDto"
+              }
+            ]
+          },
           "sessionExpiresAt": {
             "type": "string",
             "format": "date-time"
@@ -22119,6 +22259,7 @@
           "isPlatformAdmin",
           "memberships",
           "active",
+          "inactiveMembership",
           "sessionExpiresAt",
           "tenantAutoSelected"
         ]
@@ -22195,6 +22336,15 @@
               }
             ]
           },
+          "inactiveMembership": {
+            "nullable": true,
+            "description": "Set only when `active` is null because a specific membership failed to resolve (e.g. it is suspended, or its tenant is suspended/provisioning/archived) — as opposed to the user simply having no membership at all. Lets the frontend show a specific, correct message instead of a generic \"no workspace\" one.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InactiveMembershipDto"
+              }
+            ]
+          },
           "sessionExpiresAt": {
             "type": "string",
             "format": "date-time"
@@ -22205,6 +22355,7 @@
           "isPlatformAdmin",
           "memberships",
           "active",
+          "inactiveMembership",
           "sessionExpiresAt"
         ]
       },
@@ -22246,6 +22397,15 @@
               }
             ]
           },
+          "inactiveMembership": {
+            "nullable": true,
+            "description": "Set only when `active` is null because a specific membership failed to resolve (e.g. it is suspended, or its tenant is suspended/provisioning/archived) — as opposed to the user simply having no membership at all. Lets the frontend show a specific, correct message instead of a generic \"no workspace\" one.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InactiveMembershipDto"
+              }
+            ]
+          },
           "sessionExpiresAt": {
             "type": "string",
             "format": "date-time"
@@ -22256,7 +22416,97 @@
           "isPlatformAdmin",
           "memberships",
           "active",
+          "inactiveMembership",
           "sessionExpiresAt"
+        ]
+      },
+      "TenantEnabledModuleDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "displayName"
+        ]
+      },
+      "TenantPlanUsageDto": {
+        "type": "object",
+        "properties": {
+          "leads": {
+            "type": "number",
+            "nullable": true,
+            "description": "Null when CRM is not enabled for this workspace — never a fabricated zero."
+          },
+          "projects": {
+            "type": "number",
+            "nullable": true
+          },
+          "invoices": {
+            "type": "number",
+            "nullable": true
+          },
+          "employees": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "leads",
+          "projects",
+          "invoices",
+          "employees"
+        ]
+      },
+      "TenantPlanDto": {
+        "type": "object",
+        "properties": {
+          "solutionName": {
+            "type": "string",
+            "nullable": true
+          },
+          "planName": {
+            "type": "string",
+            "nullable": true
+          },
+          "subscriptionStatus": {
+            "type": "string",
+            "nullable": true,
+            "example": "active"
+          },
+          "subscriptionStartedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "subscriptionRenewsAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "enabledModules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantEnabledModuleDto"
+            }
+          },
+          "usage": {
+            "$ref": "#/components/schemas/TenantPlanUsageDto"
+          }
+        },
+        "required": [
+          "solutionName",
+          "planName",
+          "subscriptionStatus",
+          "subscriptionStartedAt",
+          "subscriptionRenewsAt",
+          "enabledModules",
+          "usage"
         ]
       },
       "CompanyProfileDto": {
@@ -23372,6 +23622,12 @@
           "invitationPending": {
             "type": "boolean",
             "description": "True while an invitation for this membership is still pending."
+          },
+          "invitationExpiresAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Expiry of the pending invitation, or null when none is pending."
           }
         },
         "required": [
@@ -23382,7 +23638,8 @@
           "status",
           "roles",
           "joinedAt",
-          "invitationPending"
+          "invitationPending",
+          "invitationExpiresAt"
         ]
       },
       "InviteMemberRequestDto": {

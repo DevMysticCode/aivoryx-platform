@@ -28,11 +28,13 @@ import { scope } from '../supply/common.js';
 import { schema } from '@aivoryx/db';
 import { CompanyProfileService } from './company-profile.service.js';
 import { TenantLogoService } from './tenant-logo.service.js';
+import { PlanService } from './plan.service.js';
 import {
   BrandingDto,
   CompanyProfileDto,
   LOGO_KINDS,
   LogoKindQueryDto,
+  TenantPlanDto,
   UpdateCompanyProfileDto,
 } from './settings.dto.js';
 
@@ -54,7 +56,19 @@ export class SettingsController {
   constructor(
     private readonly profiles: CompanyProfileService,
     private readonly logos: TenantLogoService,
+    private readonly plan: PlanService,
   ) {}
+
+  @Get('plan')
+  @RequirePermission('settings.company.read')
+  @ApiOperation({
+    operationId: 'getTenantPlan',
+    summary: 'This workspace’s solution, plan, subscription status, and real usage counts.',
+  })
+  @ApiOkResponse({ type: TenantPlanDto })
+  getPlan(@Security() ctx: SecurityContext) {
+    return this.plan.get(scope(ctx));
+  }
 
   @Get('company')
   @RequirePermission('settings.company.read')

@@ -4,6 +4,7 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { ErrorBlock, Confirm } from '@/components/ui/kit';
 import { Select, Table } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import {
@@ -20,6 +21,7 @@ import {
   useEmployee,
   useEmployeeHistory,
   useEmployeeDocuments,
+  useDeleteEmployeeDocument,
   useCompensationHistory,
   useBankDetails,
   useAttendance,
@@ -75,7 +77,7 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       {emp.isLoading && <Skeleton rows={4} />}
-      {emp.error && <ErrorNote error={emp.error} />}
+      {emp.error && <ErrorBlock error={emp.error} onRetry={() => emp.refetch()} />}
 
       {emp.data && (
         <>
@@ -539,8 +541,10 @@ function BankTab({ id, canManage }: { id: string; canManage: boolean }) {
 
 function DocumentsTab({ id, canManage }: { id: string; canManage: boolean }) {
   const docs = useEmployeeDocuments(id);
+  const remove = useDeleteEmployeeDocument(id);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<unknown>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const upload = async (file: File, kind: string, title: string) => {
     setBusy(true);
@@ -609,6 +613,16 @@ function DocumentsTab({ id, canManage }: { id: string; canManage: boolean }) {
                 >
                   Download
                 </a>
+                {canManage ? (
+                  <button
+                    type="button"
+                    disabled={remove.isPending}
+                    className="ml-3 text-destructive hover:underline disabled:opacity-50"
+                    onClick={() => setDeletingId(d.id)}
+                  >
+                    {remove.isPending && deletingId === d.id ? 'Deleting…' : 'Delete'}
+                  </button>
+                ) : null}
               </td>
             </tr>
           ))}
@@ -616,6 +630,26 @@ function DocumentsTab({ id, canManage }: { id: string; canManage: boolean }) {
       ) : (
         <p className="text-sm text-muted-foreground">No documents.</p>
       )}
+
+      <Confirm
+        open={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={async () => {
+          if (!deletingId) return;
+          try {
+            await remove.mutateAsync(deletingId);
+          } catch {
+            // error toast already shown by useMutationWithFeedback
+          } finally {
+            setDeletingId(null);
+          }
+        }}
+        title="Delete this document?"
+        body="This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        pending={remove.isPending}
+      />
     </div>
   );
 }

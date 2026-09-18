@@ -106,6 +106,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/settings/plan': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** This workspace’s solution, plan, subscription status, and real usage counts. */
+    get: operations['getTenantPlan'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/settings/company': {
     parameters: {
       query?: never;
@@ -1733,6 +1750,23 @@ export interface paths {
     put?: never;
     post?: never;
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/employees/{id}/documents/{documentId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove an employee document. */
+    delete: operations['deleteHrEmployeeDocument'];
     options?: never;
     head?: never;
     patch?: never;
@@ -4844,6 +4878,15 @@ export interface components {
       /** @description Safe tenant branding for the app shell (never a security boundary). */
       branding: components['schemas']['BrandingContextDto'];
     };
+    InactiveMembershipDto: {
+      /** Format: uuid */
+      membershipId: string;
+      /**
+       * @description A stable AppError code: AUTH_MEMBERSHIP_SUSPENDED | TENANT_SUSPENDED | TENANT_PROVISIONING | TENANT_ARCHIVED.
+       * @example TENANT_SUSPENDED
+       */
+      reason: string;
+    };
     LoginResponseDto: {
       user: components['schemas']['AuthUserDto'];
       /** @description True if this user is an Aivoryx platform administrator (not tenant-scoped). */
@@ -4851,6 +4894,8 @@ export interface components {
       memberships: components['schemas']['MembershipSummaryDto'][];
       /** @description Null until the session has a usable active tenant. */
       active: components['schemas']['ActiveContextDto'] | null;
+      /** @description Set only when `active` is null because a specific membership failed to resolve (e.g. it is suspended, or its tenant is suspended/provisioning/archived) — as opposed to the user simply having no membership at all. Lets the frontend show a specific, correct message instead of a generic "no workspace" one. */
+      inactiveMembership: components['schemas']['InactiveMembershipDto'] | null;
       /** Format: date-time */
       sessionExpiresAt: string;
       /** @description True when the single-membership user was auto-selected into a tenant. */
@@ -4879,6 +4924,8 @@ export interface components {
       memberships: components['schemas']['MembershipSummaryDto'][];
       /** @description Null until the session has a usable active tenant. */
       active: components['schemas']['ActiveContextDto'] | null;
+      /** @description Set only when `active` is null because a specific membership failed to resolve (e.g. it is suspended, or its tenant is suspended/provisioning/archived) — as opposed to the user simply having no membership at all. Lets the frontend show a specific, correct message instead of a generic "no workspace" one. */
+      inactiveMembership: components['schemas']['InactiveMembershipDto'] | null;
       /** Format: date-time */
       sessionExpiresAt: string;
     };
@@ -4896,8 +4943,33 @@ export interface components {
       memberships: components['schemas']['MembershipSummaryDto'][];
       /** @description Null until the session has a usable active tenant. */
       active: components['schemas']['ActiveContextDto'] | null;
+      /** @description Set only when `active` is null because a specific membership failed to resolve (e.g. it is suspended, or its tenant is suspended/provisioning/archived) — as opposed to the user simply having no membership at all. Lets the frontend show a specific, correct message instead of a generic "no workspace" one. */
+      inactiveMembership: components['schemas']['InactiveMembershipDto'] | null;
       /** Format: date-time */
       sessionExpiresAt: string;
+    };
+    TenantEnabledModuleDto: {
+      key: string;
+      displayName: string;
+    };
+    TenantPlanUsageDto: {
+      /** @description Null when CRM is not enabled for this workspace — never a fabricated zero. */
+      leads: number | null;
+      projects: number | null;
+      invoices: number | null;
+      employees: number | null;
+    };
+    TenantPlanDto: {
+      solutionName: string | null;
+      planName: string | null;
+      /** @example active */
+      subscriptionStatus: string | null;
+      /** Format: date-time */
+      subscriptionStartedAt: string | null;
+      /** Format: date-time */
+      subscriptionRenewsAt: string | null;
+      enabledModules: components['schemas']['TenantEnabledModuleDto'][];
+      usage: components['schemas']['TenantPlanUsageDto'];
     };
     CompanyProfileDto: {
       /** @description The workspace name (from the tenant record). */
@@ -5252,6 +5324,11 @@ export interface components {
       joinedAt: string;
       /** @description True while an invitation for this membership is still pending. */
       invitationPending: boolean;
+      /**
+       * Format: date-time
+       * @description Expiry of the pending invitation, or null when none is pending.
+       */
+      invitationExpiresAt: string | null;
     };
     InviteMemberRequestDto: {
       /** Format: email */
@@ -8736,6 +8813,41 @@ export interface operations {
       };
     };
   };
+  getTenantPlan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TenantPlanDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   getCompanyProfile: {
     parameters: {
       query?: never;
@@ -9139,6 +9251,7 @@ export interface operations {
           | 'hr.employee.membership_linked'
           | 'hr.employee.membership_unlinked'
           | 'hr.employee.document_added'
+          | 'hr.employee.document_deleted'
           | 'hr.bank_details.updated'
           | 'hr.organization.department_created'
           | 'hr.organization.designation_created'
@@ -13713,6 +13826,42 @@ export interface operations {
       };
     };
   };
+  deleteHrEmployeeDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   hrEmployeeCompensationHistory: {
     parameters: {
       query?: never;
@@ -17724,6 +17873,7 @@ export interface operations {
         status?: string;
         supplierId?: string;
         projectId?: string;
+        q?: string;
         page?: number;
         pageSize?: number;
       };

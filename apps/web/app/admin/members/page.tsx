@@ -9,6 +9,7 @@ import {
   useMembers,
   useRemoveMember,
   useRemoveRole,
+  useResendInvite,
   useRoles,
   useSetMemberStatus,
 } from '@/lib/admin/use-admin';
@@ -151,6 +152,16 @@ function InvitationHandoff({
   );
 }
 
+/** "Invite expires in 3 days" / "Invite expires in 4 hours" / "Invite expired". */
+function formatInvitationExpiry(expiresAt: string): string {
+  const diffMs = new Date(expiresAt).getTime() - Date.now();
+  if (diffMs <= 0) return 'Invite expired';
+  const hours = Math.round(diffMs / (60 * 60 * 1000));
+  if (hours < 24) return `Invite expires in ${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+  const days = Math.round(hours / 24);
+  return `Invite expires in ${days} ${days === 1 ? 'day' : 'days'}`;
+}
+
 function MemberRow({
   member,
   availableRoles,
@@ -160,16 +171,23 @@ function MemberRow({
 }) {
   const setStatus = useSetMemberStatus();
   const remove = useRemoveMember();
+  const resend = useResendInvite();
   const assignRole = useAssignRole();
   const removeRole = useRemoveRole();
   const [confirmRemove, setConfirmRemove] = useState(false);
   const memberLabel = member.name ?? member.email;
+  const isInvited = member.status === 'invited';
 
   const heldKeys = new Set(member.roles.map((r) => r.key));
   const assignable = availableRoles.filter((r) => !heldKeys.has(r.key));
   const busy =
-    setStatus.isPending || remove.isPending || assignRole.isPending || removeRole.isPending;
-  const rowError = setStatus.error ?? remove.error ?? assignRole.error ?? removeRole.error ?? null;
+    setStatus.isPending ||
+    remove.isPending ||
+    resend.isPending ||
+    assignRole.isPending ||
+    removeRole.isPending;
+  const rowError =
+    setStatus.error ?? remove.error ?? resend.error ?? assignRole.error ?? removeRole.error ?? null;
 
   return (
     <>
@@ -180,6 +198,11 @@ function MemberRow({
         </td>
         <td className="px-3 py-2">
           <StatusBadge status={member.status} />
+          {isInvited && member.invitationExpiresAt ? (
+            <div className="mt-1 text-xs text-muted-foreground">
+              {formatInvitationExpiry(member.invitationExpiresAt)}
+            </div>
+          ) : null}
         </td>
         <td className="px-3 py-2">
           <div className="flex flex-wrap items-center gap-1">
@@ -234,7 +257,18 @@ function MemberRow({
         </td>
         <td className="px-3 py-2">
           <div className="flex flex-wrap gap-2">
-            {member.status === 'suspended' ? (
+            {isInvited ? (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() =>
+                  resend.mutate({ email: member.email, name: member.name ?? undefined })
+                }
+              >
+                {resend.isPending ? 'Resending…' : 'Resend invite'}
+              </Button>
+            ) : member.status === 'suspended' ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -263,7 +297,7 @@ function MemberRow({
               disabled={busy}
               onClick={() => setConfirmRemove(true)}
             >
-              Remove
+              {isInvited ? 'Revoke invite' : 'Remove'}
             </Button>
           </div>
         </td>
@@ -282,9 +316,13 @@ function MemberRow({
           await remove.mutateAsync(member.membershipId);
           setConfirmRemove(false);
         }}
-        title={`Remove ${memberLabel}?`}
-        body={`${memberLabel} will lose access to this workspace immediately. This can be undone by inviting them again.`}
-        confirmLabel="Remove"
+        title={isInvited ? `Revoke invite for ${memberLabel}?` : `Remove ${memberLabel}?`}
+        body={
+          isInvited
+            ? `The pending invitation for ${memberLabel} will be revoked immediately and their invite link will stop working. You can invite them again at any time.`
+            : `${memberLabel} will lose access to this workspace immediately. This can be undone by inviting them again.`
+        }
+        confirmLabel={isInvited ? 'Revoke invite' : 'Remove'}
         danger
         pending={remove.isPending}
       />

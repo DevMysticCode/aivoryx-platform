@@ -82,6 +82,14 @@ export class MemberDto {
 
   @ApiProperty({ description: 'True while an invitation for this membership is still pending.' })
   invitationPending!: boolean;
+
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    format: 'date-time',
+    description: 'Expiry of the pending invitation, or null when none is pending.',
+  })
+  invitationExpiresAt!: string | null;
 }
 
 export class InviteMemberRequestDto {

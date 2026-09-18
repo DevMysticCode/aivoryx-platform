@@ -10,6 +10,7 @@ import {
   useCompanyProfile,
   useLogoObjectUrl,
   useRemoveLogo,
+  useTenantPlan,
   useUpdateCompanyProfile,
   useUploadLogo,
 } from '@/lib/settings/use-settings';
@@ -46,6 +47,7 @@ export default function CompanySettingsPage() {
   const canEdit = perms.includes('settings.company.update');
 
   const profile = useCompanyProfile();
+  const plan = useTenantPlan();
   const save = useUpdateCompanyProfile();
   const upload = useUploadLogo();
   const removeLogo = useRemoveLogo();
@@ -128,6 +130,67 @@ export default function CompanySettingsPage() {
       {data ? (
         <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
           <div className="space-y-6">
+            {/* Plan & usage */}
+            <Card className="space-y-4">
+              <h2 className="text-sm font-semibold">Plan &amp; usage</h2>
+              {plan.isLoading ? (
+                <Skeleton rows={2} />
+              ) : plan.error ? (
+                <ErrorNote error={plan.error} />
+              ) : plan.data ? (
+                <div className="space-y-3">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Solution</p>
+                      <p className="text-sm font-medium">{plan.data.solutionName ?? '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Plan</p>
+                      <p className="text-sm font-medium">{plan.data.planName ?? '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Status</p>
+                      <p className="text-sm font-medium capitalize">
+                        {plan.data.subscriptionStatus ?? 'No subscription on record'}
+                      </p>
+                    </div>
+                  </div>
+                  {plan.data.enabledModules.length > 0 ? (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Enabled modules</p>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {plan.data.enabledModules.map((m) => (
+                          <span
+                            key={m.key}
+                            className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
+                          >
+                            {m.displayName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-4">
+                    {plan.data.usage.leads !== null ? (
+                      <UsageStat label="Leads" value={plan.data.usage.leads} />
+                    ) : null}
+                    {plan.data.usage.projects !== null ? (
+                      <UsageStat label="Projects" value={plan.data.usage.projects} />
+                    ) : null}
+                    {plan.data.usage.invoices !== null ? (
+                      <UsageStat label="Invoices" value={plan.data.usage.invoices} />
+                    ) : null}
+                    {plan.data.usage.employees !== null ? (
+                      <UsageStat label="Employees" value={plan.data.usage.employees} />
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    To change your plan or enabled modules, contact Aivoryx support.
+                  </p>
+                </div>
+              ) : null}
+            </Card>
+
             {/* Company */}
             <Card className="space-y-4">
               <h2 className="text-sm font-semibold">Company</h2>
@@ -309,6 +372,15 @@ export default function CompanySettingsPage() {
         danger
         pending={removeLogo.isPending}
       />
+    </div>
+  );
+}
+
+function UsageStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold tabular-nums">{value}</p>
     </div>
   );
 }

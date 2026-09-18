@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, desc, eq, gt, ilike, inArray, isNull, lte, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, inArray, isNull, lte, or, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
@@ -87,7 +87,10 @@ export class InvoicesService {
       if (query.projectId) conds.push(eq(invoices.projectId, query.projectId));
       if (query.from) conds.push(sql`${invoices.issueDate} >= ${query.from}`);
       if (query.to) conds.push(sql`${invoices.issueDate} <= ${query.to}`);
-      if (query.q?.trim()) conds.push(ilike(invoices.number, `%${query.q.trim()}%`));
+      if (query.q?.trim()) {
+        const like = `%${query.q.trim()}%`;
+        conds.push(or(ilike(invoices.number, like), ilike(customers.name, like))!);
+      }
       if (query.overdue) {
         conds.push(inArray(invoices.status, ['ISSUED', 'PARTIALLY_PAID']));
         conds.push(sql`${invoices.dueDate} < now()::date`);
@@ -100,6 +103,7 @@ export class InvoicesService {
       const [countRow] = await tx
         .select({ n: sql<number>`count(*)::int` })
         .from(invoices)
+        .leftJoin(customers, eq(invoices.customerId, customers.id))
         .where(where);
 
       const rows = await tx

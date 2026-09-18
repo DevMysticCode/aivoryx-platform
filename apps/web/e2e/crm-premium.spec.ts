@@ -79,13 +79,13 @@ test.describe('CRM premium workspace', () => {
     await expect(
       page.getByRole('button', { name: 'Call' }).or(page.getByRole('button', { name: 'Edit' })),
     ).toBeVisible();
-    await page.getByRole('button', { name: 'Activity' }).click();
+    await page.getByRole('tab', { name: 'Activity' }).click();
     await expect(page.getByText(/Lead created/i)).toBeVisible();
-    await page.getByRole('button', { name: 'Notes' }).click();
+    await page.getByRole('tab', { name: 'Notes' }).click();
     await page.getByPlaceholder('Add a note…').fill('Called, will follow up');
     await page.getByRole('button', { name: 'Add' }).click();
     await expect(page.getByText('Called, will follow up')).toBeVisible();
-    await page.getByRole('button', { name: 'Follow-ups' }).click();
+    await page.getByRole('tab', { name: 'Follow-ups' }).click();
     await page.getByRole('button', { name: 'Schedule follow-up' }).click();
     const fu = page.getByRole('dialog', { name: 'Schedule a follow-up' });
     await fu.getByLabel('Due').fill('2027-01-01T10:00');

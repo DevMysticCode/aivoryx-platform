@@ -9,6 +9,8 @@ import { useAccess } from '@/lib/navigation/use-access';
 import { useDashboardWidgets } from '@/lib/dashboard/use-dashboard';
 import { groupWidgetsBySection } from '@/lib/dashboard/select';
 import { LoadingBlock } from '@/components/ui/kit';
+import { WorkspaceUnavailable } from '@/components/admin/ui';
+import { OnboardingCard } from '@/components/onboarding-card';
 
 const SPAN_CLASS: Record<number, string> = {
   3: 'md:col-span-3',
@@ -35,13 +37,10 @@ export default function DashboardPage() {
 
   if (me.data && !me.data.active) {
     return (
-      <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
-        <p className="font-medium">No active workspace</p>
-        <p className="mt-1 text-muted-foreground">
-          Your account is signed in but has no usable workspace membership. Ask an administrator to
-          add you to a workspace, then sign in again.
-        </p>
-      </div>
+      <WorkspaceUnavailable
+        inactiveMembership={me.data.inactiveMembership}
+        memberships={me.data.memberships}
+      />
     );
   }
 
@@ -62,6 +61,8 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      <OnboardingCard />
 
       {isLoading ? (
         <LoadingBlock />

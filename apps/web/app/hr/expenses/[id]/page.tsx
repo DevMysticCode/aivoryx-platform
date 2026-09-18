@@ -6,7 +6,7 @@ import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
 import { Select } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
-import { Confirm } from '@/components/ui/kit';
+import { Confirm, ErrorBlock } from '@/components/ui/kit';
 import { HrStatusBadge, TextField, DefRow, money, fmtDate, fmtDateTime } from '@/components/hr/ui';
 import * as hrApi from '@/lib/api/hr';
 import { useExpenseClaim, useExpenseActions } from '@/lib/hr/use-hr';
@@ -42,7 +42,7 @@ export default function ExpenseDetailPage({ params }: { params: Promise<{ id: st
         ← Expenses
       </Link>
       {claim.isLoading && <Skeleton rows={4} />}
-      {claim.error && <ErrorNote error={claim.error} />}
+      {claim.error && <ErrorBlock error={claim.error} onRetry={() => claim.refetch()} />}
       {c && (
         <>
           <PageHeader title={c.claimNumber} description={`${c.employeeName} · ${c.categoryName}`}>

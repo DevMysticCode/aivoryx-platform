@@ -171,6 +171,13 @@ describe('SecurityGuard', () => {
     });
     await expect(lenient.guard.canActivate(lenient.ctx)).resolves.toBe(true);
     expect((lenient.req.securityContext as { tenantId: string | null }).tenantId).toBeNull();
+    expect(
+      (
+        lenient.req.securityContext as {
+          inactiveMembership: { membershipId: string; reason: string } | null;
+        }
+      ).inactiveMembership,
+    ).toEqual({ membershipId: 'mem-1', reason: 'AUTH_MEMBERSHIP_SUSPENDED' });
   });
 
   it('distinguishes 401 (unauthenticated) from 403 (no permission) on a permission route', async () => {

@@ -50,13 +50,13 @@ test.describe('CRM smoke', () => {
     ).toBeVisible();
 
     // 5. add a note (Notes tab)
-    await page.getByRole('button', { name: 'Notes' }).click();
+    await page.getByRole('tab', { name: 'Notes' }).click();
     await page.getByPlaceholder('Add a note…').fill('Called and left a voicemail.');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(page.getByText('Called and left a voicemail.')).toBeVisible();
 
     // 6. create a follow-up (Follow-ups tab → dialog)
-    await page.getByRole('button', { name: 'Follow-ups' }).click();
+    await page.getByRole('tab', { name: 'Follow-ups' }).click();
     await page.getByRole('button', { name: 'Schedule follow-up' }).click();
     const due = new Date(Date.now() + 86_400_000).toISOString().slice(0, 16);
     await page.getByLabel('Due').fill(due);
@@ -67,12 +67,12 @@ test.describe('CRM smoke', () => {
     await expect(page.getByText('pending', { exact: true })).toBeVisible();
 
     // 7. qualify (back on Overview tab)
-    await page.getByRole('button', { name: 'Overview' }).click();
+    await page.getByRole('tab', { name: 'Overview' }).click();
     await page.getByRole('button', { name: 'Qualify', exact: true }).click();
     await expect(page.getByText('QUALIFIED', { exact: true }).first()).toBeVisible();
 
     // 8. verify the activity timeline recorded everything
-    await page.getByRole('button', { name: 'Activity' }).click();
+    await page.getByRole('tab', { name: 'Activity' }).click();
     await expect(page.getByText('Lead created')).toBeVisible();
     await expect(page.getByText('Note added')).toBeVisible();
     await expect(page.getByText('Qualified', { exact: true })).toBeVisible();

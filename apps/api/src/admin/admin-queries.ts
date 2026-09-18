@@ -18,6 +18,7 @@ export interface MemberView {
   roles: MemberRoleView[];
   joinedAt: string;
   invitationPending: boolean;
+  invitationExpiresAt: string | null;
 }
 
 /** Find a role by its key within a tenant (RLS already scopes `roles`). */
@@ -82,6 +83,7 @@ function assembleMembers(
     roleKey: string | null;
     roleName: string | null;
     pendingInvitationId: string | null;
+    pendingInvitationExpiresAt: Date | null;
   }>,
 ): MemberView[] {
   const byId = new Map<string, MemberView>();
@@ -97,6 +99,7 @@ function assembleMembers(
         roles: [],
         joinedAt: row.joinedAt.toISOString(),
         invitationPending: row.pendingInvitationId !== null,
+        invitationExpiresAt: row.pendingInvitationExpiresAt?.toISOString() ?? null,
       };
       byId.set(row.membershipId, entry);
     }
@@ -117,6 +120,7 @@ const memberSelect = {
   roleKey: roles.key,
   roleName: roles.name,
   pendingInvitationId: tenantInvitations.id,
+  pendingInvitationExpiresAt: tenantInvitations.expiresAt,
 } as const;
 
 const pendingInvitationJoin = and(

@@ -238,6 +238,23 @@ export class HrEmployeesController {
     return new StreamableFile(object.body, { type: object.contentType });
   }
 
+  @Delete(':id/documents/:documentId')
+  @RequirePermission('hr.employee.manage')
+  @HttpCode(204)
+  @ApiOperation({
+    operationId: 'deleteHrEmployeeDocument',
+    summary: 'Remove an employee document.',
+  })
+  async deleteDocument(
+    @Security() ctx: SecurityContext,
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+  ): Promise<void> {
+    const scope = hrScope(ctx);
+    const key = await this.employees.deleteDocument(scope, id, documentId);
+    await this.storage.deleteObject(key);
+  }
+
   // ---- compensation (highly sensitive) ------------
 
   @Get(':id/compensation')

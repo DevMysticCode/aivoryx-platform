@@ -166,6 +166,7 @@ export const AUDIT_ACTION_MODULE = {
   'hr.employee.membership_linked': 'hr',
   'hr.employee.membership_unlinked': 'hr',
   'hr.employee.document_added': 'hr',
+  'hr.employee.document_deleted': 'hr',
   'hr.bank_details.updated': 'hr',
   'hr.organization.department_created': 'hr',
   'hr.organization.designation_created': 'hr',

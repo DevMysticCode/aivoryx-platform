@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 import { Button } from '@aivoryx/ui';
 import {
   useCreatePurchaseOrder,
@@ -40,7 +41,10 @@ export default function PurchaseOrdersPage() {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 20;
-  const pos = usePurchaseOrders({ status: status || undefined, page, pageSize });
+  const [rawQuery, setRawQuery] = useState('');
+  const q = useDebounced(rawQuery.trim(), 250);
+  useEffect(() => setPage(1), [q, status]);
+  const pos = usePurchaseOrders({ status: status || undefined, q: q || undefined, page, pageSize });
   const totalPages = pos.data ? Math.max(1, Math.ceil(pos.data.total / pageSize)) : 1;
 
   const suppliers = useSuppliers();
@@ -186,23 +190,34 @@ export default function PurchaseOrdersPage() {
         </Card>
       ) : null}
 
-      <Card className="grid gap-3 sm:grid-cols-2">
-        <Select
-          label="Status"
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">All statuses</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s.replace(/_/g, ' ')}
-            </option>
-          ))}
-        </Select>
-        <div className="flex items-end text-sm text-muted-foreground">
+      <Card className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <label className="relative w-full sm:min-w-0 sm:max-w-xs sm:flex-1">
+          <span className="mb-1.5 block text-sm font-medium">Search</span>
+          <Search className="pointer-events-none absolute left-2.5 top-[34px] size-4 text-muted-foreground" />
+          <input
+            value={rawQuery}
+            onChange={(e) => setRawQuery(e.target.value)}
+            placeholder="Search PO number, supplier…"
+            className="h-9 w-full rounded-md border border-input bg-transparent pl-8 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </label>
+        <div className="sm:w-48">
+          <Select
+            label="Status"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+            }}
+          >
+            <option value="">All statuses</option>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s.replace(/_/g, ' ')}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="text-sm text-muted-foreground sm:ml-auto">
           {pos.data ? `${pos.data.total} order(s)` : ''}
         </div>
       </Card>
@@ -254,4 +269,13 @@ export default function PurchaseOrdersPage() {
       )}
     </section>
   );
+}
+
+function useDebounced<T>(value: T, ms: number): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = window.setTimeout(() => setV(value), ms);
+    return () => window.clearTimeout(t);
+  }, [value, ms]);
+  return v;
 }

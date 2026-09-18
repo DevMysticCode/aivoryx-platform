@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Search } from 'lucide-react';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { ErrorBlock } from '@/components/ui/kit';
 import { fmtMoney, fmtDate, Select, SupplyStatusBadge, Table, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useCustomers } from '@/lib/commercial/use-commercial';
@@ -34,7 +36,15 @@ export default function InvoicesPage() {
   const [status, setStatus] = useState('');
   const [overdue, setOverdue] = useState(false);
   const [page, setPage] = useState(1);
-  const list = useInvoices({ status: status || undefined, overdue: overdue || undefined, page });
+  const [rawQuery, setRawQuery] = useState('');
+  const q = useDebounced(rawQuery.trim(), 250);
+  useEffect(() => setPage(1), [q]);
+  const list = useInvoices({
+    status: status || undefined,
+    overdue: overdue || undefined,
+    q: q || undefined,
+    page,
+  });
 
   const customers = useCustomers({ pageSize: 100 });
   const create = useCreateInvoice();
@@ -180,39 +190,51 @@ export default function InvoicesPage() {
         </Card>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="w-40">
-          <Select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="">All statuses</option>
-            {['DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'PAID', 'CANCELLED', 'VOID'].map((s) => (
-              <option key={s} value={s}>
-                {s.replace(/_/g, ' ')}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <label className="flex items-center gap-1.5 text-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="relative w-full sm:min-w-0 sm:max-w-xs sm:flex-1">
+          <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <input
-            type="checkbox"
-            className="size-4 accent-primary"
-            checked={overdue}
-            onChange={(e) => {
-              setOverdue(e.target.checked);
-              setPage(1);
-            }}
+            value={rawQuery}
+            onChange={(e) => setRawQuery(e.target.value)}
+            placeholder="Search invoice number, customer…"
+            className="h-9 w-full rounded-md border bg-transparent pl-8 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
-          Overdue only
         </label>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-40">
+            <Select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">All statuses</option>
+              {['DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'PAID', 'CANCELLED', 'VOID'].map((s) => (
+                <option key={s} value={s}>
+                  {s.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <label className="flex items-center gap-1.5 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={overdue}
+              onChange={(e) => {
+                setOverdue(e.target.checked);
+                setPage(1);
+              }}
+            />
+            Overdue only
+          </label>
+        </div>
       </div>
 
       {list.isLoading && <Skeleton rows={6} />}
-      {list.error && <ErrorNote error={list.error} />}
+      {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
 
       {list.data && (
         <>
@@ -273,4 +295,13 @@ export default function InvoicesPage() {
       )}
     </div>
   );
+}
+
+function useDebounced<T>(value: T, ms: number): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = window.setTimeout(() => setV(value), ms);
+    return () => window.clearTimeout(t);
+  }, [value, ms]);
+  return v;
 }

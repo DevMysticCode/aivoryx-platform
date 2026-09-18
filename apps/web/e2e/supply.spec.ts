@@ -130,7 +130,7 @@ test.describe('Supply chain golden path', () => {
 
     // ---- 12. CRM lead shows the linked project + readiness --
     await page.goto(`/crm/leads/${leadId}`);
-    await page.getByRole('button', { name: 'Related' }).click();
+    await page.getByRole('tab', { name: 'Related' }).click();
     await expect(page.getByRole('heading', { name: 'Project / operations' })).toBeVisible();
     await expect(page.getByRole('link', { name: projectNumber })).toBeVisible();
     await expect(page.getByText(/material readiness 100%/i)).toBeVisible();

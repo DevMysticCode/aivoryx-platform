@@ -17,10 +17,15 @@ export const settingsKeys = {
   company: ['settings', 'company'] as const,
   branding: ['settings', 'branding'] as const,
   onboarding: ['settings', 'onboarding'] as const,
+  plan: ['settings', 'plan'] as const,
 };
 
 export function useCompanyProfile() {
   return useQuery({ queryKey: settingsKeys.company, queryFn: api.getCompanyProfile });
+}
+
+export function useTenantPlan() {
+  return useQuery({ queryKey: settingsKeys.plan, queryFn: api.getTenantPlan });
 }
 
 export function useBranding() {

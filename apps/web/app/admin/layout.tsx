@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
-import { Skeleton } from '@/components/admin/ui';
+import { Skeleton, WorkspaceUnavailable } from '@/components/admin/ui';
 import { ModuleTabs } from '@/components/ui/module-tabs';
 
 const NAV = [
@@ -57,6 +57,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   const active = me.data?.active;
+
+  if (!active) {
+    return (
+      <WorkspaceUnavailable
+        inactiveMembership={me.data?.inactiveMembership}
+        memberships={me.data?.memberships}
+      />
+    );
+  }
+
   const items = NAV.map(({ href, label, icon }) => ({
     href,
     label,
@@ -67,18 +77,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="space-y-6">
       <ModuleTabs items={items} />
-
-      {active ? (
-        children
-      ) : (
-        <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
-          <p className="font-medium">No active workspace selected.</p>
-          <p className="mt-1 text-muted-foreground">
-            Your account is signed in but has no usable workspace membership. Ask an administrator
-            to add you to a workspace, then sign in again.
-          </p>
-        </div>
-      )}
+      {children}
     </div>
   );
 }

@@ -171,14 +171,14 @@ test.describe('Field operations golden path', () => {
 
     // ---- 6. admin: verify the completed visit from the CRM lead -------
     await page.goto(`/crm/leads/${leadId}`);
-    await page.getByRole('button', { name: 'Related' }).click();
+    await page.getByRole('tab', { name: 'Related' }).click();
     // match by href rather than the locale-formatted date text, which can
     // render slightly differently between Node's Intl and the browser's.
     const visitLink = page.locator(`a[href="/crm/visits/${visitId}"]`);
     await expect(visitLink).toBeVisible();
     await expect(page.getByText('COMPLETED', { exact: true }).first()).toBeVisible();
 
-    await page.getByRole('button', { name: 'Activity' }).click();
+    await page.getByRole('tab', { name: 'Activity' }).click();
     const timeline = page.getByRole('list').filter({ hasText: 'Visit completed' });
     await expect(timeline.getByText('Visit scheduled').first()).toBeVisible();
     await expect(timeline.getByText('Checked in on site').first()).toBeVisible();
