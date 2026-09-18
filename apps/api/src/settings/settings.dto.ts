@@ -67,6 +67,42 @@ export class OnboardingDto {
   @ApiProperty({ type: [OnboardingStepDto] }) steps!: OnboardingStepDto[];
 }
 
+export class TenantEnabledModuleDto {
+  @ApiProperty() key!: string;
+  @ApiProperty() displayName!: string;
+}
+
+export class TenantPlanUsageDto {
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    description: 'Null when CRM is not enabled for this workspace — never a fabricated zero.',
+  })
+  leads!: number | null;
+  @ApiProperty({ nullable: true, type: Number }) projects!: number | null;
+  @ApiProperty({ nullable: true, type: Number }) invoices!: number | null;
+  @ApiProperty({ nullable: true, type: Number }) employees!: number | null;
+}
+
+/**
+ * The tenant-facing counterpart to the platform admin's tenant-detail screen
+ * (Phase 16 §9) — same underlying data (solution, plan, subscription, usage),
+ * scoped to the caller's own workspace. No pricing/billing — the subscription
+ * abstraction stays deliberately minimal (ADR 0043).
+ */
+export class TenantPlanDto {
+  @ApiProperty({ nullable: true, type: String }) solutionName!: string | null;
+  @ApiProperty({ nullable: true, type: String }) planName!: string | null;
+  @ApiProperty({ nullable: true, type: String, example: 'active' })
+  subscriptionStatus!: string | null;
+  @ApiProperty({ nullable: true, type: String, format: 'date-time' })
+  subscriptionStartedAt!: string | null;
+  @ApiProperty({ nullable: true, type: String, format: 'date-time' })
+  subscriptionRenewsAt!: string | null;
+  @ApiProperty({ type: [TenantEnabledModuleDto] }) enabledModules!: TenantEnabledModuleDto[];
+  @ApiProperty({ type: TenantPlanUsageDto }) usage!: TenantPlanUsageDto;
+}
+
 // ---- request -------------------------------------------------
 
 export class UpdateCompanyProfileDto {

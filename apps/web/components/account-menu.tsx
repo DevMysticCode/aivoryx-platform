@@ -3,7 +3,15 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, Building2, Check, ChevronsUpDown, LogOut, UserRound } from 'lucide-react';
+import {
+  Bell,
+  Building2,
+  Check,
+  ChevronsUpDown,
+  LogOut,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import * as api from '@/lib/api/admin';
 import { useMe, adminKeys } from '@/lib/admin/use-admin';
@@ -118,15 +126,25 @@ export function AccountMenu() {
       ) : null}
 
       <div className="py-1">
-        <MenuItem href="/hr/me" icon={<UserRound className="size-4 text-muted-foreground" />}>
-          My profile
-        </MenuItem>
+        {active?.entitledModules.includes('HR') ? (
+          <MenuItem href="/hr/me" icon={<UserRound className="size-4 text-muted-foreground" />}>
+            My HR profile
+          </MenuItem>
+        ) : null}
         <MenuItem
           href="/settings/notifications"
           icon={<Bell className="size-4 text-muted-foreground" />}
         >
           Notification settings
         </MenuItem>
+        {me.data?.isPlatformAdmin ? (
+          <MenuItem
+            href="/platform"
+            icon={<ShieldCheck className="size-4 text-muted-foreground" />}
+          >
+            Platform administration
+          </MenuItem>
+        ) : null}
         <MenuItem danger icon={<LogOut className="size-4" />} onSelect={() => logout.mutate()}>
           {logout.isPending ? 'Signing out…' : 'Log out'}
         </MenuItem>

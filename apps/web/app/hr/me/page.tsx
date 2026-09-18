@@ -1,6 +1,6 @@
 'use client';
 
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, Skeleton, Card } from '@/components/admin/ui';
 import { Table } from '@/components/supply/ui';
 import { HrStatusBadge, DefRow, money, fmtDate, fmtDateTime } from '@/components/hr/ui';
 import * as hrApi from '@/lib/api/hr';
@@ -10,6 +10,7 @@ import {
   useMyExpenseClaims,
   useMyPayrollHistory,
 } from '@/lib/hr/use-hr';
+import { ErrorBlock } from '@/components/ui/kit';
 
 /** Employee self-service. Identity is resolved server-side from the session. */
 export default function MyHrPage() {
@@ -23,7 +24,7 @@ export default function MyHrPage() {
     return (
       <div className="space-y-4">
         <PageHeader title="My HR" description="Your own profile, leave, expenses and payslips." />
-        <ErrorNote error={me.error} />
+        <ErrorBlock error={me.error} onRetry={() => me.refetch()} />
         <p className="text-sm text-muted-foreground">
           If your account is not linked to an employee record, ask HR to link it.
         </p>

@@ -7,7 +7,7 @@ import { CalendarDays, HardHat, ListChecks, UserPlus } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
-import { Skeleton } from '@/components/admin/ui';
+import { Skeleton, WorkspaceUnavailable } from '@/components/admin/ui';
 
 const NAV = [
   { href: '/field', label: 'Today', icon: CalendarDays },
@@ -55,9 +55,11 @@ export default function FieldLayout({ children }: { children: ReactNode }) {
 
   if (!active) {
     return (
-      <div className="mx-auto max-w-md p-4 text-sm">
-        <p className="font-medium">No active workspace selected.</p>
-        <p className="mt-1 text-muted-foreground">Sign in to a workspace to use the field app.</p>
+      <div className="mx-auto max-w-md p-4">
+        <WorkspaceUnavailable
+          inactiveMembership={me.data?.inactiveMembership}
+          memberships={me.data?.memberships}
+        />
       </div>
     );
   }

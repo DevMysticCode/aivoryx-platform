@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { ErrorBlock } from '@/components/ui/kit';
 import { Select, Table, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { HrStatusBadge, TextField, fmtDate } from '@/components/hr/ui';
@@ -257,7 +258,7 @@ export default function HrEmployeesPage() {
       </Card>
 
       {list.isLoading && <Skeleton rows={5} />}
-      {list.error && <ErrorNote error={list.error} />}
+      {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
 
       {list.data && (
         <>

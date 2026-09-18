@@ -16,7 +16,7 @@ import {
 } from '@/lib/field/use-field';
 import { Card, ErrorNote, Field, PageHeader, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { AttachmentThumb } from '@/components/field/attachment-thumb';
-import { Confirm } from '@/components/ui/kit';
+import { Confirm, ErrorBlock } from '@/components/ui/kit';
 
 export default function VisitDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,7 +36,7 @@ export default function VisitDetailPage() {
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   if (visit.isLoading) return <Skeleton rows={6} />;
-  if (visit.error) return <ErrorNote error={visit.error} />;
+  if (visit.error) return <ErrorBlock error={visit.error} onRetry={() => visit.refetch()} />;
   if (!visit.data) return null;
 
   const v = visit.data;

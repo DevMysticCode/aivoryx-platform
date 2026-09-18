@@ -620,6 +620,42 @@ export class EmployeesService {
     });
   }
 
+  /** Delete an employee document row and return its object key for storage cleanup. */
+  async deleteDocument(scope: HrScope, employeeId: string, documentId: string): Promise<string> {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const [row] = await tx
+        .select({ objectKey: employeeDocuments.objectKey })
+        .from(employeeDocuments)
+        .where(
+          and(
+            eq(employeeDocuments.tenantId, scope.tenantId),
+            eq(employeeDocuments.employeeId, employeeId),
+            eq(employeeDocuments.id, documentId),
+          ),
+        )
+        .limit(1);
+      if (!row) throw new AppError('HR_ATTACHMENT_INVALID');
+      await tx
+        .delete(employeeDocuments)
+        .where(
+          and(
+            eq(employeeDocuments.tenantId, scope.tenantId),
+            eq(employeeDocuments.employeeId, employeeId),
+            eq(employeeDocuments.id, documentId),
+          ),
+        );
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'hr.employee.document_deleted',
+        entityType: 'employee',
+        entityId: employeeId,
+        actor: userActor(scope),
+        metadata: { documentId },
+      });
+      return row.objectKey;
+    });
+  }
+
   // ---- helpers --------------------------------------------
 
   private listCols() {

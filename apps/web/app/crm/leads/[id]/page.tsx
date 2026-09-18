@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, CalendarClock, Mail, MapPin, Pencil, Phone, UserRound } from 'lucide-react';
-import { cn } from '@aivoryx/ui';
 import { Button, buttonVariants } from '@aivoryx/ui';
 import { useMembers } from '@/lib/admin/use-admin';
 import { useVisits } from '@/lib/field/use-field';
@@ -31,7 +30,8 @@ import { ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { fmtDate, fmtMoney, fmtQty, SupplyStatusBadge } from '@/components/supply/ui';
 import { Dialog } from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
-import { Confirm, LoadingBlock } from '@/components/ui/kit';
+import { Confirm, ErrorBlock, LoadingBlock } from '@/components/ui/kit';
+import { TabBar } from '@/components/ui/tab-bar';
 
 const NEXT_STATUSES: Record<string, string[]> = {
   NEW: ['ASSIGNED', 'CONTACTED', 'QUALIFIED', 'DISQUALIFIED'],
@@ -54,7 +54,7 @@ export default function LeadDetailPage() {
   const [followupOpen, setFollowupOpen] = useState(false);
 
   if (lead.isLoading) return <LoadingBlock />;
-  if (lead.error) return <ErrorNote error={lead.error} />;
+  if (lead.error) return <ErrorBlock error={lead.error} onRetry={() => lead.refetch()} />;
   if (!lead.data) return null;
 
   const l = lead.data;
@@ -121,25 +121,7 @@ export default function LeadDetailPage() {
         </div>
       </div>
 
-      {/* tabs */}
-      <div className="flex gap-1 overflow-x-auto border-b">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            aria-current={tab === t ? 'page' : undefined}
-            className={cn(
-              '-mb-px shrink-0 border-b-2 px-3 py-2 text-sm transition-colors',
-              tab === t
-                ? 'border-primary font-medium text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <TabBar tabs={TABS.map((t) => ({ key: t, label: t }))} active={tab} onChange={setTab} />
 
       {tab === 'Overview' ? (
         <OverviewTab leadId={id} members={members.data ?? []} />

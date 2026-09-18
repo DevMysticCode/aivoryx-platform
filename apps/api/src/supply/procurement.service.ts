@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
@@ -50,10 +50,15 @@ export class ProcurementService {
       if (filter.status) conds.push(eq(purchaseOrders.status, filter.status as PoStatus));
       if (filter.supplierId) conds.push(eq(purchaseOrders.supplierId, filter.supplierId));
       if (filter.projectId) conds.push(eq(purchaseOrders.projectId, filter.projectId));
+      if (filter.q?.trim()) {
+        const like = `%${filter.q.trim()}%`;
+        conds.push(or(ilike(purchaseOrders.number, like), ilike(suppliers.name, like))!);
+      }
       const where = and(...conds);
       const [countRow] = await tx
         .select({ n: sql<number>`count(*)::int` })
         .from(purchaseOrders)
+        .leftJoin(suppliers, eq(suppliers.id, purchaseOrders.supplierId))
         .where(where);
       const rows = await tx
         .select({

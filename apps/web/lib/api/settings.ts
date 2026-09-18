@@ -2,6 +2,7 @@ import type {
   Branding,
   CompanyProfile,
   Onboarding,
+  TenantPlan,
   UpdateCompanyProfileRequest,
 } from '@aivoryx/contracts';
 import { API_V1_PREFIX } from '@aivoryx/contracts';
@@ -34,6 +35,8 @@ export const getOnboarding = () => apiFetch<Onboarding>('/onboarding', { cache: 
 
 export const dismissOnboarding = () =>
   apiFetch<Onboarding>('/onboarding/dismiss', { method: 'POST' });
+
+export const getTenantPlan = () => apiFetch<TenantPlan>('/settings/plan', { cache: 'no-store' });
 
 export async function uploadLogo(kind: LogoKind, file: File): Promise<CompanyProfile> {
   const form = new FormData();

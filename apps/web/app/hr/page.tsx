@@ -1,8 +1,9 @@
 'use client';
 
-import { PageHeader, ErrorNote, Skeleton } from '@/components/admin/ui';
+import { PageHeader, Skeleton } from '@/components/admin/ui';
 import { StatCard } from '@/components/hr/ui';
 import { useHrDashboard } from '@/lib/hr/use-hr';
+import { ErrorBlock } from '@/components/ui/kit';
 
 /** HR dashboard — the workspace-wide people snapshot (Phase 12, ADR 0041). */
 export default function HrDashboardPage() {
@@ -16,7 +17,7 @@ export default function HrDashboardPage() {
       />
 
       {q.isLoading && <Skeleton rows={3} />}
-      {q.error && <ErrorNote error={q.error} />}
+      {q.error && <ErrorBlock error={q.error} onRetry={() => q.refetch()} />}
 
       {q.data && (
         <>

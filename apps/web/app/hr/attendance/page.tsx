@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { ErrorBlock } from '@/components/ui/kit';
 import { Table, Select, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { HrStatusBadge, TextField, fmtDate, fmtDateTime } from '@/components/hr/ui';
@@ -163,7 +164,7 @@ export default function AttendancePage() {
       </Card>
 
       {list.isLoading && <Skeleton rows={5} />}
-      {list.error && <ErrorNote error={list.error} />}
+      {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
       {list.data && (
         <>
           <Table

@@ -94,6 +94,14 @@ export const useEmployeeDocuments = (id: string) =>
     queryFn: () => api.listEmployeeDocuments(id),
     enabled: !!id,
   });
+export function useDeleteEmployeeDocument(id: string) {
+  const qc = useQueryClient();
+  return useMutationWithFeedback({
+    mutationFn: (documentId: string) => api.deleteEmployeeDocument(id, documentId),
+    successMessage: 'Document deleted',
+    onSuccess: () => qc.invalidateQueries({ queryKey: hrKeys.employeeDocuments(id) }),
+  });
+}
 export const useCompensationHistory = (id: string, enabled: boolean) =>
   useQuery({
     queryKey: hrKeys.compensation(id),

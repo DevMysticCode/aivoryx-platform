@@ -99,7 +99,7 @@ test.describe('Commercial golden path', () => {
 
     // ---- 6. CRM lead shows the quotation + the project -------
     await page.goto(`/crm/leads/${leadId}`);
-    await page.getByRole('button', { name: 'Related' }).click();
+    await page.getByRole('tab', { name: 'Related' }).click();
     await expect(page.getByRole('heading', { name: 'Quotations' })).toBeVisible();
     await expect(page.getByRole('link', { name: quotationNumber })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Project / operations' })).toBeVisible();

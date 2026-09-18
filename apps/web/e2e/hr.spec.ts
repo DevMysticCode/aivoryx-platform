@@ -439,7 +439,7 @@ test.describe('HR & Workforce golden path', () => {
     await expect(page.getByRole('link', { name: `Rep E2E${s}` })).toBeVisible({ timeout: 15_000 });
     await page.getByRole('link', { name: `Rep E2E${s}` }).click();
     await page.waitForURL(/\/hr\/employees\/[0-9a-f-]+$/);
-    await page.getByRole('button', { name: 'Compensation' }).click();
+    await page.getByRole('tab', { name: 'Compensation' }).click();
     await expect(page.getByText('40,000.00').first()).toBeVisible({ timeout: 15_000 });
 
     await page.goto('/hr/payroll');

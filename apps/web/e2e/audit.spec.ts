@@ -63,7 +63,7 @@ test.describe('Audit log golden path', () => {
 
     // ---- 3. inspect the detail drawer ------------------------
     await row.click();
-    const drawer = page.locator('aside').last();
+    const drawer = page.getByRole('dialog', { name: 'Audit entry' });
     await expect(drawer.getByRole('heading', { name: 'Audit entry' })).toBeVisible();
     await expect(drawer.getByText('tenant.updated')).toBeVisible();
     await expect(drawer.getByText('identity')).toBeVisible();

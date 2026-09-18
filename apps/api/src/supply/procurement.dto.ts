@@ -220,6 +220,7 @@ export class ListPurchaseOrdersQueryDto {
   @ApiProperty({ required: false }) @IsOptional() @IsString() status?: string;
   @ApiProperty({ required: false, format: 'uuid' }) @IsOptional() @IsString() supplierId?: string;
   @ApiProperty({ required: false, format: 'uuid' }) @IsOptional() @IsString() projectId?: string;
+  @ApiProperty({ required: false }) @IsOptional() @IsString() q?: string;
   @ApiProperty({ required: false, default: 1 })
   @IsOptional()
   @Type(() => Number)

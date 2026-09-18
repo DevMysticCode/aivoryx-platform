@@ -6,7 +6,7 @@ import { type ComponentType, type ReactNode, useEffect } from 'react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
-import { Skeleton } from '@/components/admin/ui';
+import { Skeleton, WorkspaceUnavailable } from '@/components/admin/ui';
 
 export interface SupplyTab {
   href: string;
@@ -48,10 +48,10 @@ export function SupplyShell({ tabs, children }: { tabs: SupplyTab[]; children: R
   const active = me.data?.active;
   if (!active) {
     return (
-      <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
-        <p className="font-medium">No active workspace selected.</p>
-        <p className="mt-1 text-muted-foreground">Sign in to a workspace to continue.</p>
-      </div>
+      <WorkspaceUnavailable
+        inactiveMembership={me.data?.inactiveMembership}
+        memberships={me.data?.memberships}
+      />
     );
   }
 

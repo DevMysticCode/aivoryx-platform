@@ -65,7 +65,7 @@ export const HELP_CONTENT = {
   },
   'settings-company': {
     title: 'Company profile & branding',
-    body: 'Your company details, logo and brand colour appear in the app, on your documents (quotations, invoices, receipts) and in notification emails. They never change security, tenancy or permissions.',
+    body: 'Your company details, logo and brand colour appear in the app, on your documents (quotations, invoices, receipts) and in notification emails. They never change security, tenancy or permissions. (This is different from the internal "workspace name" under Administration → Workspace settings, which only platform administrators see.)',
   },
 } satisfies Record<string, HelpEntry>;
 

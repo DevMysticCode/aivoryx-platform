@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { Card, EmptyState, ErrorNote, Skeleton, PageHeader } from '@/components/admin/ui';
-import { Confirm } from '@/components/ui/kit';
+import { Confirm, ErrorBlock } from '@/components/ui/kit';
 import { fmtMoney, fmtDate, SupplyStatusBadge } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useCreditNote, useCreditNoteAction } from '@/lib/finance/use-finance';
@@ -19,7 +19,7 @@ export default function CreditNoteDetailPage() {
   const [cancelling, setCancelling] = useState(false);
 
   if (q.isLoading) return <Skeleton rows={6} />;
-  if (q.error) return <ErrorNote error={q.error} />;
+  if (q.error) return <ErrorBlock error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return <EmptyState>Credit note not found.</EmptyState>;
   const cn = q.data;
 

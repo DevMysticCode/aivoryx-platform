@@ -4,6 +4,7 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { ErrorBlock } from '@/components/ui/kit';
 import { Table, Select } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import type { HrPayrollEntry } from '@aivoryx/contracts';
@@ -28,7 +29,7 @@ export default function PayrollPeriodPage({ params }: { params: Promise<{ id: st
         ← Payroll
       </Link>
       {q.isLoading && <Skeleton rows={4} />}
-      {q.error && <ErrorNote error={q.error} />}
+      {q.error && <ErrorBlock error={q.error} onRetry={() => q.refetch()} />}
       {p && (
         <>
           <PageHeader

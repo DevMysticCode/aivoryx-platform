@@ -96,6 +96,7 @@ export class SecurityGuard implements CanActivate {
       permissions: EMPTY_SET,
       entitledModules: EMPTY_SET,
       isPlatformAdmin: false,
+      inactiveMembership: null,
     };
 
     // Platform-admin status is user-scoped and independent of any tenant.
@@ -122,7 +123,11 @@ export class SecurityGuard implements CanActivate {
         ctx.entitledModules = entitledModules;
       } catch (err) {
         // On a strict route a suspended membership / tenant is a hard failure;
-        // on an auth-only route (e.g. /auth/me) we still answer, tenant-less.
+        // on an auth-only route (e.g. /auth/me) we still answer, tenant-less —
+        // but record why, so the response can say more than just "inactive".
+        if (err instanceof AppError) {
+          ctx.inactiveMembership = { membershipId: session.activeMembershipId, reason: err.code };
+        }
         if (strictTenant) throw err;
       }
     }

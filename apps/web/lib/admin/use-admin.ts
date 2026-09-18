@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { InviteMemberRequest } from '@aivoryx/contracts';
 import * as api from '@/lib/api/admin';
 import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
@@ -52,9 +52,28 @@ function invalidateMembers(qc: ReturnType<typeof useQueryClient>) {
 
 export function useInviteMember() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: InviteMemberRequest) => api.inviteMember(body),
     onSuccess: () => invalidateMembers(qc),
+  });
+}
+
+/**
+ * Re-invite an existing `invited` membership by email. The backend treats
+ * this identically to a fresh invite (`invitation.service.ts` `create`):
+ * it silently revokes any prior pending invitation and issues a new one, so
+ * this is the supported "resend" path. Kept separate from `useInviteMember`
+ * because the two calls need different success feedback: the initial invite
+ * shows its own one-time token handoff panel (no email provider is
+ * configured), while a resend has nothing new to hand off and just needs a
+ * toast.
+ */
+export function useResendInvite() {
+  const qc = useQueryClient();
+  return useMutationWithFeedback({
+    mutationFn: (body: InviteMemberRequest) => api.inviteMember(body),
+    onSuccess: () => invalidateMembers(qc),
+    successMessage: 'Invitation resent',
   });
 }
 

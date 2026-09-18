@@ -16,6 +16,7 @@ export type SwitchTenantResponse = components['schemas']['SwitchTenantResponseDt
 export type LogoutResponse = components['schemas']['LogoutResponseDto'];
 export type MembershipSummary = components['schemas']['MembershipSummaryDto'];
 export type ActiveContext = components['schemas']['ActiveContextDto'];
+export type InactiveMembership = components['schemas']['InactiveMembershipDto'];
 export type AuthUser = components['schemas']['AuthUserDto'];
 export type AdminRole = components['schemas']['AdminRoleDto'];
 export type CataloguePermission = components['schemas']['CataloguePermissionDto'];
@@ -260,6 +261,11 @@ export type UpdateCompanyProfileRequest = components['schemas']['UpdateCompanyPr
 export type Branding = components['schemas']['BrandingDto'];
 export type Onboarding = components['schemas']['OnboardingDto'];
 export type OnboardingStep = components['schemas']['OnboardingStepDto'];
+
+// Phase 16 — SaaS product completeness: tenant-facing plan/usage (ADR 0043).
+export type TenantPlan = components['schemas']['TenantPlanDto'];
+export type TenantEnabledModule = components['schemas']['TenantEnabledModuleDto'];
+export type TenantPlanUsage = components['schemas']['TenantPlanUsageDto'];
 
 // Phase 11 — Global Audit Log (ADR 0040).
 export type AuditLog = components['schemas']['AuditLogDto'];

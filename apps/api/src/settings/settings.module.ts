@@ -3,6 +3,7 @@ import { StorageModule } from '../storage/storage.module.js';
 import { CompanyProfileService } from './company-profile.service.js';
 import { TenantLogoService } from './tenant-logo.service.js';
 import { OnboardingService } from './onboarding.service.js';
+import { PlanService } from './plan.service.js';
 import { SettingsController } from './settings.controller.js';
 import { OnboardingController } from './onboarding.controller.js';
 
@@ -16,7 +17,7 @@ import { OnboardingController } from './onboarding.controller.js';
 @Module({
   imports: [StorageModule],
   controllers: [SettingsController, OnboardingController],
-  providers: [CompanyProfileService, TenantLogoService, OnboardingService],
+  providers: [CompanyProfileService, TenantLogoService, OnboardingService, PlanService],
   exports: [CompanyProfileService, TenantLogoService],
 })
 export class SettingsModule {}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { ErrorBlock } from '@/components/ui/kit';
 import { fmtMoney, Select, SupplyStatusBadge, Table, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useCustomers } from '@/lib/commercial/use-commercial';
@@ -127,7 +128,7 @@ export default function CreditNotesPage() {
       </div>
 
       {list.isLoading && <Skeleton rows={5} />}
-      {list.error && <ErrorNote error={list.error} />}
+      {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
 
       {list.data && (
         <>

@@ -103,6 +103,19 @@ export class ActiveContextDto {
   branding!: BrandingContextDto;
 }
 
+export class InactiveMembershipDto {
+  @ApiProperty({ format: 'uuid' })
+  membershipId!: string;
+
+  @ApiProperty({
+    example: 'TENANT_SUSPENDED',
+    description:
+      'A stable AppError code: AUTH_MEMBERSHIP_SUSPENDED | TENANT_SUSPENDED | ' +
+      'TENANT_PROVISIONING | TENANT_ARCHIVED.',
+  })
+  reason!: string;
+}
+
 // ---- endpoint responses ---------------------------------------------------
 
 export class MeResponseDto {
@@ -123,6 +136,17 @@ export class MeResponseDto {
     description: 'Null until the session has a usable active tenant.',
   })
   active!: ActiveContextDto | null;
+
+  @ApiProperty({
+    type: InactiveMembershipDto,
+    nullable: true,
+    description:
+      'Set only when `active` is null because a specific membership failed to resolve ' +
+      '(e.g. it is suspended, or its tenant is suspended/provisioning/archived) — as ' +
+      'opposed to the user simply having no membership at all. Lets the frontend show a ' +
+      'specific, correct message instead of a generic "no workspace" one.',
+  })
+  inactiveMembership!: InactiveMembershipDto | null;
 
   @ApiProperty({ format: 'date-time' })
   sessionExpiresAt!: string;

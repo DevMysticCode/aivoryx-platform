@@ -7,7 +7,7 @@ import type { ModuleKey } from '@aivoryx/shared';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
 import { useAccess } from '@/lib/navigation/use-access';
-import { Skeleton } from '@/components/admin/ui';
+import { Skeleton, WorkspaceUnavailable } from '@/components/admin/ui';
 import { ModuleTabs } from '@/components/ui/module-tabs';
 
 interface CrmNavItem {
@@ -57,10 +57,10 @@ export default function CrmLayout({ children }: { children: ReactNode }) {
 
   if (!me.data?.active) {
     return (
-      <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
-        <p className="font-medium">No active workspace selected.</p>
-        <p className="mt-1 text-muted-foreground">Sign in to a workspace to use the CRM.</p>
-      </div>
+      <WorkspaceUnavailable
+        inactiveMembership={me.data?.inactiveMembership}
+        memberships={me.data?.memberships}
+      />
     );
   }
 

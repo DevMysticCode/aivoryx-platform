@@ -44,6 +44,16 @@ export interface SecurityContext {
   entitledModules: ReadonlySet<string>;
   /** true if this user is an Aivoryx platform administrator (not tenant-scoped) */
   isPlatformAdmin: boolean;
+  /**
+   * Set when `session.activeMembershipId` pointed at a membership that failed
+   * to resolve (Phase 16 §2) — e.g. the membership was suspended, or the
+   * tenant is suspended/provisioning/archived. Only populated on `@AuthOnly()`
+   * routes, where that failure is otherwise swallowed so `/auth/me` can still
+   * answer with `active: null`; a strict route still throws immediately and
+   * never reaches this. Lets the frontend tell "you have no workspace" apart
+   * from "your workspace exists but isn't usable right now, and here's why".
+   */
+  inactiveMembership: { membershipId: string; reason: string } | null;
 }
 
 const storage = new AsyncLocalStorage<SecurityContext>();

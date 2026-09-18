@@ -152,6 +152,7 @@ export interface ListPosParams {
   status?: string;
   supplierId?: string;
   projectId?: string;
+  q?: string;
   page?: number;
   pageSize?: number;
 }

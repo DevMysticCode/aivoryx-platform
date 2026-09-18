@@ -15,6 +15,7 @@ import {
   Skeleton,
   StatusBadge,
 } from '@/components/admin/ui';
+import { ErrorBlock } from '@/components/ui/kit';
 
 const STATUSES = ['SCHEDULED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
 const SURVEY_DATA_TYPES = ['text', 'number', 'boolean', 'date', 'select'] as const;
@@ -130,7 +131,7 @@ export default function VisitsPage() {
       {visits.isLoading ? (
         <Skeleton rows={6} />
       ) : visits.error ? (
-        <ErrorNote error={visits.error} />
+        <ErrorBlock error={visits.error} onRetry={() => visits.refetch()} />
       ) : visits.data && visits.data.items.length > 0 ? (
         <>
           <div className="overflow-x-auto rounded-lg border">

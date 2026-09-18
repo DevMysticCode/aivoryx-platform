@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { ErrorBlock } from '@/components/ui/kit';
 import { Table } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { HrStatusBadge, TextField, money, fmtDate } from '@/components/hr/ui';
@@ -96,7 +97,7 @@ export default function PayrollPage() {
       )}
 
       {list.isLoading && <Skeleton rows={4} />}
-      {list.error && <ErrorNote error={list.error} />}
+      {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
       {list.data && (
         <Table
           head={

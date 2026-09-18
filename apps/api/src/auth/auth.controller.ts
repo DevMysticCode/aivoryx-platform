@@ -75,6 +75,7 @@ export class AuthController {
       isPlatformAdmin: await this.platformAdmins.isPlatformAdmin(result.userId),
       memberships: result.memberships.map(toSummary),
       active,
+      inactiveMembership: null,
       sessionExpiresAt: result.expiresAt.toISOString(),
       tenantAutoSelected: result.activeMembershipId !== null,
     };
@@ -142,6 +143,7 @@ export class AuthController {
       isPlatformAdmin: ctx.isPlatformAdmin,
       memberships: memberships.map(toSummary),
       active,
+      inactiveMembership: null,
       sessionExpiresAt: ctx.session.expiresAt.toISOString(),
     };
   }
@@ -164,6 +166,7 @@ export class AuthController {
       isPlatformAdmin: ctx.isPlatformAdmin,
       memberships: memberships.map(toSummary),
       active,
+      inactiveMembership: active ? null : ctx.inactiveMembership,
       sessionExpiresAt: ctx.session.expiresAt.toISOString(),
     };
   }
