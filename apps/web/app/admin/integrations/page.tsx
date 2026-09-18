@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
+import { Confirm } from '@/components/ui/kit';
 import {
   useCreateSource,
   useInboundEvents,
@@ -35,6 +36,11 @@ export default function IntegrationsAdminPage() {
   const [handoff, setHandoff] = useState<{ label: string; secret: string; url: string } | null>(
     null,
   );
+  const [sourceAction, setSourceAction] = useState<{
+    id: string;
+    name: string;
+    next: 'revoke' | 'reactivate';
+  } | null>(null);
 
   const webhookUrl = (sourceKey: string) =>
     typeof window !== 'undefined'
@@ -137,11 +143,23 @@ export default function IntegrationsAdminPage() {
                     Rotate secret
                   </Button>
                   {s.status === 'active' ? (
-                    <Button size="sm" variant="ghost" onClick={() => revoke.mutate(s.id)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={revoke.isPending}
+                      onClick={() => setSourceAction({ id: s.id, name: s.name, next: 'revoke' })}
+                    >
                       Revoke
                     </Button>
                   ) : (
-                    <Button size="sm" variant="ghost" onClick={() => reactivate.mutate(s.id)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={reactivate.isPending}
+                      onClick={() =>
+                        setSourceAction({ id: s.id, name: s.name, next: 'reactivate' })
+                      }
+                    >
                       Reactivate
                     </Button>
                   )}
@@ -201,8 +219,13 @@ export default function IntegrationsAdminPage() {
                       {new Date(e.createdAt).toLocaleString()}
                     </td>
                     <td className="px-3 py-2">
-                      <Button size="sm" variant="outline" onClick={() => replay.mutate(e.id)}>
-                        Replay
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={replay.isPending}
+                        onClick={() => replay.mutate(e.id)}
+                      >
+                        {replay.isPending ? 'Replaying…' : 'Replay'}
                       </Button>
                     </td>
                   </tr>
@@ -215,6 +238,30 @@ export default function IntegrationsAdminPage() {
         )}
         <ErrorNote error={replay.error} />
       </Card>
+
+      <Confirm
+        open={!!sourceAction}
+        onClose={() => setSourceAction(null)}
+        onConfirm={async () => {
+          if (!sourceAction) return;
+          if (sourceAction.next === 'revoke') await revoke.mutateAsync(sourceAction.id);
+          else await reactivate.mutateAsync(sourceAction.id);
+          setSourceAction(null);
+        }}
+        title={
+          sourceAction?.next === 'revoke'
+            ? `Revoke "${sourceAction.name}"?`
+            : `Reactivate "${sourceAction?.name}"?`
+        }
+        body={
+          sourceAction?.next === 'revoke'
+            ? 'This source will immediately stop accepting inbound events. You can reactivate it later.'
+            : 'This source will start accepting inbound events again.'
+        }
+        confirmLabel={sourceAction?.next === 'revoke' ? 'Revoke' : 'Reactivate'}
+        danger={sourceAction?.next === 'revoke'}
+        pending={revoke.isPending || reactivate.isPending}
+      />
     </section>
   );
 }

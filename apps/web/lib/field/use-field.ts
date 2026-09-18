@@ -14,6 +14,7 @@ import type {
 } from '@aivoryx/contracts';
 import * as api from '@/lib/api/field';
 import type { ListVisitsParams } from '@/lib/api/field';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /** TanStack Query hooks for field operations — visits, GPS, survey, attachments (ADR 0033). */
 
@@ -35,17 +36,19 @@ export function useFieldAgents() {
 
 export function useDesignateFieldAgent() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: DesignateFieldAgentRequest) => api.designateFieldAgent(body),
     onSuccess: () => qc.invalidateQueries({ queryKey: fieldKeys.agents }),
+    successMessage: 'Field agent designated',
   });
 }
 
 export function useDeactivateFieldAgent() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (membershipId: string) => api.deactivateFieldAgent(membershipId),
     onSuccess: () => qc.invalidateQueries({ queryKey: fieldKeys.agents }),
+    successMessage: 'Field agent deactivated',
   });
 }
 
@@ -107,25 +110,28 @@ export function useScheduleVisit() {
 
 export function useAssignVisit(visitId: string) {
   const invalidate = useInvalidateVisit(visitId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: AssignVisitRequest) => api.assignVisit(visitId, body),
     onSuccess: invalidate,
+    successMessage: 'Visit assigned',
   });
 }
 
 export function useRescheduleVisit(visitId: string) {
   const invalidate = useInvalidateVisit(visitId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: RescheduleVisitRequest) => api.rescheduleVisit(visitId, body),
     onSuccess: invalidate,
+    successMessage: 'Visit rescheduled',
   });
 }
 
 export function useCancelVisit(visitId: string) {
   const invalidate = useInvalidateVisit(visitId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: CancelVisitRequest = {}) => api.cancelVisit(visitId, body),
     onSuccess: invalidate,
+    successMessage: 'Visit cancelled',
   });
 }
 
@@ -147,9 +153,10 @@ export function useCheckOutVisit(visitId: string) {
 
 export function useCompleteVisit(visitId: string) {
   const invalidate = useInvalidateVisit(visitId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: () => api.completeVisit(visitId),
     onSuccess: invalidate,
+    successMessage: 'Visit marked complete',
   });
 }
 
@@ -168,12 +175,13 @@ export function useSubmitVisitSurvey(visitId: string) {
 export function useCreateVisitNote(visitId: string) {
   const qc = useQueryClient();
   const invalidate = useInvalidateVisit(visitId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: CreateVisitNoteRequest) => api.createVisitNote(visitId, body),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: fieldKeys.notes(visitId) });
       await invalidate();
     },
+    successMessage: 'Note added',
   });
 }
 
@@ -191,8 +199,9 @@ export function useUploadVisitAttachment(visitId: string) {
 
 export function useDeleteVisitAttachment(visitId: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (attachmentId: string) => api.deleteVisitAttachment(visitId, attachmentId),
     onSuccess: () => qc.invalidateQueries({ queryKey: fieldKeys.attachments(visitId) }),
+    successMessage: 'Photo removed',
   });
 }

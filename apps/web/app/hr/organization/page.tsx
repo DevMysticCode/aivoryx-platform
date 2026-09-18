@@ -79,13 +79,11 @@ function UnitList({ kind, canManage }: { kind: 'department' | 'designation'; can
               )
             }
           >
-            Add
+            {create.isPending ? 'Adding…' : 'Add'}
           </Button>
-          {create.error && (
-            <div className="w-full">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="w-full">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {list.isLoading && <Skeleton rows={3} />}
@@ -165,14 +163,12 @@ function LocationList({ canManage }: { canManage: boolean }) {
                 )
               }
             >
-              Add
+              {create.isPending ? 'Adding…' : 'Add'}
             </Button>
           </div>
-          {create.error && (
-            <div className="lg:col-span-5">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="lg:col-span-5">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {list.data && (
@@ -270,14 +266,12 @@ function ScheduleList({ canManage }: { canManage: boolean }) {
                 )
               }
             >
-              Add
+              {create.isPending ? 'Adding…' : 'Add'}
             </Button>
           </div>
-          {create.error && (
-            <div className="lg:col-span-5">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="lg:col-span-5">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {list.data && (

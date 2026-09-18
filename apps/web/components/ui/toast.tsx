@@ -63,16 +63,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             role="status"
             className={cn(
-              'pointer-events-auto w-full max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg',
-              t.tone === 'success' && 'border-emerald-500/30 bg-background text-foreground',
-              t.tone === 'error' && 'border-destructive/40 bg-background text-foreground',
-              t.tone === 'info' && 'border-border bg-background text-foreground',
+              'pointer-events-auto w-full max-w-sm rounded-lg border bg-card px-4 py-3 text-sm text-card-foreground shadow-lg',
+              t.tone === 'success' && 'border-success/30',
+              t.tone === 'error' && 'border-destructive/40',
+              t.tone === 'info' && 'border-border',
             )}
           >
             <span
               className={cn(
                 'mr-2 inline-block size-2 rounded-full align-middle',
-                t.tone === 'success' && 'bg-emerald-500',
+                t.tone === 'success' && 'bg-success',
                 t.tone === 'error' && 'bg-destructive',
                 t.tone === 'info' && 'bg-muted-foreground',
               )}

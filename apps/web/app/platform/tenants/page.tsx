@@ -44,8 +44,8 @@ export default function PlatformTenantsPage() {
         </Link>
       </PageHeader>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="relative flex-1 sm:max-w-xs">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="relative w-full sm:min-w-0 sm:max-w-xs sm:flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <input
             value={q}
@@ -54,29 +54,31 @@ export default function PlatformTenantsPage() {
             className="h-9 w-full rounded-md border bg-transparent pl-8 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as typeof status)}
-          className="h-9 rounded-md border bg-transparent px-2 text-sm"
-          aria-label="Status filter"
-        >
-          <option value="all">All statuses</option>
-          <option value="provisioning">Provisioning</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="archived">Archived</option>
-        </select>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
-          className="h-9 rounded-md border bg-transparent px-2 text-sm"
-          aria-label="Sort"
-        >
-          <option value="name">Sort: Name</option>
-          <option value="members">Sort: Members</option>
-          <option value="modules">Sort: Modules</option>
-          <option value="created">Sort: Newest</option>
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as typeof status)}
+            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            aria-label="Status filter"
+          >
+            <option value="all">All statuses</option>
+            <option value="provisioning">Provisioning</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="archived">Archived</option>
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            aria-label="Sort"
+          >
+            <option value="name">Sort: Name</option>
+            <option value="members">Sort: Members</option>
+            <option value="modules">Sort: Modules</option>
+            <option value="created">Sort: Newest</option>
+          </select>
+        </div>
       </div>
 
       {tenants.isLoading ? (

@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UpdateCompanyProfileRequest } from '@aivoryx/contracts';
 import * as api from '@/lib/api/settings';
 import { adminKeys } from '@/lib/admin/use-admin';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /**
  * TanStack Query hooks for platform settings (Phase 10, ADR 0039). Mutations
@@ -43,31 +44,34 @@ function useInvalidateBranding() {
 
 export function useUpdateCompanyProfile() {
   const invalidate = useInvalidateBranding();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (patch: UpdateCompanyProfileRequest) => api.updateCompanyProfile(patch),
     onSuccess: invalidate,
+    successMessage: 'Company settings saved',
   });
 }
 
 export function useUploadLogo() {
   const invalidate = useInvalidateBranding();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ kind, file }: { kind: api.LogoKind; file: File }) => api.uploadLogo(kind, file),
     onSuccess: invalidate,
+    successMessage: 'Logo uploaded',
   });
 }
 
 export function useRemoveLogo() {
   const invalidate = useInvalidateBranding();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (kind: api.LogoKind) => api.removeLogo(kind),
     onSuccess: invalidate,
+    successMessage: 'Logo removed',
   });
 }
 
 export function useDismissOnboarding() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: api.dismissOnboarding,
     onSuccess: () => qc.invalidateQueries({ queryKey: settingsKeys.onboarding }),
   });

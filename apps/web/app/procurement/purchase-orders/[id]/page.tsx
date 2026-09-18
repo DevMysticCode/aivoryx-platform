@@ -12,6 +12,7 @@ import {
 } from '@/lib/supply/use-supply';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Skeleton } from '@/components/admin/ui';
+import { Confirm } from '@/components/ui/kit';
 import {
   fmtDate,
   fmtMoney,
@@ -30,6 +31,7 @@ export default function PurchaseOrderDetailPage() {
 
   const po = usePurchaseOrder(id);
   const { submit, approve, cancel } = usePoTransition(id);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   if (po.isLoading) return <Skeleton rows={8} />;
   if (po.error) return <ErrorNote error={po.error} />;
@@ -64,22 +66,40 @@ export default function PurchaseOrderDetailPage() {
         <div className="flex flex-wrap gap-2">
           {d.status === 'DRAFT' && canUpdate ? (
             <Button onClick={() => submit.mutate()} disabled={submit.isPending}>
-              Submit
+              {submit.isPending ? 'Submitting…' : 'Submit'}
             </Button>
           ) : null}
           {d.status === 'SUBMITTED' && canApprove ? (
             <Button onClick={() => approve.mutate()} disabled={approve.isPending}>
-              Approve
+              {approve.isPending ? 'Approving…' : 'Approve'}
             </Button>
           ) : null}
           {['DRAFT', 'SUBMITTED', 'APPROVED'].includes(d.status) && canUpdate ? (
-            <Button variant="outline" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
-              Cancel
+            <Button
+              variant="outline"
+              onClick={() => setConfirmingCancel(true)}
+              disabled={cancel.isPending}
+            >
+              {cancel.isPending ? 'Cancelling…' : 'Cancel'}
             </Button>
           ) : null}
         </div>
       </div>
       <ErrorNote error={submit.error || approve.error || cancel.error} />
+
+      <Confirm
+        open={confirmingCancel}
+        onClose={() => setConfirmingCancel(false)}
+        onConfirm={async () => {
+          await cancel.mutateAsync();
+          setConfirmingCancel(false);
+        }}
+        title="Cancel this purchase order?"
+        body="The order will be cancelled and can no longer be submitted, approved, or received against."
+        confirmLabel="Cancel order"
+        danger
+        pending={cancel.isPending}
+      />
 
       <Card className="space-y-3">
         <div className="flex flex-wrap gap-x-8 gap-y-1 text-sm">

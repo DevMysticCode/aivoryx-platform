@@ -23,6 +23,7 @@ import {
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Skeleton } from '@/components/admin/ui';
 import { fmtDate, fmtMoney, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
+import { Confirm } from '@/components/ui/kit';
 
 interface DraftLine {
   productId: string;
@@ -83,6 +84,7 @@ export default function QuotationDetailPage() {
   const [notes, setNotes] = useState('');
   const [validityDate, setValidityDate] = useState('');
   const [acceptNote, setAcceptNote] = useState('');
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const preview = useMemo(() => previewTotals(lines), [lines]);
 
@@ -189,7 +191,7 @@ export default function QuotationDetailPage() {
           ) : null}
           {isDraft && can('quotations.send') ? (
             <Button onClick={() => actions.send.mutate()} disabled={actions.send.isPending}>
-              Send
+              {actions.send.isPending ? 'Sending…' : 'Send'}
             </Button>
           ) : null}
           {qd.status === 'SENT' && can('quotations.accept') ? (
@@ -197,7 +199,7 @@ export default function QuotationDetailPage() {
               onClick={() => actions.accept.mutate({ note: acceptNote || undefined })}
               disabled={actions.accept.isPending}
             >
-              Record acceptance
+              {actions.accept.isPending ? 'Recording…' : 'Record acceptance'}
             </Button>
           ) : null}
           {qd.status === 'ACCEPTED' && can('quotations.book') ? (
@@ -211,16 +213,16 @@ export default function QuotationDetailPage() {
               onClick={() => actions.revise.mutate({})}
               disabled={actions.revise.isPending}
             >
-              New revision
+              {actions.revise.isPending ? 'Revising…' : 'New revision'}
             </Button>
           ) : null}
           {(qd.status === 'DRAFT' || qd.status === 'SENT') && can('quotations.cancel') ? (
             <Button
               variant="ghost"
-              onClick={() => actions.cancel.mutate()}
+              onClick={() => setConfirmingCancel(true)}
               disabled={actions.cancel.isPending}
             >
-              Cancel
+              {actions.cancel.isPending ? 'Cancelling…' : 'Cancel'}
             </Button>
           ) : null}
         </div>
@@ -234,6 +236,25 @@ export default function QuotationDetailPage() {
           actions.cancel.error ||
           update.error
         }
+      />
+
+      <Confirm
+        open={confirmingCancel}
+        onClose={() => setConfirmingCancel(false)}
+        onConfirm={async () => {
+          try {
+            await actions.cancel.mutateAsync();
+          } catch {
+            // error toast already shown by useMutationWithFeedback
+          } finally {
+            setConfirmingCancel(false);
+          }
+        }}
+        title="Cancel this quotation?"
+        body="The quotation will be marked cancelled and can no longer be sent or booked."
+        confirmLabel="Cancel quotation"
+        danger
+        pending={actions.cancel.isPending}
       />
 
       {qd.status === 'SENT' && can('quotations.accept') ? (
@@ -504,6 +525,7 @@ function QuotationAttachments({
   const upload = useUploadQuotationAttachment(quotationId);
   const remove = useDeleteQuotationAttachment(quotationId);
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const view = async (attachmentId: string) => {
     const { objectUrl } = await fetchQuotationAttachmentBlob(quotationId, attachmentId);
@@ -531,10 +553,11 @@ function QuotationAttachments({
                 {canManage ? (
                   <button
                     type="button"
-                    className="ml-3 text-destructive hover:underline"
-                    onClick={() => remove.mutate(a.id)}
+                    disabled={remove.isPending}
+                    className="ml-3 text-destructive hover:underline disabled:opacity-50"
+                    onClick={() => setDeletingId(a.id)}
                   >
-                    Delete
+                    {remove.isPending && deletingId === a.id ? 'Deleting…' : 'Delete'}
                   </button>
                 ) : null}
               </span>
@@ -567,6 +590,26 @@ function QuotationAttachments({
         </label>
       ) : null}
       <ErrorNote error={upload.error || remove.error} />
+
+      <Confirm
+        open={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={async () => {
+          if (!deletingId) return;
+          try {
+            await remove.mutateAsync(deletingId);
+          } catch {
+            // error toast already shown by useMutationWithFeedback
+          } finally {
+            setDeletingId(null);
+          }
+        }}
+        title="Delete this attachment?"
+        body="This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        pending={remove.isPending}
+      />
     </Card>
   );
 }

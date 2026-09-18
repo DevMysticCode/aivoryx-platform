@@ -13,10 +13,10 @@ import {
 } from '@/lib/notifications/use-notifications';
 
 const TYPE_DOT: Record<string, string> = {
-  info: 'bg-sky-500',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  action_required: 'bg-rose-500',
+  info: 'bg-info',
+  success: 'bg-success',
+  warning: 'bg-warning',
+  action_required: 'bg-destructive',
 };
 
 function timeAgo(iso: string): string {
@@ -88,7 +88,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border bg-background shadow-lg sm:w-96">
+        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border bg-card shadow-lg sm:w-96">
           <div className="flex items-center justify-between border-b px-3 py-2">
             <span className="text-sm font-semibold">Notifications</span>
             <button
@@ -98,7 +98,7 @@ export function NotificationBell() {
               className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-40"
             >
               <CheckCheck className="size-3.5" aria-hidden />
-              Mark all read
+              {markAll.isPending ? 'Marking…' : 'Mark all read'}
             </button>
           </div>
 

@@ -1,54 +1,98 @@
-/* Shared design tokens. Imported by the web app's globals.css. */
+/* Shared design tokens (Phase 15.1 — Aivoryx platform visual foundation).
+ * Imported by the web app's globals.css.
+ *
+ * Brand: Teal #00A19A (primary interactive accent), Navy #231D45 ("brand
+ * ink" — headings, active-navigation identity), Gold #C18A38 (sparing
+ * emphasis only — never a general status color; success/warning/info stay
+ * semantically distinct hues so status meaning is never confused with the
+ * brand accent).
+ *
+ * These are PLATFORM tokens, not tenant branding. Tenant-facing components
+ * must keep reading colour through these CSS variables (never a literal
+ * hex) so a tenant accent override can be layered on later purely by
+ * reassigning `--primary` (and optionally `--ring`) at the DOM root for that
+ * tenant's session — nothing here should ever need to change for that.
+ *
+ * Hover/pressed states are intentionally NOT separate colour tokens — every
+ * interactive primitive derives them from the base token via Tailwind's
+ * opacity modifier (`hover:bg-primary/90`, `active:bg-primary/80`), so a
+ * tenant accent override still gets correct hover/pressed shades for free.
+ * "Disabled" is likewise a convention (`disabled:opacity-50`), not a colour.
+ * `--ring` doubles as the one focus-indicator token used everywhere via
+ * `focus-visible:ring-ring`.
+ */
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 222 84% 40%;
-  --primary: 222 84% 40%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  --background: 210 20% 98%;
+  --foreground: 249 28% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 249 28% 14%;
+  --border: 220 16% 88%;
+  --input: 220 16% 88%;
+  --ring: 177 90% 33%;
+
+  --primary: 177 100% 32%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 20% 95%;
+  --secondary-foreground: 249 28% 14%;
+  --accent: 220 20% 95%;
+  --accent-foreground: 249 28% 14%;
+  --muted: 220 20% 95%;
+  --muted-foreground: 220 9% 42%;
+
   --destructive: 0 72% 51%;
-  --destructive-foreground: 210 40% 98%;
-  /* Phase 14 — semantic status tokens (success/warning/info), matching the
-     existing --destructive pair. Consolidates the emerald-500/amber-500/blue-500
-     literals used ad hoc across modules; not yet a mass find-replace (Phase 14
-     applies them only to what it touches — see PRODUCT-UX.md "Design tokens"). */
-  --success: 152 69% 31%;
-  --success-foreground: 210 40% 98%;
-  --warning: 32 95% 44%;
-  --warning-foreground: 210 40% 98%;
-  --info: 217 91% 45%;
-  --info-foreground: 210 40% 98%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 60% 30%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 42%;
+  --warning-foreground: 0 0% 100%;
+  --info: 217 85% 45%;
+  --info-foreground: 0 0% 100%;
+
+  /* "Brand ink" — navy. A deliberately separate token from --foreground
+     (even though the values start close) for the specific places that
+     should carry navy as identity rather than as generic body text: the
+     active state of primary navigation, and — used sparingly — a heavier
+     heading treatment. Everyday body/heading text stays on --foreground. */
+  --brand: 249 41% 19%;
+  --brand-foreground: 0 0% 100%;
+  /* Gold — sparing emphasis only (e.g. a single highlighted metric). Never
+     used for status/semantic meaning; success/warning/info own that. */
+  --gold: 36 55% 49%;
+  --gold-foreground: 249 28% 14%;
+
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: 222 47% 6%;
-  --foreground: 210 40% 96%;
-  --border: 217 33% 18%;
-  --input: 217 33% 18%;
-  --ring: 213 94% 68%;
-  --primary: 213 94% 68%;
-  --primary-foreground: 222 47% 11%;
-  --secondary: 217 33% 15%;
-  --secondary-foreground: 210 40% 96%;
-  --accent: 217 33% 15%;
-  --accent-foreground: 210 40% 96%;
-  --muted: 217 33% 15%;
-  --muted-foreground: 215 20% 65%;
-  --destructive: 0 63% 45%;
-  --destructive-foreground: 210 40% 96%;
-  --success: 152 55% 42%;
-  --success-foreground: 222 47% 11%;
-  --warning: 38 92% 55%;
-  --warning-foreground: 222 47% 11%;
-  --info: 213 90% 62%;
-  --info-foreground: 222 47% 11%;
+  --background: 249 30% 8%;
+  --foreground: 220 20% 92%;
+  --card: 249 24% 12%;
+  --card-foreground: 220 20% 92%;
+  --border: 249 15% 22%;
+  --input: 249 15% 22%;
+  --ring: 177 80% 45%;
+
+  --primary: 177 75% 42%;
+  --primary-foreground: 249 30% 8%;
+  --secondary: 249 18% 18%;
+  --secondary-foreground: 220 20% 92%;
+  --accent: 249 18% 18%;
+  --accent-foreground: 220 20% 92%;
+  --muted: 249 18% 16%;
+  --muted-foreground: 220 12% 65%;
+
+  --destructive: 0 63% 52%;
+  --destructive-foreground: 220 20% 96%;
+  --success: 142 45% 45%;
+  --success-foreground: 249 30% 10%;
+  --warning: 38 85% 58%;
+  --warning-foreground: 249 30% 10%;
+  --info: 213 80% 62%;
+  --info-foreground: 249 30% 10%;
+
+  --brand: 220 25% 88%;
+  --brand-foreground: 249 30% 10%;
+  --gold: 38 65% 58%;
+  --gold-foreground: 249 30% 10%;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 import type {
   AdjustStockRequest,
   AllocateMaterialRequest,
@@ -63,58 +64,66 @@ export const useProducts = (p: ListProductsParams = {}) =>
 
 export function useUpsertUnit() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: UpsertUnitRequest) => api.upsertUnit(b),
     onSuccess: () => qc.invalidateQueries({ queryKey: supplyKeys.units }),
+    successMessage: 'Unit saved',
   });
 }
 export function useUpsertCategory() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: UpsertCategoryRequest) => api.upsertCategory(b),
     onSuccess: () => qc.invalidateQueries({ queryKey: supplyKeys.categories }),
+    successMessage: 'Category saved',
   });
 }
 export function useCreateProduct() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: CreateProductRequest) => api.createProduct(b),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['supply', 'products'] }),
+    successMessage: 'Product created',
   });
 }
 export function useUpdateProduct(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: UpdateProductRequest) => api.updateProduct(id, b),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['supply', 'products'] }),
+    successMessage: 'Product updated',
   });
 }
 export function useCreateSupplier() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: CreateSupplierRequest) => api.createSupplier(b),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['supply', 'suppliers'] }),
+    successMessage: 'Supplier created',
   });
 }
 export function useUpdateSupplier(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: CreateSupplierRequest) => api.updateSupplier(id, b),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['supply', 'suppliers'] }),
+    successMessage: 'Supplier updated',
   });
 }
 export function useCreateWarehouse() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: CreateWarehouseRequest) => api.createWarehouse(b),
     onSuccess: () => qc.invalidateQueries({ queryKey: supplyKeys.warehouses }),
+    successMessage: 'Warehouse created',
   });
 }
 export function useUpdateWarehouse(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: CreateWarehouseRequest) => api.updateWarehouse(id, b),
     onSuccess: () => qc.invalidateQueries({ queryKey: supplyKeys.warehouses }),
+    successMessage: 'Warehouse updated',
   });
 }
 
@@ -135,16 +144,18 @@ function useInvalidateInventory() {
 }
 export function useAdjustStock() {
   const invalidate = useInvalidateInventory();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: AdjustStockRequest) => api.adjustStock(b),
     onSuccess: invalidate,
+    successMessage: 'Stock adjusted',
   });
 }
 export function useTransferStock() {
   const invalidate = useInvalidateInventory();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: TransferStockRequest) => api.transferStock(b),
     onSuccess: invalidate,
+    successMessage: 'Stock transferred',
   });
 }
 
@@ -181,49 +192,60 @@ export function useCreateProject() {
 }
 export function useApproveProject(id: string) {
   const invalidate = useInvalidateProject(id);
-  return useMutation({ mutationFn: () => api.approveProject(id), onSuccess: invalidate });
+  return useMutationWithFeedback({
+    mutationFn: () => api.approveProject(id),
+    onSuccess: invalidate,
+    successMessage: 'Project approved',
+  });
 }
 export function useSetProjectStatus(id: string) {
   const invalidate = useInvalidateProject(id);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: SetProjectStatusRequest) => api.setProjectStatus(id, b),
     onSuccess: invalidate,
+    successMessage: (_data, variables) =>
+      `Project status changed to ${variables.status.replace(/_/g, ' ').toLowerCase()}`,
   });
 }
 export function useAddMaterial(id: string) {
   const invalidate = useInvalidateProject(id);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: UpsertMaterialRequest) => api.addMaterial(id, b),
     onSuccess: invalidate,
+    successMessage: 'Material added',
   });
 }
 export function useUpdateMaterial(id: string) {
   const invalidate = useInvalidateProject(id);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ materialId, body }: { materialId: string; body: UpdateMaterialRequest }) =>
       api.updateMaterial(id, materialId, body),
     onSuccess: invalidate,
+    successMessage: 'Material updated',
   });
 }
 export function useRemoveMaterial(id: string) {
   const invalidate = useInvalidateProject(id);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (materialId: string) => api.removeMaterial(id, materialId),
     onSuccess: invalidate,
+    successMessage: 'Material removed',
   });
 }
 export function useAllocateMaterial(id: string) {
   const invalidate = useInvalidateProject(id);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: AllocateMaterialRequest) => api.allocateMaterial(id, b),
     onSuccess: invalidate,
+    successMessage: 'Material allocated',
   });
 }
 export function useReleaseMaterial(id: string) {
   const invalidate = useInvalidateProject(id);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: AllocateMaterialRequest) => api.releaseMaterial(id, b),
     onSuccess: invalidate,
+    successMessage: 'Material allocation released',
   });
 }
 
@@ -256,16 +278,29 @@ export function useCreatePurchaseOrder() {
 export function usePoTransition(id: string) {
   const invalidate = useInvalidatePo(id);
   return {
-    submit: useMutation({ mutationFn: () => api.submitPurchaseOrder(id), onSuccess: invalidate }),
-    approve: useMutation({ mutationFn: () => api.approvePurchaseOrder(id), onSuccess: invalidate }),
-    cancel: useMutation({ mutationFn: () => api.cancelPurchaseOrder(id), onSuccess: invalidate }),
+    submit: useMutationWithFeedback({
+      mutationFn: () => api.submitPurchaseOrder(id),
+      onSuccess: invalidate,
+      successMessage: 'Purchase order submitted',
+    }),
+    approve: useMutationWithFeedback({
+      mutationFn: () => api.approvePurchaseOrder(id),
+      onSuccess: invalidate,
+      successMessage: 'Purchase order approved',
+    }),
+    cancel: useMutationWithFeedback({
+      mutationFn: () => api.cancelPurchaseOrder(id),
+      onSuccess: invalidate,
+      successMessage: 'Purchase order cancelled',
+    }),
   };
 }
 export function useReceivePurchaseOrder(id: string) {
   const invalidate = useInvalidatePo(id);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: ReceivePurchaseOrderRequest) => api.receivePurchaseOrder(id, b),
     onSuccess: invalidate,
+    successMessage: 'Goods receipt recorded',
   });
 }
 
@@ -308,25 +343,36 @@ export function useCreateDispatch() {
 export function useDispatchActions(id: string) {
   const invalidate = useInvalidateDispatch(id);
   return {
-    cancel: useMutation({ mutationFn: () => api.cancelDispatch(id), onSuccess: invalidate }),
-    send: useMutation({ mutationFn: () => api.sendDispatch(id), onSuccess: invalidate }),
-    deliver: useMutation({
+    cancel: useMutationWithFeedback({
+      mutationFn: () => api.cancelDispatch(id),
+      onSuccess: invalidate,
+      successMessage: 'Dispatch cancelled',
+    }),
+    send: useMutationWithFeedback({
+      mutationFn: () => api.sendDispatch(id),
+      onSuccess: invalidate,
+      successMessage: 'Dispatch marked as sent',
+    }),
+    deliver: useMutationWithFeedback({
       mutationFn: (b: DeliverDispatchRequest) => api.deliverDispatch(id, b),
       onSuccess: invalidate,
+      successMessage: 'Delivery confirmed',
     }),
   };
 }
 export function useUploadDispatchAttachment(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (file: File) => api.uploadDispatchAttachment(id, file),
     onSuccess: () => qc.invalidateQueries({ queryKey: supplyKeys.dispatchAttachments(id) }),
+    successMessage: 'Attachment uploaded',
   });
 }
 export function useDeleteDispatchAttachment(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (attachmentId: string) => api.deleteDispatchAttachment(id, attachmentId),
     onSuccess: () => qc.invalidateQueries({ queryKey: supplyKeys.dispatchAttachments(id) }),
+    successMessage: 'Attachment deleted',
   });
 }

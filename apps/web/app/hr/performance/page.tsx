@@ -83,14 +83,12 @@ function Periods({ canManage }: { canManage: boolean }) {
               disabled={!form.name || !form.periodStart || !form.periodEnd || create.isPending}
               onClick={() => create.mutate({ ...form }, { onSuccess: () => set('name', '') })}
             >
-              Create
+              {create.isPending ? 'Creating…' : 'Create'}
             </Button>
           </div>
-          {create.error && (
-            <div className="sm:col-span-4">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="sm:col-span-4">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {list.isLoading && <Skeleton rows={3} />}
@@ -118,18 +116,20 @@ function Periods({ canManage }: { canManage: boolean }) {
                 <td className="px-3 py-2 text-right">
                   {p.status === 'DRAFT' && (
                     <button
-                      className="text-xs text-primary hover:underline"
+                      className="text-xs text-primary hover:underline disabled:opacity-50"
+                      disabled={status.isPending}
                       onClick={() => status.mutate({ id: p.id, action: 'open' })}
                     >
-                      Open
+                      {status.isPending ? 'Opening…' : 'Open'}
                     </button>
                   )}
                   {p.status === 'OPEN' && (
                     <button
-                      className="text-xs text-primary hover:underline"
+                      className="text-xs text-primary hover:underline disabled:opacity-50"
+                      disabled={status.isPending}
                       onClick={() => status.mutate({ id: p.id, action: 'close' })}
                     >
-                      Close
+                      {status.isPending ? 'Closing…' : 'Close'}
                     </button>
                   )}
                 </td>
@@ -203,14 +203,12 @@ function Goals({ canManage }: { canManage: boolean }) {
                 )
               }
             >
-              Add goal
+              {create.isPending ? 'Adding…' : 'Add goal'}
             </Button>
           </div>
-          {create.error && (
-            <div className="sm:col-span-4">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="sm:col-span-4">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {goals.data && (
@@ -309,14 +307,12 @@ function Reviews({ canManage }: { canManage: boolean }) {
                 )
               }
             >
-              Create review
+              {create.isPending ? 'Creating…' : 'Create review'}
             </Button>
           </div>
-          {create.error && (
-            <div className="sm:col-span-4">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="sm:col-span-4">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {reviews.data?.map((r) => <ReviewCard key={r.id} r={r} canManage={canManage} />)}
@@ -348,7 +344,7 @@ function ReviewCard({ r, canManage }: { r: HrPerformanceReview; canManage: boole
               disabled={actions.submit.isPending}
               onClick={() => actions.submit.mutate()}
             >
-              Submit to employee
+              {actions.submit.isPending ? 'Submitting…' : 'Submit to employee'}
             </Button>
           )}
           {(r.status === 'SUBMITTED' || r.status === 'ACKNOWLEDGED') && (
@@ -358,14 +354,12 @@ function ReviewCard({ r, canManage }: { r: HrPerformanceReview; canManage: boole
               disabled={actions.close.isPending}
               onClick={() => actions.close.mutate()}
             >
-              Close
+              {actions.close.isPending ? 'Closing…' : 'Close'}
             </Button>
           )}
         </div>
       )}
-      {(actions.submit.error || actions.close.error) && (
-        <ErrorNote error={actions.submit.error || actions.close.error} />
-      )}
+      <ErrorNote error={actions.submit.error || actions.close.error} />
     </Card>
   );
 }

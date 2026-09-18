@@ -16,6 +16,7 @@ import {
 } from '@/lib/field/use-field';
 import { Card, ErrorNote, Field, PageHeader, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { AttachmentThumb } from '@/components/field/attachment-thumb';
+import { Confirm } from '@/components/ui/kit';
 
 export default function VisitDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,7 @@ export default function VisitDetailPage() {
 
   const [rescheduleAt, setRescheduleAt] = useState('');
   const [cancelReason, setCancelReason] = useState('');
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   if (visit.isLoading) return <Skeleton rows={6} />;
   if (visit.error) return <ErrorNote error={visit.error} />;
@@ -112,7 +114,7 @@ export default function VisitDetailPage() {
                     setRescheduleAt('');
                   }}
                 >
-                  Reschedule
+                  {reschedule.isPending ? 'Rescheduling…' : 'Reschedule'}
                 </Button>
               </div>
             ) : null}
@@ -129,13 +131,32 @@ export default function VisitDetailPage() {
                   size="sm"
                   variant="outline"
                   disabled={cancel.isPending}
-                  onClick={() => cancel.mutate({ reason: cancelReason || undefined })}
+                  onClick={() => setConfirmingCancel(true)}
                 >
-                  Cancel visit
+                  {cancel.isPending ? 'Cancelling…' : 'Cancel visit'}
                 </Button>
               </div>
             ) : null}
             <ErrorNote error={cancel.error} />
+
+            <Confirm
+              open={confirmingCancel}
+              onClose={() => setConfirmingCancel(false)}
+              onConfirm={async () => {
+                try {
+                  await cancel.mutateAsync({ reason: cancelReason || undefined });
+                } catch {
+                  // error toast already shown by useMutationWithFeedback
+                } finally {
+                  setConfirmingCancel(false);
+                }
+              }}
+              title="Cancel this visit?"
+              body="The visit will be marked cancelled and removed from the active schedule."
+              confirmLabel="Cancel visit"
+              danger
+              pending={cancel.isPending}
+            />
           </Card>
 
           <Card className="space-y-3">

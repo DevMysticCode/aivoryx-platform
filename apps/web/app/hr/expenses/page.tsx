@@ -131,14 +131,12 @@ function MyClaims() {
                 )
               }
             >
-              Create draft
+              {create.isPending ? 'Creating…' : 'Create draft'}
             </Button>
           </div>
-          {create.error && (
-            <div className="sm:col-span-2 lg:col-span-3">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="sm:col-span-2 lg:col-span-3">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {mine.isLoading && <Skeleton rows={4} />}
@@ -243,14 +241,12 @@ function Categories({ canManage }: { canManage: boolean }) {
                 )
               }
             >
-              Add
+              {create.isPending ? 'Adding…' : 'Add'}
             </Button>
           </div>
-          {create.error && (
-            <div className="sm:col-span-4">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="sm:col-span-4">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {cats.data && (

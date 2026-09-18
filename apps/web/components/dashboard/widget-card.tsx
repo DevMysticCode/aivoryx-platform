@@ -10,28 +10,33 @@ export function WidgetCard({
   title,
   href,
   linkLabel = 'Open',
+  action,
   children,
   className,
 }: {
   title: string;
   href?: string;
   linkLabel?: string;
+  /** Arbitrary header-right content (e.g. a range toggle) — takes precedence
+   *  over `href`/`linkLabel` when both are given. */
+  action?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cn('flex flex-col rounded-lg border bg-background', className)}>
+    <section className={cn('flex flex-col rounded-lg border bg-card', className)}>
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <h2 className="text-sm font-semibold">{title}</h2>
-        {href ? (
-          <Link
-            href={href}
-            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-          >
-            {linkLabel}
-            <ArrowRight className="size-3" aria-hidden />
-          </Link>
-        ) : null}
+        {action ??
+          (href ? (
+            <Link
+              href={href}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
+              {linkLabel}
+              <ArrowRight className="size-3" aria-hidden />
+            </Link>
+          ) : null)}
       </div>
       <div className="flex-1 p-4">{children}</div>
     </section>
@@ -53,9 +58,9 @@ export function WidgetStat({
       <p
         className={cn(
           'text-xl font-semibold tabular-nums',
-          tone === 'warn' && 'text-amber-600 dark:text-amber-400',
+          tone === 'warn' && 'text-warning',
           tone === 'danger' && 'text-destructive',
-          tone === 'good' && 'text-emerald-600 dark:text-emerald-400',
+          tone === 'good' && 'text-success',
         )}
       >
         {value}
@@ -66,9 +71,12 @@ export function WidgetStat({
 
 export function WidgetSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="space-y-2" aria-busy="true">
+    <div className="space-y-2" aria-busy="true" aria-live="polite">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-8 animate-pulse rounded bg-muted" />
+        <div
+          key={i}
+          className="h-8 animate-pulse rounded bg-secondary motion-reduce:animate-none"
+        />
       ))}
     </div>
   );

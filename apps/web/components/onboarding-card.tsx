@@ -43,7 +43,7 @@ export function OnboardingCard() {
           className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="size-3.5" aria-hidden />
-          Skip for now
+          {dismiss.isPending ? 'Dismissing…' : 'Skip for now'}
         </button>
       </div>
 

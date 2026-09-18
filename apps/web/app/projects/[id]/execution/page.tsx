@@ -17,6 +17,8 @@ import {
 } from '@/lib/execution/use-execution';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Field, Skeleton } from '@/components/admin/ui';
+import { TabBar } from '@/components/ui/tab-bar';
+import { Confirm } from '@/components/ui/kit';
 import { fmtDate, ProgressBar, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
 
 const TABS = [
@@ -73,23 +75,7 @@ export default function ProjectExecutionPage() {
       <Header v={v} />
       <ProgressStrip v={v} />
 
-      <nav className="flex flex-wrap gap-1 border-b pb-2 text-sm">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={
-              'rounded-md px-3 py-1.5 transition-colors ' +
-              (tab === t
-                ? 'bg-secondary font-medium text-foreground'
-                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground')
-            }
-          >
-            {t}
-          </button>
-        ))}
-      </nav>
+      <TabBar tabs={TABS.map((t) => ({ key: t, label: t }))} active={tab} onChange={setTab} />
 
       {tab === 'Overview' && <OverviewTab v={v} can={can} actions={actions} />}
       {tab === 'Materials' && <MaterialsTab v={v} projectId={id} can={can} actions={actions} />}
@@ -181,10 +167,11 @@ function OverviewTab({
                 {can('projects.execution.update') && m.status !== 'done' ? (
                   <button
                     type="button"
-                    className="text-xs text-primary hover:underline"
+                    className="text-xs text-primary hover:underline disabled:opacity-50"
+                    disabled={actions.completeMilestone.isPending}
                     onClick={() => actions.completeMilestone.mutate({ milestoneId: m.id })}
                   >
-                    Mark done
+                    {actions.completeMilestone.isPending ? 'Marking…' : 'Mark done'}
                   </button>
                 ) : null}
               </td>
@@ -360,8 +347,12 @@ function InstallationTab({
               {inst.status === 'ASSIGNED' ? 'Reassign' : 'Assign'}
             </Button>
             {inst.status === 'ASSIGNED' ? (
-              <Button variant="ghost" onClick={() => actions.unassign.mutate()}>
-                Unassign
+              <Button
+                variant="ghost"
+                onClick={() => actions.unassign.mutate()}
+                disabled={actions.unassign.isPending}
+              >
+                {actions.unassign.isPending ? 'Unassigning…' : 'Unassign'}
               </Button>
             ) : null}
           </div>
@@ -711,8 +702,11 @@ function NetMeteringTab({
               ))}
             </Select>
             <Field label="Reference number" value={ref} onChange={(e) => setRef(e.target.value)} />
-            <Button onClick={() => actions.updateNetMetering.mutate({ referenceNumber: ref })}>
-              Save reference
+            <Button
+              onClick={() => actions.updateNetMetering.mutate({ referenceNumber: ref })}
+              disabled={actions.updateNetMetering.isPending}
+            >
+              {actions.updateNetMetering.isPending ? 'Saving…' : 'Save reference'}
             </Button>
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -779,6 +773,7 @@ function HandoverTab({
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
+              disabled={actions.updateHandover.isPending}
               onClick={() =>
                 actions.updateHandover.mutate({
                   customerAcknowledged: true,
@@ -787,7 +782,7 @@ function HandoverTab({
                 })
               }
             >
-              Save acknowledgement
+              {actions.updateHandover.isPending ? 'Saving…' : 'Save acknowledgement'}
             </Button>
             {can('projects.handover.complete') ? (
               <Button
@@ -893,6 +888,7 @@ function ExecFiles({
   const upload = useUploadExecutionAttachment(projectId);
   const del = useDeleteExecutionAttachment(projectId);
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const view = async (attachmentId: string) => {
     const { objectUrl } = await fetchExecutionAttachmentBlob(projectId, attachmentId);
@@ -921,10 +917,11 @@ function ExecFiles({
                 {canManage ? (
                   <button
                     type="button"
-                    className="ml-3 text-destructive hover:underline"
-                    onClick={() => del.mutate(a.id)}
+                    className="ml-3 text-destructive hover:underline disabled:opacity-50"
+                    disabled={del.isPending}
+                    onClick={() => setDeleting(a.id)}
                   >
-                    Delete
+                    {del.isPending && deleting === a.id ? 'Deleting…' : 'Delete'}
                   </button>
                 ) : null}
               </span>
@@ -957,6 +954,20 @@ function ExecFiles({
         </label>
       ) : null}
       <ErrorNote error={upload.error || del.error} />
+
+      <Confirm
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => {
+          if (!deleting) return;
+          del.mutate(deleting, { onSuccess: () => setDeleting(null) });
+        }}
+        title="Delete this file?"
+        body="The file will be permanently removed from this project."
+        confirmLabel="Delete"
+        danger
+        pending={del.isPending}
+      />
     </Card>
   );
 }

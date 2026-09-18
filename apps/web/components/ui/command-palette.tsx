@@ -194,7 +194,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="w-full max-w-xl overflow-hidden rounded-xl border bg-background shadow-2xl"
+        className="w-full max-w-xl overflow-hidden rounded-xl border bg-card shadow-xl"
       >
         <div className="flex items-center gap-2 border-b px-4">
           <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />

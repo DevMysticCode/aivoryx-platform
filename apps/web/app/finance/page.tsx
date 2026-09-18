@@ -63,11 +63,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: 'po
       <div className="text-xs text-muted-foreground">{label}</div>
       <div
         className={`text-lg font-semibold tabular-nums ${
-          tone === 'pos'
-            ? 'text-emerald-600 dark:text-emerald-400'
-            : tone === 'neg'
-              ? 'text-destructive'
-              : ''
+          tone === 'pos' ? 'text-success' : tone === 'neg' ? 'text-destructive' : ''
         }`}
       >
         {value}

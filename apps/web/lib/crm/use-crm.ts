@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 import type {
   CompleteFollowupRequest,
   CreateCustomFieldRequest,
@@ -85,33 +86,38 @@ export function useUpdateLead(leadId: string) {
 
 export function useAssignLead(leadId: string) {
   const invalidate = useInvalidateLead(leadId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (membershipId: string) => api.assignLead(leadId, membershipId),
+    successMessage: 'Lead assigned',
     onSuccess: invalidate,
   });
 }
 
 export function useChangeLeadStatus(leadId: string) {
   const invalidate = useInvalidateLead(leadId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (status: string) => api.changeLeadStatus(leadId, status),
+    successMessage: (_data, status) => `Lead marked ${status.replace(/_/g, ' ').toLowerCase()}`,
     onSuccess: invalidate,
   });
 }
 
 export function useQualifyLead(leadId: string) {
   const invalidate = useInvalidateLead(leadId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: QualifyLeadRequest) => api.qualifyLead(leadId, body),
+    successMessage: (_data, body) =>
+      body.outcome === 'QUALIFIED' ? 'Lead qualified' : 'Lead disqualified',
     onSuccess: invalidate,
   });
 }
 
 export function useLogCallAttempt(leadId: string) {
   const invalidate = useInvalidateLead(leadId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ outcome, note }: { outcome: string; note?: string }) =>
       api.logCallAttempt(leadId, outcome, note),
+    successMessage: 'Call logged',
     onSuccess: invalidate,
   });
 }
@@ -119,8 +125,9 @@ export function useLogCallAttempt(leadId: string) {
 export function useCreateNote(leadId: string) {
   const qc = useQueryClient();
   const invalidate = useInvalidateLead(leadId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: CreateNoteRequest) => api.createNote(leadId, body),
+    successMessage: 'Note added',
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: crmKeys.notes(leadId) });
       await invalidate();
@@ -130,17 +137,19 @@ export function useCreateNote(leadId: string) {
 
 export function useUpdateNote(leadId: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ noteId, body }: { noteId: string; body: CreateNoteRequest }) =>
       api.updateNote(leadId, noteId, body),
+    successMessage: 'Note updated',
     onSuccess: () => qc.invalidateQueries({ queryKey: crmKeys.notes(leadId) }),
   });
 }
 
 export function useDeleteNote(leadId: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (noteId: string) => api.deleteNote(leadId, noteId),
+    successMessage: 'Note deleted',
     onSuccess: () => qc.invalidateQueries({ queryKey: crmKeys.notes(leadId) }),
   });
 }
@@ -160,9 +169,10 @@ export function useCreateFollowup(leadId: string) {
 export function useCompleteFollowup(leadId: string) {
   const qc = useQueryClient();
   const invalidate = useInvalidateLead(leadId);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ followupId, body }: { followupId: string; body: CompleteFollowupRequest }) =>
       api.completeFollowup(leadId, followupId, body),
+    successMessage: 'Follow-up completed',
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: crmKeys.followups(leadId) });
       await invalidate();
@@ -172,17 +182,19 @@ export function useCompleteFollowup(leadId: string) {
 
 export function useRescheduleFollowup(leadId: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ followupId, body }: { followupId: string; body: RescheduleFollowupRequest }) =>
       api.rescheduleFollowup(leadId, followupId, body),
+    successMessage: 'Follow-up rescheduled',
     onSuccess: () => qc.invalidateQueries({ queryKey: crmKeys.followups(leadId) }),
   });
 }
 
 export function useCreateCustomField() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: CreateCustomFieldRequest) => api.createCustomField(body),
+    successMessage: 'Custom field created',
     onSuccess: (definition) =>
       qc.invalidateQueries({
         queryKey: crmKeys.customFields(definition.entity as 'lead' | 'visit'),

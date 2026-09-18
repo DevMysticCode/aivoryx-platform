@@ -266,7 +266,7 @@ export default function VisitsPage() {
             size="sm"
             disabled={createSurveyField.isPending || !surveyKey || !surveyLabel}
           >
-            Add question
+            {createSurveyField.isPending ? 'Adding…' : 'Add question'}
           </Button>
           {surveyType === 'select' ? (
             <div className="sm:col-span-5">

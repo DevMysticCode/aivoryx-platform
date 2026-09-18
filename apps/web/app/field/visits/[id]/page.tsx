@@ -20,6 +20,7 @@ import {
 } from '@/lib/field/use-field';
 import { Card, ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { AttachmentThumb } from '@/components/field/attachment-thumb';
+import { Confirm } from '@/components/ui/kit';
 
 type SurveyValue = string | number | boolean | null;
 
@@ -77,6 +78,7 @@ export default function FieldVisitDetailPage() {
   const [noteBody, setNoteBody] = useState('');
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'failed'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
 
   // Restore whatever the agent typed before a reload/temporary disconnect, then
   // apply the server's saved values on top (server wins once it has an answer).
@@ -207,8 +209,9 @@ export default function FieldVisitDetailPage() {
                   <button
                     type="button"
                     aria-label="Remove photo"
-                    className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-destructive text-xs text-destructive-foreground"
-                    onClick={() => deleteAttachment.mutate(a.id)}
+                    disabled={deleteAttachment.isPending}
+                    className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-destructive text-xs text-destructive-foreground disabled:opacity-50"
+                    onClick={() => setDeletingAttachmentId(a.id)}
                   >
                     ×
                   </button>
@@ -248,6 +251,26 @@ export default function FieldVisitDetailPage() {
               </p>
             ) : null}
           </Card>
+
+          <Confirm
+            open={!!deletingAttachmentId}
+            onClose={() => setDeletingAttachmentId(null)}
+            onConfirm={async () => {
+              if (!deletingAttachmentId) return;
+              try {
+                await deleteAttachment.mutateAsync(deletingAttachmentId);
+              } catch {
+                // error toast already shown by useMutationWithFeedback
+              } finally {
+                setDeletingAttachmentId(null);
+              }
+            }}
+            title="Remove this photo?"
+            body="The photo will be permanently removed from this visit."
+            confirmLabel="Remove"
+            danger
+            pending={deleteAttachment.isPending}
+          />
 
           {/* 4. NOTES */}
           <Card className="space-y-3">

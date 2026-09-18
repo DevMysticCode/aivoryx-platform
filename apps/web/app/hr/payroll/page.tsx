@@ -86,14 +86,12 @@ export default function PayrollPage() {
                 )
               }
             >
-              Create
+              {create.isPending ? 'Creating…' : 'Create'}
             </Button>
           </div>
-          {create.error && (
-            <div className="lg:col-span-5">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="lg:col-span-5">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
 

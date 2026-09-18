@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { UpdateCompanyProfileRequest } from '@aivoryx/contracts';
 import { Card, ErrorNote, Field, PageHeader, Skeleton } from '@/components/admin/ui';
+import { Confirm } from '@/components/ui/kit';
 import { GuidanceCard } from '@/components/guidance';
 import { usePermissions } from '@/components/supply/supply-shell';
 import {
@@ -53,6 +54,7 @@ export default function CompanySettingsPage() {
   const [draft, setDraft] = useState<Draft>({});
   const [primary, setPrimary] = useState('#1e40af');
   const [footer, setFooter] = useState('');
+  const [confirmRemoveLogo, setConfirmRemoveLogo] = useState(false);
 
   const data = profile.data;
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function CompanySettingsPage() {
 
   if (!canRead) {
     return (
-      <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+      <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
         <p className="font-medium">You don’t have access to company settings.</p>
         <p className="mt-1 text-muted-foreground">
           Ask a workspace administrator for the “View company profile” permission.
@@ -169,7 +171,8 @@ export default function CompanySettingsPage() {
                         ref={fileRef}
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
-                        className="block text-sm file:mr-3 file:rounded-md file:border file:bg-secondary file:px-3 file:py-1.5 file:text-sm"
+                        disabled={upload.isPending}
+                        className="block text-sm file:mr-3 file:rounded-md file:border file:bg-secondary file:px-3 file:py-1.5 file:text-sm disabled:opacity-50"
                         onChange={(e) => {
                           const f = e.target.files?.[0];
                           if (f) upload.mutate({ kind: 'logo', file: f });
@@ -177,15 +180,18 @@ export default function CompanySettingsPage() {
                         }}
                       />
                       <p className="text-xs text-muted-foreground">
-                        PNG, JPEG or WebP · up to 2 MB · square works best.
+                        {upload.isPending
+                          ? 'Uploading…'
+                          : 'PNG, JPEG or WebP · up to 2 MB · square works best.'}
                       </p>
                       {data.hasLogo ? (
                         <button
                           type="button"
-                          onClick={() => removeLogo.mutate('logo')}
-                          className="text-xs font-medium text-destructive hover:underline"
+                          disabled={removeLogo.isPending}
+                          onClick={() => setConfirmRemoveLogo(true)}
+                          className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
                         >
-                          Remove logo
+                          {removeLogo.isPending ? 'Removing…' : 'Remove logo'}
                         </button>
                       ) : null}
                     </div>
@@ -289,6 +295,20 @@ export default function CompanySettingsPage() {
           </aside>
         </div>
       ) : null}
+
+      <Confirm
+        open={confirmRemoveLogo}
+        onClose={() => setConfirmRemoveLogo(false)}
+        onConfirm={async () => {
+          await removeLogo.mutateAsync('logo');
+          setConfirmRemoveLogo(false);
+        }}
+        title="Remove the workspace logo?"
+        body="Your logo will no longer appear in the app or on generated documents until you upload a new one."
+        confirmLabel="Remove logo"
+        danger
+        pending={removeLogo.isPending}
+      />
     </div>
   );
 }

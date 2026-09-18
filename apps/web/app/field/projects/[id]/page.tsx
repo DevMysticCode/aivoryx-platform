@@ -170,11 +170,12 @@ export default function FieldProjectExecutionPage() {
                   <Button
                     variant="outline"
                     className="mt-2 w-full"
+                    disabled={actions.updateDefect.isPending}
                     onClick={() =>
                       actions.updateDefect.mutate({ defectId: d.id, status: 'RESOLVED' })
                     }
                   >
-                    Mark resolved
+                    {actions.updateDefect.isPending ? 'Marking…' : 'Mark resolved'}
                   </Button>
                 ) : null}
               </li>

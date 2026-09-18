@@ -24,11 +24,7 @@ function Grid({ s }: { s: FinancialSummary }) {
           <div className="text-xs text-muted-foreground">{label}</div>
           <div
             className={`text-base font-semibold tabular-nums ${
-              tone === 'pos'
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : tone === 'neg'
-                  ? 'text-destructive'
-                  : ''
+              tone === 'pos' ? 'text-success' : tone === 'neg' ? 'text-destructive' : ''
             }`}
           >
             {value}

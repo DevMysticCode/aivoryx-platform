@@ -11,6 +11,7 @@ import type {
 } from '@aivoryx/contracts';
 import * as api from '@/lib/api/commercial';
 import type { ListCustomersParams, ListQuotationsParams } from '@/lib/api/commercial';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /** TanStack Query hooks for customers & quotations (ADR 0035). */
 
@@ -37,20 +38,22 @@ export const useCustomer = (id: string) =>
 
 export function useCreateCustomer() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: CreateCustomerRequest) => api.createCustomer(b),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['commercial', 'customers'] }),
+    successMessage: 'Customer created',
   });
 }
 export function useUpdateCustomer(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: UpdateCustomerRequest) => api.updateCustomer(id, b),
     onSuccess: () =>
       Promise.all([
         qc.invalidateQueries({ queryKey: commercialKeys.customer(id) }),
         qc.invalidateQueries({ queryKey: ['commercial', 'customers'] }),
       ]),
+    successMessage: 'Customer updated',
   });
 }
 
@@ -112,26 +115,45 @@ export function useCreateQuotation() {
 }
 export function useUpdateQuotation(id: string) {
   const invalidate = useInvalidateQuotation(id);
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (b: UpdateQuotationRequest) => api.updateQuotation(id, b),
     onSuccess: invalidate,
+    successMessage: 'Quotation updated',
   });
 }
 export function useQuotationActions(id: string) {
   const invalidate = useInvalidateQuotation(id);
   return {
-    revise: useMutation({
+    revise: useMutationWithFeedback({
       mutationFn: (b: ReviseQuotationRequest = {}) => api.reviseQuotation(id, b),
       onSuccess: invalidate,
+      successMessage: 'Quotation revised',
     }),
-    send: useMutation({ mutationFn: () => api.sendQuotation(id), onSuccess: invalidate }),
-    accept: useMutation({
+    send: useMutationWithFeedback({
+      mutationFn: () => api.sendQuotation(id),
+      onSuccess: invalidate,
+      successMessage: 'Quotation sent',
+    }),
+    accept: useMutationWithFeedback({
       mutationFn: (b: AcceptQuotationRequest = {}) => api.acceptQuotation(id, b),
       onSuccess: invalidate,
+      successMessage: 'Quotation acceptance recorded',
     }),
-    cancel: useMutation({ mutationFn: () => api.cancelQuotation(id), onSuccess: invalidate }),
-    expire: useMutation({ mutationFn: () => api.expireQuotation(id), onSuccess: invalidate }),
-    book: useMutation({ mutationFn: () => api.bookQuotation(id), onSuccess: invalidate }),
+    cancel: useMutationWithFeedback({
+      mutationFn: () => api.cancelQuotation(id),
+      onSuccess: invalidate,
+      successMessage: 'Quotation cancelled',
+    }),
+    expire: useMutationWithFeedback({
+      mutationFn: () => api.expireQuotation(id),
+      onSuccess: invalidate,
+      successMessage: 'Quotation expired',
+    }),
+    book: useMutationWithFeedback({
+      mutationFn: () => api.bookQuotation(id),
+      onSuccess: invalidate,
+      successMessage: 'Quotation booked',
+    }),
   };
 }
 
@@ -144,8 +166,9 @@ export function useUploadQuotationAttachment(id: string) {
 }
 export function useDeleteQuotationAttachment(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (attachmentId: string) => api.deleteQuotationAttachment(id, attachmentId),
     onSuccess: () => qc.invalidateQueries({ queryKey: commercialKeys.quotationAttachments(id) }),
+    successMessage: 'Attachment deleted',
   });
 }

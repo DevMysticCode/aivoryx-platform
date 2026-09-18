@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, CalendarClock, Mail, MapPin, Pencil, Phone, UserRound } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
-import { Button } from '@aivoryx/ui';
+import { Button, buttonVariants } from '@aivoryx/ui';
 import { useMembers } from '@/lib/admin/use-admin';
 import { useVisits } from '@/lib/field/use-field';
 import {
@@ -31,7 +31,7 @@ import { ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { fmtDate, fmtMoney, fmtQty, SupplyStatusBadge } from '@/components/supply/ui';
 import { Dialog } from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
-import { LoadingBlock } from '@/components/ui/kit';
+import { Confirm, LoadingBlock } from '@/components/ui/kit';
 
 const NEXT_STATUSES: Record<string, string[]> = {
   NEW: ['ASSIGNED', 'CONTACTED', 'QUALIFIED', 'DISQUALIFIED'],
@@ -74,7 +74,7 @@ export default function LeadDetailPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-lg font-semibold tracking-tight">{l.name ?? 'Unnamed lead'}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{l.name ?? 'Unnamed lead'}</h1>
               <StatusBadge status={l.status} />
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -106,25 +106,17 @@ export default function LeadDetailPage() {
             {l.phone ? (
               <a
                 href={`tel:${l.phone}`}
-                className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
+                className={buttonVariants({ variant: 'outline', size: 'sm' })}
               >
                 <Phone className="size-4" aria-hidden /> Call
               </a>
             ) : null}
-            <button
-              type="button"
-              onClick={() => setFollowupOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
-            >
+            <Button variant="outline" size="sm" onClick={() => setFollowupOpen(true)}>
               <CalendarClock className="size-4" aria-hidden /> Follow-up
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
-            >
+            </Button>
+            <Button size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="size-4" aria-hidden /> Edit
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -183,7 +175,6 @@ function OverviewTab({
   const logCall = useLogCallAttempt(leadId);
   const [callOutcome, setCallOutcome] = useState('connected');
   const [qualifyNote, setQualifyNote] = useState('');
-  const toast = useToast();
   const l = lead.data;
   if (!l) return null;
   const nextStatuses = NEXT_STATUSES[l.status] ?? [];
@@ -310,12 +301,9 @@ function OverviewTab({
               size="sm"
               variant="outline"
               disabled={logCall.isPending}
-              onClick={() => {
-                logCall.mutate({ outcome: callOutcome });
-                toast.success('Call logged');
-              }}
+              onClick={() => logCall.mutate({ outcome: callOutcome })}
             >
-              Log
+              {logCall.isPending ? 'Logging…' : 'Log'}
             </Button>
           </div>
           <ErrorNote error={logCall.error} />
@@ -421,13 +409,15 @@ function FollowupsTab({ leadId }: { leadId: string }) {
           <Button
             size="sm"
             variant="outline"
+            disabled={complete.isPending}
             onClick={() => complete.mutate({ followupId: f.id, body: {} })}
           >
-            Complete
+            {complete.isPending ? 'Completing…' : 'Complete'}
           </Button>
           <Button
             size="sm"
             variant="ghost"
+            disabled={reschedule.isPending}
             onClick={() =>
               reschedule.mutate({
                 followupId: f.id,
@@ -435,7 +425,7 @@ function FollowupsTab({ leadId }: { leadId: string }) {
               })
             }
           >
-            +1 day
+            {reschedule.isPending ? 'Saving…' : '+1 day'}
           </Button>
         </div>
       ) : f.result ? (
@@ -508,6 +498,7 @@ function NotesTab({ leadId }: { leadId: string }) {
   const [body, setBody] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   return (
     <div className="space-y-4">
@@ -527,10 +518,23 @@ function NotesTab({ leadId }: { leadId: string }) {
           className="h-9 flex-1 rounded-md border bg-transparent px-3 text-sm"
         />
         <Button size="sm" type="submit" disabled={create.isPending || !body.trim()}>
-          Add
+          {create.isPending ? 'Adding…' : 'Add'}
         </Button>
       </form>
       <ErrorNote error={create.error} />
+      <Confirm
+        open={deletingId !== null}
+        onClose={() => setDeletingId(null)}
+        onConfirm={() => {
+          if (!deletingId) return;
+          del.mutate(deletingId, { onSuccess: () => setDeletingId(null) });
+        }}
+        title="Delete this note?"
+        body="This note will be permanently removed."
+        confirmLabel="Delete note"
+        danger
+        pending={del.isPending}
+      />
       {notes.isLoading ? (
         <Skeleton rows={3} />
       ) : (notes.data ?? []).length === 0 ? (
@@ -549,12 +553,15 @@ function NotesTab({ leadId }: { leadId: string }) {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() => {
-                        update.mutate({ noteId: n.id, body: { body: editingBody } });
-                        setEditingId(null);
-                      }}
+                      disabled={update.isPending}
+                      onClick={() =>
+                        update.mutate(
+                          { noteId: n.id, body: { body: editingBody } },
+                          { onSuccess: () => setEditingId(null) },
+                        )
+                      }
                     >
-                      Save
+                      {update.isPending ? 'Saving…' : 'Save'}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
                       Cancel
@@ -580,7 +587,7 @@ function NotesTab({ leadId }: { leadId: string }) {
                       <button
                         type="button"
                         className="hover:text-destructive hover:underline"
-                        onClick={() => del.mutate(n.id)}
+                        onClick={() => setDeletingId(n.id)}
                       >
                         Delete
                       </button>

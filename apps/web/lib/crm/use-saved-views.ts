@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateSavedViewRequest, UpdateSavedViewRequest } from '@aivoryx/contracts';
 import * as api from '@/lib/api/saved-views';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 export { serializeViewConfig, parseViewConfig, type LeadViewConfig } from './lead-view-config';
 
@@ -31,8 +32,9 @@ export function useUpdateSavedView() {
 
 export function useDeleteSavedView() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (id: string) => api.deleteSavedView(id),
+    successMessage: 'Saved view deleted',
     onSuccess: () => qc.invalidateQueries({ queryKey: savedViewKeys.all }),
   });
 }

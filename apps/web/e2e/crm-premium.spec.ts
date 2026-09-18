@@ -96,6 +96,8 @@ test.describe('CRM premium workspace', () => {
     await page.getByRole('link', { name: 'Leads' }).first().click();
     await page.getByRole('button', { name: 'Saved views' }).click();
     await page.getByRole('button', { name: `Delete ${viewName}` }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete saved view' }).click();
+    await expect(page.getByText('Saved view deleted')).toBeVisible();
   });
 
   test('mobile: lead list is cards, detail is a stacked workspace', async ({ page }) => {

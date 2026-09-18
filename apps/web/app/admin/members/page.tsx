@@ -22,6 +22,7 @@ import {
   Skeleton,
   StatusBadge,
 } from '@/components/admin/ui';
+import { Confirm } from '@/components/ui/kit';
 
 export default function MembersPage() {
   const members = useMembers();
@@ -162,6 +163,7 @@ function MemberRow({
   const assignRole = useAssignRole();
   const removeRole = useRemoveRole();
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const memberLabel = member.name ?? member.email;
 
   const heldKeys = new Set(member.roles.map((r) => r.key));
   const assignable = availableRoles.filter((r) => !heldKeys.has(r.key));
@@ -241,7 +243,7 @@ function MemberRow({
                   setStatus.mutate({ membershipId: member.membershipId, status: 'active' })
                 }
               >
-                Reactivate
+                {setStatus.isPending ? 'Reactivating…' : 'Reactivate'}
               </Button>
             ) : member.status === 'active' ? (
               <Button
@@ -252,33 +254,17 @@ function MemberRow({
                   setStatus.mutate({ membershipId: member.membershipId, status: 'suspended' })
                 }
               >
-                Suspend
+                {setStatus.isPending ? 'Suspending…' : 'Suspend'}
               </Button>
             ) : null}
-            {confirmRemove ? (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => remove.mutate(member.membershipId)}
-                >
-                  Confirm remove
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setConfirmRemove(false)}>
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => setConfirmRemove(true)}
-              >
-                Remove
-              </Button>
-            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => setConfirmRemove(true)}
+            >
+              Remove
+            </Button>
           </div>
         </td>
       </tr>
@@ -289,6 +275,19 @@ function MemberRow({
           </td>
         </tr>
       ) : null}
+      <Confirm
+        open={confirmRemove}
+        onClose={() => setConfirmRemove(false)}
+        onConfirm={async () => {
+          await remove.mutateAsync(member.membershipId);
+          setConfirmRemove(false);
+        }}
+        title={`Remove ${memberLabel}?`}
+        body={`${memberLabel} will lose access to this workspace immediately. This can be undone by inviting them again.`}
+        confirmLabel="Remove"
+        danger
+        pending={remove.isPending}
+      />
     </>
   );
 }
