@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { Card, EmptyState, ErrorNote, Skeleton, PageHeader } from '@/components/admin/ui';
+import { Confirm } from '@/components/ui/kit';
 import { fmtMoney, fmtDate, SupplyStatusBadge } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useCreditNote, useCreditNoteAction } from '@/lib/finance/use-finance';
@@ -14,6 +16,7 @@ export default function CreditNoteDetailPage() {
   const perms = usePermissions();
   const q = useCreditNote(id);
   const actions = useCreditNoteAction(id);
+  const [cancelling, setCancelling] = useState(false);
 
   if (q.isLoading) return <Skeleton rows={6} />;
   if (q.error) return <ErrorNote error={q.error} />;
@@ -48,18 +51,29 @@ export default function CreditNoteDetailPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => {
-                if (confirm('Cancel this credit note?')) actions.cancel.mutate();
-              }}
+              onClick={() => setCancelling(true)}
               disabled={actions.cancel.isPending}
             >
-              Cancel
+              {actions.cancel.isPending ? 'Cancelling…' : 'Cancel'}
             </Button>
           )}
         </div>
       </PageHeader>
 
       <ErrorNote error={actions.issue.error ?? actions.cancel.error} />
+
+      <Confirm
+        open={cancelling}
+        onClose={() => setCancelling(false)}
+        onConfirm={() => {
+          actions.cancel.mutate(undefined, { onSuccess: () => setCancelling(false) });
+        }}
+        title="Cancel this credit note?"
+        body="The credit note will be marked cancelled and will no longer reduce the linked invoice's receivable."
+        confirmLabel="Cancel credit note"
+        danger
+        pending={actions.cancel.isPending}
+      />
 
       <Card className="space-y-1 text-sm">
         <Row label="Amount" value={`${fmtMoney(cn.amount)} ${cn.currency}`} />

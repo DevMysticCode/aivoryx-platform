@@ -186,14 +186,14 @@ export default function HrEmployeesPage() {
               ))}
             </Select>
           </div>
-          {create.error && <ErrorNote error={create.error} />}
+          <ErrorNote error={create.error} />
           <div className="flex gap-2">
             <Button
               size="sm"
               onClick={submit}
               disabled={create.isPending || !form.firstName || !form.lastName || !form.joiningDate}
             >
-              Create employee
+              {create.isPending ? 'Creating…' : 'Create employee'}
             </Button>
           </div>
         </Card>

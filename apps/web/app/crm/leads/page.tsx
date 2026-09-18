@@ -84,6 +84,7 @@ export default function LeadsPage() {
   const savedViews = useSavedViews();
   const createView = useCreateSavedView();
   const deleteView = useDeleteSavedView();
+  const [deletingView, setDeletingView] = useState<{ id: string; name: string } | null>(null);
   const activeConfig = serializeViewConfig({ ...filter, q: q || undefined });
 
   const applyView = (config: Record<string, unknown>) => {
@@ -124,8 +125,8 @@ export default function LeadsPage() {
       </PageHeader>
 
       {/* toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="relative min-w-0 flex-1 sm:max-w-xs">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <label className="relative w-full sm:min-w-0 sm:max-w-xs sm:flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <input
             value={rawQuery}
@@ -135,44 +136,60 @@ export default function LeadsPage() {
           />
         </label>
 
-        <select
-          value={filter.status ?? ''}
-          onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value || undefined }))}
-          className="h-9 rounded-md border bg-transparent px-2 text-sm"
-          aria-label="Status filter"
-        >
-          <option value="">Any status</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {titleCase(s)}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={filter.status ?? ''}
+            onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value || undefined }))}
+            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            aria-label="Status filter"
+          >
+            <option value="">Any status</option>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {titleCase(s)}
+              </option>
+            ))}
+          </select>
 
-        <select
-          value={filter.assignedMembershipId ?? ''}
-          onChange={(e) =>
-            setFilter((f) => ({ ...f, assignedMembershipId: e.target.value || undefined }))
-          }
-          className="h-9 rounded-md border bg-transparent px-2 text-sm"
-          aria-label="Assignee filter"
-        >
-          <option value="">Anyone</option>
-          {(members.data ?? []).map((m) => (
-            <option key={m.membershipId} value={m.membershipId}>
-              {m.name ?? m.email}
-            </option>
-          ))}
-        </select>
+          <select
+            value={filter.assignedMembershipId ?? ''}
+            onChange={(e) =>
+              setFilter((f) => ({ ...f, assignedMembershipId: e.target.value || undefined }))
+            }
+            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            aria-label="Assignee filter"
+          >
+            <option value="">Anyone</option>
+            {(members.data ?? []).map((m) => (
+              <option key={m.membershipId} value={m.membershipId}>
+                {m.name ?? m.email}
+              </option>
+            ))}
+          </select>
 
-        <SavedViewsMenu
-          views={savedViews.data ?? []}
-          onApply={applyView}
-          onSave={() => setSaveOpen(true)}
-          onDelete={(id) => deleteView.mutate(id)}
+          <SavedViewsMenu
+            views={savedViews.data ?? []}
+            onApply={applyView}
+            onSave={() => setSaveOpen(true)}
+            onDelete={(id, name) => setDeletingView({ id, name })}
+          />
+        </div>
+
+        <Confirm
+          open={deletingView !== null}
+          onClose={() => setDeletingView(null)}
+          onConfirm={() => {
+            if (!deletingView) return;
+            deleteView.mutate(deletingView.id, { onSuccess: () => setDeletingView(null) });
+          }}
+          title={`Delete "${deletingView?.name ?? ''}"?`}
+          body="This saved view will be permanently removed. Your leads are not affected."
+          confirmLabel="Delete saved view"
+          danger
+          pending={deleteView.isPending}
         />
 
-        <div className="ml-auto flex items-center gap-1 rounded-md border p-0.5">
+        <div className="flex items-center gap-1 self-start rounded-md border p-0.5 sm:ml-auto sm:self-auto">
           <button
             type="button"
             aria-pressed={!filter.board}
@@ -606,7 +623,7 @@ function SavedViewsMenu({
   views: { id: string; name: string; config: Record<string, unknown> }[];
   onApply: (config: Record<string, unknown>) => void;
   onSave: () => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, name: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -653,7 +670,10 @@ function SavedViewsMenu({
             <button
               type="button"
               aria-label={`Delete ${v.name}`}
-              onClick={() => onDelete(v.id)}
+              onClick={() => {
+                setOpen(false);
+                onDelete(v.id, v.name);
+              }}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             >
               <Trash2 className="size-3.5" />

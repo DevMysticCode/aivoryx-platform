@@ -6,6 +6,7 @@ import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
 import { Table, Select } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import type { HrLeaveRequest } from '@aivoryx/contracts';
+import { Confirm } from '@/components/ui/kit';
 import { HrStatusBadge, TextField, TabBar, fmtDate } from '@/components/hr/ui';
 import {
   useLeaveTypes,
@@ -127,14 +128,12 @@ function MyLeave() {
                 )
               }
             >
-              Submit
+              {create.isPending ? 'Submitting…' : 'Submit'}
             </Button>
           </div>
-          {create.error && (
-            <div className="sm:col-span-2 lg:col-span-4">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="sm:col-span-2 lg:col-span-4">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {mine.isLoading && <Skeleton rows={4} />}
@@ -179,23 +178,21 @@ function DecisionCard({ r }: { r: HrLeaveRequest }) {
         <TextField label="Note" value={reason} onChange={(e) => setReason(e.target.value)} />
         <Button
           size="sm"
-          disabled={dec.approve.isPending}
+          disabled={dec.approve.isPending || dec.reject.isPending}
           onClick={() => dec.approve.mutate({ reason: reason || undefined })}
         >
-          Approve
+          {dec.approve.isPending ? 'Approving…' : 'Approve'}
         </Button>
         <Button
           size="sm"
           variant="outline"
-          disabled={dec.reject.isPending}
+          disabled={dec.approve.isPending || dec.reject.isPending}
           onClick={() => dec.reject.mutate({ reason: reason || undefined })}
         >
-          Reject
+          {dec.reject.isPending ? 'Rejecting…' : 'Reject'}
         </Button>
       </div>
-      {(dec.approve.error || dec.reject.error) && (
-        <ErrorNote error={dec.approve.error || dec.reject.error} />
-      )}
+      <ErrorNote error={dec.approve.error || dec.reject.error} />
     </Card>
   );
 }
@@ -268,6 +265,7 @@ function RequestRow({
   showCancel?: boolean;
 }) {
   const dec = useLeaveDecision(r.id);
+  const [confirming, setConfirming] = useState(false);
   return (
     <tr>
       <td className="px-3 py-2 tabular-nums">{r.requestNumber}</td>
@@ -291,11 +289,27 @@ function RequestRow({
             <button
               className="text-xs text-primary hover:underline disabled:opacity-50"
               disabled={dec.cancel.isPending}
-              onClick={() => dec.cancel.mutate()}
+              onClick={() => setConfirming(true)}
             >
-              Cancel
+              {dec.cancel.isPending ? 'Cancelling…' : 'Cancel'}
             </button>
           )}
+          <Confirm
+            open={confirming}
+            onClose={() => setConfirming(false)}
+            onConfirm={() => {
+              dec.cancel.mutate(undefined, { onSuccess: () => setConfirming(false) });
+            }}
+            title="Cancel leave request?"
+            body={
+              r.status === 'APPROVED'
+                ? 'This request was already approved. Cancelling will release the days back to the balance.'
+                : 'This leave request will be withdrawn.'
+            }
+            confirmLabel="Cancel request"
+            danger
+            pending={dec.cancel.isPending}
+          />
         </td>
       )}
     </tr>
@@ -464,14 +478,12 @@ function LeaveTypes({ canManage }: { canManage: boolean }) {
                 )
               }
             >
-              Add
+              {create.isPending ? 'Adding…' : 'Add'}
             </Button>
           </div>
-          {create.error && (
-            <div className="lg:col-span-5">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="lg:col-span-5">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {types.data && (

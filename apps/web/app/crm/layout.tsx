@@ -1,15 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
 import { CalendarClock, Contact, Gauge, Users, type LucideIcon } from 'lucide-react';
-import { cn } from '@aivoryx/ui';
 import type { ModuleKey } from '@aivoryx/shared';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
 import { useAccess } from '@/lib/navigation/use-access';
 import { Skeleton } from '@/components/admin/ui';
+import { ModuleTabs } from '@/components/ui/module-tabs';
 
 interface CrmNavItem {
   href: string;
@@ -65,31 +64,18 @@ export default function CrmLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  const items = NAV.filter(
+    (item) => access.can(item.permission) && access.hasModule(item.module),
+  ).map(({ href, label, icon, exact }) => ({
+    href,
+    label,
+    icon,
+    current: exact ? pathname === href : pathname.startsWith(href),
+  }));
+
   return (
     <div className="space-y-6">
-      <nav className="flex flex-wrap gap-1 border-b pb-2">
-        {NAV.filter((item) => access.can(item.permission) && access.hasModule(item.module)).map(
-          ({ href, label, icon: Icon, exact }) => {
-            const current = exact ? pathname === href : pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={current ? 'page' : undefined}
-                className={cn(
-                  'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
-                  current
-                    ? 'bg-secondary font-medium text-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                )}
-              >
-                <Icon className="size-4" aria-hidden />
-                {label}
-              </Link>
-            );
-          },
-        )}
-      </nav>
+      <ModuleTabs items={items} />
       {children}
     </div>
   );

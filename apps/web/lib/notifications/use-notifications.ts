@@ -1,12 +1,13 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   UpdateNotificationPreferencesRequest,
   UpdateNotificationRuleRequest,
   UpdateNotificationTemplateRequest,
 } from '@aivoryx/contracts';
 import * as api from '@/lib/api/notifications';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /** TanStack Query hooks for the Notifications & Communications Engine (ADR 0037). */
 
@@ -39,7 +40,10 @@ export function useNotifications(unreadOnly = false) {
 
 export function useMarkNotificationRead() {
   const qc = useQueryClient();
-  return useMutation({
+  // No successMessage: this fires silently while the user is navigating to the
+  // notification's deep link (see notification-bell.tsx), so a toast would
+  // appear and vanish off-screen with nothing useful to say.
+  return useMutationWithFeedback({
     mutationFn: (id: string) => api.markNotificationRead(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['notifications'] });
@@ -49,8 +53,9 @@ export function useMarkNotificationRead() {
 
 export function useMarkAllRead() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: api.markAllNotificationsRead,
+    successMessage: 'All notifications marked as read',
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['notifications'] });
     },
@@ -66,9 +71,10 @@ export function useNotificationPreferences() {
 
 export function useUpdateNotificationPreferences() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: UpdateNotificationPreferencesRequest) =>
       api.updateNotificationPreferences(body),
+    successMessage: 'Notification preferences updated',
     onSuccess: (data) => {
       qc.setQueryData(notificationKeys.preferences, data);
     },
@@ -83,9 +89,10 @@ export function useNotificationRules() {
 
 export function useUpdateNotificationRule() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ key, body }: { key: string; body: UpdateNotificationRuleRequest }) =>
       api.updateNotificationRule(key, body),
+    successMessage: 'Notification rule updated',
     onSuccess: (data) => qc.setQueryData(notificationKeys.rules, data),
   });
 }
@@ -104,9 +111,10 @@ export function useNotificationTemplate(key: string) {
 
 export function useUpdateNotificationTemplate() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ key, body }: { key: string; body: UpdateNotificationTemplateRequest }) =>
       api.updateNotificationTemplate(key, body),
+    successMessage: 'Notification template updated',
     onSuccess: (data, vars) => {
       qc.setQueryData(notificationKeys.template(vars.key), data);
       void qc.invalidateQueries({ queryKey: notificationKeys.templates });
@@ -116,8 +124,9 @@ export function useUpdateNotificationTemplate() {
 
 export function useResetNotificationTemplate() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (key: string) => api.resetNotificationTemplate(key),
+    successMessage: 'Notification template reset to default',
     onSuccess: (data, key) => {
       qc.setQueryData(notificationKeys.template(key), data);
       void qc.invalidateQueries({ queryKey: notificationKeys.templates });

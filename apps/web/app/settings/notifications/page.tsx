@@ -52,7 +52,7 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
-      {update.error && <ErrorNote error={update.error} />}
+      <ErrorNote error={update.error} />
     </div>
   );
 }

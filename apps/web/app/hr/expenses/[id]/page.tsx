@@ -6,6 +6,7 @@ import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
 import { Select } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
+import { Confirm } from '@/components/ui/kit';
 import { HrStatusBadge, TextField, DefRow, money, fmtDate, fmtDateTime } from '@/components/hr/ui';
 import * as hrApi from '@/lib/api/hr';
 import { useExpenseClaim, useExpenseActions } from '@/lib/hr/use-hr';
@@ -19,6 +20,7 @@ export default function ExpenseDetailPage({ params }: { params: Promise<{ id: st
 
   const claim = useExpenseClaim(id);
   const actions = useExpenseActions(id);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const [approvedAmount, setApprovedAmount] = useState('');
   const [reason, setReason] = useState('');
@@ -116,7 +118,7 @@ export default function ExpenseDetailPage({ params }: { params: Promise<{ id: st
                   disabled={actions.submit.isPending}
                   onClick={() => actions.submit.mutate()}
                 >
-                  Submit for approval
+                  {actions.submit.isPending ? 'Submitting…' : 'Submit for approval'}
                 </Button>
               )}
               {canSubmit && (c.status === 'DRAFT' || c.status === 'SUBMITTED') && (
@@ -124,11 +126,23 @@ export default function ExpenseDetailPage({ params }: { params: Promise<{ id: st
                   size="sm"
                   variant="outline"
                   disabled={actions.cancel.isPending}
-                  onClick={() => actions.cancel.mutate()}
+                  onClick={() => setConfirmingCancel(true)}
                 >
-                  Cancel
+                  {actions.cancel.isPending ? 'Cancelling…' : 'Cancel'}
                 </Button>
               )}
+              <Confirm
+                open={confirmingCancel}
+                onClose={() => setConfirmingCancel(false)}
+                onConfirm={() => {
+                  actions.cancel.mutate(undefined, { onSuccess: () => setConfirmingCancel(false) });
+                }}
+                title="Cancel this expense claim?"
+                body="The claim will be withdrawn and will no longer be eligible for approval or reimbursement."
+                confirmLabel="Cancel claim"
+                danger
+                pending={actions.cancel.isPending}
+              />
               <label className="text-sm">
                 <span className="block font-medium">Attach receipt</span>
                 <input
@@ -163,7 +177,7 @@ export default function ExpenseDetailPage({ params }: { params: Promise<{ id: st
                 <div className="flex items-end gap-2">
                   <Button
                     size="sm"
-                    disabled={actions.approve.isPending}
+                    disabled={actions.approve.isPending || actions.reject.isPending}
                     onClick={() =>
                       actions.approve.mutate({
                         approvedAmount: approvedAmount || undefined,
@@ -171,15 +185,15 @@ export default function ExpenseDetailPage({ params }: { params: Promise<{ id: st
                       })
                     }
                   >
-                    Approve
+                    {actions.approve.isPending ? 'Approving…' : 'Approve'}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={actions.reject.isPending}
+                    disabled={actions.approve.isPending || actions.reject.isPending}
                     onClick={() => actions.reject.mutate({ reason: reason || undefined })}
                   >
-                    Reject
+                    {actions.reject.isPending ? 'Rejecting…' : 'Reject'}
                   </Button>
                 </div>
               </div>
@@ -251,27 +265,21 @@ export default function ExpenseDetailPage({ params }: { params: Promise<{ id: st
                       })
                     }
                   >
-                    Record reimbursement
+                    {actions.reimburse.isPending ? 'Recording…' : 'Record reimbursement'}
                   </Button>
                 </div>
               </div>
             )}
 
-            {(actions.submit.error ||
-              actions.approve.error ||
-              actions.reject.error ||
-              actions.cancel.error ||
-              actions.reimburse.error) && (
-              <ErrorNote
-                error={
-                  actions.submit.error ||
-                  actions.approve.error ||
-                  actions.reject.error ||
-                  actions.cancel.error ||
-                  actions.reimburse.error
-                }
-              />
-            )}
+            <ErrorNote
+              error={
+                actions.submit.error ||
+                actions.approve.error ||
+                actions.reject.error ||
+                actions.cancel.error ||
+                actions.reimburse.error
+              }
+            />
           </Card>
         </>
       )}

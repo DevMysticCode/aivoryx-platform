@@ -16,6 +16,7 @@ import {
   Skeleton,
   StatusBadge,
 } from '@/components/admin/ui';
+import { Confirm } from '@/components/ui/kit';
 
 /**
  * Minimum field-agent capability management (Phase 4, ADR 0033) — designate
@@ -28,6 +29,10 @@ export default function FieldAgentsPage() {
   const designate = useDesignateFieldAgent();
   const deactivate = useDeactivateFieldAgent();
   const [membershipId, setMembershipId] = useState('');
+  const [deactivating, setDeactivating] = useState<{
+    membershipId: string;
+    name: string;
+  } | null>(null);
 
   const agentMembershipIds = new Set((fieldAgents.data ?? []).map((a) => a.membershipId));
   const eligibleMembers = (members.data ?? []).filter(
@@ -108,9 +113,16 @@ export default function FieldAgentsPage() {
                         size="sm"
                         variant="outline"
                         disabled={deactivate.isPending}
-                        onClick={() => deactivate.mutate(agent.membershipId)}
+                        onClick={() =>
+                          setDeactivating({
+                            membershipId: agent.membershipId,
+                            name: agent.userName ?? agent.userEmail,
+                          })
+                        }
                       >
-                        Deactivate
+                        {deactivate.isPending && deactivating?.membershipId === agent.membershipId
+                          ? 'Deactivating…'
+                          : 'Deactivate'}
                       </Button>
                     ) : (
                       <Button
@@ -132,6 +144,26 @@ export default function FieldAgentsPage() {
         <EmptyState>No field agents designated yet.</EmptyState>
       )}
       <ErrorNote error={deactivate.error} />
+
+      <Confirm
+        open={!!deactivating}
+        onClose={() => setDeactivating(null)}
+        onConfirm={async () => {
+          if (!deactivating) return;
+          try {
+            await deactivate.mutateAsync(deactivating.membershipId);
+          } catch {
+            // error toast already shown by useMutationWithFeedback
+          } finally {
+            setDeactivating(null);
+          }
+        }}
+        title="Deactivate this field agent?"
+        body={`${deactivating?.name ?? 'They'} will no longer be able to work site visits from the field app.`}
+        confirmLabel="Deactivate"
+        danger
+        pending={deactivate.isPending}
+      />
     </section>
   );
 }

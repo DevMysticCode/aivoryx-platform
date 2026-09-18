@@ -102,14 +102,12 @@ export default function AttendancePage() {
               disabled={!rec.employeeId || !rec.workDate || record.isPending}
               onClick={() => record.mutate(rec, { onSuccess: () => setShowRec(false) })}
             >
-              Save
+              {record.isPending ? 'Saving…' : 'Save'}
             </Button>
           </div>
-          {record.error && (
-            <div className="sm:col-span-4">
-              <ErrorNote error={record.error} />
-            </div>
-          )}
+          <div className="sm:col-span-4">
+            <ErrorNote error={record.error} />
+          </div>
         </Card>
       )}
 
@@ -287,15 +285,13 @@ function AttendanceRow({
                     correct.mutate({ field, value, reason }, { onSuccess: () => setOpen(false) })
                   }
                 >
-                  Apply correction
+                  {correct.isPending ? 'Applying…' : 'Apply correction'}
                 </Button>
               </div>
             </div>
-            {correct.error && (
-              <div className="mt-2">
-                <ErrorNote error={correct.error} />
-              </div>
-            )}
+            <div className="mt-2">
+              <ErrorNote error={correct.error} />
+            </div>
             <p className="mt-2 text-xs text-muted-foreground">
               Corrections are immutable and generate an audit record with the original and new
               value.

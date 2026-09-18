@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AddChecklistItemRequest,
   AssignInstallationRequest,
@@ -14,6 +14,7 @@ import type {
   UpdateNetMeteringRequest,
 } from '@aivoryx/contracts';
 import * as api from '@/lib/api/execution';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /** TanStack Query hooks for EPC project execution (ADR 0036). */
 
@@ -74,94 +75,130 @@ export function useExecutionActions(projectId: string) {
   const opt = { onSuccess: invalidate };
 
   return {
-    start: useMutation({ mutationFn: () => api.startExecution(projectId), ...opt }),
-    completeMilestone: useMutation({
+    start: useMutationWithFeedback({
+      mutationFn: () => api.startExecution(projectId),
+      successMessage: 'Execution started',
+      ...opt,
+    }),
+    completeMilestone: useMutationWithFeedback({
       mutationFn: ({ milestoneId, notes }: { milestoneId: string; notes?: string }) =>
         api.completeMilestone(projectId, milestoneId, notes),
+      successMessage: 'Milestone marked done',
       ...opt,
     }),
-    completeProject: useMutation({ mutationFn: () => api.completeProject(projectId), ...opt }),
-    assign: useMutation({
+    completeProject: useMutationWithFeedback({
+      mutationFn: () => api.completeProject(projectId),
+      successMessage: 'Project marked complete',
+      ...opt,
+    }),
+    assign: useMutationWithFeedback({
       mutationFn: (b: AssignInstallationRequest) => api.assignInstallation(projectId, b),
+      successMessage: 'Installer assigned',
       ...opt,
     }),
-    unassign: useMutation({ mutationFn: () => api.unassignInstallation(projectId), ...opt }),
-    override: useMutation({
+    unassign: useMutationWithFeedback({
+      mutationFn: () => api.unassignInstallation(projectId),
+      successMessage: 'Installer unassigned',
+      ...opt,
+    }),
+    override: useMutationWithFeedback({
       mutationFn: (b: MaterialOverrideRequest) => api.overrideMaterials(projectId, b),
+      successMessage: 'Material readiness override applied',
       ...opt,
     }),
-    startInstallation: useMutation({
+    startInstallation: useMutationWithFeedback({
       mutationFn: (b: StartInstallationRequest = {}) => api.startInstallation(projectId, b),
+      successMessage: 'Installation started',
       ...opt,
     }),
-    completeInstallation: useMutation({
+    completeInstallation: useMutationWithFeedback({
       mutationFn: (b: CompleteInstallationRequest = {}) => api.completeInstallation(projectId, b),
+      successMessage: 'Installation marked complete',
       ...opt,
     }),
-    addChecklistItem: useMutation({
+    addChecklistItem: useMutationWithFeedback({
       mutationFn: (b: AddChecklistItemRequest) => api.addChecklistItem(projectId, b),
+      successMessage: 'Checklist item added',
       ...opt,
     }),
-    toggleChecklistItem: useMutation({
+    toggleChecklistItem: useMutationWithFeedback({
       mutationFn: ({ itemId, ...b }: ToggleChecklistItemRequest & { itemId: string }) =>
         api.toggleChecklistItem(projectId, itemId, b),
+      successMessage: 'Checklist item updated',
       ...opt,
     }),
-    removeChecklistItem: useMutation({
+    removeChecklistItem: useMutationWithFeedback({
       mutationFn: (itemId: string) => api.removeChecklistItem(projectId, itemId),
+      successMessage: 'Checklist item removed',
       ...opt,
     }),
-    createQc: useMutation({
+    createQc: useMutationWithFeedback({
       mutationFn: (inspectorMembershipId?: string) =>
         api.createQcInspection(projectId, inspectorMembershipId),
+      successMessage: 'QC inspection opened',
       ...opt,
     }),
-    toggleQcItem: useMutation({
+    toggleQcItem: useMutationWithFeedback({
       mutationFn: ({
         inspectionId,
         itemId,
         ...b
       }: ToggleChecklistItemRequest & { inspectionId: string; itemId: string }) =>
         api.toggleQcChecklistItem(projectId, inspectionId, itemId, b),
+      successMessage: 'QC checklist updated',
       ...opt,
     }),
-    startQc: useMutation({
+    startQc: useMutationWithFeedback({
       mutationFn: (inspectionId: string) => api.startQc(projectId, inspectionId),
+      successMessage: 'QC inspection started',
       ...opt,
     }),
-    passQc: useMutation({
+    passQc: useMutationWithFeedback({
       mutationFn: (inspectionId: string) => api.passQc(projectId, inspectionId),
+      successMessage: 'QC passed',
       ...opt,
     }),
-    failQc: useMutation({
+    failQc: useMutationWithFeedback({
       mutationFn: ({ inspectionId, resultNote }: { inspectionId: string; resultNote?: string }) =>
         api.failQc(projectId, inspectionId, { resultNote }),
+      successMessage: 'QC failed',
       ...opt,
     }),
-    createDefect: useMutation({
+    createDefect: useMutationWithFeedback({
       mutationFn: (b: CreateDefectRequest) => api.createDefect(projectId, b),
+      successMessage: 'Defect raised',
       ...opt,
     }),
-    updateDefect: useMutation({
+    updateDefect: useMutationWithFeedback({
       mutationFn: ({ defectId, ...b }: UpdateDefectRequest & { defectId: string }) =>
         api.updateDefect(projectId, defectId, b),
+      successMessage: (_data, vars) =>
+        vars.status
+          ? `Defect marked ${vars.status.replace(/_/g, ' ').toLowerCase()}`
+          : 'Defect updated',
       ...opt,
     }),
-    updateNetMetering: useMutation({
+    updateNetMetering: useMutationWithFeedback({
       mutationFn: (b: UpdateNetMeteringRequest) => api.updateNetMetering(projectId, b),
+      successMessage: 'Net metering updated',
       ...opt,
     }),
-    updateHandover: useMutation({
+    updateHandover: useMutationWithFeedback({
       mutationFn: (b: UpdateHandoverRequest) => api.updateHandover(projectId, b),
+      successMessage: 'Handover acknowledgement saved',
       ...opt,
     }),
-    completeHandover: useMutation({ mutationFn: () => api.completeHandover(projectId), ...opt }),
+    completeHandover: useMutationWithFeedback({
+      mutationFn: () => api.completeHandover(projectId),
+      successMessage: 'Handover completed',
+      ...opt,
+    }),
   };
 }
 
 export function useUploadExecutionAttachment(projectId: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({
       entityKind,
       entityId,
@@ -171,14 +208,16 @@ export function useUploadExecutionAttachment(projectId: string) {
       entityId: string;
       file: File;
     }) => api.uploadExecutionAttachment(projectId, entityKind, entityId, file),
+    successMessage: 'File uploaded',
     onSuccess: () => qc.invalidateQueries({ queryKey: ['execution', 'attachments', projectId] }),
   });
 }
 
 export function useDeleteExecutionAttachment(projectId: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (attachmentId: string) => api.deleteExecutionAttachment(projectId, attachmentId),
+    successMessage: 'File deleted',
     onSuccess: () => qc.invalidateQueries({ queryKey: ['execution', 'attachments', projectId] }),
   });
 }

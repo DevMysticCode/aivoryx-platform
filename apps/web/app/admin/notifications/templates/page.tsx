@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { NotificationTemplate } from '@aivoryx/contracts';
 import { ErrorNote, PageHeader, Skeleton } from '@/components/admin/ui';
+import { Confirm } from '@/components/ui/kit';
 import { NotifTabs } from '@/components/admin/notif-tabs';
 import {
   useNotificationTemplates,
@@ -67,6 +68,7 @@ function TemplateEditor({ template }: { template: NotificationTemplate }) {
 
   const save = useUpdateNotificationTemplate();
   const reset = useResetNotificationTemplate();
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   return (
     <div className="space-y-3 border-t px-4 py-4">
@@ -109,7 +111,7 @@ function TemplateEditor({ template }: { template: NotificationTemplate }) {
         />
       </Labeled>
 
-      {(save.error || reset.error) && <ErrorNote error={save.error ?? reset.error} />}
+      <ErrorNote error={save.error ?? reset.error} />
 
       <div className="flex gap-2">
         <button
@@ -126,13 +128,26 @@ function TemplateEditor({ template }: { template: NotificationTemplate }) {
           <button
             type="button"
             disabled={reset.isPending}
-            onClick={() => reset.mutate(template.key)}
+            onClick={() => setConfirmingReset(true)}
             className="rounded-md border px-3 py-1.5 text-sm disabled:opacity-50"
           >
-            Reset to default
+            {reset.isPending ? 'Resetting…' : 'Reset to default'}
           </button>
         )}
       </div>
+
+      <Confirm
+        open={confirmingReset}
+        onClose={() => setConfirmingReset(false)}
+        onConfirm={() => {
+          reset.mutate(template.key, { onSuccess: () => setConfirmingReset(false) });
+        }}
+        title="Reset this template to default?"
+        body="Your customised wording will be discarded and replaced with the system default text."
+        confirmLabel="Reset to default"
+        danger
+        pending={reset.isPending}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import type {
   UpdateInvoiceRequest,
 } from '@aivoryx/contracts';
 import * as api from '@/lib/api/finance';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /** TanStack Query hooks for the finance surface (Phase 9, ADR 0038). */
 
@@ -81,8 +82,9 @@ export function useCreateInvoice() {
 
 export function useUpdateInvoice(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: UpdateInvoiceRequest) => api.updateInvoice(id, body),
+    successMessage: 'Invoice updated',
     onSuccess: () => invalidateAll(qc),
   });
 }
@@ -91,9 +93,14 @@ export function useInvoiceAction(id: string) {
   const qc = useQueryClient();
   const done = () => invalidateAll(qc);
   return {
-    issue: useMutation({ mutationFn: () => api.issueInvoice(id), onSuccess: done }),
-    cancel: useMutation({
+    issue: useMutationWithFeedback({
+      mutationFn: () => api.issueInvoice(id),
+      successMessage: 'Invoice issued',
+      onSuccess: done,
+    }),
+    cancel: useMutationWithFeedback({
       mutationFn: (mode: 'CANCELLED' | 'VOID') => api.cancelInvoice(id, { mode }),
+      successMessage: 'Invoice cancelled',
       onSuccess: done,
     }),
   };
@@ -101,8 +108,9 @@ export function useInvoiceAction(id: string) {
 
 export function useRecordPayment() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: RecordPaymentRequest) => api.recordPayment(body),
+    successMessage: 'Payment recorded',
     onSuccess: () => invalidateAll(qc),
   });
 }
@@ -115,8 +123,9 @@ export function usePaymentAction(id: string) {
       mutationFn: (body: AllocatePaymentRequest) => api.allocatePayment(id, body),
       onSuccess: done,
     }),
-    reverse: useMutation({
+    reverse: useMutationWithFeedback({
       mutationFn: (reason: string) => api.reversePayment(id, { reason: reason || undefined }),
+      successMessage: 'Payment reversed',
       onSuccess: done,
     }),
   };
@@ -134,7 +143,15 @@ export function useCreditNoteAction(id: string) {
   const qc = useQueryClient();
   const done = () => invalidateAll(qc);
   return {
-    issue: useMutation({ mutationFn: () => api.issueCreditNote(id), onSuccess: done }),
-    cancel: useMutation({ mutationFn: () => api.cancelCreditNote(id), onSuccess: done }),
+    issue: useMutationWithFeedback({
+      mutationFn: () => api.issueCreditNote(id),
+      successMessage: 'Credit note issued',
+      onSuccess: done,
+    }),
+    cancel: useMutationWithFeedback({
+      mutationFn: () => api.cancelCreditNote(id),
+      successMessage: 'Credit note cancelled',
+      onSuccess: done,
+    }),
   };
 }

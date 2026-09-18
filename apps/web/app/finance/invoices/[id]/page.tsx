@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { Card, EmptyState, ErrorNote, Skeleton, PageHeader } from '@/components/admin/ui';
+import { Confirm } from '@/components/ui/kit';
 import { fmtMoney, fmtDate, SupplyStatusBadge } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useInvoice, useInvoiceAction, useRecordPayment } from '@/lib/finance/use-finance';
@@ -23,6 +24,7 @@ export default function InvoiceDetailPage() {
   const [method, setMethod] = useState('BANK_TRANSFER');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
   const [reference, setReference] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   if (q.isLoading) return <Skeleton rows={8} />;
   if (q.error) return <ErrorNote error={q.error} />;
@@ -98,12 +100,10 @@ export default function InvoiceDetailPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => {
-                if (confirm('Cancel this invoice?')) actions.cancel.mutate('CANCELLED');
-              }}
+              onClick={() => setCancelling(true)}
               disabled={actions.cancel.isPending}
             >
-              Cancel
+              {actions.cancel.isPending ? 'Cancelling…' : 'Cancel'}
             </Button>
           )}
           {canPay && (
@@ -115,6 +115,19 @@ export default function InvoiceDetailPage() {
       </PageHeader>
 
       <ErrorNote error={actions.issue.error ?? actions.cancel.error} />
+
+      <Confirm
+        open={cancelling}
+        onClose={() => setCancelling(false)}
+        onConfirm={() => {
+          actions.cancel.mutate('CANCELLED', { onSuccess: () => setCancelling(false) });
+        }}
+        title="Cancel this invoice?"
+        body="The invoice will be marked cancelled and can no longer be paid or edited."
+        confirmLabel="Cancel invoice"
+        danger
+        pending={actions.cancel.isPending}
+      />
 
       {inv.status === 'DRAFT' && perms.includes('finance.invoices.update') && (
         <p className="text-sm text-muted-foreground">

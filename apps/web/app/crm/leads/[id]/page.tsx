@@ -31,7 +31,7 @@ import { ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { fmtDate, fmtMoney, fmtQty, SupplyStatusBadge } from '@/components/supply/ui';
 import { Dialog } from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
-import { LoadingBlock } from '@/components/ui/kit';
+import { Confirm, LoadingBlock } from '@/components/ui/kit';
 
 const NEXT_STATUSES: Record<string, string[]> = {
   NEW: ['ASSIGNED', 'CONTACTED', 'QUALIFIED', 'DISQUALIFIED'],
@@ -183,7 +183,6 @@ function OverviewTab({
   const logCall = useLogCallAttempt(leadId);
   const [callOutcome, setCallOutcome] = useState('connected');
   const [qualifyNote, setQualifyNote] = useState('');
-  const toast = useToast();
   const l = lead.data;
   if (!l) return null;
   const nextStatuses = NEXT_STATUSES[l.status] ?? [];
@@ -310,12 +309,9 @@ function OverviewTab({
               size="sm"
               variant="outline"
               disabled={logCall.isPending}
-              onClick={() => {
-                logCall.mutate({ outcome: callOutcome });
-                toast.success('Call logged');
-              }}
+              onClick={() => logCall.mutate({ outcome: callOutcome })}
             >
-              Log
+              {logCall.isPending ? 'Logging…' : 'Log'}
             </Button>
           </div>
           <ErrorNote error={logCall.error} />
@@ -421,13 +417,15 @@ function FollowupsTab({ leadId }: { leadId: string }) {
           <Button
             size="sm"
             variant="outline"
+            disabled={complete.isPending}
             onClick={() => complete.mutate({ followupId: f.id, body: {} })}
           >
-            Complete
+            {complete.isPending ? 'Completing…' : 'Complete'}
           </Button>
           <Button
             size="sm"
             variant="ghost"
+            disabled={reschedule.isPending}
             onClick={() =>
               reschedule.mutate({
                 followupId: f.id,
@@ -435,7 +433,7 @@ function FollowupsTab({ leadId }: { leadId: string }) {
               })
             }
           >
-            +1 day
+            {reschedule.isPending ? 'Saving…' : '+1 day'}
           </Button>
         </div>
       ) : f.result ? (
@@ -508,6 +506,7 @@ function NotesTab({ leadId }: { leadId: string }) {
   const [body, setBody] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   return (
     <div className="space-y-4">
@@ -527,10 +526,23 @@ function NotesTab({ leadId }: { leadId: string }) {
           className="h-9 flex-1 rounded-md border bg-transparent px-3 text-sm"
         />
         <Button size="sm" type="submit" disabled={create.isPending || !body.trim()}>
-          Add
+          {create.isPending ? 'Adding…' : 'Add'}
         </Button>
       </form>
       <ErrorNote error={create.error} />
+      <Confirm
+        open={deletingId !== null}
+        onClose={() => setDeletingId(null)}
+        onConfirm={() => {
+          if (!deletingId) return;
+          del.mutate(deletingId, { onSuccess: () => setDeletingId(null) });
+        }}
+        title="Delete this note?"
+        body="This note will be permanently removed."
+        confirmLabel="Delete note"
+        danger
+        pending={del.isPending}
+      />
       {notes.isLoading ? (
         <Skeleton rows={3} />
       ) : (notes.data ?? []).length === 0 ? (
@@ -549,12 +561,15 @@ function NotesTab({ leadId }: { leadId: string }) {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() => {
-                        update.mutate({ noteId: n.id, body: { body: editingBody } });
-                        setEditingId(null);
-                      }}
+                      disabled={update.isPending}
+                      onClick={() =>
+                        update.mutate(
+                          { noteId: n.id, body: { body: editingBody } },
+                          { onSuccess: () => setEditingId(null) },
+                        )
+                      }
                     >
-                      Save
+                      {update.isPending ? 'Saving…' : 'Save'}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
                       Cancel
@@ -580,7 +595,7 @@ function NotesTab({ leadId }: { leadId: string }) {
                       <button
                         type="button"
                         className="hover:text-destructive hover:underline"
-                        onClick={() => del.mutate(n.id)}
+                        onClick={() => setDeletingId(n.id)}
                       >
                         Delete
                       </button>

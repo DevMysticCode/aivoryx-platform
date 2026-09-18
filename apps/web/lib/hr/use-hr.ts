@@ -1,7 +1,8 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '@/lib/api/hr';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /** TanStack Query hooks for the HR & Workforce surface (Phase 12, ADR 0041). */
 
@@ -57,17 +58,24 @@ export const useSchedules = () =>
   useQuery({ queryKey: hrKeys.schedules, queryFn: api.listSchedules });
 export const useOrgChart = () => useQuery({ queryKey: hrKeys.orgChart, queryFn: api.orgChart });
 
-function mutation<TArgs, TResult>(fn: (a: TArgs) => Promise<TResult>) {
+function mutation<TArgs, TResult>(
+  fn: (a: TArgs) => Promise<TResult>,
+  successMessage?: string | ((data: TResult, variables: TArgs) => string),
+) {
   return function useHrMutation() {
     const qc = useQueryClient();
-    return useMutation({ mutationFn: fn, onSuccess: () => invalidateAll(qc) });
+    return useMutationWithFeedback({
+      mutationFn: fn,
+      successMessage,
+      onSuccess: () => invalidateAll(qc),
+    });
   };
 }
 
-export const useCreateDepartment = mutation(api.createDepartment);
-export const useCreateDesignation = mutation(api.createDesignation);
-export const useCreateLocation = mutation(api.createLocation);
-export const useCreateSchedule = mutation(api.createSchedule);
+export const useCreateDepartment = mutation(api.createDepartment, 'Department created');
+export const useCreateDesignation = mutation(api.createDesignation, 'Designation created');
+export const useCreateLocation = mutation(api.createLocation, 'Location created');
+export const useCreateSchedule = mutation(api.createSchedule, 'Schedule created');
 
 // ---- employees ------------------------------------------
 export const useEmployees = (filters: Parameters<typeof api.listEmployees>[0]) =>
@@ -101,46 +109,55 @@ export const useBankDetails = (id: string, enabled: boolean) =>
     retry: false,
   });
 
+// No successMessage: the call site (apps/web/app/hr/employees/page.tsx) redirects
+// to the new employee's detail page on success, which already confirms creation.
 export const useCreateEmployee = mutation(api.createEmployee);
 export function useUpdateEmployee(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: Record<string, unknown>) => api.updateEmployee(id, body),
+    successMessage: 'Employee updated',
     onSuccess: () => invalidateAll(qc),
   });
 }
 export function useChangeEmployeeStatus(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: { status: string; reason?: string }) => api.changeEmployeeStatus(id, body),
+    successMessage: (_data, variables) =>
+      `Employee status changed to ${variables.status.replace(/_/g, ' ').toLowerCase()}`,
     onSuccess: () => invalidateAll(qc),
   });
 }
 export function useLinkMembership(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (membershipId: string) => api.linkMembership(id, membershipId),
+    successMessage: 'Employee linked to user account',
     onSuccess: () => invalidateAll(qc),
   });
 }
 export function useUnlinkMembership(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: () => api.unlinkMembership(id),
+    successMessage: 'Employee unlinked from user account',
     onSuccess: () => invalidateAll(qc),
   });
 }
 export function useCreateCompensation(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: Record<string, unknown>) => api.createCompensation(id, body),
+    successMessage: 'Compensation record added',
     onSuccess: () => invalidateAll(qc),
   });
 }
 export function useUpsertBankDetails(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: Record<string, unknown>) => api.upsertBankDetails(id, body),
+    successMessage: 'Bank details saved',
     onSuccess: () => invalidateAll(qc),
   });
 }
@@ -148,13 +165,14 @@ export function useUpsertBankDetails(id: string) {
 // ---- attendance ---------------------------------------
 export const useAttendance = (filters: Parameters<typeof api.listAttendance>[0]) =>
   useQuery({ queryKey: hrKeys.attendance(filters), queryFn: () => api.listAttendance(filters) });
-export const useRecordAttendance = mutation(api.recordAttendance);
-export const useCheckIn = mutation(api.checkIn);
-export const useCheckOut = mutation(api.checkOut);
+export const useRecordAttendance = mutation(api.recordAttendance, 'Attendance recorded');
+export const useCheckIn = mutation(api.checkIn, 'Checked in');
+export const useCheckOut = mutation(api.checkOut, 'Checked out');
 export function useCorrectAttendance(id: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: Record<string, unknown>) => api.correctAttendance(id, body),
+    successMessage: 'Attendance correction applied',
     onSuccess: () => invalidateAll(qc),
   });
 }
@@ -180,22 +198,25 @@ export const useLeaveQueue = () =>
 export const useLeaveCalendar = (filters: { from: string; to: string; departmentId?: string }) =>
   useQuery({ queryKey: hrKeys.leaveCalendar(filters), queryFn: () => api.leaveCalendar(filters) });
 
-export const useCreateLeaveType = mutation(api.createLeaveType);
-export const useCreateLeaveRequest = mutation(api.createLeaveRequest);
-export const useAdjustLeaveBalance = mutation(api.adjustLeaveBalance);
+export const useCreateLeaveType = mutation(api.createLeaveType, 'Leave type created');
+export const useCreateLeaveRequest = mutation(api.createLeaveRequest, 'Leave request submitted');
+export const useAdjustLeaveBalance = mutation(api.adjustLeaveBalance, 'Leave balance adjusted');
 export function useLeaveDecision(id: string) {
   const qc = useQueryClient();
   return {
-    approve: useMutation({
+    approve: useMutationWithFeedback({
       mutationFn: (body: { reason?: string }) => api.approveLeave(id, body),
+      successMessage: 'Leave request approved',
       onSuccess: () => invalidateAll(qc),
     }),
-    reject: useMutation({
+    reject: useMutationWithFeedback({
       mutationFn: (body: { reason?: string }) => api.rejectLeave(id, body),
+      successMessage: 'Leave request rejected',
       onSuccess: () => invalidateAll(qc),
     }),
-    cancel: useMutation({
+    cancel: useMutationWithFeedback({
       mutationFn: () => api.cancelLeave(id),
+      successMessage: 'Leave request cancelled',
       onSuccess: () => invalidateAll(qc),
     }),
   };
@@ -218,25 +239,39 @@ export const useExpenseClaim = (id: string) =>
     enabled: !!id,
   });
 
-export const useCreateExpenseCategory = mutation(api.createExpenseCategory);
-export const useCreateExpenseClaim = mutation(api.createExpenseClaim);
+export const useCreateExpenseCategory = mutation(
+  api.createExpenseCategory,
+  'Expense category created',
+);
+export const useCreateExpenseClaim = mutation(api.createExpenseClaim, 'Expense claim created');
 export function useExpenseActions(id: string) {
   const qc = useQueryClient();
   const ok = () => invalidateAll(qc);
   return {
-    submit: useMutation({ mutationFn: () => api.submitExpenseClaim(id), onSuccess: ok }),
-    approve: useMutation({
+    submit: useMutationWithFeedback({
+      mutationFn: () => api.submitExpenseClaim(id),
+      successMessage: 'Expense claim submitted',
+      onSuccess: ok,
+    }),
+    approve: useMutationWithFeedback({
       mutationFn: (b: { approvedAmount?: string; reason?: string }) =>
         api.approveExpenseClaim(id, b),
+      successMessage: 'Expense claim approved',
       onSuccess: ok,
     }),
-    reject: useMutation({
+    reject: useMutationWithFeedback({
       mutationFn: (b: { reason?: string }) => api.rejectExpenseClaim(id, b),
+      successMessage: 'Expense claim rejected',
       onSuccess: ok,
     }),
-    cancel: useMutation({ mutationFn: () => api.cancelExpenseClaim(id), onSuccess: ok }),
-    reimburse: useMutation({
+    cancel: useMutationWithFeedback({
+      mutationFn: () => api.cancelExpenseClaim(id),
+      successMessage: 'Expense claim cancelled',
+      onSuccess: ok,
+    }),
+    reimburse: useMutationWithFeedback({
       mutationFn: (b: Record<string, unknown>) => api.reimburseExpenseClaim(id, b),
+      successMessage: 'Reimbursement recorded',
       onSuccess: ok,
     }),
   };
@@ -245,10 +280,14 @@ export function useExpenseActions(id: string) {
 // ---- incentives ------------------------------------
 export const useIncentives = (filters: Record<string, string | number | undefined>) =>
   useQuery({ queryKey: hrKeys.incentives(filters), queryFn: () => api.listIncentives(filters) });
-export const useCreateIncentive = mutation(api.createIncentive);
+export const useCreateIncentive = mutation(api.createIncentive, 'Incentive created');
 export function useApproveIncentive() {
   const qc = useQueryClient();
-  return useMutation({ mutationFn: api.approveIncentive, onSuccess: () => invalidateAll(qc) });
+  return useMutationWithFeedback({
+    mutationFn: api.approveIncentive,
+    successMessage: 'Incentive approved',
+    onSuccess: () => invalidateAll(qc),
+  });
 }
 
 // ---- payroll -------------------------------------
@@ -263,15 +302,24 @@ export const usePayrollPeriod = (id: string) =>
     queryFn: () => api.getPayrollPeriod(id),
     enabled: !!id,
   });
-export const useCreatePayrollPeriod = mutation(api.createPayrollPeriod);
+export const useCreatePayrollPeriod = mutation(api.createPayrollPeriod, 'Payroll period created');
 export function usePayrollActions(id: string) {
   const qc = useQueryClient();
   const ok = () => invalidateAll(qc);
   return {
-    process: useMutation({ mutationFn: () => api.processPayrollPeriod(id), onSuccess: ok }),
-    finalize: useMutation({ mutationFn: () => api.finalizePayrollPeriod(id), onSuccess: ok }),
-    recordPayment: useMutation({
+    process: useMutationWithFeedback({
+      mutationFn: () => api.processPayrollPeriod(id),
+      successMessage: 'Payroll period processed',
+      onSuccess: ok,
+    }),
+    finalize: useMutationWithFeedback({
+      mutationFn: () => api.finalizePayrollPeriod(id),
+      successMessage: 'Payroll period finalized',
+      onSuccess: ok,
+    }),
+    recordPayment: useMutationWithFeedback({
       mutationFn: (b: Record<string, unknown>) => api.recordPayrollPayment(id, b),
+      successMessage: 'Payment recorded',
       onSuccess: ok,
     }),
   };
@@ -290,14 +338,19 @@ export const usePerformanceReviews = (filters: Record<string, string | undefined
     queryKey: hrKeys.performanceReviews(filters),
     queryFn: () => api.listPerformanceReviews(filters),
   });
-export const useCreatePerformancePeriod = mutation(api.createPerformancePeriod);
-export const useCreatePerformanceGoal = mutation(api.createPerformanceGoal);
-export const useCreatePerformanceReview = mutation(api.createPerformanceReview);
+export const useCreatePerformancePeriod = mutation(
+  api.createPerformancePeriod,
+  'Performance period created',
+);
+export const useCreatePerformanceGoal = mutation(api.createPerformanceGoal, 'Goal added');
+export const useCreatePerformanceReview = mutation(api.createPerformanceReview, 'Review created');
 export function usePerformancePeriodStatus() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ id, action }: { id: string; action: 'open' | 'close' }) =>
       api.setPerformancePeriodStatus(id, action),
+    successMessage: (_data, variables) =>
+      variables.action === 'open' ? 'Performance period opened' : 'Performance period closed',
     onSuccess: () => invalidateAll(qc),
   });
 }
@@ -305,12 +358,21 @@ export function useReviewActions(id: string) {
   const qc = useQueryClient();
   const ok = () => invalidateAll(qc);
   return {
-    update: useMutation({
+    update: useMutationWithFeedback({
       mutationFn: (b: Record<string, unknown>) => api.updatePerformanceReview(id, b),
+      successMessage: 'Review updated',
       onSuccess: ok,
     }),
-    submit: useMutation({ mutationFn: () => api.submitPerformanceReview(id), onSuccess: ok }),
-    close: useMutation({ mutationFn: () => api.closePerformanceReview(id), onSuccess: ok }),
+    submit: useMutationWithFeedback({
+      mutationFn: () => api.submitPerformanceReview(id),
+      successMessage: 'Review submitted to employee',
+      onSuccess: ok,
+    }),
+    close: useMutationWithFeedback({
+      mutationFn: () => api.closePerformanceReview(id),
+      successMessage: 'Review closed',
+      onSuccess: ok,
+    }),
   };
 }
 

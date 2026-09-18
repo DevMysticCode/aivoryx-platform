@@ -152,7 +152,7 @@ function MasterDataForms() {
             onChange={(e) => setUnit({ ...unit, name: e.target.value })}
           />
           <Button type="submit" disabled={upsertUnit.isPending}>
-            Save
+            {upsertUnit.isPending ? 'Saving…' : 'Save'}
           </Button>
         </form>
         <ErrorNote error={upsertUnit.error} />
@@ -180,7 +180,7 @@ function MasterDataForms() {
             onChange={(e) => setCat({ ...cat, name: e.target.value })}
           />
           <Button type="submit" disabled={upsertCategory.isPending}>
-            Save
+            {upsertCategory.isPending ? 'Saving…' : 'Save'}
           </Button>
         </form>
         <ErrorNote error={upsertCategory.error} />

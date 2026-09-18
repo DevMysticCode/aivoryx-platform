@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { InviteMemberRequest } from '@aivoryx/contracts';
 import * as api from '@/lib/api/admin';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /**
  * TanStack Query hooks for the tenant-admin surface (ADR 0030). Mutations
@@ -35,9 +36,10 @@ export function useRoles() {
 
 export function useUpdateTenant() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (name: string) => api.updateTenant({ name }),
     onSuccess: () => qc.invalidateQueries({ queryKey: adminKeys.tenant }),
+    successMessage: 'Workspace name updated',
   });
 }
 
@@ -58,7 +60,7 @@ export function useInviteMember() {
 
 export function useSetMemberStatus() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({
       membershipId,
       status,
@@ -67,31 +69,36 @@ export function useSetMemberStatus() {
       status: 'active' | 'suspended';
     }) => api.updateMember(membershipId, { status }),
     onSuccess: () => invalidateMembers(qc),
+    successMessage: (_data, variables) =>
+      variables.status === 'active' ? 'Member reactivated' : 'Member suspended',
   });
 }
 
 export function useRemoveMember() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (membershipId: string) => api.removeMember(membershipId),
     onSuccess: () => invalidateMembers(qc),
+    successMessage: 'Member removed',
   });
 }
 
 export function useAssignRole() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ membershipId, roleKey }: { membershipId: string; roleKey: string }) =>
       api.assignRole(membershipId, roleKey),
     onSuccess: () => invalidateMembers(qc),
+    successMessage: 'Role assigned',
   });
 }
 
 export function useRemoveRole() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: ({ membershipId, roleKey }: { membershipId: string; roleKey: string }) =>
       api.removeRole(membershipId, roleKey),
     onSuccess: () => invalidateMembers(qc),
+    successMessage: 'Role removed',
   });
 }

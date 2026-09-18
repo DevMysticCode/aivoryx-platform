@@ -15,6 +15,7 @@ import {
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Skeleton } from '@/components/admin/ui';
 import { fmtDate, fmtQty, SupplyStatusBadge, Table } from '@/components/supply/ui';
+import { Confirm } from '@/components/ui/kit';
 
 export default function DispatchDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,7 @@ export default function DispatchDetailPage() {
 
   const dispatch = useDispatch(id);
   const { cancel, send, deliver } = useDispatchActions(id);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   if (dispatch.isLoading) return <Skeleton rows={8} />;
   if (dispatch.error) return <ErrorNote error={dispatch.error} />;
@@ -57,13 +59,31 @@ export default function DispatchDetailPage() {
             </Button>
           ) : null}
           {d.status === 'DRAFT' && canUpdate ? (
-            <Button variant="outline" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
-              Cancel
+            <Button
+              variant="outline"
+              onClick={() => setConfirmingCancel(true)}
+              disabled={cancel.isPending}
+            >
+              {cancel.isPending ? 'Cancelling…' : 'Cancel'}
             </Button>
           ) : null}
         </div>
       </div>
       <ErrorNote error={send.error || cancel.error} />
+
+      <Confirm
+        open={confirmingCancel}
+        onClose={() => setConfirmingCancel(false)}
+        onConfirm={async () => {
+          await cancel.mutateAsync();
+          setConfirmingCancel(false);
+        }}
+        title="Cancel this dispatch?"
+        body="The dispatch will be cancelled and its allocated stock will no longer be sent."
+        confirmLabel="Cancel dispatch"
+        danger
+        pending={cancel.isPending}
+      />
 
       <Card className="space-y-3">
         <div className="flex flex-wrap gap-x-8 gap-y-1 text-sm text-muted-foreground">
@@ -199,6 +219,7 @@ function Attachments({ dispatchId, canManage }: { dispatchId: string; canManage:
   const upload = useUploadDispatchAttachment(dispatchId);
   const remove = useDeleteDispatchAttachment(dispatchId);
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const view = async (attachmentId: string) => {
     const { objectUrl } = await fetchDispatchAttachmentBlob(dispatchId, attachmentId);
@@ -226,10 +247,11 @@ function Attachments({ dispatchId, canManage }: { dispatchId: string; canManage:
                 {canManage ? (
                   <button
                     type="button"
-                    className="ml-3 text-destructive hover:underline"
-                    onClick={() => remove.mutate(a.id)}
+                    className="ml-3 text-destructive hover:underline disabled:opacity-50"
+                    disabled={remove.isPending && deletingId === a.id}
+                    onClick={() => setDeletingId(a.id)}
                   >
-                    Delete
+                    {remove.isPending && deletingId === a.id ? 'Deleting…' : 'Delete'}
                   </button>
                 ) : null}
               </span>
@@ -262,6 +284,21 @@ function Attachments({ dispatchId, canManage }: { dispatchId: string; canManage:
         </label>
       ) : null}
       <ErrorNote error={upload.error || remove.error} />
+
+      <Confirm
+        open={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={async () => {
+          if (!deletingId) return;
+          await remove.mutateAsync(deletingId);
+          setDeletingId(null);
+        }}
+        title="Delete this attachment?"
+        body="The file will be permanently removed from this dispatch."
+        confirmLabel="Delete"
+        danger
+        pending={remove.isPending}
+      />
     </Card>
   );
 }

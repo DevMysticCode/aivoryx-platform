@@ -17,6 +17,7 @@ import {
 } from '@/lib/supply/use-supply';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Skeleton } from '@/components/admin/ui';
+import { Confirm } from '@/components/ui/kit';
 import { ProjectFinanceCard } from '@/components/finance/summary-card';
 import { fmtQty, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
 import type { ProjectMaterial } from '@aivoryx/contracts';
@@ -155,6 +156,7 @@ function MaterialsCard({
   const [productId, setProductId] = useState('');
   const [requiredQty, setRequiredQty] = useState('');
   const [allocRow, setAllocRow] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const terminal = projectStatus === 'COMPLETED' || projectStatus === 'CANCELLED';
 
@@ -203,10 +205,11 @@ function MaterialsCard({
                   {canUpdate && Number(m.allocatedQty) === 0 && Number(m.dispatchedQty) === 0 ? (
                     <button
                       type="button"
-                      className="ml-3 text-xs text-destructive hover:underline"
-                      onClick={() => removeMaterial.mutate(m.id)}
+                      className="ml-3 text-xs text-destructive hover:underline disabled:opacity-50"
+                      disabled={removeMaterial.isPending && removingId === m.id}
+                      onClick={() => setRemovingId(m.id)}
                     >
-                      Remove
+                      {removeMaterial.isPending && removingId === m.id ? 'Removing…' : 'Remove'}
                     </button>
                   ) : null}
                 </td>
@@ -229,6 +232,21 @@ function MaterialsCard({
         <EmptyState>No materials added yet.</EmptyState>
       )}
       <ErrorNote error={removeMaterial.error} />
+
+      <Confirm
+        open={!!removingId}
+        onClose={() => setRemovingId(null)}
+        onConfirm={async () => {
+          if (!removingId) return;
+          await removeMaterial.mutateAsync(removingId);
+          setRemovingId(null);
+        }}
+        title="Remove this material requirement?"
+        body="It will be removed from the project. This can be re-added later, but any progress tracked against it is lost."
+        confirmLabel="Remove"
+        danger
+        pending={removeMaterial.isPending}
+      />
 
       {canUpdate && !terminal ? (
         <form
@@ -325,7 +343,7 @@ function AllocateRow({
           onClick={() => run('allocate')}
           disabled={!warehouseId || !quantity || allocate.isPending}
         >
-          Allocate
+          {allocate.isPending ? 'Allocating…' : 'Allocate'}
         </Button>
         <Button
           type="button"
@@ -333,7 +351,7 @@ function AllocateRow({
           onClick={() => run('release')}
           disabled={!warehouseId || !quantity || release.isPending}
         >
-          Release
+          {release.isPending ? 'Releasing…' : 'Release'}
         </Button>
       </div>
       <ErrorNote error={allocate.error || release.error} />

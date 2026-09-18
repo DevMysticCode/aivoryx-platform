@@ -98,7 +98,7 @@ export function NotificationBell() {
               className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-40"
             >
               <CheckCheck className="size-3.5" aria-hidden />
-              Mark all read
+              {markAll.isPending ? 'Marking…' : 'Mark all read'}
             </button>
           </div>
 

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateSourceRequest } from '@aivoryx/contracts';
 import * as api from '@/lib/api/integrations';
+import { useMutationWithFeedback } from '@/lib/api/use-mutation-with-feedback';
 
 /** TanStack Query hooks for the Pabbly connector admin surface (ADR 0032). */
 
@@ -50,24 +51,27 @@ export function useRotateSourceSecret() {
 
 export function useRevokeSource() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (sourceId: string) => api.revokeSource(sourceId),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.sources }),
+    successMessage: 'Integration source revoked',
   });
 }
 
 export function useReactivateSource() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (sourceId: string) => api.reactivateSource(sourceId),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.sources }),
+    successMessage: 'Integration source reactivated',
   });
 }
 
 export function useReplayInboundEvent() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (id: string) => api.replayInboundEvent(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.events }),
+    successMessage: 'Event replay queued',
   });
 }

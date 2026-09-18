@@ -61,7 +61,11 @@ export default function PayrollPeriodPage({ params }: { params: Promise<{ id: st
                   disabled={actions.process.isPending}
                   onClick={() => actions.process.mutate()}
                 >
-                  {p.status === 'DRAFT' ? 'Process' : 'Re-process'}
+                  {actions.process.isPending
+                    ? 'Processing…'
+                    : p.status === 'DRAFT'
+                      ? 'Process'
+                      : 'Re-process'}
                 </Button>
               )}
               {canFinalize && p.status === 'PROCESSING' && (
@@ -70,7 +74,7 @@ export default function PayrollPeriodPage({ params }: { params: Promise<{ id: st
                   disabled={actions.finalize.isPending}
                   onClick={() => actions.finalize.mutate()}
                 >
-                  Finalize (freeze)
+                  {actions.finalize.isPending ? 'Finalizing…' : 'Finalize (freeze)'}
                 </Button>
               )}
               {['FINALIZED', 'PAYMENT_PROCESSING', 'PARTIALLY_PAID', 'PAID'].includes(p.status) && (
@@ -79,9 +83,7 @@ export default function PayrollPeriodPage({ params }: { params: Promise<{ id: st
                   changes do not alter them.
                 </p>
               )}
-              {(actions.process.error || actions.finalize.error) && (
-                <ErrorNote error={actions.process.error || actions.finalize.error} />
-              )}
+              <ErrorNote error={actions.process.error || actions.finalize.error} />
             </Card>
           </div>
 
@@ -256,15 +258,13 @@ function EntryRow({
                     )
                   }
                 >
-                  Record payment
+                  {actions.recordPayment.isPending ? 'Recording…' : 'Record payment'}
                 </Button>
               </div>
             </div>
-            {actions.recordPayment.error && (
-              <div className="mt-2">
-                <ErrorNote error={actions.recordPayment.error} />
-              </div>
-            )}
+            <div className="mt-2">
+              <ErrorNote error={actions.recordPayment.error} />
+            </div>
           </td>
         </tr>
       )}

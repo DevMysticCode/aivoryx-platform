@@ -171,7 +171,7 @@ function Employment({ id, canManage }: { id: string; canManage: boolean }) {
                 disabled={!status || change.isPending}
                 onClick={() => change.mutate({ status, reason: reason || undefined })}
               >
-                Apply
+                {change.isPending ? 'Applying…' : 'Apply'}
               </Button>
             </div>
           </div>
@@ -180,7 +180,7 @@ function Employment({ id, canManage }: { id: string; canManage: boolean }) {
             You do not have permission to change status.
           </p>
         )}
-        {change.error && <ErrorNote error={change.error} />}
+        <ErrorNote error={change.error} />
       </Card>
       <ActivityTab id={id} />
     </div>
@@ -391,14 +391,12 @@ function CompensationTab({ id, canManage }: { id: string; canManage: boolean }) 
               disabled={!form.effectiveDate || !form.baseSalary || create.isPending}
               onClick={() => create.mutate({ ...form }, { onSuccess: () => setShow(false) })}
             >
-              Save
+              {create.isPending ? 'Saving…' : 'Save'}
             </Button>
           </div>
-          {create.error && (
-            <div className="sm:col-span-2 lg:col-span-4">
-              <ErrorNote error={create.error} />
-            </div>
-          )}
+          <div className="sm:col-span-2 lg:col-span-4">
+            <ErrorNote error={create.error} />
+          </div>
         </Card>
       )}
       {history.isLoading && <Skeleton rows={3} />}
@@ -525,14 +523,12 @@ function BankTab({ id, canManage }: { id: string; canManage: boolean }) {
                   disabled={!form.accountHolderName || !form.accountNumber || upsert.isPending}
                   onClick={() => upsert.mutate({ ...form }, { onSuccess: () => setShow(false) })}
                 >
-                  Save
+                  {upsert.isPending ? 'Saving…' : 'Save'}
                 </Button>
               </div>
-              {upsert.error && (
-                <div className="sm:col-span-2">
-                  <ErrorNote error={upsert.error} />
-                </div>
-              )}
+              <div className="sm:col-span-2">
+                <ErrorNote error={upsert.error} />
+              </div>
             </Card>
           )}
         </>

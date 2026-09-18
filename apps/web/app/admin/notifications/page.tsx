@@ -48,7 +48,7 @@ export default function NotificationRulesPage() {
 
       {rules.isLoading && <Skeleton rows={6} />}
       {rules.error && <ErrorNote error={rules.error} />}
-      {update.error && <ErrorNote error={update.error} />}
+      <ErrorNote error={update.error} />
 
       <div className="space-y-3">
         {(rules.data ?? []).map((rule) => (
