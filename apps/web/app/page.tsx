@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
   if (me.data && !me.data.active) {
     return (
-      <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+      <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
         <p className="font-medium">No active workspace</p>
         <p className="mt-1 text-muted-foreground">
           Your account is signed in but has no usable workspace membership. Ask an administrator to

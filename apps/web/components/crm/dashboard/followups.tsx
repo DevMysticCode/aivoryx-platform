@@ -48,7 +48,7 @@ export function FollowupActionCenter({
                   (g.tone === 'danger'
                     ? 'text-destructive'
                     : g.tone === 'warn'
-                      ? 'text-amber-600 dark:text-amber-400'
+                      ? 'text-warning'
                       : 'text-muted-foreground')
                 }
               >

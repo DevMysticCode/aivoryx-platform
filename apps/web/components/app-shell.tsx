@@ -61,7 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <BrandProvider />
 
       {/* mobile top bar */}
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b bg-background/95 px-4 py-2.5 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b bg-card/95 px-4 py-2.5 backdrop-blur md:hidden">
         <Brand platformRoute={platformRoute} />
         <div className="flex items-center gap-1">
           <button
@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* desktop top bar */}
-        <div className="sticky top-0 z-20 hidden items-center justify-between border-b bg-background/95 px-4 py-2 backdrop-blur md:flex md:px-6">
+        <div className="sticky top-0 z-20 hidden items-center justify-between border-b bg-card/95 px-4 py-2 backdrop-blur md:flex md:px-6">
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
@@ -159,7 +159,7 @@ function DesktopSidebar({ platformRoute, pathname }: { platformRoute: boolean; p
         ))}
       </nav>
       {platformMode ? (
-        <div className="border-t px-4 py-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="border-t px-4 py-3 text-[11px] font-medium uppercase tracking-wide text-brand">
           Platform administration
         </div>
       ) : null}
@@ -263,7 +263,7 @@ function MobileBottomNav({
     : (MOBILE_PRIMARY_KEYS.map((k) => flat.find((e) => e.key === k)).filter(Boolean) as NavEntry[]);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t bg-background/95 backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t bg-card/95 backdrop-blur md:hidden">
       {primary.map((entry) => {
         const active = isActive(pathname, entry.href);
         const Icon = entry.icon;
@@ -344,7 +344,10 @@ function Brand({ platformRoute }: { platformRoute?: boolean }) {
         <span
           className={cn(
             'grid size-7 shrink-0 place-items-center rounded-md text-sm font-bold',
-            platformMode ? 'bg-foreground text-background' : 'bg-primary text-primary-foreground',
+            // Platform-admin mode keeps a fixed Aivoryx navy mark regardless of
+            // tenant branding — a deliberate visual cue that this is platform
+            // identity, not a (possibly tenant-recoloured) workspace context.
+            platformMode ? 'bg-brand text-brand-foreground' : 'bg-primary text-primary-foreground',
           )}
           aria-hidden
         >

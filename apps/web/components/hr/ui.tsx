@@ -5,22 +5,24 @@ import { cn } from '@aivoryx/ui';
 
 /** Presentational helpers shared across the Phase 12 HR surface (ADR 0041). */
 
+export { TabBar } from '@/components/ui/tab-bar';
+
 const HR_STATUS_STYLES: Record<string, string> = {
-  active: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  approved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  paid: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  reimbursed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  finalized: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  present: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  submitted: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  pending: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  processing: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  payment_processing: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  partially_paid: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  active: 'bg-success/10 text-success',
+  approved: 'bg-success/10 text-success',
+  paid: 'bg-success/10 text-success',
+  reimbursed: 'bg-success/10 text-success',
+  finalized: 'bg-info/10 text-info',
+  present: 'bg-success/10 text-success',
+  submitted: 'bg-warning/10 text-warning',
+  pending: 'bg-warning/10 text-warning',
+  processing: 'bg-warning/10 text-warning',
+  payment_processing: 'bg-warning/10 text-warning',
+  partially_paid: 'bg-warning/10 text-warning',
   draft: 'bg-secondary text-secondary-foreground',
   on_leave: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  late: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  half_day: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  late: 'bg-warning/10 text-warning',
+  half_day: 'bg-warning/10 text-warning',
   rejected: 'bg-destructive/10 text-destructive',
   reimbursement_failed: 'bg-destructive/10 text-destructive',
   failed: 'bg-destructive/10 text-destructive',
@@ -114,9 +116,9 @@ export function StatCard({
       <div
         className={cn(
           'mt-1 text-2xl font-semibold tabular-nums',
-          tone === 'pos' && 'text-emerald-600 dark:text-emerald-400',
+          tone === 'pos' && 'text-success',
           tone === 'neg' && 'text-destructive',
-          tone === 'warn' && 'text-amber-600 dark:text-amber-400',
+          tone === 'warn' && 'text-warning',
         )}
       >
         {value}
@@ -128,37 +130,6 @@ export function StatCard({
     <a href={href} className="block transition-opacity hover:opacity-80">
       {body}
     </a>
-  );
-}
-
-export function TabBar<T extends string>({
-  tabs,
-  active,
-  onChange,
-}: {
-  tabs: { key: T; label: string }[];
-  active: T;
-  onChange: (k: T) => void;
-}) {
-  return (
-    <nav className="flex flex-wrap gap-1 border-b pb-2">
-      {tabs.map((t) => (
-        <button
-          key={t.key}
-          type="button"
-          onClick={() => onChange(t.key)}
-          aria-current={active === t.key ? 'page' : undefined}
-          className={cn(
-            'rounded-md px-3 py-1.5 text-sm transition-colors',
-            active === t.key
-              ? 'bg-secondary font-medium text-foreground'
-              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-          )}
-        >
-          {t.label}
-        </button>
-      ))}
-    </nav>
   );
 }
 

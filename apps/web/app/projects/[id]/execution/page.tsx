@@ -17,6 +17,7 @@ import {
 } from '@/lib/execution/use-execution';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Field, Skeleton } from '@/components/admin/ui';
+import { TabBar } from '@/components/ui/tab-bar';
 import { Confirm } from '@/components/ui/kit';
 import { fmtDate, ProgressBar, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
 
@@ -74,23 +75,7 @@ export default function ProjectExecutionPage() {
       <Header v={v} />
       <ProgressStrip v={v} />
 
-      <nav className="flex flex-wrap gap-1 border-b pb-2 text-sm">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={
-              'rounded-md px-3 py-1.5 transition-colors ' +
-              (tab === t
-                ? 'bg-secondary font-medium text-foreground'
-                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground')
-            }
-          >
-            {t}
-          </button>
-        ))}
-      </nav>
+      <TabBar tabs={TABS.map((t) => ({ key: t, label: t }))} active={tab} onChange={setTab} />
 
       {tab === 'Overview' && <OverviewTab v={v} can={can} actions={actions} />}
       {tab === 'Materials' && <MaterialsTab v={v} projectId={id} can={can} actions={actions} />}

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
 import {
@@ -13,10 +12,10 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react';
-import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
 import { Skeleton } from '@/components/admin/ui';
+import { ModuleTabs } from '@/components/ui/module-tabs';
 
 const NAV = [
   { href: '/admin', label: 'Overview', icon: ShieldCheck },
@@ -58,35 +57,21 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   const active = me.data?.active;
+  const items = NAV.map(({ href, label, icon }) => ({
+    href,
+    label,
+    icon,
+    current: pathname === href,
+  }));
 
   return (
     <div className="space-y-6">
-      <nav className="flex flex-wrap gap-1 border-b pb-2">
-        {NAV.map(({ href, label, icon: Icon }) => {
-          const current = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={current ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
-                current
-                  ? 'bg-secondary font-medium text-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-              )}
-            >
-              <Icon className="size-4" aria-hidden />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
+      <ModuleTabs items={items} />
 
       {active ? (
         children
       ) : (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+        <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
           <p className="font-medium">No active workspace selected.</p>
           <p className="mt-1 text-muted-foreground">
             Your account is signed in but has no usable workspace membership. Ask an administrator

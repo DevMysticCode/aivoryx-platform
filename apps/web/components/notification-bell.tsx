@@ -13,10 +13,10 @@ import {
 } from '@/lib/notifications/use-notifications';
 
 const TYPE_DOT: Record<string, string> = {
-  info: 'bg-sky-500',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  action_required: 'bg-rose-500',
+  info: 'bg-info',
+  success: 'bg-success',
+  warning: 'bg-warning',
+  action_required: 'bg-destructive',
 };
 
 function timeAgo(iso: string): string {
@@ -88,7 +88,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border bg-background shadow-lg sm:w-96">
+        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg border bg-card shadow-lg sm:w-96">
           <div className="flex items-center justify-between border-b px-3 py-2">
             <span className="text-sm font-semibold">Notifications</span>
             <button

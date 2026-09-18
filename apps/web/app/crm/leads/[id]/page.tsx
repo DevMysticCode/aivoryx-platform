@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, CalendarClock, Mail, MapPin, Pencil, Phone, UserRound } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
-import { Button } from '@aivoryx/ui';
+import { Button, buttonVariants } from '@aivoryx/ui';
 import { useMembers } from '@/lib/admin/use-admin';
 import { useVisits } from '@/lib/field/use-field';
 import {
@@ -74,7 +74,7 @@ export default function LeadDetailPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-lg font-semibold tracking-tight">{l.name ?? 'Unnamed lead'}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{l.name ?? 'Unnamed lead'}</h1>
               <StatusBadge status={l.status} />
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -106,25 +106,17 @@ export default function LeadDetailPage() {
             {l.phone ? (
               <a
                 href={`tel:${l.phone}`}
-                className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
+                className={buttonVariants({ variant: 'outline', size: 'sm' })}
               >
                 <Phone className="size-4" aria-hidden /> Call
               </a>
             ) : null}
-            <button
-              type="button"
-              onClick={() => setFollowupOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
-            >
+            <Button variant="outline" size="sm" onClick={() => setFollowupOpen(true)}>
               <CalendarClock className="size-4" aria-hidden /> Follow-up
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
-            >
+            </Button>
+            <Button size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="size-4" aria-hidden /> Edit
-            </button>
+            </Button>
           </div>
         </div>
       </div>

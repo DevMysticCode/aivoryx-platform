@@ -75,7 +75,7 @@ export default function FieldLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <header className="sticky top-0 z-10 flex items-center gap-2 border-b bg-background/95 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center gap-2 border-b bg-card/95 px-4 py-3 backdrop-blur">
         <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground">
           <span className="text-sm font-bold">A</span>
         </span>

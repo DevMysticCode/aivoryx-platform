@@ -1,6 +1,7 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/api/error-message';
 
 /**
  * Small presentational primitives for the admin surface, built only from
@@ -31,7 +32,7 @@ export function PageHeader({
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('rounded-lg border p-4', className)}>{children}</div>;
+  return <div className={cn('rounded-lg border bg-card p-4', className)}>{children}</div>;
 }
 
 export const Field = forwardRef<
@@ -58,19 +59,19 @@ export const Field = forwardRef<
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-primary/10 text-primary',
-  invited: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  invited: 'bg-warning/10 text-warning',
   suspended: 'bg-destructive/10 text-destructive',
   // CRM lead lifecycle (ADR 0031)
   new: 'bg-secondary text-secondary-foreground',
-  assigned: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  contacted: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  assigned: 'bg-warning/10 text-warning',
+  contacted: 'bg-info/10 text-info',
   qualified: 'bg-primary/10 text-primary',
   disqualified: 'bg-destructive/10 text-destructive',
-  converted: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  converted: 'bg-success/10 text-success',
   // visit lifecycle (ADR 0033)
   scheduled: 'bg-secondary text-secondary-foreground',
-  in_progress: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  in_progress: 'bg-info/10 text-info',
+  completed: 'bg-success/10 text-success',
   cancelled: 'bg-destructive/10 text-destructive',
   // tenant lifecycle (Phase 14 §14) — using the new semantic warning/success
   // tokens (packages/ui styles.css) rather than another ad hoc amber literal;
@@ -106,9 +107,8 @@ export function RoleChip({ children }: { children: ReactNode }) {
 /** Actionable error box — states the failure, the reference id, and (where known) the fix. */
 export function ErrorNote({ error }: { error: unknown }) {
   if (!error) return null;
-  const isApi = error instanceof ApiError;
-  const message = error instanceof Error ? error.message : 'Something went wrong.';
-  const correlationId = isApi ? error.correlationId : undefined;
+  const message = getErrorMessage(error);
+  const correlationId = error instanceof ApiError ? error.correlationId : undefined;
   return (
     <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
       <p className="font-medium text-destructive">{message}</p>
@@ -119,19 +119,35 @@ export function ErrorNote({ error }: { error: unknown }) {
   );
 }
 
-export function EmptyState({ children }: { children: ReactNode }) {
+export function EmptyState({
+  children,
+  icon: Icon,
+  action,
+}: {
+  children: ReactNode;
+  /** Optional — most empty states don't need one; reach for it only when a
+   *  glance-able icon genuinely helps (e.g. "no results" vs. "nothing here yet"). */
+  icon?: (props: { className?: string }) => ReactNode;
+  /** Optional call-to-action rendered below the message (e.g. a "Create…" button). */
+  action?: ReactNode;
+}) {
   return (
-    <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-      {children}
+    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+      {Icon ? <Icon className="size-8 text-muted-foreground/60" /> : null}
+      <div>{children}</div>
+      {action}
     </div>
   );
 }
 
 export function Skeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div className="space-y-2" aria-hidden>
+    <div className="space-y-2" aria-busy="true" aria-live="polite">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-10 animate-pulse rounded-md bg-secondary/50" />
+        <div
+          key={i}
+          className="h-10 animate-pulse rounded-md bg-secondary motion-reduce:animate-none"
+        />
       ))}
     </div>
   );

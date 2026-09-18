@@ -1,8 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { cn } from '@aivoryx/ui';
+import { Button, cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/api/error-message';
 import { Dialog } from './overlays';
 
 /** A compact KPI tile (§5 StatCard). Numeric-forward, low chrome. */
@@ -18,7 +19,7 @@ export function StatCard({
   icon?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-background p-4">
+    <div className="rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
         {icon ? <span className="text-muted-foreground">{icon}</span> : null}
@@ -46,9 +47,7 @@ export function ErrorBlock({
     ? 'Your company does not currently have access to this area.'
     : isForbidden
       ? "You don't have permission to view this."
-      : error instanceof Error
-        ? error.message
-        : 'Please try again in a moment.';
+      : getErrorMessage(error);
   const ref = error instanceof ApiError ? error.correlationId : undefined;
   return (
     <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-sm">
@@ -56,13 +55,9 @@ export function ErrorBlock({
       <p className="mt-1 text-muted-foreground">{message}</p>
       {ref ? <p className="mt-1 font-mono text-xs text-muted-foreground">Ref: {ref}</p> : null}
       {onRetry && !isEntitlement && !isForbidden ? (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-3 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
-        >
+        <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
           Try again
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -74,7 +69,10 @@ export function LoadingBlock({ lines = 5 }: { lines?: number }) {
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
-          className={cn('h-10 animate-pulse rounded-md bg-muted', i === 0 && 'h-8 w-1/3')}
+          className={cn(
+            'h-10 animate-pulse rounded-md bg-secondary motion-reduce:animate-none',
+            i === 0 && 'h-8 w-1/3',
+          )}
         />
       ))}
     </div>
@@ -109,24 +107,19 @@ export function Confirm({
       size="sm"
       footer={
         <>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant={danger ? 'destructive' : 'primary'}
+            size="sm"
             onClick={onConfirm}
-            disabled={pending}
-            className={cn(
-              'rounded-md px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50',
-              danger ? 'bg-destructive' : 'bg-primary',
-            )}
+            isLoading={pending}
+            loadingText="Working…"
           >
-            {pending ? 'Working…' : confirmLabel}
-          </button>
+            {confirmLabel}
+          </Button>
         </>
       }
     >

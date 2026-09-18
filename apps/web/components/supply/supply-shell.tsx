@@ -48,7 +48,7 @@ export function SupplyShell({ tabs, children }: { tabs: SupplyTab[]; children: R
   const active = me.data?.active;
   if (!active) {
     return (
-      <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+      <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
         <p className="font-medium">No active workspace selected.</p>
         <p className="mt-1 text-muted-foreground">Sign in to a workspace to continue.</p>
       </div>

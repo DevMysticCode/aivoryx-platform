@@ -90,7 +90,7 @@ export default function CompanySettingsPage() {
 
   if (!canRead) {
     return (
-      <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+      <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
         <p className="font-medium">You don’t have access to company settings.</p>
         <p className="mt-1 text-muted-foreground">
           Ask a workspace administrator for the “View company profile” permission.

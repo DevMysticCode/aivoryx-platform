@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import { ErrorNote, Field, PageHeader, Skeleton } from '@/components/admin/ui';
 import { Pager, Select, Table } from '@/components/supply/ui';
+import { Sheet } from '@/components/ui/overlays';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useAuditLog, useAuditEntry } from '@/lib/audit/use-audit';
 import type { AuditFilters } from '@/lib/api/audit';
@@ -99,7 +99,7 @@ export default function AuditLogPage() {
 
   if (!canRead) {
     return (
-      <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+      <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
         <p className="font-medium">You don’t have access to the audit log.</p>
         <p className="mt-1 text-muted-foreground">
           Ask a workspace administrator for the “View the workspace audit log” permission.
@@ -243,26 +243,13 @@ export default function AuditLogPage() {
       )}
 
       {selected && (
-        <div
-          className="fixed inset-0 z-40 flex justify-end bg-black/20"
-          onClick={() => setSelected(null)}
+        <Sheet
+          open={selected !== null}
+          onClose={() => setSelected(null)}
+          title="Audit entry"
+          size="md"
         >
-          <aside
-            className="h-full w-full max-w-md overflow-y-auto border-l bg-background p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between">
-              <h2 className="text-base font-semibold">Audit entry</h2>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="rounded-md p-1 text-muted-foreground hover:bg-accent"
-                aria-label="Close"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
+          <div className="p-3">
             {detail.isLoading && <Skeleton rows={6} />}
             {detail.error && <ErrorNote error={detail.error} />}
 
@@ -351,8 +338,8 @@ export default function AuditLogPage() {
                 )}
               </dl>
             )}
-          </aside>
-        </div>
+          </div>
+        </Sheet>
       )}
     </div>
   );

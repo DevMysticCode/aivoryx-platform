@@ -93,7 +93,7 @@ export function Dialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         className={cn(
-          'w-full rounded-xl border bg-background shadow-xl',
+          'w-full rounded-xl border bg-card shadow-xl',
           size === 'sm' && 'max-w-sm',
           size === 'md' && 'max-w-lg',
           size === 'lg' && 'max-w-2xl',
@@ -126,10 +126,14 @@ export interface SheetProps {
   title: string;
   children: ReactNode;
   side?: 'left' | 'right';
+  /** `sm` (default) fits nav/filter lists; `md` suits denser content (a
+   *  record's full detail, a form) without growing every other Sheet. */
+  size?: 'sm' | 'md';
 }
 
-/** A slide-over panel — used for the mobile "More" navigation and filters. */
-export function Sheet({ open, onClose, title, children, side = 'right' }: SheetProps) {
+/** A slide-over panel — used for the mobile "More" navigation, filters, and
+ *  record-detail panels (e.g. the audit log). */
+export function Sheet({ open, onClose, title, children, side = 'right', size = 'sm' }: SheetProps) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
   useDismiss(open, onClose);
@@ -148,7 +152,8 @@ export function Sheet({ open, onClose, title, children, side = 'right' }: SheetP
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          'absolute inset-y-0 flex w-[min(20rem,85vw)] flex-col border bg-background shadow-xl',
+          'absolute inset-y-0 flex flex-col border bg-card shadow-xl',
+          size === 'sm' ? 'w-[min(20rem,85vw)]' : 'w-[min(28rem,90vw)]',
           side === 'right' ? 'right-0' : 'left-0',
         )}
       >
@@ -206,7 +211,7 @@ export function Menu({ trigger, children, align = 'end', open, onOpenChange }: M
         <div
           role="menu"
           className={cn(
-            'absolute z-40 mt-2 min-w-56 rounded-lg border bg-background p-1 shadow-lg',
+            'absolute z-40 mt-2 min-w-56 rounded-lg border bg-card p-1 shadow-lg',
             align === 'end' ? 'right-0' : 'left-0',
           )}
         >

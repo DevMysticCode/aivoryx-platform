@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
+import { ScrollFadeRow } from './scroll-fade-row';
 
 export interface ModuleTabItem {
   href: string;
@@ -22,38 +22,9 @@ export interface ModuleTabItem {
  * the browser's native anchor tab order plus a visible focus ring.
  */
 export function ModuleTabs({ items }: { items: ModuleTabItem[] }) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-
-    const update = () => {
-      setCanScrollLeft(el.scrollLeft > 4);
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-    };
-    update();
-
-    el.addEventListener('scroll', update, { passive: true });
-    // ResizeObserver is a progressive enhancement (keeps the edge fades in
-    // sync with layout changes) — its absence (older browsers, jsdom in
-    // tests) shouldn't break the tabs themselves, just the fade hint.
-    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : undefined;
-    observer?.observe(el);
-    return () => {
-      el.removeEventListener('scroll', update);
-      observer?.disconnect();
-    };
-  }, [items.length]);
-
   return (
-    <div className="relative border-b">
-      <div
-        ref={scrollerRef}
-        className="flex snap-x gap-1 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
+    <nav className="border-b">
+      <ScrollFadeRow className="pb-2">
         {items.map(({ href, label, icon: Icon, current }) => (
           <Link
             key={href}
@@ -71,19 +42,7 @@ export function ModuleTabs({ items }: { items: ModuleTabItem[] }) {
             {label}
           </Link>
         ))}
-      </div>
-      {canScrollLeft ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-background to-transparent"
-        />
-      ) : null}
-      {canScrollRight ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-background to-transparent"
-        />
-      ) : null}
-    </div>
+      </ScrollFadeRow>
+    </nav>
   );
 }
