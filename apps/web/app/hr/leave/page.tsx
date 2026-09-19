@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, ErrorNote, Skeleton, Card, EmptyState } from '@/components/admin/ui';
 import { Table, Select } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import type { HrLeaveRequest } from '@aivoryx/contracts';
@@ -149,9 +149,7 @@ function ApprovalQueue() {
     <div className="space-y-3">
       {q.isLoading && <Skeleton rows={3} />}
       {q.error && <ErrorNote error={q.error} />}
-      {q.data && q.data.length === 0 && (
-        <p className="text-sm text-muted-foreground">Nothing awaiting your decision.</p>
-      )}
+      {q.data && q.data.length === 0 && <EmptyState>Nothing awaiting your decision.</EmptyState>}
       {q.data?.map((r) => <DecisionCard key={r.id} r={r} />)}
     </div>
   );
@@ -226,6 +224,7 @@ function RequestTable({
   withEmployee?: boolean;
   showCancel?: boolean;
 }) {
+  if (rows.length === 0) return <EmptyState>No requests.</EmptyState>;
   return (
     <Table
       head={
@@ -244,13 +243,6 @@ function RequestTable({
       {rows.map((r) => (
         <RequestRow key={r.id} r={r} withEmployee={withEmployee} showCancel={showCancel} />
       ))}
-      {rows.length === 0 && (
-        <tr>
-          <td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">
-            No requests.
-          </td>
-        </tr>
-      )}
     </Table>
   );
 }
@@ -336,7 +328,8 @@ function LeaveCalendar() {
       </Card>
       {q.isLoading && <Skeleton rows={3} />}
       {q.error && <ErrorNote error={q.error} />}
-      {q.data && (
+      {q.data && q.data.length === 0 && <EmptyState>No leave in this window.</EmptyState>}
+      {q.data && q.data.length > 0 && (
         <Table
           head={
             <tr>
@@ -363,13 +356,6 @@ function LeaveCalendar() {
               </td>
             </tr>
           ))}
-          {q.data.length === 0 && (
-            <tr>
-              <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
-                No leave in this window.
-              </td>
-            </tr>
-          )}
         </Table>
       )}
     </div>

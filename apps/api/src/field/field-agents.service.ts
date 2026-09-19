@@ -17,6 +17,8 @@ export interface FieldAgentView {
   userEmail: string;
   status: 'active' | 'inactive';
   createdAt: string;
+  /** Filled in by the controller from HR's workforce directory when permitted. */
+  employee: { id: string; displayName: string; employeeNumber: string; status: string } | null;
 }
 
 /**
@@ -43,7 +45,7 @@ export class FieldAgentsService {
         .innerJoin(userTenantMemberships, eq(userTenantMemberships.id, fieldAgents.membershipId))
         .innerJoin(users, eq(users.id, userTenantMemberships.userId))
         .where(eq(fieldAgents.tenantId, scope.tenantId));
-      return rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
+      return rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString(), employee: null }));
     });
   }
 
@@ -73,6 +75,7 @@ export class FieldAgentsService {
         userEmail: member.userEmail,
         status: 'active',
         createdAt: row!.createdAt.toISOString(),
+        employee: null,
       };
     });
   }
@@ -96,6 +99,7 @@ export class FieldAgentsService {
         userEmail: member.userEmail,
         status: 'inactive',
         createdAt: row.createdAt.toISOString(),
+        employee: null,
       };
     });
   }

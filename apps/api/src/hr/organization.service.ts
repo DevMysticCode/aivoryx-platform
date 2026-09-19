@@ -11,6 +11,7 @@ import type {
   OrgChartDto,
   OrgUnitDto,
   UpdateOrgUnitDto,
+  UpdateWorkScheduleDto,
   WorkLocationDto,
   WorkScheduleDto,
 } from './hr.dto.js';
@@ -52,7 +53,14 @@ export class OrganizationService {
   }
 
   updateDepartment(scope: HrScope, id: string, body: UpdateOrgUnitDto): Promise<OrgUnitDto> {
-    return this.updateUnit(scope, departments, id, body);
+    return this.updateUnit(
+      scope,
+      departments,
+      id,
+      body,
+      'hr.organization.department_updated',
+      'department',
+    );
   }
 
   // ---- designations -----------------------------------------
@@ -80,7 +88,14 @@ export class OrganizationService {
   }
 
   updateDesignation(scope: HrScope, id: string, body: UpdateOrgUnitDto): Promise<OrgUnitDto> {
-    return this.updateUnit(scope, designations, id, body);
+    return this.updateUnit(
+      scope,
+      designations,
+      id,
+      body,
+      'hr.organization.designation_updated',
+      'designation',
+    );
   }
 
   // ---- work locations -------------------------------------
@@ -157,6 +172,14 @@ export class OrganizationService {
         .where(and(eq(workLocations.id, id), eq(workLocations.tenantId, scope.tenantId)))
         .returning({ id: workLocations.id });
       if (res.length === 0) throw new AppError('HR_ORG_UNIT_NOT_FOUND');
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'hr.organization.location_updated',
+        entityType: 'work_location',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: { fields: Object.keys(set).filter((k) => k !== 'updatedAt') },
+      });
       return (await this.listLocations(scope)).find((l) => l.id === id)!;
     });
   }
@@ -216,6 +239,40 @@ export class OrganizationService {
         metadata: { name: body.name, startTime: body.startTime, endTime: body.endTime },
       });
       return row!.id;
+    });
+    return (await this.listSchedules(scope)).find((s) => s.id === id)!;
+  }
+
+  async updateSchedule(
+    scope: HrScope,
+    id: string,
+    body: UpdateWorkScheduleDto,
+  ): Promise<WorkScheduleDto> {
+    await withTenantContext(getDb(), scope, async (tx) => {
+      const set: Record<string, unknown> = { updatedAt: new Date() };
+      if (body.name !== undefined) set.name = body.name.trim();
+      if (body.startTime !== undefined) set.startTime = body.startTime;
+      if (body.endTime !== undefined) set.endTime = body.endTime;
+      if (body.workingDaysMask !== undefined) set.workingDaysMask = body.workingDaysMask;
+      if (body.graceMinutes !== undefined) set.graceMinutes = body.graceMinutes;
+      if (body.status !== undefined) set.status = body.status;
+      const res = await tx
+        .update(workSchedules)
+        .set(set)
+        .where(and(eq(workSchedules.id, id), eq(workSchedules.tenantId, scope.tenantId)))
+        .returning({ id: workSchedules.id });
+      if (res.length === 0) throw new AppError('HR_ORG_UNIT_NOT_FOUND');
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'hr.organization.schedule_updated',
+        entityType: 'work_schedule',
+        entityId: id,
+        actor: userActor(scope),
+        metadata: {
+          fields: Object.keys(set).filter((k) => k !== 'updatedAt'),
+          status: body.status,
+        },
+      });
     });
     return (await this.listSchedules(scope)).find((s) => s.id === id)!;
   }
@@ -327,6 +384,8 @@ export class OrganizationService {
     table: typeof departments | typeof designations,
     id: string,
     body: UpdateOrgUnitDto,
+    action: 'hr.organization.department_updated' | 'hr.organization.designation_updated',
+    entityType: string,
   ): Promise<OrgUnitDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
       const set: Record<string, unknown> = { updatedAt: new Date() };
@@ -338,6 +397,17 @@ export class OrganizationService {
         .where(and(eq(table.id, id), eq(table.tenantId, scope.tenantId)))
         .returning({ id: table.id });
       if (res.length === 0) throw new AppError('HR_ORG_UNIT_NOT_FOUND');
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action,
+        entityType,
+        entityId: id,
+        actor: userActor(scope),
+        metadata: {
+          fields: Object.keys(set).filter((k) => k !== 'updatedAt'),
+          status: body.status,
+        },
+      });
     });
     const list =
       table === departments

@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, ErrorNote, Skeleton, Card, EmptyState } from '@/components/admin/ui';
 import { ErrorBlock } from '@/components/ui/kit';
 import { Table, Select } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
@@ -90,34 +90,37 @@ export default function PayrollPeriodPage({ params }: { params: Promise<{ id: st
 
           <Card>
             <div className="mb-3 text-sm font-semibold">Entries</div>
-            <Table
-              head={
-                <tr>
-                  <th className="px-3 py-2">Employee</th>
-                  <th className="px-3 py-2">Base</th>
-                  <th className="px-3 py-2">Allowances</th>
-                  <th className="px-3 py-2">Incentives</th>
-                  <th className="px-3 py-2">Reimb.</th>
-                  <th className="px-3 py-2">Deductions</th>
-                  <th className="px-3 py-2">Gross</th>
-                  <th className="px-3 py-2">Net</th>
-                  <th className="px-3 py-2">Paid</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2" />
-                </tr>
-              }
-            >
-              {p.entries.map((e) => (
-                <EntryRow key={e.id} e={e} periodId={id} canPay={canPay} periodStatus={p.status} />
-              ))}
-              {p.entries.length === 0 && (
-                <tr>
-                  <td colSpan={11} className="px-3 py-8 text-center text-muted-foreground">
-                    No entries. Process the period to calculate them.
-                  </td>
-                </tr>
-              )}
-            </Table>
+            {p.entries.length === 0 ? (
+              <EmptyState>No entries. Process the period to calculate them.</EmptyState>
+            ) : (
+              <Table
+                head={
+                  <tr>
+                    <th className="px-3 py-2">Employee</th>
+                    <th className="px-3 py-2">Base</th>
+                    <th className="px-3 py-2">Allowances</th>
+                    <th className="px-3 py-2">Incentives</th>
+                    <th className="px-3 py-2">Reimb.</th>
+                    <th className="px-3 py-2">Deductions</th>
+                    <th className="px-3 py-2">Gross</th>
+                    <th className="px-3 py-2">Net</th>
+                    <th className="px-3 py-2">Paid</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2" />
+                  </tr>
+                }
+              >
+                {p.entries.map((e) => (
+                  <EntryRow
+                    key={e.id}
+                    e={e}
+                    periodId={id}
+                    canPay={canPay}
+                    periodStatus={p.status}
+                  />
+                ))}
+              </Table>
+            )}
           </Card>
         </>
       )}

@@ -133,7 +133,7 @@ export class HrExpensesController {
   @ApiOperation({ operationId: 'getHrExpenseClaim', summary: 'One expense claim.' })
   @ApiOkResponse({ type: ExpenseClaimDto })
   get(@Security() ctx: SecurityContext, @Param('id') id: string) {
-    return this.expenses.get(hrScope(ctx), id);
+    return this.expenses.getForCaller(hrScope(ctx), id);
   }
 
   @Post(':id/submit')
@@ -236,7 +236,7 @@ export class HrExpensesController {
     @Param('id') id: string,
   ): Promise<StreamableFile> {
     const scope = hrScope(ctx);
-    const key = await this.expenses.receiptObjectKey(scope, id);
+    const key = await this.expenses.receiptObjectKeyForCaller(scope, id);
     if (!key) throw new AppError('HR_ATTACHMENT_INVALID', { details: { reason: 'no_receipt' } });
     const object = await this.storage.getObject(key);
     if (!object)

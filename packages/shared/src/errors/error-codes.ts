@@ -609,6 +609,11 @@ export const ERROR_CODES = {
     httpStatus: 404,
     message: 'That department, designation, location or schedule does not exist.',
   },
+  HR_ORG_UNIT_ARCHIVED: {
+    httpStatus: 422,
+    message:
+      'That department, designation or location is archived and cannot be assigned to employees. Restore it first, or choose another.',
+  },
   HR_DUPLICATE_CODE: { httpStatus: 409, message: 'That code is already in use in this workspace.' },
   HR_INVALID_MANAGER: {
     httpStatus: 422,

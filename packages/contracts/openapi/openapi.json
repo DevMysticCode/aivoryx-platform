@@ -828,11 +828,16 @@
                 "hr.employee.membership_unlinked",
                 "hr.employee.document_added",
                 "hr.employee.document_deleted",
+                "hr.employee.document_sharing_changed",
                 "hr.bank_details.updated",
                 "hr.organization.department_created",
                 "hr.organization.designation_created",
                 "hr.organization.location_created",
                 "hr.organization.schedule_created",
+                "hr.organization.department_updated",
+                "hr.organization.designation_updated",
+                "hr.organization.location_updated",
+                "hr.organization.schedule_updated",
                 "hr.attendance.checked_in",
                 "hr.attendance.checked_out",
                 "hr.attendance.recorded",
@@ -860,6 +865,7 @@
                 "hr.payroll.payment_recorded",
                 "hr.performance.goal_created",
                 "hr.performance.review_submitted",
+                "hr.performance.review_acknowledged",
                 "hr.performance.review_closed"
               ],
               "type": "string"
@@ -6535,7 +6541,7 @@
             "cookie": []
           }
         ],
-        "summary": "HR dashboard counters.",
+        "summary": "HR dashboard — counters, attention items and recent activity, bound by data scope.",
         "tags": [
           "hr"
         ]
@@ -7159,6 +7165,72 @@
         ]
       }
     },
+    "/hr/schedules/{id}": {
+      "patch": {
+        "operationId": "updateHrSchedule",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkScheduleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkScheduleDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update or archive a work schedule.",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
     "/hr/organization/chart": {
       "get": {
         "operationId": "hrOrgChart",
@@ -7251,6 +7323,7 @@
             "in": "query",
             "schema": {
               "enum": [
+                "ONBOARDING",
                 "ACTIVE",
                 "ON_LEAVE",
                 "SUSPENDED",
@@ -7882,6 +7955,138 @@
         ]
       }
     },
+    "/hr/employees/{id}/documents/{documentId}": {
+      "patch": {
+        "operationId": "updateHrEmployeeDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmployeeDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeDocumentDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Share or unshare a document with the employee (self-service visibility).",
+        "tags": [
+          "hr"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteHrEmployeeDocument",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove an employee document.",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
     "/hr/employees/{id}/documents/{documentId}/download": {
       "get": {
         "operationId": "downloadHrEmployeeDocument",
@@ -7934,63 +8139,6 @@
           }
         ],
         "summary": "Download an employee document.",
-        "tags": [
-          "hr"
-        ]
-      }
-    },
-    "/hr/employees/{id}/documents/{documentId}": {
-      "delete": {
-        "operationId": "deleteHrEmployeeDocument",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "documentId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Remove an employee document.",
         "tags": [
           "hr"
         ]
@@ -12542,6 +12690,155 @@
           }
         ],
         "summary": "My expense claims.",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/me/documents": {
+      "get": {
+        "operationId": "hrMyDocuments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeDocumentDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Documents HR has shared with me.",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/me/documents/{documentId}/download": {
+      "get": {
+        "operationId": "downloadHrMyDocument",
+        "parameters": [
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Download a document HR has shared with me.",
+        "tags": [
+          "hr"
+        ]
+      }
+    },
+    "/hr/me/performance-reviews": {
+      "get": {
+        "operationId": "hrMyPerformanceReviews",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PerformanceReviewDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "My performance reviews (submitted onward — drafts stay with the manager).",
         "tags": [
           "hr"
         ]
@@ -25356,6 +25653,30 @@
           "createdAt"
         ]
       },
+      "FieldAgentEmployeeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "employeeNumber": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "employeeNumber",
+          "status"
+        ]
+      },
       "FieldAgentDto": {
         "type": "object",
         "properties": {
@@ -25385,6 +25706,15 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "employee": {
+            "nullable": true,
+            "description": "The linked HR employee record. Present only when the workspace has HR enabled, the caller may read employees, and this login is linked to an employee — otherwise null.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FieldAgentEmployeeDto"
+              }
+            ]
           }
         },
         "required": [
@@ -25393,7 +25723,8 @@
           "userName",
           "userEmail",
           "status",
-          "createdAt"
+          "createdAt",
+          "employee"
         ]
       },
       "DesignateFieldAgentRequestDto": {
@@ -26173,6 +26504,67 @@
           "createdAt"
         ]
       },
+      "HrDashboardEmployeeRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Joining date or probation end date."
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "date"
+        ]
+      },
+      "HrActivityItemDto": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "HIRED",
+              "STATUS",
+              "DEPARTMENT",
+              "DESIGNATION",
+              "MANAGER",
+              "LOCATION",
+              "EMPLOYMENT_TYPE"
+            ]
+          },
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeName": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Human-readable, never carries compensation or raw identifiers."
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "employeeId",
+          "employeeName",
+          "summary"
+        ]
+      },
       "HrDashboardDto": {
         "type": "object",
         "properties": {
@@ -26181,6 +26573,31 @@
           },
           "activeEmployees": {
             "type": "number"
+          },
+          "onboardingEmployees": {
+            "type": "number",
+            "description": "Employees created ahead of their start date."
+          },
+          "upcomingStarts": {
+            "description": "Next onboarding starts.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HrDashboardEmployeeRefDto"
+            }
+          },
+          "probationEnding": {
+            "description": "Active employees whose probation ends within 30 days.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HrDashboardEmployeeRefDto"
+            }
+          },
+          "recentActivity": {
+            "description": "Most recent workforce changes.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HrActivityItemDto"
+            }
           },
           "presentToday": {
             "type": "number"
@@ -26208,6 +26625,10 @@
         "required": [
           "totalEmployees",
           "activeEmployees",
+          "onboardingEmployees",
+          "upcomingStarts",
+          "probationEnding",
+          "recentActivity",
           "presentToday",
           "onLeaveToday",
           "absentToday",
@@ -26466,6 +26887,35 @@
           "endTime"
         ]
       },
+      "UpdateWorkScheduleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "09:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "18:00"
+          },
+          "workingDaysMask": {
+            "type": "number"
+          },
+          "graceMinutes": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ]
+          }
+        }
+      },
       "OrgChartNodeDto": {
         "type": "object",
         "properties": {
@@ -26540,6 +26990,7 @@
           "status": {
             "type": "string",
             "enum": [
+              "ONBOARDING",
               "ACTIVE",
               "ON_LEAVE",
               "SUSPENDED",
@@ -26714,6 +27165,15 @@
           },
           "notes": {
             "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ONBOARDING",
+              "ACTIVE"
+            ],
+            "default": "ACTIVE",
+            "description": "Starting lifecycle state. ONBOARDING = created ahead of the start date (excluded from headcount and payroll until moved to ACTIVE). Defaults to ACTIVE. Ignored on update — use the status endpoint to change an existing employee."
           }
         },
         "required": [
@@ -26742,6 +27202,7 @@
           "status": {
             "type": "string",
             "enum": [
+              "ONBOARDING",
               "ACTIVE",
               "ON_LEAVE",
               "SUSPENDED",
@@ -27011,6 +27472,15 @@
           "notes": {
             "type": "string"
           },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ONBOARDING",
+              "ACTIVE"
+            ],
+            "default": "ACTIVE",
+            "description": "Starting lifecycle state. ONBOARDING = created ahead of the start date (excluded from headcount and payroll until moved to ACTIVE). Defaults to ACTIVE. Ignored on update — use the status endpoint to change an existing employee."
+          },
           "changeReason": {
             "type": "string"
           }
@@ -27022,6 +27492,7 @@
           "status": {
             "type": "string",
             "enum": [
+              "ONBOARDING",
               "ACTIVE",
               "ON_LEAVE",
               "SUSPENDED",
@@ -27114,6 +27585,10 @@
             "type": "string",
             "nullable": true
           },
+          "sharedWithEmployee": {
+            "type": "boolean",
+            "description": "Whether the employee can see and download this document in their self-service."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -27126,6 +27601,7 @@
           "contentType",
           "sizeBytes",
           "originalFilename",
+          "sharedWithEmployee",
           "createdAt"
         ]
       },
@@ -27137,11 +27613,31 @@
           },
           "title": {
             "type": "string"
+          },
+          "sharedWithEmployee": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ],
+            "default": "false",
+            "description": "Multipart form field — share this document with the employee (default: no)."
           }
         },
         "required": [
           "kind",
           "title"
+        ]
+      },
+      "UpdateEmployeeDocumentDto": {
+        "type": "object",
+        "properties": {
+          "sharedWithEmployee": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sharedWithEmployee"
         ]
       },
       "CompensationComponentDto": {

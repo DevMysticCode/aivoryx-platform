@@ -27,7 +27,9 @@ export type RecipientEntity =
   | 'invoice_customer'
   | 'payment_customer'
   | 'hr_leave_employee'
-  | 'hr_expense_employee';
+  | 'hr_leave_approver'
+  | 'hr_expense_employee'
+  | 'hr_expense_approver';
 
 export interface DefaultTemplate {
   key: string;
@@ -190,6 +192,46 @@ const RAW_TEMPLATES: Omit<DefaultTemplate, 'requiredVars'>[] = [
       'Hello {{employee.name}},\n\n' +
       'Your {{leave.typeName}} leave request {{leave.number}} from {{leave.startDate}} to {{leave.endDate}} ' +
       '({{leave.totalDays}} day(s)) has been approved.\n\n{{tenant.name}}',
+  },
+  {
+    key: 'hr_leave_requested',
+    title: 'Leave request {{leave.number}} needs your approval',
+    body: '{{employee.name}} requested {{leave.typeName}} leave from {{leave.startDate}} to {{leave.endDate}} ({{leave.totalDays}} day(s)).',
+    emailSubject: 'Leave request {{leave.number}} needs your approval',
+    emailBody:
+      'Hello,\n\n' +
+      '{{employee.name}} requested {{leave.typeName}} leave from {{leave.startDate}} to {{leave.endDate}} ' +
+      '({{leave.totalDays}} day(s)). Please review it in {{tenant.name}}.\n\n{{tenant.name}}',
+  },
+  {
+    key: 'hr_leave_rejected',
+    title: 'Leave {{leave.number}} was not approved',
+    body: 'Your {{leave.typeName}} leave from {{leave.startDate}} to {{leave.endDate}} was not approved. Reason: {{leave.decisionReason}}',
+    emailSubject: 'Your leave request {{leave.number}} was not approved',
+    emailBody:
+      'Hello {{employee.name}},\n\n' +
+      'Your {{leave.typeName}} leave request {{leave.number}} from {{leave.startDate}} to {{leave.endDate}} ' +
+      'was not approved.\nReason: {{leave.decisionReason}}\n\n{{tenant.name}}',
+  },
+  {
+    key: 'hr_expense_submitted',
+    title: 'Expense {{expense.number}} needs your approval',
+    body: '{{employee.name}} submitted expense claim {{expense.number}} for {{expense.amount}} {{expense.currency}}.',
+    emailSubject: 'Expense claim {{expense.number}} needs your approval',
+    emailBody:
+      'Hello,\n\n' +
+      '{{employee.name}} submitted expense claim {{expense.number}} for {{expense.amount}} {{expense.currency}}. ' +
+      'Please review it in {{tenant.name}}.\n\n{{tenant.name}}',
+  },
+  {
+    key: 'hr_expense_rejected',
+    title: 'Expense {{expense.number}} was not approved',
+    body: 'Your expense claim {{expense.number}} ({{expense.amount}} {{expense.currency}}) was not approved. Reason: {{expense.decisionReason}}',
+    emailSubject: 'Your expense claim {{expense.number}} was not approved',
+    emailBody:
+      'Hello {{employee.name}},\n\n' +
+      'Your expense claim {{expense.number}} ({{expense.amount}} {{expense.currency}}) was not approved.\n' +
+      'Reason: {{expense.decisionReason}}\n\n{{tenant.name}}',
   },
   {
     key: 'hr_expense_reimbursed',
@@ -436,6 +478,54 @@ export const DEFAULT_RULES: DefaultRule[] = [
     suppressible: true,
     deepLink: '/hr/leave',
     description: 'Notify the employee (if they have a login) when their leave is approved.',
+  },
+  {
+    key: 'hr_leave_requested.approver',
+    eventType: 'hr.leave.requested',
+    templateKey: 'hr_leave_requested',
+    channels: ['in_app'],
+    recipientStrategy: 'ASSIGNED_USER',
+    entity: 'hr_leave_approver',
+    notificationType: 'action_required',
+    suppressible: true,
+    deepLink: '/hr/leave',
+    description: 'Tell the assigned approver a leave request is waiting for their decision.',
+  },
+  {
+    key: 'hr_leave_rejected.employee',
+    eventType: 'hr.leave.rejected',
+    templateKey: 'hr_leave_rejected',
+    channels: ['in_app', 'email'],
+    recipientStrategy: 'ASSIGNED_USER',
+    entity: 'hr_leave_employee',
+    notificationType: 'warning',
+    suppressible: true,
+    deepLink: '/hr/leave',
+    description: 'Notify the employee (if they have a login) when their leave is not approved.',
+  },
+  {
+    key: 'hr_expense_submitted.approver',
+    eventType: 'hr.expense.submitted',
+    templateKey: 'hr_expense_submitted',
+    channels: ['in_app'],
+    recipientStrategy: 'ASSIGNED_USER',
+    entity: 'hr_expense_approver',
+    notificationType: 'action_required',
+    suppressible: true,
+    deepLink: '/hr/expenses',
+    description: 'Tell the assigned approver an expense claim is waiting for their decision.',
+  },
+  {
+    key: 'hr_expense_rejected.employee',
+    eventType: 'hr.expense.rejected',
+    templateKey: 'hr_expense_rejected',
+    channels: ['in_app', 'email'],
+    recipientStrategy: 'ASSIGNED_USER',
+    entity: 'hr_expense_employee',
+    notificationType: 'warning',
+    suppressible: true,
+    deepLink: '/hr/expenses',
+    description: 'Notify the employee when their expense claim is not approved.',
   },
   {
     key: 'hr_expense_reimbursed.employee',

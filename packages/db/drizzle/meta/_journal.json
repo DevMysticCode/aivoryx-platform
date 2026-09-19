@@ -141,6 +141,20 @@
       "when": 1789273457107,
       "tag": "0019_round_spirit",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789783111235,
+      "tag": "0020_many_iron_patriot",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789783910581,
+      "tag": "0021_smart_redwing",
+      "breakpoints": true
     }
   ]
 }

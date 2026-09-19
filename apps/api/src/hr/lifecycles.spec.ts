@@ -21,6 +21,21 @@ describe('HR lifecycle transitions (Phase 12, ADR 0041)', () => {
     expect(isTerminalEmployeeStatus('ACTIVE')).toBe(false);
   });
 
+  it('employee (Phase 17): an onboarding hire can start or fall through, nothing else', () => {
+    expect(canTransitionEmployee('ONBOARDING', 'ACTIVE')).toBe(true);
+    expect(canTransitionEmployee('ONBOARDING', 'RESIGNED')).toBe(true);
+    expect(canTransitionEmployee('ONBOARDING', 'TERMINATED')).toBe(true);
+    // states that presuppose having started are unreachable from ONBOARDING
+    expect(canTransitionEmployee('ONBOARDING', 'ON_LEAVE')).toBe(false);
+    expect(canTransitionEmployee('ONBOARDING', 'SUSPENDED')).toBe(false);
+    expect(canTransitionEmployee('ONBOARDING', 'INACTIVE')).toBe(false);
+    // and you never go back to onboarding
+    for (const from of ['ACTIVE', 'ON_LEAVE', 'SUSPENDED', 'INACTIVE'] as const) {
+      expect(canTransitionEmployee(from, 'ONBOARDING')).toBe(false);
+    }
+    expect(isTerminalEmployeeStatus('ONBOARDING')).toBe(false);
+  });
+
   it('leave: pending -> approved/rejected/cancelled; rejected is terminal', () => {
     expect(canTransitionLeave('PENDING', 'APPROVED')).toBe(true);
     expect(canTransitionLeave('APPROVED', 'CANCELLED')).toBe(true);

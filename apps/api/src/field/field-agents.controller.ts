@@ -10,6 +10,7 @@ import { AppError } from '@aivoryx/shared';
 import { RequirePermission, Security } from '../security/security.decorators.js';
 import type { SecurityContext } from '../security/security-context.js';
 import { ApiErrorDto } from '../auth/auth.dto.js';
+import { WorkforceDirectoryService } from '../hr/workforce-directory.service.js';
 import { FieldAgentsService, type TenantScope } from './field-agents.service.js';
 import { DesignateFieldAgentRequestDto, FieldAgentDto } from './field.dto.js';
 
@@ -22,14 +23,27 @@ import { DesignateFieldAgentRequestDto, FieldAgentDto } from './field.dto.js';
 @ApiForbiddenResponse({ type: ApiErrorDto })
 @Controller('field-agents')
 export class FieldAgentsController {
-  constructor(private readonly fieldAgents: FieldAgentsService) {}
+  constructor(
+    private readonly fieldAgents: FieldAgentsService,
+    private readonly workforce: WorkforceDirectoryService,
+  ) {}
 
   @Get()
   @RequirePermission('field.agents.manage')
   @ApiOperation({ operationId: 'listFieldAgents', summary: 'Field agents in the workspace.' })
   @ApiOkResponse({ type: [FieldAgentDto] })
-  list(@Security() ctx: SecurityContext) {
-    return this.fieldAgents.list(scope(ctx));
+  async list(@Security() ctx: SecurityContext) {
+    const agents = await this.fieldAgents.list(scope(ctx));
+    // Optional HR link (Phase 17): only when the workspace has HR AND the caller
+    // may read employees. Field never reads HR tables — it asks HR's directory.
+    const canSeeEmployees =
+      ctx.entitledModules.has('HR') && ctx.permissions.has('hr.employee.read') && !!ctx.membership;
+    if (!canSeeEmployees || agents.length === 0) return agents;
+    const linked = await this.workforce.linkedByMembership(
+      { tenantId: ctx.tenantId!, userId: ctx.user.id, actorMembershipId: ctx.membership!.id },
+      agents.map((a) => a.membershipId),
+    );
+    return agents.map((a) => ({ ...a, employee: linked.get(a.membershipId) ?? null }));
   }
 
   @Post()

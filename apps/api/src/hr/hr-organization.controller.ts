@@ -20,6 +20,7 @@ import {
   OrgChartDto,
   OrgUnitDto,
   UpdateOrgUnitDto,
+  UpdateWorkScheduleDto,
   WorkLocationDto,
   WorkScheduleDto,
 } from './hr.dto.js';
@@ -42,10 +43,15 @@ export class HrOrganizationController {
 
   @Get('dashboard')
   @RequirePermission('hr.employee.read')
-  @ApiOperation({ operationId: 'hrDashboard', summary: 'HR dashboard counters.' })
+  @ApiOperation({
+    operationId: 'hrDashboard',
+    summary: 'HR dashboard — counters, attention items and recent activity, bound by data scope.',
+  })
   @ApiOkResponse({ type: HrDashboardDto })
   getDashboard(@Security() ctx: SecurityContext) {
-    return this.dashboard.summary(hrScope(ctx));
+    return this.dashboard.summary(hrScope(ctx), {
+      canSeePayroll: ctx.permissions.has('hr.payroll.read'),
+    });
   }
 
   // ---- departments ----------------------------------
@@ -158,6 +164,18 @@ export class HrOrganizationController {
   @ApiOkResponse({ type: WorkScheduleDto })
   createSchedule(@Security() ctx: SecurityContext, @Body() body: CreateWorkScheduleDto) {
     return this.org.createSchedule(hrScope(ctx), body);
+  }
+
+  @Patch('schedules/:id')
+  @RequirePermission('hr.organization.manage')
+  @ApiOperation({ operationId: 'updateHrSchedule', summary: 'Update or archive a work schedule.' })
+  @ApiOkResponse({ type: WorkScheduleDto })
+  updateSchedule(
+    @Security() ctx: SecurityContext,
+    @Param('id') id: string,
+    @Body() body: UpdateWorkScheduleDto,
+  ) {
+    return this.org.updateSchedule(hrScope(ctx), id, body);
   }
 
   // ---- org chart ----------------------------------

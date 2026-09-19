@@ -307,6 +307,9 @@ export type HrPerformanceGoal = components['schemas']['PerformanceGoalDto'];
 export type HrPerformanceReview = components['schemas']['PerformanceReviewDto'];
 export type HrMe = components['schemas']['HrMeDto'];
 export type HrDashboard = components['schemas']['HrDashboardDto'];
+export type HrDashboardEmployeeRef = components['schemas']['HrDashboardEmployeeRefDto'];
+export type HrActivityItem = components['schemas']['HrActivityItemDto'];
+export type FieldAgentEmployee = components['schemas']['FieldAgentEmployeeDto'];
 
 // ── Platform Access, Module Entitlements & Effective Authorization (Phase 13A, ADR 0042) ──
 export type PlatformModuleCatalogue = components['schemas']['PlatformModuleCatalogueDto'];

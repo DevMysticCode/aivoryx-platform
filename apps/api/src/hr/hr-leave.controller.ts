@@ -81,7 +81,7 @@ export class HrLeaveController {
   @ApiOperation({ operationId: 'hrLeaveBalances', summary: 'Leave balances for an employee.' })
   @ApiOkResponse({ type: [LeaveBalanceDto] })
   balances(@Security() ctx: SecurityContext, @Param('employeeId') employeeId: string) {
-    return this.leave.balancesFor(hrScope(ctx), employeeId);
+    return this.leave.balancesForCaller(hrScope(ctx), employeeId);
   }
 
   @Post('balances/adjust')
@@ -152,7 +152,7 @@ export class HrLeaveController {
   @ApiOperation({ operationId: 'getHrLeaveRequest', summary: 'One leave request.' })
   @ApiOkResponse({ type: LeaveRequestDto })
   getRequest(@Security() ctx: SecurityContext, @Param('id') id: string) {
-    return this.leave.getRequest(hrScope(ctx), id);
+    return this.leave.getRequestForCaller(hrScope(ctx), id);
   }
 
   @Post('requests/:id/approve')

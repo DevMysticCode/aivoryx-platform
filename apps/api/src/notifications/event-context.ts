@@ -475,8 +475,13 @@ export async function buildEventContext(
     };
   }
 
-  // --- hr.leave.approved (Phase 12) ---------------------------
-  if (type === 'hr.leave.approved') {
+  // --- hr.leave.{approved,rejected,requested} (Phase 12; Phase 17) ---
+  // approved/rejected notify the employee; requested notifies the assigned approver.
+  if (
+    type === 'hr.leave.approved' ||
+    type === 'hr.leave.rejected' ||
+    type === 'hr.leave.requested'
+  ) {
     const leaveRequestId = str(payload, 'leaveRequestId');
     if (!leaveRequestId) return null;
     const [lr] = await tx
@@ -487,6 +492,8 @@ export async function buildEventContext(
         totalDays: leaveRequests.totalDays,
         employeeId: leaveRequests.employeeId,
         leaveTypeId: leaveRequests.leaveTypeId,
+        approverMembershipId: leaveRequests.approverMembershipId,
+        decisionReason: leaveRequests.decisionReason,
       })
       .from(leaveRequests)
       .where(and(eq(leaveRequests.tenantId, tenantId), eq(leaveRequests.id, leaveRequestId)))
@@ -512,14 +519,26 @@ export async function buildEventContext(
           startDate: lr.startDate,
           endDate: lr.endDate,
           totalDays: lr.totalDays,
+          decisionReason: lr.decisionReason?.trim() || '—',
         },
       },
-      refs: { ...baseRefs, assignedMembershipId: emp?.membershipId ?? null },
+      refs: {
+        ...baseRefs,
+        assignedMembershipId:
+          type === 'hr.leave.requested'
+            ? (lr.approverMembershipId ?? null)
+            : (emp?.membershipId ?? null),
+      },
     };
   }
 
-  // --- hr.expense.reimbursed (Phase 12) ----------------------
-  if (type === 'hr.expense.reimbursed') {
+  // --- hr.expense.{reimbursed,rejected,submitted} (Phase 12; Phase 17) ---
+  // reimbursed/rejected notify the employee; submitted notifies the assigned approver.
+  if (
+    type === 'hr.expense.reimbursed' ||
+    type === 'hr.expense.rejected' ||
+    type === 'hr.expense.submitted'
+  ) {
     const expenseClaimId = str(payload, 'expenseClaimId');
     if (!expenseClaimId) return null;
     const [ec] = await tx
@@ -528,6 +547,8 @@ export async function buildEventContext(
         amount: expenseClaims.amount,
         currency: expenseClaims.currency,
         employeeId: expenseClaims.employeeId,
+        approverMembershipId: expenseClaims.approverMembershipId,
+        decisionReason: expenseClaims.decisionReason,
       })
       .from(expenseClaims)
       .where(and(eq(expenseClaims.tenantId, tenantId), eq(expenseClaims.id, expenseClaimId)))
@@ -557,9 +578,16 @@ export async function buildEventContext(
           amount: money(ec.amount),
           currency: ec.currency,
           reference: rb?.ref ?? '—',
+          decisionReason: ec.decisionReason?.trim() || '—',
         },
       },
-      refs: { ...baseRefs, assignedMembershipId: emp?.membershipId ?? null },
+      refs: {
+        ...baseRefs,
+        assignedMembershipId:
+          type === 'hr.expense.submitted'
+            ? (ec.approverMembershipId ?? null)
+            : (emp?.membershipId ?? null),
+      },
     };
   }
 

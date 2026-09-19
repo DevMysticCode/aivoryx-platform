@@ -14,6 +14,7 @@ import {
   resolveMyEmployeeId,
   type Paged,
 } from './common.js';
+import { assertEmployeeVisible, employeeIdFilter } from './data-scope.js';
 import type {
   AdjustLeaveBalanceDto,
   CreateLeaveRequestDto,
@@ -193,6 +194,7 @@ export class LeaveService {
 
   async adjustBalance(scope: HrScope, body: AdjustLeaveBalanceDto): Promise<LeaveBalanceDto[]> {
     await withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, body.employeeId);
       await this.ensureBalanceRow(tx, scope.tenantId, body.employeeId, body.leaveTypeId, body.year);
       await tx
         .update(leaveBalances)
@@ -238,10 +240,19 @@ export class LeaveService {
     );
   }
 
+  /** API read of another employee's balances — bound by the caller's data scope. */
+  balancesForCaller(scope: HrScope, employeeId: string): Promise<LeaveBalanceDto[]> {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, employeeId);
+      return this.loadBalances(tx, scope.tenantId, employeeId);
+    });
+  }
+
   // ---- requests ----------------------------------------
 
   async createRequest(scope: HrScope, body: CreateLeaveRequestDto): Promise<LeaveRequestDto> {
     const id = await withTenantContext(getDb(), scope, async (tx) => {
+      if (body.employeeId) await assertEmployeeVisible(tx, scope, body.employeeId);
       const employeeId =
         body.employeeId ?? (await resolveMyEmployeeId(tx, scope.tenantId, scope.actorMembershipId));
       const [emp] = await tx
@@ -518,6 +529,8 @@ export class LeaveService {
       if (query.status) conds.push(eq(leaveRequests.status, query.status as 'PENDING'));
       if (query.from) conds.push(gte(leaveRequests.endDate, query.from.slice(0, 10)));
       if (query.to) conds.push(lte(leaveRequests.startDate, query.to.slice(0, 10)));
+      const scopeFilter = await employeeIdFilter(tx, scope, leaveRequests.employeeId);
+      if (scopeFilter) conds.push(scopeFilter);
       const where = and(...conds)!;
       const [countRow] = await tx
         .select({ n: sql<number>`count(*)::int` })
@@ -567,6 +580,22 @@ export class LeaveService {
     });
   }
 
+  /** API single-request read: visible when the employee is in the caller's data
+   *  scope OR the caller is the request's assigned approver (approvers must be
+   *  able to open what they are asked to decide, wherever the requester sits). */
+  async getRequestForCaller(scope: HrScope, id: string): Promise<LeaveRequestDto> {
+    const dto = await this.getRequest(scope, id);
+    if (dto.approverMembershipId === scope.actorMembershipId) return dto;
+    await withTenantContext(getDb(), scope, async (tx) => {
+      try {
+        await assertEmployeeVisible(tx, scope, dto.employeeId);
+      } catch {
+        throw new AppError('HR_LEAVE_NOT_FOUND');
+      }
+    });
+    return dto;
+  }
+
   getRequest(scope: HrScope, id: string): Promise<LeaveRequestDto> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const rows = await tx
@@ -591,6 +620,8 @@ export class LeaveService {
       ];
       if (query.departmentId) conds.push(eq(employees.departmentId, query.departmentId));
       if (query.leaveTypeId) conds.push(eq(leaveRequests.leaveTypeId, query.leaveTypeId));
+      const scopeFilter = await employeeIdFilter(tx, scope, leaveRequests.employeeId);
+      if (scopeFilter) conds.push(scopeFilter);
       const rows = await tx
         .select({
           id: leaveRequests.id,

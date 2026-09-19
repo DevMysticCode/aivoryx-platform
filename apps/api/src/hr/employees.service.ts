@@ -17,6 +17,7 @@ import {
   pageBounds,
   type Paged,
 } from './common.js';
+import { assertEmployeeVisible, employeeScopeCondition } from './data-scope.js';
 import type {
   CreateEmployeeDto,
   EmployeeDetailDto,
@@ -78,6 +79,8 @@ export class EmployeesService {
       if (query.status) conds.push(eq(employees.status, query.status as EmployeeStatus));
       if (query.employmentType)
         conds.push(eq(employees.employmentType, query.employmentType as 'FULL_TIME'));
+      const scopeCond = await employeeScopeCondition(tx, scope);
+      if (scopeCond) conds.push(scopeCond);
       const where = and(...conds)!;
 
       const [countRow] = await tx
@@ -117,7 +120,10 @@ export class EmployeesService {
   }
 
   get(scope: HrScope, id: string): Promise<EmployeeDetailDto> {
-    return withTenantContext(getDb(), scope, (tx) => this.detail(tx, scope.tenantId, id));
+    return withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, id);
+      return this.detail(tx, scope.tenantId, id);
+    });
   }
 
   async detail(tx: Tx, tenantId: string, id: string): Promise<EmployeeDetailDto> {
@@ -192,6 +198,7 @@ export class EmployeesService {
   history(scope: HrScope, id: string): Promise<EmploymentHistoryItemDto[]> {
     return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, id);
+      await assertEmployeeVisible(tx, scope, id);
       const rows = await tx
         .select()
         .from(employmentHistory)
@@ -214,22 +221,54 @@ export class EmployeesService {
   listDocuments(scope: HrScope, id: string): Promise<EmployeeDocumentDto[]> {
     return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, id);
-      const rows = await tx
-        .select()
-        .from(employeeDocuments)
-        .where(
-          and(eq(employeeDocuments.tenantId, scope.tenantId), eq(employeeDocuments.employeeId, id)),
-        )
-        .orderBy(desc(employeeDocuments.createdAt));
-      return rows.map((r) => ({
-        id: r.id,
-        kind: r.kind,
-        title: r.title,
-        contentType: r.contentType,
-        sizeBytes: r.sizeBytes,
-        originalFilename: r.originalFilename,
-        createdAt: r.createdAt.toISOString(),
-      }));
+      await assertEmployeeVisible(tx, scope, id);
+      return this.documentRows(tx, scope.tenantId, id, false);
+    });
+  }
+
+  /** The employee's own view: only documents HR has shared. `employeeId` must be
+   *  the caller's own (resolved from their membership, never client-supplied). */
+  listMyDocuments(scope: HrScope, employeeId: string): Promise<EmployeeDocumentDto[]> {
+    return withTenantContext(getDb(), scope, (tx) =>
+      this.documentRows(tx, scope.tenantId, employeeId, true),
+    );
+  }
+
+  private async documentRows(
+    tx: Tx,
+    tenantId: string,
+    employeeId: string,
+    sharedOnly: boolean,
+  ): Promise<EmployeeDocumentDto[]> {
+    const rows = await tx
+      .select()
+      .from(employeeDocuments)
+      .where(
+        and(
+          eq(employeeDocuments.tenantId, tenantId),
+          eq(employeeDocuments.employeeId, employeeId),
+          sharedOnly ? eq(employeeDocuments.sharedWithEmployee, true) : undefined,
+        ),
+      )
+      .orderBy(desc(employeeDocuments.createdAt));
+    return rows.map((r) => ({
+      id: r.id,
+      kind: r.kind,
+      title: r.title,
+      contentType: r.contentType,
+      sizeBytes: r.sizeBytes,
+      originalFilename: r.originalFilename,
+      sharedWithEmployee: r.sharedWithEmployee,
+      createdAt: r.createdAt.toISOString(),
+    }));
+  }
+
+  /** Existence + data-scope check to run BEFORE any storage I/O for an employee,
+   *  so an out-of-scope caller can't leave orphaned objects behind. */
+  ensureAccessible(scope: HrScope, id: string): Promise<void> {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      await this.requireEmployee(tx, scope.tenantId, id);
+      await assertEmployeeVisible(tx, scope, id);
     });
   }
 
@@ -264,6 +303,7 @@ export class EmployeesService {
             emergencyContactPhone: body.emergencyContactPhone ?? null,
             emergencyContactRelation: body.emergencyContactRelation ?? null,
             joiningDate: body.joiningDate.slice(0, 10),
+            status: (body.status as 'ONBOARDING' | 'ACTIVE' | undefined) ?? 'ACTIVE',
             employmentType: (body.employmentType as 'FULL_TIME') ?? 'FULL_TIME',
             departmentId: body.departmentId ?? null,
             designationId: body.designationId ?? null,
@@ -284,7 +324,11 @@ export class EmployeesService {
           entityType: 'employee',
           entityId: newId,
           actor: userActor(scope),
-          metadata: { employeeNumber: number, employmentType: body.employmentType ?? 'FULL_TIME' },
+          metadata: {
+            employeeNumber: number,
+            employmentType: body.employmentType ?? 'FULL_TIME',
+            status: body.status ?? 'ACTIVE',
+          },
         });
         await this.outbox.emit(tx, {
           tenantId: scope.tenantId,
@@ -299,13 +343,16 @@ export class EmployeesService {
         throw err;
       }
     });
-    return this.get(scope, id);
+    // Unscoped read-back: a creator with a narrowed data scope may create a
+    // record outside their own scope, and the create must still return it.
+    return withTenantContext(getDb(), scope, (tx) => this.detail(tx, scope.tenantId, id));
   }
 
   async update(scope: HrScope, id: string, body: UpdateEmployeeDto): Promise<EmployeeDetailDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, id);
       const before = await this.lock(tx, scope.tenantId, id);
-      await this.validateOrgRefs(tx, scope.tenantId, body);
+      await this.validateOrgRefs(tx, scope.tenantId, body, before);
 
       if (body.managerId !== undefined && body.managerId !== null) {
         if (body.managerId === id) throw new AppError('HR_INVALID_MANAGER');
@@ -453,6 +500,7 @@ export class EmployeesService {
     reason: string | undefined,
   ): Promise<EmployeeDetailDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, id);
       const before = await this.lock(tx, scope.tenantId, id);
       if (before.status === to) return;
       if (!canTransitionEmployee(before.status as EmployeeStatus, to)) {
@@ -502,6 +550,7 @@ export class EmployeesService {
     membershipId: string,
   ): Promise<EmployeeDetailDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, id);
       await this.lock(tx, scope.tenantId, id);
       const [m] = await tx
         .select({ id: userTenantMemberships.id })
@@ -548,6 +597,7 @@ export class EmployeesService {
 
   async unlinkMembership(scope: HrScope, id: string): Promise<EmployeeDetailDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, id);
       await this.lock(tx, scope.tenantId, id);
       await tx
         .update(employees)
@@ -574,10 +624,12 @@ export class EmployeesService {
       contentType: string;
       sizeBytes: number;
       originalFilename: string | null;
+      sharedWithEmployee: boolean;
     },
   ): Promise<EmployeeDocumentDto[]> {
     await withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, id);
+      await assertEmployeeVisible(tx, scope, id);
       await tx.insert(employeeDocuments).values({
         tenantId: scope.tenantId,
         employeeId: id,
@@ -587,6 +639,7 @@ export class EmployeesService {
         contentType: doc.contentType,
         sizeBytes: doc.sizeBytes,
         originalFilename: doc.originalFilename,
+        sharedWithEmployee: doc.sharedWithEmployee,
         uploadedByMembershipId: scope.actorMembershipId,
       });
       await this.audit.record(tx, {
@@ -595,15 +648,79 @@ export class EmployeesService {
         entityType: 'employee',
         entityId: id,
         actor: userActor(scope),
-        metadata: { kind: doc.kind, title: doc.title, contentType: doc.contentType },
+        metadata: {
+          kind: doc.kind,
+          title: doc.title,
+          contentType: doc.contentType,
+          sharedWithEmployee: doc.sharedWithEmployee,
+        },
       });
     });
     return this.listDocuments(scope, id);
   }
 
+  /** HR controls whether the employee can see a document (`hr.employee.manage`). */
+  async setDocumentSharing(
+    scope: HrScope,
+    employeeId: string,
+    documentId: string,
+    sharedWithEmployee: boolean,
+  ): Promise<EmployeeDocumentDto[]> {
+    await withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, employeeId);
+      const res = await tx
+        .update(employeeDocuments)
+        .set({ sharedWithEmployee })
+        .where(
+          and(
+            eq(employeeDocuments.tenantId, scope.tenantId),
+            eq(employeeDocuments.employeeId, employeeId),
+            eq(employeeDocuments.id, documentId),
+          ),
+        )
+        .returning({ id: employeeDocuments.id });
+      if (res.length === 0) throw new AppError('HR_ATTACHMENT_INVALID');
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'hr.employee.document_sharing_changed',
+        entityType: 'employee',
+        entityId: employeeId,
+        actor: userActor(scope),
+        metadata: { documentId, sharedWithEmployee },
+      });
+    });
+    return this.listDocuments(scope, employeeId);
+  }
+
+  /** Object key for a document the employee may download themselves — only ever
+   *  their own, and only if shared. Indistinguishable 'not found' otherwise. */
+  async myDocumentObjectKey(
+    scope: HrScope,
+    employeeId: string,
+    documentId: string,
+  ): Promise<string> {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const [row] = await tx
+        .select({ objectKey: employeeDocuments.objectKey })
+        .from(employeeDocuments)
+        .where(
+          and(
+            eq(employeeDocuments.tenantId, scope.tenantId),
+            eq(employeeDocuments.employeeId, employeeId),
+            eq(employeeDocuments.id, documentId),
+            eq(employeeDocuments.sharedWithEmployee, true),
+          ),
+        )
+        .limit(1);
+      if (!row) throw new AppError('HR_ATTACHMENT_INVALID');
+      return row.objectKey;
+    });
+  }
+
   /** Object key for a stored document, tenant-scoped. */
   async documentObjectKey(scope: HrScope, employeeId: string, documentId: string): Promise<string> {
     return withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, employeeId);
       const [row] = await tx
         .select({ objectKey: employeeDocuments.objectKey })
         .from(employeeDocuments)
@@ -623,6 +740,7 @@ export class EmployeesService {
   /** Delete an employee document row and return its object key for storage cleanup. */
   async deleteDocument(scope: HrScope, employeeId: string, documentId: string): Promise<string> {
     return withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, employeeId);
       const [row] = await tx
         .select({ objectKey: employeeDocuments.objectKey })
         .from(employeeDocuments)
@@ -731,27 +849,36 @@ export class EmployeesService {
     if (!row) throw new AppError('HR_EMPLOYEE_NOT_FOUND');
   }
 
+  /** Every referenced unit must exist in this tenant, and must not be archived —
+   *  except a unit the employee already holds (`current`), which they keep. */
   private async validateOrgRefs(
     tx: Tx,
     tenantId: string,
     body: Partial<CreateEmployeeDto>,
+    current?: {
+      departmentId: string | null;
+      designationId: string | null;
+      workLocationId: string | null;
+    },
   ): Promise<void> {
     const checks: [
       string | undefined,
       typeof departments | typeof designations | typeof workLocations,
+      string | null | undefined,
     ][] = [
-      [body.departmentId, departments],
-      [body.designationId, designations],
-      [body.workLocationId, workLocations],
+      [body.departmentId, departments, current?.departmentId],
+      [body.designationId, designations, current?.designationId],
+      [body.workLocationId, workLocations, current?.workLocationId],
     ];
-    for (const [id, table] of checks) {
+    for (const [id, table, held] of checks) {
       if (!id) continue;
       const [row] = await tx
-        .select({ id: table.id })
+        .select({ id: table.id, status: table.status })
         .from(table)
         .where(and(eq(table.id, id), eq(table.tenantId, tenantId)))
         .limit(1);
       if (!row) throw new AppError('HR_ORG_UNIT_NOT_FOUND');
+      if (row.status === 'ARCHIVED' && id !== held) throw new AppError('HR_ORG_UNIT_ARCHIVED');
     }
   }
 

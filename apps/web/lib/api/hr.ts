@@ -41,6 +41,8 @@ import { apiFetch } from './client';
  * pass an identity the server would trust.
  */
 
+export type OrgUnitStatus = 'ACTIVE' | 'ARCHIVED';
+
 const json = (body: unknown, method = 'POST'): RequestInit => ({
   method,
   headers: { 'Content-Type': 'application/json' },
@@ -62,31 +64,38 @@ export const listDepartments = () =>
   apiFetch<HrOrgUnit[]>('/hr/departments', { cache: 'no-store' });
 export const createDepartment = (body: { name: string; code: string }) =>
   apiFetch<HrOrgUnit>('/hr/departments', json(body));
-export const updateDepartment = (
-  id: string,
-  body: { name?: string; code?: string; status?: string },
-) => apiFetch<HrOrgUnit>(`/hr/departments/${id}`, json(body, 'PATCH'));
+export const updateDepartment = (id: string, body: { name?: string; status?: OrgUnitStatus }) =>
+  apiFetch<HrOrgUnit>(`/hr/departments/${id}`, json(body, 'PATCH'));
 
 export const listDesignations = () =>
   apiFetch<HrOrgUnit[]>('/hr/designations', { cache: 'no-store' });
 export const createDesignation = (body: { name: string; code: string }) =>
   apiFetch<HrOrgUnit>('/hr/designations', json(body));
-export const updateDesignation = (
-  id: string,
-  body: { name?: string; code?: string; status?: string },
-) => apiFetch<HrOrgUnit>(`/hr/designations/${id}`, json(body, 'PATCH'));
+export const updateDesignation = (id: string, body: { name?: string; status?: OrgUnitStatus }) =>
+  apiFetch<HrOrgUnit>(`/hr/designations/${id}`, json(body, 'PATCH'));
 
 export const listLocations = () =>
   apiFetch<HrWorkLocation[]>('/hr/locations', { cache: 'no-store' });
 export const createLocation = (body: Record<string, unknown>) =>
   apiFetch<HrWorkLocation>('/hr/locations', json(body));
-export const updateLocation = (id: string, body: Record<string, unknown>) =>
+export const updateLocation = (id: string, body: { name?: string; status?: OrgUnitStatus }) =>
   apiFetch<HrWorkLocation>(`/hr/locations/${id}`, json(body, 'PATCH'));
 
 export const listSchedules = () =>
   apiFetch<HrWorkSchedule[]>('/hr/schedules', { cache: 'no-store' });
 export const createSchedule = (body: Record<string, unknown>) =>
   apiFetch<HrWorkSchedule>('/hr/schedules', json(body));
+export const updateSchedule = (
+  id: string,
+  body: {
+    name?: string;
+    startTime?: string;
+    endTime?: string;
+    workingDaysMask?: number;
+    graceMinutes?: number;
+    status?: OrgUnitStatus;
+  },
+) => apiFetch<HrWorkSchedule>(`/hr/schedules/${id}`, json(body, 'PATCH'));
 
 export const orgChart = () => apiFetch<HrOrgChart>('/hr/organization/chart', { cache: 'no-store' });
 
@@ -130,6 +139,15 @@ export const employeeDocumentUrl = (id: string, documentId: string) =>
   `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/hr/employees/${id}/documents/${documentId}/download`;
 export const deleteEmployeeDocument = (id: string, documentId: string) =>
   apiFetch<void>(`/hr/employees/${id}/documents/${documentId}`, { method: 'DELETE' });
+export const setEmployeeDocumentSharing = (
+  id: string,
+  documentId: string,
+  sharedWithEmployee: boolean,
+) =>
+  apiFetch<HrEmployeeDocument[]>(
+    `/hr/employees/${id}/documents/${documentId}`,
+    json({ sharedWithEmployee }, 'PATCH'),
+  );
 
 // compensation (sensitive)
 export const compensationHistory = (id: string) =>
@@ -274,6 +292,8 @@ export const submitPerformanceReview = (id: string) =>
   apiFetch<HrPerformanceReview>(`/hr/performance/reviews/${id}/submit`, json({}));
 export const closePerformanceReview = (id: string) =>
   apiFetch<HrPerformanceReview>(`/hr/performance/reviews/${id}/close`, json({}));
+export const acknowledgePerformanceReview = (id: string) =>
+  apiFetch<HrPerformanceReview>(`/hr/performance/reviews/${id}/acknowledge`, json({}));
 
 // ---- self-service (/hr/me) --------------------------
 export const hrMe = () => apiFetch<HrMe>('/hr/me', { cache: 'no-store' });
@@ -285,3 +305,9 @@ export const myExpenses = (opts: Record<string, string | number | undefined> = {
   apiFetch<HrExpenseClaimList>(`/hr/me/expenses${qs(opts)}`, { cache: 'no-store' });
 export const myPayrollHistory = () =>
   apiFetch<HrPayrollHistoryItem[]>('/hr/me/payroll-history', { cache: 'no-store' });
+export const myDocuments = () =>
+  apiFetch<HrEmployeeDocument[]>('/hr/me/documents', { cache: 'no-store' });
+export const myDocumentUrl = (documentId: string) =>
+  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/hr/me/documents/${documentId}/download`;
+export const myPerformanceReviews = () =>
+  apiFetch<HrPerformanceReview[]>('/hr/me/performance-reviews', { cache: 'no-store' });

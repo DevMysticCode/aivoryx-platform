@@ -39,7 +39,7 @@ test.describe('tenant admin smoke', () => {
     // 4. perform one safe admin operation: invite a new member
     const email = `smoke+${Date.now()}@e2e.test`;
     await page.getByLabel('Email').fill(email);
-    await page.getByRole('button', { name: 'Send invite' }).click();
+    await page.getByRole('button', { name: 'Send invite', exact: true }).click();
 
     // 5. verify the result: the one-time invitation link is shown and the row appears
     await expect(page.getByText(`Invitation created for ${email}`)).toBeVisible();

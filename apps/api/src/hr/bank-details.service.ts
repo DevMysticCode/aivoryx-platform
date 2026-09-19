@@ -4,6 +4,7 @@ import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { AuditService, userActor } from '../audit/audit.service.js';
 import { HrScope } from './common.js';
+import { assertEmployeeVisible } from './data-scope.js';
 import type { BankDetailsDto, UpsertBankDetailsDto } from './hr.dto.js';
 
 const { employeeBankDetails, employees } = schema;
@@ -28,6 +29,7 @@ export class BankDetailsService {
   get(scope: HrScope, employeeId: string): Promise<BankDetailsDto> {
     return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, employeeId);
+      await assertEmployeeVisible(tx, scope, employeeId);
       const [row] = await tx
         .select()
         .from(employeeBankDetails)
@@ -50,6 +52,7 @@ export class BankDetailsService {
   ): Promise<BankDetailsDto> {
     return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, employeeId);
+      await assertEmployeeVisible(tx, scope, employeeId);
       const values = {
         tenantId: scope.tenantId,
         employeeId,

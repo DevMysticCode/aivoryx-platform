@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, ErrorNote, Skeleton, Card, EmptyState } from '@/components/admin/ui';
 import { ErrorBlock, Confirm } from '@/components/ui/kit';
 import { Select, Table } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
@@ -14,8 +14,11 @@ import {
   money,
   fmtDate,
   fmtDateTime,
+  fmtSize,
   TabBar,
 } from '@/components/hr/ui';
+import { ManagerPicker, type ManagerValue } from '@/components/hr/manager-picker';
+import { nextEmployeeStatuses, isEndingStatus, employeeStatusLabel } from '@/lib/hr/lifecycle';
 import * as hrApi from '@/lib/api/hr';
 import {
   useEmployee,
@@ -29,6 +32,11 @@ import {
   useLeaveRequests,
   useExpenseClaims,
   useChangeEmployeeStatus,
+  useUpdateEmployee,
+  useSetDocumentSharing,
+  useDepartments,
+  useDesignations,
+  useLocations,
   useCreateCompensation,
   useUpsertBankDetails,
 } from '@/lib/hr/use-hr';
@@ -43,8 +51,6 @@ type Tab =
   | 'bank'
   | 'documents'
   | 'activity';
-
-const STATUSES = ['ACTIVE', 'ON_LEAVE', 'SUSPENDED', 'TERMINATED', 'RESIGNED', 'INACTIVE'];
 
 export default function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -88,6 +94,10 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
             <HrStatusBadge status={emp.data.status} />
           </PageHeader>
 
+          {emp.data.status === 'ONBOARDING' && (
+            <OnboardingNotice id={id} joiningDate={emp.data.joiningDate} canManage={canManage} />
+          )}
+
           <TabBar tabs={tabs} active={tab} onChange={setTab} />
 
           {tab === 'overview' && <Overview id={id} />}
@@ -105,6 +115,40 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
           {tab === 'activity' && <ActivityTab id={id} />}
         </>
       )}
+    </div>
+  );
+}
+
+function OnboardingNotice({
+  id,
+  joiningDate,
+  canManage,
+}: {
+  id: string;
+  joiningDate: string;
+  canManage: boolean;
+}) {
+  const change = useChangeEmployeeStatus(id);
+  return (
+    <div role="status" className="space-y-2 rounded-lg border border-info/30 bg-info/5 p-4 text-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-semibold">Onboarding — starts {fmtDate(joiningDate)}</p>
+          <p className="text-muted-foreground">
+            Not counted in headcount or payroll until marked as started.
+          </p>
+        </div>
+        {canManage && (
+          <Button
+            size="sm"
+            disabled={change.isPending}
+            onClick={() => change.mutate({ status: 'ACTIVE', reason: 'Started' })}
+          >
+            {change.isPending ? 'Starting…' : 'Mark as started'}
+          </Button>
+        )}
+      </div>
+      <ErrorNote error={change.error} />
     </div>
   );
 }
@@ -147,45 +191,170 @@ function Employment({ id, canManage }: { id: string; canManage: boolean }) {
   const change = useChangeEmployeeStatus(id);
   const [status, setStatus] = useState('');
   const [reason, setReason] = useState('');
+  const [confirming, setConfirming] = useState(false);
   if (!emp.data) return null;
+
+  const moves = nextEmployeeStatuses(emp.data.status);
+  const ending = isEndingStatus(status);
+  const needsReason = ending && !reason.trim();
+
+  const apply = async () => {
+    try {
+      await change.mutateAsync({ status, reason: reason.trim() || undefined });
+      setStatus('');
+      setReason('');
+    } catch {
+      // surfaced via ErrorNote + toast
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
       <Card>
-        <div className="mb-2 text-sm font-semibold">Lifecycle status</div>
+        <h2 className="mb-2 text-sm font-semibold">Lifecycle status</h2>
         <p className="text-sm text-muted-foreground">
           Current: <HrStatusBadge status={emp.data.status} />
         </p>
-        {canManage ? (
+        {!canManage ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            You do not have permission to change status.
+          </p>
+        ) : moves.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">
+            This person has left. The record is retained for history and its status cannot be
+            changed.
+          </p>
+        ) : (
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <Select label="Change to" value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="">—</option>
-              {STATUSES.filter((s) => s !== emp.data!.status).map((s) => (
+              {moves.map((s) => (
                 <option key={s} value={s}>
-                  {s.replace(/_/g, ' ')}
+                  {employeeStatusLabel(s)}
                 </option>
               ))}
             </Select>
-            <TextField label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} />
+            <TextField
+              label={ending ? 'Reason (required)' : 'Reason'}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
             <div className="flex items-end">
               <Button
                 size="sm"
-                disabled={!status || change.isPending}
-                onClick={() => change.mutate({ status, reason: reason || undefined })}
+                disabled={!status || needsReason || change.isPending}
+                onClick={() => (ending ? setConfirming(true) : void apply())}
               >
                 {change.isPending ? 'Applying…' : 'Apply'}
               </Button>
             </div>
           </div>
-        ) : (
-          <p className="mt-2 text-xs text-muted-foreground">
-            You do not have permission to change status.
-          </p>
         )}
         <ErrorNote error={change.error} />
       </Card>
+      {canManage && <OrganisationCard id={id} />}
       <ActivityTab id={id} />
+
+      <Confirm
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={apply}
+        title={`Mark ${emp.data.displayName} as ${employeeStatusLabel(status).toLowerCase()}?`}
+        body="This ends their employment and cannot be undone. Their record is kept for history, and they will no longer count towards headcount or payroll."
+        confirmLabel={`Mark as ${employeeStatusLabel(status).toLowerCase()}`}
+        danger
+        pending={change.isPending}
+      />
     </div>
+  );
+}
+
+/** Active units, plus the one currently held even if archived — the server rejects newly assigning an archived unit. */
+function unitOptions(
+  units: { id: string; name: string; status: 'ACTIVE' | 'ARCHIVED' }[] | undefined,
+  currentId: string,
+) {
+  return (units ?? [])
+    .filter((u) => u.status === 'ACTIVE' || u.id === currentId)
+    .map((u) => ({ id: u.id, label: u.status === 'ARCHIVED' ? `${u.name} (archived)` : u.name }));
+}
+
+type OrgDraft = {
+  departmentId: string;
+  designationId: string;
+  workLocationId: string;
+  manager: ManagerValue | null;
+};
+
+function OrganisationCard({ id }: { id: string }) {
+  const emp = useEmployee(id);
+  const update = useUpdateEmployee(id);
+  const departments = useDepartments();
+  const designations = useDesignations();
+  const locations = useLocations();
+  const e = emp.data;
+  const [draft, setDraft] = useState<OrgDraft | null>(null);
+  if (!e) return null;
+
+  const cur: OrgDraft = draft ?? {
+    departmentId: e.departmentId ?? '',
+    designationId: e.designationId ?? '',
+    workLocationId: e.workLocationId ?? '',
+    manager: e.managerId ? { id: e.managerId, name: e.managerName ?? 'Manager' } : null,
+  };
+  const patch = (p: Partial<OrgDraft>) => setDraft({ ...cur, ...p });
+
+  const unitSelect = (
+    label: string,
+    key: 'departmentId' | 'designationId' | 'workLocationId',
+    units: { id: string; name: string; status: 'ACTIVE' | 'ARCHIVED' }[] | undefined,
+    held: string | null,
+  ) => (
+    <Select label={label} value={cur[key]} onChange={(ev) => patch({ [key]: ev.target.value })}>
+      <option value="">—</option>
+      {unitOptions(units, held ?? '').map((o) => (
+        <option key={o.id} value={o.id}>
+          {o.label}
+        </option>
+      ))}
+    </Select>
+  );
+
+  return (
+    <Card className="space-y-3">
+      <h2 className="text-sm font-semibold">Organisation</h2>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {unitSelect('Department', 'departmentId', departments.data, e.departmentId)}
+        {unitSelect('Designation', 'designationId', designations.data, e.designationId)}
+        {unitSelect('Work location', 'workLocationId', locations.data, e.workLocationId)}
+        <ManagerPicker
+          label="Reporting manager"
+          value={cur.manager}
+          excludeId={id}
+          onChange={(m) => patch({ manager: m })}
+        />
+      </div>
+      <ErrorNote error={update.error} />
+      <Button
+        size="sm"
+        disabled={!draft || update.isPending}
+        onClick={() =>
+          update.mutate(
+            {
+              departmentId: cur.departmentId || null,
+              designationId: cur.designationId || null,
+              workLocationId: cur.workLocationId || null,
+              managerId: cur.manager?.id ?? null,
+            },
+            { onSuccess: () => setDraft(null) },
+          )
+        }
+      >
+        {update.isPending ? 'Saving…' : 'Save organisation'}
+      </Button>
+    </Card>
   );
 }
 
@@ -220,15 +389,9 @@ function AttendanceTab({ id }: { id: string }) {
               <td className="px-3 py-2 tabular-nums">{a.correctionCount || '—'}</td>
             </tr>
           ))}
-          {q.data.items.length === 0 && (
-            <tr>
-              <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
-                No attendance recorded.
-              </td>
-            </tr>
-          )}
         </Table>
       )}
+      {q.data && q.data.items.length === 0 && <EmptyState>No attendance recorded.</EmptyState>}
     </div>
   );
 }
@@ -265,7 +428,7 @@ function LeaveTab({ id }: { id: string }) {
             ))}
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">No balances.</p>
+          <EmptyState>No balances.</EmptyState>
         )}
       </Card>
       <Card>
@@ -297,7 +460,7 @@ function LeaveTab({ id }: { id: string }) {
             ))}
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">No leave requests.</p>
+          <EmptyState>No leave requests.</EmptyState>
         )}
       </Card>
     </div>
@@ -337,7 +500,7 @@ function ExpensesTab({ id }: { id: string }) {
           ))}
         </Table>
       ) : (
-        <p className="text-sm text-muted-foreground">No expense claims.</p>
+        <EmptyState>No expense claims.</EmptyState>
       )}
     </div>
   );
@@ -427,9 +590,7 @@ function CompensationTab({ id, canManage }: { id: string; canManage: boolean }) 
           )}
         </Card>
       ))}
-      {history.data?.length === 0 && (
-        <p className="text-sm text-muted-foreground">No compensation on file.</p>
-      )}
+      {history.data?.length === 0 && <EmptyState>No compensation on file.</EmptyState>}
     </div>
   );
 }
@@ -456,7 +617,7 @@ function BankTab({ id, canManage }: { id: string; canManage: boolean }) {
       </div>
       {bank.isLoading && <Skeleton rows={3} />}
       {bank.error ? (
-        <p className="text-sm text-muted-foreground">No bank details on file.</p>
+        <EmptyState>No bank details on file.</EmptyState>
       ) : (
         bank.data && (
           <Card>
@@ -539,6 +700,18 @@ function BankTab({ id, canManage }: { id: string; canManage: boolean }) {
   );
 }
 
+const DOCUMENT_KINDS = [
+  { value: 'general', label: 'General' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'offer_letter', label: 'Offer letter' },
+  { value: 'identity', label: 'Identity' },
+  { value: 'certificate', label: 'Certificate' },
+] as const;
+
+function documentKindLabel(kind: string): string {
+  return DOCUMENT_KINDS.find((k) => k.value === kind)?.label ?? kind;
+}
+
 function DocumentsTab({ id, canManage }: { id: string; canManage: boolean }) {
   const docs = useEmployeeDocuments(id);
   const remove = useDeleteEmployeeDocument(id);
@@ -546,16 +719,30 @@ function DocumentsTab({ id, canManage }: { id: string; canManage: boolean }) {
   const [err, setErr] = useState<unknown>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const upload = async (file: File, kind: string, title: string) => {
+  const share = useSetDocumentSharing(id);
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
+  const [kind, setKind] = useState('general');
+  const [shareOnUpload, setShareOnUpload] = useState(false);
+  const [fileKey, setFileKey] = useState(0);
+
+  const upload = async () => {
+    if (!file) return;
     setBusy(true);
     setErr(null);
     try {
       const fd = new FormData();
       fd.set('file', file);
       fd.set('kind', kind);
-      fd.set('title', title);
+      fd.set('title', title.trim() || file.name);
+      fd.set('sharedWithEmployee', shareOnUpload ? 'true' : 'false');
       await hrApi.uploadEmployeeDocument(id, fd);
       await docs.refetch();
+      setFile(null);
+      setTitle('');
+      setKind('general');
+      setShareOnUpload(false);
+      setFileKey((k) => k + 1);
     } catch (e) {
       setErr(e);
     } finally {
@@ -566,21 +753,72 @@ function DocumentsTab({ id, canManage }: { id: string; canManage: boolean }) {
   return (
     <div className="space-y-3">
       {canManage && (
-        <Card className="flex flex-wrap items-end gap-3">
-          <label className="text-sm">
-            <span className="block font-medium">Add document</span>
-            <input
-              type="file"
+        <Card>
+          <form
+            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_1.2fr_1fr_auto] lg:items-end"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void upload();
+            }}
+          >
+            <label className="block min-w-0 space-y-1.5">
+              <span className="text-sm font-medium">Document file</span>
+              <input
+                key={fileKey}
+                type="file"
+                disabled={busy}
+                className="block w-full min-w-0 text-sm"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setFile(f);
+                  if (f && !title) setTitle(f.name);
+                }}
+              />
+            </label>
+            <TextField
+              label="Title"
+              value={title}
+              maxLength={160}
               disabled={busy}
-              className="mt-1 text-sm"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void upload(f, 'general', f.name);
-                e.currentTarget.value = '';
-              }}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Employment contract"
             />
-          </label>
-          {busy && <span className="text-xs text-muted-foreground">Uploading…</span>}
+            <Select
+              label="Type"
+              value={kind}
+              disabled={busy}
+              onChange={(e) => setKind(e.target.value)}
+            >
+              {DOCUMENT_KINDS.map((k) => (
+                <option key={k.value} value={k.value}>
+                  {k.label}
+                </option>
+              ))}
+            </Select>
+            <Button
+              type="submit"
+              isLoading={busy}
+              loadingText="Uploading…"
+              disabled={!file || busy}
+            >
+              Upload
+            </Button>
+            <label className="flex items-start gap-2 text-sm sm:col-span-2 lg:col-span-4">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={shareOnUpload}
+                disabled={busy}
+                onChange={(e) => setShareOnUpload(e.target.checked)}
+              />
+              <span>
+                Share with the employee
+                <span className="block text-xs text-muted-foreground">
+                  They can view and download it in My HR. Documents are HR-only unless shared.
+                </span>
+              </span>
+            </label>
+          </form>
         </Card>
       )}
       {err ? <ErrorNote error={err} /> : null}
@@ -589,46 +827,83 @@ function DocumentsTab({ id, canManage }: { id: string; canManage: boolean }) {
           head={
             <tr>
               <th className="px-3 py-2">Title</th>
-              <th className="px-3 py-2">Kind</th>
-              <th className="px-3 py-2">Type</th>
-              <th className="px-3 py-2">Size</th>
-              <th className="px-3 py-2">Added</th>
-              <th className="px-3 py-2" />
+              <th className="hidden px-3 py-2 sm:table-cell">Kind</th>
+              <th className="px-3 py-2">Visibility</th>
+              <th className="hidden px-3 py-2 lg:table-cell">Type</th>
+              <th className="hidden px-3 py-2 md:table-cell">Size</th>
+              <th className="hidden px-3 py-2 md:table-cell">Added</th>
+              <th className="px-3 py-2">
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           }
         >
           {docs.data.map((d) => (
             <tr key={d.id}>
-              <td className="px-3 py-2">{d.title}</td>
-              <td className="px-3 py-2">{d.kind}</td>
-              <td className="px-3 py-2 text-muted-foreground">{d.contentType}</td>
-              <td className="px-3 py-2 tabular-nums">{(d.sizeBytes / 1024).toFixed(0)} KB</td>
-              <td className="px-3 py-2">{fmtDate(d.createdAt)}</td>
-              <td className="px-3 py-2 text-right">
-                <a
-                  href={hrApi.employeeDocumentUrl(id, d.id)}
-                  className="text-primary hover:underline"
-                  target="_blank"
-                  rel="noreferrer"
+              <td className="px-3 py-2">
+                {d.title}
+                <span className="mt-1 block text-xs text-muted-foreground sm:hidden">
+                  {documentKindLabel(d.kind)} · {fmtSize(d.sizeBytes)} · {fmtDate(d.createdAt)}
+                </span>
+              </td>
+              <td className="hidden px-3 py-2 sm:table-cell">{documentKindLabel(d.kind)}</td>
+              <td className="px-3 py-2">
+                <span
+                  className={
+                    d.sharedWithEmployee
+                      ? 'inline-flex whitespace-nowrap rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info'
+                      : 'inline-flex whitespace-nowrap rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground'
+                  }
                 >
-                  Download
-                </a>
-                {canManage ? (
-                  <button
-                    type="button"
-                    disabled={remove.isPending}
-                    className="ml-3 text-destructive hover:underline disabled:opacity-50"
-                    onClick={() => setDeletingId(d.id)}
+                  {d.sharedWithEmployee ? 'Shared with employee' : 'HR only'}
+                </span>
+              </td>
+              <td className="hidden px-3 py-2 text-muted-foreground lg:table-cell">
+                {d.contentType}
+              </td>
+              <td className="hidden px-3 py-2 tabular-nums md:table-cell">
+                {fmtSize(d.sizeBytes)}
+              </td>
+              <td className="hidden px-3 py-2 md:table-cell">{fmtDate(d.createdAt)}</td>
+              <td className="px-3 py-2">
+                <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
+                  <a
+                    href={hrApi.employeeDocumentUrl(id, d.id)}
+                    className="text-primary hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
                   >
-                    {remove.isPending && deletingId === d.id ? 'Deleting…' : 'Delete'}
-                  </button>
-                ) : null}
+                    Download
+                  </a>
+                  {canManage ? (
+                    <button
+                      type="button"
+                      disabled={share.isPending}
+                      className="text-primary hover:underline disabled:opacity-50"
+                      onClick={() =>
+                        share.mutate({ documentId: d.id, shared: !d.sharedWithEmployee })
+                      }
+                    >
+                      {d.sharedWithEmployee ? 'Make HR-only' : 'Share with employee'}
+                    </button>
+                  ) : null}
+                  {canManage ? (
+                    <button
+                      type="button"
+                      disabled={remove.isPending}
+                      className="text-destructive hover:underline disabled:opacity-50"
+                      onClick={() => setDeletingId(d.id)}
+                    >
+                      {remove.isPending && deletingId === d.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  ) : null}
+                </div>
               </td>
             </tr>
           ))}
         </Table>
       ) : (
-        <p className="text-sm text-muted-foreground">No documents.</p>
+        <EmptyState>No documents.</EmptyState>
       )}
 
       <Confirm
@@ -678,7 +953,7 @@ function ActivityTab({ id }: { id: string }) {
           ))}
         </ol>
       ) : (
-        <p className="text-sm text-muted-foreground">No employment history yet.</p>
+        <EmptyState>No employment history yet.</EmptyState>
       )}
     </div>
   );

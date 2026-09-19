@@ -125,7 +125,7 @@ export class HrPerformanceController {
   @ApiOperation({ operationId: 'getHrPerformanceReview', summary: 'One performance review.' })
   @ApiOkResponse({ type: PerformanceReviewDto })
   getReview(@Security() ctx: SecurityContext, @Param('id') id: string) {
-    return this.performance.getReview(hrScope(ctx), id);
+    return this.performance.getReviewForCaller(hrScope(ctx), id);
   }
 
   @Patch('reviews/:id')

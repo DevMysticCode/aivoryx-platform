@@ -1482,7 +1482,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** HR dashboard counters. */
+    /** HR dashboard — counters, attention items and recent activity, bound by data scope. */
     get: operations['hrDashboard'];
     put?: never;
     post?: never;
@@ -1615,6 +1615,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/hr/schedules/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update or archive a work schedule. */
+    patch: operations['updateHrSchedule'];
+    trace?: never;
+  };
   '/hr/organization/chart': {
     parameters: {
       query?: never;
@@ -1738,23 +1755,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/hr/employees/{id}/documents/{documentId}/download': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Download an employee document. */
-    get: operations['downloadHrEmployeeDocument'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/hr/employees/{id}/documents/{documentId}': {
     parameters: {
       query?: never;
@@ -1767,6 +1767,24 @@ export interface paths {
     post?: never;
     /** Remove an employee document. */
     delete: operations['deleteHrEmployeeDocument'];
+    options?: never;
+    head?: never;
+    /** Share or unshare a document with the employee (self-service visibility). */
+    patch: operations['updateHrEmployeeDocument'];
+    trace?: never;
+  };
+  '/hr/employees/{id}/documents/{documentId}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download an employee document. */
+    get: operations['downloadHrEmployeeDocument'];
+    put?: never;
+    post?: never;
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -2729,6 +2747,57 @@ export interface paths {
     };
     /** My expense claims. */
     get: operations['hrMyExpenses'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me/documents': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Documents HR has shared with me. */
+    get: operations['hrMyDocuments'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me/documents/{documentId}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download a document HR has shared with me. */
+    get: operations['downloadHrMyDocument'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/hr/me/performance-reviews': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My performance reviews (submitted onward — drafts stay with the manager). */
+    get: operations['hrMyPerformanceReviews'];
     put?: never;
     post?: never;
     delete?: never;
@@ -5823,6 +5892,13 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    FieldAgentEmployeeDto: {
+      /** Format: uuid */
+      id: string;
+      displayName: string;
+      employeeNumber: string;
+      status: string;
+    };
     FieldAgentDto: {
       /** Format: uuid */
       id: string;
@@ -5835,6 +5911,8 @@ export interface components {
       status: 'active' | 'inactive';
       /** Format: date-time */
       createdAt: string;
+      /** @description The linked HR employee record. Present only when the workspace has HR enabled, the caller may read employees, and this login is linked to an employee — otherwise null. */
+      employee: components['schemas']['FieldAgentEmployeeDto'] | null;
     };
     DesignateFieldAgentRequestDto: {
       /** Format: uuid */
@@ -6079,9 +6157,45 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    HrDashboardEmployeeRefDto: {
+      /** Format: uuid */
+      id: string;
+      displayName: string;
+      /**
+       * Format: date
+       * @description Joining date or probation end date.
+       */
+      date: string;
+    };
+    HrActivityItemDto: {
+      /** Format: date-time */
+      at: string;
+      /** @enum {string} */
+      kind:
+        | 'HIRED'
+        | 'STATUS'
+        | 'DEPARTMENT'
+        | 'DESIGNATION'
+        | 'MANAGER'
+        | 'LOCATION'
+        | 'EMPLOYMENT_TYPE';
+      /** Format: uuid */
+      employeeId: string;
+      employeeName: string;
+      /** @description Human-readable, never carries compensation or raw identifiers. */
+      summary: string;
+    };
     HrDashboardDto: {
       totalEmployees: number;
       activeEmployees: number;
+      /** @description Employees created ahead of their start date. */
+      onboardingEmployees: number;
+      /** @description Next onboarding starts. */
+      upcomingStarts: components['schemas']['HrDashboardEmployeeRefDto'][];
+      /** @description Active employees whose probation ends within 30 days. */
+      probationEnding: components['schemas']['HrDashboardEmployeeRefDto'][];
+      /** @description Most recent workforce changes. */
+      recentActivity: components['schemas']['HrActivityItemDto'][];
       presentToday: number;
       onLeaveToday: number;
       absentToday: number;
@@ -6166,6 +6280,17 @@ export interface components {
       /** Format: uuid */
       locationId?: string;
     };
+    UpdateWorkScheduleDto: {
+      name?: string;
+      /** @example 09:00 */
+      startTime?: string;
+      /** @example 18:00 */
+      endTime?: string;
+      workingDaysMask?: number;
+      graceMinutes?: number;
+      /** @enum {string} */
+      status?: 'ACTIVE' | 'ARCHIVED';
+    };
     OrgChartNodeDto: {
       /** Format: uuid */
       employeeId: string;
@@ -6187,7 +6312,14 @@ export interface components {
       displayName: string;
       workEmail: string | null;
       /** @enum {string} */
-      status: 'ACTIVE' | 'ON_LEAVE' | 'SUSPENDED' | 'TERMINATED' | 'RESIGNED' | 'INACTIVE';
+      status:
+        | 'ONBOARDING'
+        | 'ACTIVE'
+        | 'ON_LEAVE'
+        | 'SUSPENDED'
+        | 'TERMINATED'
+        | 'RESIGNED'
+        | 'INACTIVE';
       /** @enum {string} */
       employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN' | 'TEMPORARY';
       department: string | null;
@@ -6238,6 +6370,12 @@ export interface components {
       /** Format: date */
       probationEndDate?: string;
       notes?: string;
+      /**
+       * @description Starting lifecycle state. ONBOARDING = created ahead of the start date (excluded from headcount and payroll until moved to ACTIVE). Defaults to ACTIVE. Ignored on update — use the status endpoint to change an existing employee.
+       * @default ACTIVE
+       * @enum {string}
+       */
+      status: 'ONBOARDING' | 'ACTIVE';
     };
     EmployeeDetailDto: {
       /** Format: uuid */
@@ -6246,7 +6384,14 @@ export interface components {
       displayName: string;
       workEmail: string | null;
       /** @enum {string} */
-      status: 'ACTIVE' | 'ON_LEAVE' | 'SUSPENDED' | 'TERMINATED' | 'RESIGNED' | 'INACTIVE';
+      status:
+        | 'ONBOARDING'
+        | 'ACTIVE'
+        | 'ON_LEAVE'
+        | 'SUSPENDED'
+        | 'TERMINATED'
+        | 'RESIGNED'
+        | 'INACTIVE';
       /** @enum {string} */
       employmentType: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN' | 'TEMPORARY';
       department: string | null;
@@ -6322,11 +6467,24 @@ export interface components {
       /** Format: date */
       probationEndDate?: string;
       notes?: string;
+      /**
+       * @description Starting lifecycle state. ONBOARDING = created ahead of the start date (excluded from headcount and payroll until moved to ACTIVE). Defaults to ACTIVE. Ignored on update — use the status endpoint to change an existing employee.
+       * @default ACTIVE
+       * @enum {string}
+       */
+      status: 'ONBOARDING' | 'ACTIVE';
       changeReason?: string;
     };
     ChangeEmployeeStatusDto: {
       /** @enum {string} */
-      status: 'ACTIVE' | 'ON_LEAVE' | 'SUSPENDED' | 'TERMINATED' | 'RESIGNED' | 'INACTIVE';
+      status:
+        | 'ONBOARDING'
+        | 'ACTIVE'
+        | 'ON_LEAVE'
+        | 'SUSPENDED'
+        | 'TERMINATED'
+        | 'RESIGNED'
+        | 'INACTIVE';
       reason?: string;
     };
     EmploymentHistoryItemDto: {
@@ -6353,12 +6511,23 @@ export interface components {
       contentType: string;
       sizeBytes: number;
       originalFilename: string | null;
+      /** @description Whether the employee can see and download this document in their self-service. */
+      sharedWithEmployee: boolean;
       /** Format: date-time */
       createdAt: string;
     };
     AddEmployeeDocumentMetaDto: {
       kind: string;
       title: string;
+      /**
+       * @description Multipart form field — share this document with the employee (default: no).
+       * @default false
+       * @enum {string}
+       */
+      sharedWithEmployee: 'true' | 'false';
+    };
+    UpdateEmployeeDocumentDto: {
+      sharedWithEmployee: boolean;
     };
     CompensationComponentDto: {
       /** @enum {string} */
@@ -9252,11 +9421,16 @@ export interface operations {
           | 'hr.employee.membership_unlinked'
           | 'hr.employee.document_added'
           | 'hr.employee.document_deleted'
+          | 'hr.employee.document_sharing_changed'
           | 'hr.bank_details.updated'
           | 'hr.organization.department_created'
           | 'hr.organization.designation_created'
           | 'hr.organization.location_created'
           | 'hr.organization.schedule_created'
+          | 'hr.organization.department_updated'
+          | 'hr.organization.designation_updated'
+          | 'hr.organization.location_updated'
+          | 'hr.organization.schedule_updated'
           | 'hr.attendance.checked_in'
           | 'hr.attendance.checked_out'
           | 'hr.attendance.recorded'
@@ -9284,6 +9458,7 @@ export interface operations {
           | 'hr.payroll.payment_recorded'
           | 'hr.performance.goal_created'
           | 'hr.performance.review_submitted'
+          | 'hr.performance.review_acknowledged'
           | 'hr.performance.review_closed';
         module?:
           | 'auth'
@@ -13360,6 +13535,47 @@ export interface operations {
       };
     };
   };
+  updateHrSchedule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateWorkScheduleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WorkScheduleDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   hrOrgChart: {
     parameters: {
       query?: never;
@@ -13402,7 +13618,14 @@ export interface operations {
         departmentId?: string;
         designationId?: string;
         workLocationId?: string;
-        status?: 'ACTIVE' | 'ON_LEAVE' | 'SUSPENDED' | 'TERMINATED' | 'RESIGNED' | 'INACTIVE';
+        status?:
+          | 'ONBOARDING'
+          | 'ACTIVE'
+          | 'ON_LEAVE'
+          | 'SUSPENDED'
+          | 'TERMINATED'
+          | 'RESIGNED'
+          | 'INACTIVE';
         employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN' | 'TEMPORARY';
         page?: number;
         pageSize?: number;
@@ -13790,7 +14013,7 @@ export interface operations {
       };
     };
   };
-  downloadHrEmployeeDocument: {
+  deleteHrEmployeeDocument: {
     parameters: {
       query?: never;
       header?: never;
@@ -13802,7 +14025,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      200: {
+      204: {
         headers: {
           [name: string]: unknown;
         };
@@ -13826,7 +14049,49 @@ export interface operations {
       };
     };
   };
-  deleteHrEmployeeDocument: {
+  updateHrEmployeeDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateEmployeeDocumentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDocumentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadHrEmployeeDocument: {
     parameters: {
       query?: never;
       header?: never;
@@ -13838,7 +14103,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      204: {
+      200: {
         headers: {
           [name: string]: unknown;
         };
@@ -16567,6 +16832,111 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ExpenseClaimListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMyDocuments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EmployeeDocumentDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  downloadHrMyDocument: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  hrMyPerformanceReviews: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceReviewDto'][];
         };
       };
       401: {
