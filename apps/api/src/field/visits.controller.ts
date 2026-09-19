@@ -28,6 +28,7 @@ import {
   AssignVisitRequestDto,
   CancelVisitRequestDto,
   CheckOutRequestDto,
+  CompleteVisitRequestDto,
   CreateVisitNoteRequestDto,
   GeoPointRequestDto,
   ListVisitsQueryDto,
@@ -39,6 +40,7 @@ import {
   VisitAttachmentDto,
   VisitDto,
   VisitListResponseDto,
+  VisitSummaryDto,
   VisitNoteDto,
 } from './field.dto.js';
 import { VisitAttachmentsService } from './visit-attachments.service.js';
@@ -46,7 +48,12 @@ import { VisitNotesService } from './visit-notes.service.js';
 import { listActivitiesForVisit } from './visit-activities.js';
 import { visitExists } from './visit-queries.js';
 import { getDb, withTenantContext } from '@aivoryx/db';
-import { VisitsService, type TenantScope, type VisitVisibility } from './visits.service.js';
+import {
+  VisitsService,
+  type CrmAccess,
+  type TenantScope,
+  type VisitVisibility,
+} from './visits.service.js';
 
 /**
  * Field operations surface — visits, GPS check-in/out, survey, notes,
@@ -85,6 +92,17 @@ export class VisitsController {
     );
   }
 
+  @Get('summary')
+  @RequirePermission('field.visits.read')
+  @ApiOperation({
+    operationId: 'visitSummary',
+    summary: 'Real visit counts for dashboards (scheduled, awaiting outcome, follow-up required).',
+  })
+  @ApiOkResponse({ type: VisitSummaryDto })
+  summary(@Security() ctx: SecurityContext) {
+    return this.visits.summary(scope(ctx), visibility(ctx));
+  }
+
   @Get(':visitId')
   @RequirePermission('field.visits.read')
   @ApiOperation({ operationId: 'getVisit', summary: 'A single visit.' })
@@ -99,7 +117,7 @@ export class VisitsController {
   @ApiOperation({ operationId: 'scheduleVisit', summary: 'Schedule a site visit for a lead.' })
   @ApiOkResponse({ type: VisitDto })
   schedule(@Security() ctx: SecurityContext, @Body() body: ScheduleVisitRequestDto) {
-    return this.visits.schedule(scope(ctx), body);
+    return this.visits.schedule(scope(ctx), body, crmAccess(ctx));
   }
 
   @Post(':visitId/assign')
@@ -172,8 +190,14 @@ export class VisitsController {
   @RequirePermission('field.visits.complete')
   @ApiOperation({ operationId: 'completeVisit', summary: 'Mark an assigned visit complete.' })
   @ApiOkResponse({ type: VisitDto })
-  complete(@Security() ctx: SecurityContext, @Param('visitId') visitId: string) {
-    return this.visits.complete(scope(ctx), visitId);
+  complete(
+    @Security() ctx: SecurityContext,
+    @Param('visitId') visitId: string,
+    @Body() body: CompleteVisitRequestDto,
+  ) {
+    return this.visits.complete(scope(ctx), visitId, body ?? {}, {
+      entitled: ctx.entitledModules.has('CRM'),
+    });
   }
 
   // ---- survey ---------------------------------------------------------
@@ -331,4 +355,12 @@ function scope(ctx: SecurityContext): TenantScope {
  *  (mirrors the lead-notes "manage any note" pattern). */
 function visibility(ctx: SecurityContext): VisitVisibility {
   return { canSeeAll: ctx.permissions.has('crm.leads.read') };
+}
+
+/** CRM entitlement and lead-read permission, from the security context — never client input. */
+function crmAccess(ctx: SecurityContext): CrmAccess {
+  return {
+    entitled: ctx.entitledModules.has('CRM'),
+    canReadLeads: ctx.permissions.has('crm.leads.read'),
+  };
 }

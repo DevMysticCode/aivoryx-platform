@@ -24,7 +24,7 @@ import { tenants, userTenantMemberships } from './identity.js';
  *   assigned role regardless of kind.
  * - `membership_roles.data_scope` records how wide a role assignment reaches
  *   (OWN / TEAM / DEPARTMENT / COMPANY). Modules that honour a scope (CRM
- *   analytics, HR since Phase 17 — ADR 0044) read it; modules with their own
+ *   analytics, HR since Phase 17 — ADR 0044, CRM lead reads since Phase 18 — ADR 0045) read it; modules with their own
  *   access boundary (Field) are unaffected.
  */
 export const roleKind = pgEnum('role_kind', ['profile', 'permission_set', 'custom']);

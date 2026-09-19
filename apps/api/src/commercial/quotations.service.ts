@@ -8,6 +8,8 @@ import { AuditService, userActor } from '../audit/audit.service.js';
 import { DocumentRenderService } from '../documents/document-render.service.js';
 import { buildQuotationDocument } from '../documents/builders.js';
 import { isValidLeadTransition } from '../crm/lead-lifecycle.js';
+import { assertLeadAccessible, resolveCrmDataScope } from '../crm/lead-access.js';
+import { findReferencableVisit } from '../field/visit-reference.js';
 import {
   OBJECT_STORAGE,
   buildEntityAttachmentKey,
@@ -92,6 +94,7 @@ export class QuotationsService {
       status?: string;
       customerId?: string;
       leadId?: string;
+      projectId?: string;
       q?: string;
       page?: number;
       pageSize?: number;
@@ -103,6 +106,7 @@ export class QuotationsService {
       if (filter.status) conds.push(eq(quotations.status, filter.status as QuotationStatus));
       if (filter.customerId) conds.push(eq(quotations.customerId, filter.customerId));
       if (filter.leadId) conds.push(eq(quotations.leadId, filter.leadId));
+      if (filter.projectId) conds.push(eq(quotations.projectId, filter.projectId));
       if (filter.q?.trim()) conds.push(ilike(quotations.number, `%${filter.q.trim()}%`));
       const where = and(...conds);
       const [countRow] = await tx
@@ -146,8 +150,68 @@ export class QuotationsService {
     });
   }
 
-  async get(scope: TenantScope, id: string): Promise<QuotationDetailDto> {
-    return withTenantContext(getDb(), scope, (tx) => this.loadDetail(tx, scope, id));
+  /** Real pipeline counts for the CRM dashboard, bound by the caller's CRM data scope. */
+  async pipelineSummary(scope: TenantScope) {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const dataScope = await resolveCrmDataScope(tx, scope.tenantId, scope.actorMembershipId);
+      const own = dataScope === 'OWN';
+      const [q] = await tx
+        .select({
+          draft: sql<number>`count(*) filter (where ${quotations.status} = 'DRAFT')::int`,
+          sent: sql<number>`count(*) filter (where ${quotations.status} = 'SENT')::int`,
+        })
+        .from(quotations)
+        .where(
+          own
+            ? and(
+                eq(quotations.tenantId, scope.tenantId),
+                sql`exists (select 1 from leads l where l.id = ${quotations.leadId} and l.tenant_id = ${quotations.tenantId} and l.assigned_membership_id = ${scope.actorMembershipId})`,
+              )
+            : eq(quotations.tenantId, scope.tenantId),
+        );
+      const [w] = await tx
+        .select({ n: sql<number>`count(*)::int` })
+        .from(leads)
+        .where(
+          and(
+            eq(leads.tenantId, scope.tenantId),
+            eq(leads.status, 'QUALIFIED'),
+            own ? eq(leads.assignedMembershipId, scope.actorMembershipId) : undefined,
+            sql`not exists (select 1 from quotations qq where qq.lead_id = ${leads.id} and qq.tenant_id = ${leads.tenantId} and qq.status <> 'CANCELLED')`,
+          ),
+        );
+      return {
+        qualifiedAwaitingQuotation: w?.n ?? 0,
+        draft: q?.draft ?? 0,
+        sentAwaitingResponse: q?.sent ?? 0,
+      };
+    });
+  }
+
+  /** `visitAccess` decides whether the referenced visit is revealed at all. */
+  async get(
+    scope: TenantScope,
+    id: string,
+    visitAccess?: QuotationVisitAccess,
+  ): Promise<QuotationDetailDto> {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const detail = await this.loadDetail(tx, scope, id);
+      if (detail.visitId && visitAccess?.allowed) {
+        const ref = await findReferencableVisit(tx, {
+          tenantId: scope.tenantId,
+          visitId: detail.visitId,
+          actorMembershipId: scope.actorMembershipId,
+          canSeeAll: visitAccess.canSeeAll,
+        });
+        detail.visit = ref
+          ? { id: ref.id, status: ref.status, scheduledAt: ref.scheduledAt, outcome: ref.outcome }
+          : null;
+        if (!ref) detail.visitId = null;
+      } else {
+        detail.visitId = null;
+      }
+      return detail;
+    });
   }
 
   async listActivities(scope: TenantScope, id: string): Promise<QuotationActivityDto[]> {
@@ -209,13 +273,42 @@ export class QuotationsService {
 
   // ---- writes -------------------------------------------------
 
-  async create(scope: TenantScope, body: CreateQuotationDto): Promise<QuotationDetailDto> {
+  /**
+   * Create a quotation for a lead. Where CRM is enabled the caller needs CRM access to
+   * the lead (permission AND data scope); Commercial stands alone where it is not.
+   * `visitId` is a typed reference to the completed site visit it is prepared from.
+   */
+  async create(
+    scope: TenantScope,
+    body: CreateQuotationDto,
+    crm: QuotationCrmAccess,
+    visitAccess: QuotationVisitAccess,
+  ): Promise<QuotationDetailDto> {
     const id = await withTenantContext(getDb(), scope, async (tx) => {
-      const [lead] = await tx
-        .select({ id: leads.id, name: leads.name })
-        .from(leads)
-        .where(and(eq(leads.id, body.leadId), eq(leads.tenantId, scope.tenantId)));
-      if (!lead) throw new AppError('LEAD_NOT_FOUND');
+      if (crm.entitled) {
+        if (!crm.canReadLeads) throw new AppError('QUOTATION_CRM_ACCESS_REQUIRED');
+        await assertLeadAccessible(tx, scope, body.leadId);
+      } else {
+        const [lead] = await tx
+          .select({ id: leads.id })
+          .from(leads)
+          .where(and(eq(leads.id, body.leadId), eq(leads.tenantId, scope.tenantId)));
+        if (!lead) throw new AppError('LEAD_NOT_FOUND');
+      }
+      if (body.visitId) {
+        // never confirms a visit the caller cannot see: same 404 as a missing one
+        const ref = visitAccess.allowed
+          ? await findReferencableVisit(tx, {
+              tenantId: scope.tenantId,
+              visitId: body.visitId,
+              actorMembershipId: scope.actorMembershipId,
+              canSeeAll: visitAccess.canSeeAll,
+            })
+          : null;
+        if (!ref) throw new AppError('VISIT_NOT_FOUND');
+        if (ref.leadId !== body.leadId) throw new AppError('QUOTATION_VISIT_LEAD_MISMATCH');
+        if (ref.status !== 'COMPLETED') throw new AppError('QUOTATION_VISIT_NOT_COMPLETED');
+      }
 
       if (body.customerId) {
         const customer = await loadCustomer(tx, scope.tenantId, body.customerId);
@@ -240,6 +333,7 @@ export class QuotationsService {
             leadId: body.leadId,
             customerId: body.customerId ?? null,
             projectId: body.projectId ?? null,
+            visitId: body.visitId ?? null,
             status: 'DRAFT',
             currentRevisionNo: 1,
             createdByMembershipId: scope.actorMembershipId,
@@ -281,7 +375,7 @@ export class QuotationsService {
         leadId: body.leadId,
         type: 'quotation_created',
         actorMembershipId: scope.actorMembershipId,
-        payload: { quotationId, number },
+        payload: { quotationId, number, visitId: body.visitId ?? null },
       });
       await this.outbox.emit(tx, {
         tenantId: scope.tenantId,
@@ -294,11 +388,11 @@ export class QuotationsService {
         entityType: 'quotation',
         entityId: quotationId,
         actor: userActor(scope),
-        metadata: { number, leadId: body.leadId },
+        metadata: { number, leadId: body.leadId, visitId: body.visitId ?? null },
       });
       return quotationId;
     });
-    return this.get(scope, id);
+    return this.get(scope, id, visitAccess);
   }
 
   async update(
@@ -1129,6 +1223,8 @@ export class QuotationsService {
 
     return {
       ...toQuotationDto(row.q, row.leadName, row.customerName, row.projectNumber),
+      // the raw reference; `get` reveals it only to callers who may see the visit
+      visitId: row.q.visitId,
       validityDate: currentRevision.validityDate,
       total: currentRevision.total,
       currentRevision,
@@ -1247,6 +1343,18 @@ function toDateOrNull(iso: string | undefined): Date | null {
   return iso ? new Date(iso) : null;
 }
 
+/** What the caller may do with the modules a quotation references, decided by the controller. */
+export interface QuotationCrmAccess {
+  entitled: boolean;
+  canReadLeads: boolean;
+}
+export interface QuotationVisitAccess {
+  /** FIELD is entitled AND the caller holds `field.visits.read` */
+  allowed: boolean;
+  /** same visibility rule Field applies: see all (via CRM) or only assigned visits */
+  canSeeAll: boolean;
+}
+
 function toQuotationDto(
   q: typeof quotations.$inferSelect,
   leadName: string | null,
@@ -1264,6 +1372,8 @@ function toQuotationDto(
     customerName,
     projectId: q.projectId,
     projectNumber,
+    visitId: null,
+    visit: null,
     validityDate: null,
     total: '0.00',
     bookedAt: q.bookedAt ? q.bookedAt.toISOString() : null,

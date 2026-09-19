@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Button } from '@aivoryx/ui';
@@ -24,6 +23,9 @@ import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Skeleton } from '@/components/admin/ui';
 import { fmtDate, fmtMoney, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
 import { Confirm } from '@/components/ui/kit';
+import { RelatedLink } from '@/components/ui/related-link';
+import { VisitOutcomeBadge } from '@/components/field/visit-outcome';
+import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
 
 interface DraftLine {
   productId: string;
@@ -72,6 +74,7 @@ export default function QuotationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const perms = usePermissions();
   const can = (p: string) => perms.includes(p);
+  const access = useCrossModuleAccess();
 
   const quotation = useQuotation(id);
   const activities = useQuotationActivities(id);
@@ -95,6 +98,10 @@ export default function QuotationDetailPage() {
   const qd = quotation.data;
   const rev = qd.currentRevision;
   const isDraft = qd.status === 'DRAFT';
+  const showLead = access.crmLeads && !!qd.leadId;
+  const showCustomer = access.customers && !!qd.customerId;
+  const showVisit = !!qd.visit && access.fieldVisits;
+  const showProject = access.projects && !!qd.projectId;
 
   const startEdit = () => {
     setLines(
@@ -148,26 +155,46 @@ export default function QuotationDetailPage() {
             <span className="text-xs text-muted-foreground">revision {qd.currentRevisionNo}</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            {qd.customerId ? (
-              <Link href={`/customers/${qd.customerId}`} className="text-primary hover:underline">
-                {qd.customerName}
-              </Link>
-            ) : (
-              (qd.leadName ?? 'Lead')
-            )}
-            {' · '}
-            <Link href={`/crm/leads/${qd.leadId}`} className="text-primary hover:underline">
-              CRM lead
-            </Link>
-            {qd.projectId ? (
-              <>
-                {' · '}
-                <Link href={`/projects/${qd.projectId}`} className="text-primary hover:underline">
-                  {qd.projectNumber}
-                </Link>
-              </>
-            ) : null}
+            {qd.customerName ?? qd.leadName ?? 'Lead'}
           </p>
+          {showLead || showCustomer || showVisit || showProject ? (
+            <nav
+              aria-label="Related records"
+              className="flex flex-wrap items-baseline gap-x-4 gap-y-1 pt-1"
+            >
+              {showLead ? (
+                <RelatedLink kind="Lead" href={`/crm/leads/${qd.leadId}`}>
+                  {qd.leadName ?? 'CRM lead'}
+                </RelatedLink>
+              ) : null}
+              {showCustomer ? (
+                <RelatedLink kind="Customer" href={`/customers/${qd.customerId}`}>
+                  {qd.customerName ?? 'Customer'}
+                </RelatedLink>
+              ) : null}
+              {showVisit && qd.visit ? (
+                <RelatedLink
+                  kind="Visit"
+                  href={
+                    access.crmLeads ? `/crm/visits/${qd.visit.id}` : `/field/visits/${qd.visit.id}`
+                  }
+                  meta={
+                    <>
+                      {fmtDate(qd.visit.scheduledAt)}{' '}
+                      <VisitOutcomeBadge outcome={qd.visit.outcome} />
+                    </>
+                  }
+                >
+                  Site visit
+                </RelatedLink>
+              ) : null}
+              {showProject ? (
+                <RelatedLink kind="Project" href={`/projects/${qd.projectId}`}>
+                  {qd.projectNumber ?? 'Project'}
+                </RelatedLink>
+              ) : null}
+            </nav>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <a

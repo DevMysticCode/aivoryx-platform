@@ -5,9 +5,13 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import { useCustomer, useUpdateCustomer } from '@/lib/commercial/use-commercial';
+import { useVisits } from '@/lib/field/use-field';
+import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
+import { VisitOutcomeBadge } from '@/components/field/visit-outcome';
 import { usePermissions } from '@/components/supply/supply-shell';
-import { Card, EmptyState, ErrorNote, Field, Skeleton } from '@/components/admin/ui';
+import { Card, EmptyState, ErrorNote, Field, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { fmtDate, Select, SupplyStatusBadge } from '@/components/supply/ui';
+import { RelatedLink } from '@/components/ui/related-link';
 import { CustomerFinanceCard } from '@/components/finance/summary-card';
 
 export default function CustomerDetailPage() {
@@ -137,12 +141,50 @@ export default function CustomerDetailPage() {
 
       <CustomerFinanceCard customerId={id} />
 
+      <FieldActivityCard leadId={c.leads[0]?.id} />
+
       <div className="grid gap-4 md:grid-cols-3">
         <LinkCard title="Leads" items={c.leads} hrefBase="/crm/leads" />
         <LinkCard title="Quotations" items={c.quotations} hrefBase="/quotations" />
         <LinkCard title="Projects" items={c.projects} hrefBase="/projects" />
       </div>
     </section>
+  );
+}
+
+/** The customer's originating lead's recent site visits — Field owns them, this only references. */
+function FieldActivityCard({ leadId }: { leadId: string | undefined }) {
+  const access = useCrossModuleAccess();
+  const enabled = access.fieldVisits && !!leadId;
+  const visits = useVisits({ leadId, pageSize: 5 }, { enabled });
+  if (!enabled) return null;
+  const items = visits.data?.items ?? [];
+  if (!visits.isLoading && (visits.error || items.length === 0)) return null;
+  return (
+    <Card className="space-y-2">
+      <h2 className="text-sm font-semibold">Field activity</h2>
+      {visits.isLoading ? (
+        <Skeleton rows={2} />
+      ) : (
+        <ul className="space-y-1.5 text-sm">
+          {items.map((v) => (
+            <li key={v.id} className="flex flex-wrap items-center justify-between gap-2">
+              {access.crmLeads ? (
+                <RelatedLink kind="Visit" href={`/crm/visits/${v.id}`}>
+                  {new Date(v.scheduledAt).toLocaleString()}
+                </RelatedLink>
+              ) : (
+                <span>{new Date(v.scheduledAt).toLocaleString()}</span>
+              )}
+              <span className="flex flex-wrap items-center gap-1.5">
+                <StatusBadge status={v.status} />
+                <VisitOutcomeBadge outcome={v.outcome} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 

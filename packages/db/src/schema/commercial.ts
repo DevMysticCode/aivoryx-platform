@@ -18,6 +18,7 @@ import { newUuidV7 } from '../id.js';
 import { tenants, userTenantMemberships } from './identity.js';
 import { leads } from './crm.js';
 import { products, projects } from './supply.js';
+import { visits } from './field.js';
 
 /**
  * Commercial — Customers, Quotations & Project Booking (Phase 6, ADR 0035).
@@ -170,6 +171,9 @@ export const quotations = pgTable(
     customerId: uuid('customer_id'),
     /** set at booking — the operationally activated Phase 5 project */
     projectId: uuid('project_id'),
+    /** the site visit / assessment this quotation was prepared from (Phase 18) — a
+     *  typed reference only; the visit stays owned by Field */
+    visitId: uuid('visit_id'),
     status: quotationStatus('status').notNull().default('DRAFT'),
     /** the revision number currently in force; the editable one iff status = DRAFT */
     currentRevisionNo: integer('current_revision_no').notNull().default(1),
@@ -184,6 +188,12 @@ export const quotations = pgTable(
     index('quotations_tenant_status_idx').on(t.tenantId, t.status),
     index('quotations_tenant_lead_idx').on(t.tenantId, t.leadId),
     index('quotations_tenant_customer_idx').on(t.tenantId, t.customerId),
+    index('quotations_tenant_visit_idx').on(t.tenantId, t.visitId),
+    foreignKey({
+      name: 'quotations_visit_fk',
+      columns: [t.visitId, t.tenantId],
+      foreignColumns: [visits.id, visits.tenantId],
+    }).onDelete('set null'),
     index('quotations_tenant_created_idx').on(t.tenantId, t.createdAt),
     // at most one quotation may own a given project
     uniqueIndex('quotations_tenant_project_uq')

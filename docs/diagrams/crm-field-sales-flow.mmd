@@ -1,0 +1,23 @@
+%% Phase 18 (ADR 0045) — ownership stays put; integration is by typed references.
+flowchart LR
+  subgraph CRM[CRM — owns leads, follow-ups]
+    L[Lead] -->|qualify| Q[QUALIFIED]
+    FU[Follow-up]
+  end
+  subgraph FIELD[Field — owns visits]
+    V[Visit<br/>lead_id]
+    O{{Outcome<br/>SUITABLE / NOT_SUITABLE / FOLLOW_UP_REQUIRED}}
+  end
+  subgraph COM[Commercial — owns quotations]
+    QT[Quotation<br/>lead_id + visit_id]
+  end
+  subgraph EXE[Execution / Supply — owns projects]
+    P[Project]
+  end
+  Q -- "schedule visit<br/>(field.visits.create + crm.leads.read + CRM data scope)" --> V
+  V --> O
+  O -- "FOLLOW_UP_REQUIRED (CRM enabled)" --> FU
+  O -- "completed visit reference" --> QT
+  Q -- "create quotation<br/>(quotations.create + crm.leads.read + scope)" --> QT
+  QT -- "book" --> P
+  classDef gate stroke-dasharray: 4 3;

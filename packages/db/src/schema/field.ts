@@ -49,6 +49,17 @@ export const visitStatus = pgEnum('visit_status', [
   'CANCELLED',
 ]);
 
+/**
+ * What a completed visit concluded (Phase 18). Deliberately three values that fit
+ * the existing Field domain — a visit that could not happen is CANCELLED, not an
+ * outcome. Null on visits completed before Phase 18 or without an explicit outcome.
+ */
+export const visitOutcome = pgEnum('visit_outcome', [
+  'SUITABLE',
+  'NOT_SUITABLE',
+  'FOLLOW_UP_REQUIRED',
+]);
+
 export const visitActivityType = pgEnum('visit_activity_type', [
   'created',
   'assigned',
@@ -140,6 +151,10 @@ export const visits = pgTable(
     travelNotes: text('travel_notes'),
 
     surveyCompletedAt: timestamp('survey_completed_at', { withTimezone: true }),
+
+    /** structured conclusion recorded at completion (Phase 18); Field owns it, CRM surfaces it */
+    outcome: visitOutcome('outcome'),
+    outcomeNote: text('outcome_note'),
 
     createdByMembershipId: uuid('created_by_membership_id').notNull(),
     ...entityTimestamps,

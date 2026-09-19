@@ -21,6 +21,9 @@ import {
 import { Card, ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { AttachmentThumb } from '@/components/field/attachment-thumb';
 import { Confirm } from '@/components/ui/kit';
+import { RelatedLink } from '@/components/ui/related-link';
+import { VisitOutcomeBadge, VisitOutcomeForm } from '@/components/field/visit-outcome';
+import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
 
 type SurveyValue = string | number | boolean | null;
 
@@ -57,6 +60,7 @@ function clearDraft(visitId: string): void {
 
 export default function FieldVisitDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const access = useCrossModuleAccess();
   const visit = useVisit(id);
   const survey = useVisitSurvey(id);
   const notes = useVisitNotes(id);
@@ -118,6 +122,27 @@ export default function FieldVisitDetailPage() {
         </div>
         <StatusBadge status={v.status} />
       </div>
+
+      <Card className="space-y-2">
+        <h2 className="text-sm font-semibold">Customer / lead</h2>
+        <p className="text-sm">{v.leadName ?? 'Unnamed lead'}</p>
+        {v.leadPhone ? (
+          <a
+            href={`tel:${v.leadPhone}`}
+            className="inline-flex min-h-11 items-center rounded-sm text-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {v.leadPhone}
+          </a>
+        ) : null}
+        {v.addressLine ? <p className="text-sm text-muted-foreground">{v.addressLine}</p> : null}
+        {access.crmLeads && v.leadId ? (
+          <div>
+            <RelatedLink kind="Lead" href={`/crm/leads/${v.leadId}`}>
+              {v.leadName ?? 'Open lead'}
+            </RelatedLink>
+          </div>
+        ) : null}
+      </Card>
 
       {/* 1. CHECK IN */}
       <Card className="space-y-2">
@@ -362,12 +387,22 @@ export default function FieldVisitDetailPage() {
           <Card className="space-y-2">
             <h2 className="text-sm font-semibold">Complete visit</h2>
             {v.status === 'COMPLETED' ? (
-              <p className="text-sm text-muted-foreground">This visit is complete.</p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">This visit is complete.</p>
+                {v.outcome ? (
+                  <div className="space-y-1">
+                    <VisitOutcomeBadge outcome={v.outcome} />
+                    {v.outcomeNote ? <p className="text-sm">{v.outcomeNote}</p> : null}
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <>
-                <Button disabled={complete.isPending} onClick={() => complete.mutate()}>
-                  {complete.isPending ? 'Completing…' : 'Mark visit complete'}
-                </Button>
+                <VisitOutcomeForm
+                  pending={complete.isPending}
+                  disabled={complete.isPending}
+                  onSubmit={(body) => complete.mutate(body)}
+                />
                 {missing.length > 0 ? (
                   <p className="text-xs text-destructive">
                     Still missing: {missing.join(', ').replace(/_/g, ' ')}

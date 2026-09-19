@@ -121,6 +121,7 @@ export {
 export {
   fieldAgentStatus,
   visitStatus,
+  visitOutcome,
   visitActivityType,
   fieldAgents,
   visits,

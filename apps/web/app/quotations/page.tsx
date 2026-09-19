@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import { useLeads } from '@/lib/crm/use-crm';
 import { useCreateQuotation, useCustomers, useQuotations } from '@/lib/commercial/use-commercial';
-import { usePermissions } from '@/components/supply/supply-shell';
+import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
 import { Card, EmptyState, ErrorNote, PageHeader, Skeleton } from '@/components/admin/ui';
 import { fmtDate, fmtMoney, Pager, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
 
@@ -14,8 +14,7 @@ const STATUSES = ['DRAFT', 'SENT', 'ACCEPTED', 'BOOKED', 'CANCELLED', 'EXPIRED']
 
 export default function QuotationsPage() {
   const router = useRouter();
-  const perms = usePermissions();
-  const canCreate = perms.includes('quotations.create');
+  const canCreate = useCrossModuleAccess().createQuotation;
 
   const [status, setStatus] = useState('');
   const [q, setQ] = useState('');

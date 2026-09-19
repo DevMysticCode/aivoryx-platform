@@ -15,6 +15,8 @@ export interface VisitView {
   leadName: string | null;
   leadPhone: string | null;
   status: string;
+  outcome: string | null;
+  outcomeNote: string | null;
   scheduledAt: string;
   addressLine: string | null;
   city: string | null;
@@ -49,6 +51,9 @@ export interface ListVisitsFilter {
   assignedMembershipId?: string;
   /** only visits scheduled today (server-side, UTC calendar day) — the "Today" view. */
   today?: boolean;
+  /** CRM OWN data scope (Phase 18): visits assigned to this membership OR for a lead
+   *  assigned to it. Applied server-side for callers who see visits through CRM. */
+  scopeToActor?: string;
   page: number;
   pageSize: number;
 }
@@ -68,6 +73,8 @@ const visitSelect = {
   leadName: leads.name,
   leadPhone: leads.phone,
   status: visits.status,
+  outcome: visits.outcome,
+  outcomeNote: visits.outcomeNote,
   scheduledAt: visits.scheduledAt,
   addressLine: visits.addressLine,
   city: visits.city,
@@ -102,6 +109,8 @@ interface VisitSelectRow {
   leadName: string | null;
   leadPhone: string | null;
   status: string;
+  outcome: string | null;
+  outcomeNote: string | null;
   scheduledAt: Date;
   addressLine: string | null;
   city: string | null;
@@ -137,6 +146,8 @@ function toVisitView(row: VisitSelectRow): VisitView {
     leadName: row.leadName,
     leadPhone: row.leadPhone,
     status: row.status,
+    outcome: row.outcome,
+    outcomeNote: row.outcomeNote,
     scheduledAt: row.scheduledAt.toISOString(),
     addressLine: row.addressLine,
     city: row.city,
@@ -206,6 +217,13 @@ export async function listVisits(
   }
   if (filter.today) {
     conditions.push(sql`${visits.scheduledAt}::date = now()::date`);
+  }
+  if (filter.scopeToActor) {
+    conditions.push(
+      sql`(${visits.assignedMembershipId} = ${filter.scopeToActor} or exists (
+        select 1 from leads l where l.id = ${visits.leadId} and l.tenant_id = ${visits.tenantId}
+        and l.assigned_membership_id = ${filter.scopeToActor}))`,
+    );
   }
   const where = and(...conditions);
 

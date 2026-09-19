@@ -6,6 +6,11 @@ import { OutboxService } from '../admin/outbox.service.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
 import { leadExists } from '../crm/lead-queries.js';
 import {
+  assertLeadAccessible,
+  createLeadFollowupTx,
+  resolveCrmDataScope,
+} from '../crm/lead-access.js';
+import {
   loadActiveCustomFieldDefsWithMeta,
   loadCustomFieldValuesForEntity,
   writeCustomFieldValues,
@@ -27,7 +32,17 @@ import {
   type VisitView,
 } from './visit-queries.js';
 
-const { visits } = schema;
+const { visits, visitNotes, leads } = schema;
+
+/** What the caller may do with CRM, decided by the controller from the security context. */
+export interface CrmAccess {
+  /** the CRM module is entitled for this workspace */
+  entitled: boolean;
+  /** the caller holds `crm.leads.read` */
+  canReadLeads: boolean;
+}
+
+const DAY_MS = 86_400_000;
 
 export interface TenantScope {
   tenantId: string;
@@ -41,8 +56,15 @@ export interface VisitVisibility {
   canSeeAll: boolean;
 }
 
+export interface CompleteVisitInput {
+  outcome?: string;
+  outcomeNote?: string;
+  followUpDueAt?: string;
+}
+
 export interface ScheduleVisitInput {
   leadId: string;
+  instructions?: string;
   scheduledAt: string;
   assignedMembershipId?: string;
   addressLine?: string;
@@ -75,23 +97,108 @@ export class VisitsService {
     const effective: ListVisitsFilter = visibility.canSeeAll
       ? filter
       : { ...filter, assignedMembershipId: scope.actorMembershipId };
-    return withTenantContext(getDb(), scope, (tx) => listVisits(tx, scope.tenantId, effective));
+    return withTenantContext(getDb(), scope, async (tx) => {
+      if (!visibility.canSeeAll) return listVisits(tx, scope.tenantId, effective);
+      // Seeing visits through CRM: the caller's CRM data scope still applies, and a lead
+      // they cannot open has no visits "for them" (an empty page, never an error that
+      // would confirm the lead exists).
+      if (filter.leadId) {
+        try {
+          await assertLeadAccessible(tx, scope, filter.leadId);
+        } catch {
+          return { items: [], total: 0, page: filter.page, pageSize: filter.pageSize };
+        }
+      }
+      const dataScope = await resolveCrmDataScope(tx, scope.tenantId, scope.actorMembershipId);
+      return listVisits(
+        tx,
+        scope.tenantId,
+        dataScope === 'OWN' ? { ...effective, scopeToActor: scope.actorMembershipId } : effective,
+      );
+    });
+  }
+
+  /** Real counts for the CRM/Field dashboards — same visibility and CRM data scope as `list`. */
+  async summary(scope: TenantScope, visibility: VisitVisibility) {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const conds = [sql`${visits.tenantId} = ${scope.tenantId}`];
+      if (!visibility.canSeeAll) {
+        conds.push(sql`${visits.assignedMembershipId} = ${scope.actorMembershipId}`);
+      } else {
+        const dataScope = await resolveCrmDataScope(tx, scope.tenantId, scope.actorMembershipId);
+        if (dataScope === 'OWN') {
+          conds.push(
+            sql`(${visits.assignedMembershipId} = ${scope.actorMembershipId} or exists (
+              select 1 from leads l where l.id = ${visits.leadId} and l.tenant_id = ${visits.tenantId}
+              and l.assigned_membership_id = ${scope.actorMembershipId}))`,
+          );
+        }
+      }
+      const base = and(...conds)!;
+      const [row] = await tx
+        .select({
+          scheduled: sql<number>`count(*) filter (where ${visits.status} in ('SCHEDULED','ASSIGNED','IN_PROGRESS') and ${visits.scheduledAt} >= now() and ${visits.scheduledAt} < now() + interval '7 days')::int`,
+          awaiting: sql<number>`count(*) filter (where ${visits.status} = 'COMPLETED' and ${visits.outcome} is null and ${visits.updatedAt} >= now() - interval '30 days')::int`,
+          followUp: sql<number>`count(*) filter (where ${visits.status} = 'COMPLETED' and ${visits.outcome} = 'FOLLOW_UP_REQUIRED' and ${visits.updatedAt} >= now() - interval '30 days')::int`,
+        })
+        .from(visits)
+        .where(base);
+      return {
+        scheduledNext7Days: row?.scheduled ?? 0,
+        awaitingOutcome: row?.awaiting ?? 0,
+        followUpRequired: row?.followUp ?? 0,
+      };
+    });
   }
 
   async get(scope: TenantScope, visitId: string, visibility: VisitVisibility): Promise<VisitView> {
-    const view = await withTenantContext(getDb(), scope, (tx) =>
-      loadVisitView(tx, scope.tenantId, visitId),
-    );
+    const view = await withTenantContext(getDb(), scope, async (tx) => {
+      const found = await loadVisitView(tx, scope.tenantId, visitId);
+      if (!found) return undefined;
+      if (visibility.canSeeAll && found.assignee?.membershipId !== scope.actorMembershipId) {
+        const dataScope = await resolveCrmDataScope(tx, scope.tenantId, scope.actorMembershipId);
+        if (dataScope === 'OWN') {
+          const [lead] = await tx
+            .select({ assigned: leads.assignedMembershipId })
+            .from(leads)
+            .where(and(eq(leads.tenantId, scope.tenantId), eq(leads.id, found.leadId)));
+          if (lead?.assigned !== scope.actorMembershipId) return undefined;
+        }
+      }
+      return found;
+    });
     if (!view) throw new AppError('VISIT_NOT_FOUND');
     this.assertVisible(view, scope, visibility);
     return view;
   }
 
-  async schedule(scope: TenantScope, input: ScheduleVisitInput): Promise<VisitView> {
+  /**
+   * Schedule a visit for a lead. Where CRM is enabled the caller needs CRM access to
+   * the lead (permission AND data scope) on top of `field.visits.create` — Field
+   * access never implies CRM access. Where CRM is not enabled, Field stands alone
+   * and only the lead's existence in the workspace is required.
+   */
+  async schedule(
+    scope: TenantScope,
+    input: ScheduleVisitInput,
+    crm: CrmAccess,
+  ): Promise<VisitView> {
     const visitId = await withTenantContext(getDb(), scope, async (tx) => {
-      if (!(await leadExists(tx, scope.tenantId, input.leadId))) {
+      let lead: {
+        status: string;
+        addressLine: string | null;
+        city: string | null;
+        state: string | null;
+        postalCode: string | null;
+        country: string | null;
+      } | null = null;
+      if (crm.entitled) {
+        if (!crm.canReadLeads) throw new AppError('VISIT_CRM_ACCESS_REQUIRED');
+        lead = await assertLeadAccessible(tx, scope, input.leadId);
+      } else if (!(await leadExists(tx, scope.tenantId, input.leadId))) {
         throw new AppError('LEAD_NOT_FOUND');
       }
+      if (lead?.status === 'DISQUALIFIED') throw new AppError('VISIT_LEAD_NOT_ELIGIBLE');
       if (input.assignedMembershipId) {
         await this.requireActiveFieldAgent(tx, scope.tenantId, input.assignedMembershipId);
       }
@@ -104,11 +211,12 @@ export class VisitsService {
           assignedMembershipId: input.assignedMembershipId ?? null,
           status: input.assignedMembershipId ? 'ASSIGNED' : 'SCHEDULED',
           scheduledAt: new Date(input.scheduledAt),
-          addressLine: input.addressLine ?? null,
-          city: input.city ?? null,
-          state: input.state ?? null,
-          postalCode: input.postalCode ?? null,
-          country: input.country ?? null,
+          // the site address is a snapshot: what the caller sent, else the lead's own
+          addressLine: input.addressLine ?? lead?.addressLine ?? null,
+          city: input.city ?? lead?.city ?? null,
+          state: input.state ?? lead?.state ?? null,
+          postalCode: input.postalCode ?? lead?.postalCode ?? null,
+          country: input.country ?? lead?.country ?? null,
           siteLat: input.siteLat !== undefined ? String(input.siteLat) : null,
           siteLng: input.siteLng !== undefined ? String(input.siteLng) : null,
           createdByMembershipId: scope.actorMembershipId,
@@ -116,6 +224,14 @@ export class VisitsService {
         .returning({ id: visits.id });
       const id = row!.id;
 
+      if (input.instructions?.trim()) {
+        await tx.insert(visitNotes).values({
+          tenantId: scope.tenantId,
+          visitId: id,
+          body: input.instructions.trim(),
+          authorMembershipId: scope.actorMembershipId,
+        });
+      }
       await recordVisitActivity(tx, {
         tenantId: scope.tenantId,
         visitId: id,
@@ -496,7 +612,17 @@ export class VisitsService {
     });
   }
 
-  async complete(scope: TenantScope, visitId: string): Promise<VisitView> {
+  /**
+   * Complete a visit, optionally recording its outcome. An outcome of
+   * FOLLOW_UP_REQUIRED creates the CRM follow-up in the SAME transaction — but only
+   * where CRM is enabled; Field completion never depends on CRM being there.
+   */
+  async complete(
+    scope: TenantScope,
+    visitId: string,
+    input: CompleteVisitInput,
+    crm: { entitled: boolean },
+  ): Promise<VisitView> {
     await withTenantContext(getDb(), scope, async (tx) => {
       const current = await this.requireVisit(tx, scope.tenantId, visitId);
       this.assertOwnAssignment(current, scope);
@@ -514,9 +640,15 @@ export class VisitsService {
       if (!surveyComplete) missing.push('survey');
       if (missing.length > 0) throw new AppError('VISIT_INCOMPLETE', { details: { missing } });
 
+      const outcome = (input.outcome ?? null) as (typeof visits.outcome.enumValues)[number] | null;
       await tx
         .update(visits)
-        .set({ status: 'COMPLETED', updatedAt: new Date() })
+        .set({
+          status: 'COMPLETED',
+          outcome,
+          outcomeNote: input.outcomeNote?.trim() || null,
+          updatedAt: new Date(),
+        })
         .where(and(eq(visits.id, visitId), eq(visits.tenantId, scope.tenantId)));
 
       await recordVisitActivity(tx, {
@@ -524,18 +656,19 @@ export class VisitsService {
         visitId,
         type: 'completed',
         actorMembershipId: scope.actorMembershipId,
+        payload: outcome ? { outcome } : {},
       });
       await recordLeadVisitMilestone(tx, {
         tenantId: scope.tenantId,
         leadId: current.leadId,
         type: 'visit_completed',
         actorMembershipId: scope.actorMembershipId,
-        payload: { visitId },
+        payload: { visitId, outcome },
       });
       await this.outbox.emit(tx, {
         tenantId: scope.tenantId,
         type: 'visit.completed',
-        payload: { visitId },
+        payload: { visitId, outcome },
       });
       await this.audit.record(tx, {
         tenantId: scope.tenantId,
@@ -544,7 +677,34 @@ export class VisitsService {
         entityId: visitId,
         actor: userActor(scope),
         changes: { status: { from: current.status, to: 'COMPLETED' } },
+        metadata: outcome ? { outcome } : undefined,
       });
+
+      if (outcome === 'FOLLOW_UP_REQUIRED' && crm.entitled) {
+        const [lead] = await tx
+          .select({ assigned: leads.assignedMembershipId })
+          .from(leads)
+          .where(and(eq(leads.tenantId, scope.tenantId), eq(leads.id, current.leadId)));
+        const note = input.outcomeNote?.trim();
+        const followup = await createLeadFollowupTx(tx, {
+          tenantId: scope.tenantId,
+          leadId: current.leadId,
+          assignedMembershipId: lead?.assigned ?? scope.actorMembershipId,
+          dueAt: input.followUpDueAt
+            ? new Date(input.followUpDueAt)
+            : new Date(Date.now() + 2 * DAY_MS),
+          note: note ? `Follow-up after site visit: ${note}` : 'Follow-up after site visit',
+          actorMembershipId: scope.actorMembershipId,
+        });
+        await this.audit.record(tx, {
+          tenantId: scope.tenantId,
+          action: 'crm.lead.followup_created',
+          entityType: 'lead',
+          entityId: current.leadId,
+          actor: userActor(scope),
+          metadata: { source: 'field_visit', visitId, followupId: followup.id },
+        });
+      }
     });
     return this.get(scope, visitId, { canSeeAll: true });
   }

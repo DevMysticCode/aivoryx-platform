@@ -4,6 +4,7 @@ import type {
   AssignVisitRequest,
   CancelVisitRequest,
   CheckOutRequest,
+  CompleteVisitRequest,
   CreateVisitNoteRequest,
   DesignateFieldAgentRequest,
   FieldAgent,
@@ -17,6 +18,7 @@ import type {
   VisitAttachment,
   VisitListResponse,
   VisitNote,
+  VisitSummary,
 } from '@aivoryx/contracts';
 import { webEnv } from '../env';
 import { apiFetch, ApiError } from './client';
@@ -79,8 +81,11 @@ export const checkInVisit = (visitId: string, body: GeoPointRequest) =>
 export const checkOutVisit = (visitId: string, body: CheckOutRequest) =>
   apiFetch<Visit>(`/visits/${visitId}/check-out`, json(body));
 
-export const completeVisit = (visitId: string) =>
-  apiFetch<Visit>(`/visits/${visitId}/complete`, json({}));
+export const completeVisit = (visitId: string, body: CompleteVisitRequest = {}) =>
+  apiFetch<Visit>(`/visits/${visitId}/complete`, json(body));
+
+/** Real counts for dashboards, bound server-side to the caller's visibility. */
+export const visitSummary = () => apiFetch<VisitSummary>('/visits/summary', { cache: 'no-store' });
 
 export const getVisitSurvey = (visitId: string) =>
   apiFetch<SurveyFieldValue[]>(`/visits/${visitId}/survey`, { cache: 'no-store' });

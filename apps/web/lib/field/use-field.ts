@@ -5,6 +5,7 @@ import type {
   AssignVisitRequest,
   CancelVisitRequest,
   CheckOutRequest,
+  CompleteVisitRequest,
   CreateVisitNoteRequest,
   DesignateFieldAgentRequest,
   GeoPointRequest,
@@ -22,6 +23,7 @@ export const fieldKeys = {
   agents: ['field', 'agents'] as const,
   visits: (params: ListVisitsParams) => ['field', 'visits', params] as const,
   visit: (id: string) => ['field', 'visit', id] as const,
+  summary: ['field', 'summary'] as const,
   activities: (id: string) => ['field', 'visit', id, 'activities'] as const,
   notes: (id: string) => ['field', 'visit', id, 'notes'] as const,
   survey: (id: string) => ['field', 'visit', id, 'survey'] as const,
@@ -54,8 +56,12 @@ export function useDeactivateFieldAgent() {
 
 // ---- visits -----------------------------------------------------------
 
-export function useVisits(params: ListVisitsParams) {
-  return useQuery({ queryKey: fieldKeys.visits(params), queryFn: () => api.listVisits(params) });
+export function useVisits(params: ListVisitsParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: fieldKeys.visits(params),
+    queryFn: () => api.listVisits(params),
+    enabled: options?.enabled ?? true,
+  });
 }
 
 export function useVisit(visitId: string) {
@@ -102,9 +108,10 @@ function useInvalidateVisit(visitId: string) {
 
 export function useScheduleVisit() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutationWithFeedback({
     mutationFn: (body: ScheduleVisitRequest) => api.scheduleVisit(body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['field', 'visits'] }),
+    successMessage: 'Visit scheduled',
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['field'] }),
   });
 }
 
@@ -154,7 +161,7 @@ export function useCheckOutVisit(visitId: string) {
 export function useCompleteVisit(visitId: string) {
   const invalidate = useInvalidateVisit(visitId);
   return useMutationWithFeedback({
-    mutationFn: () => api.completeVisit(visitId),
+    mutationFn: (body: CompleteVisitRequest = {}) => api.completeVisit(visitId, body),
     onSuccess: invalidate,
     successMessage: 'Visit marked complete',
   });
@@ -203,5 +210,15 @@ export function useDeleteVisitAttachment(visitId: string) {
     mutationFn: (attachmentId: string) => api.deleteVisitAttachment(visitId, attachmentId),
     onSuccess: () => qc.invalidateQueries({ queryKey: fieldKeys.attachments(visitId) }),
     successMessage: 'Photo removed',
+  });
+}
+
+/** Dashboard counts (scheduled next 7 days / awaiting outcome / follow-up required). */
+export function useVisitSummary(enabled: boolean) {
+  return useQuery({
+    queryKey: fieldKeys.summary,
+    queryFn: api.visitSummary,
+    enabled,
+    retry: false,
   });
 }

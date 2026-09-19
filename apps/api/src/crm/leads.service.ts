@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { recordActivity } from './activities.js';
+import { resolveCrmDataScope } from './lead-access.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
 import { isValidLeadTransition, type LeadStatus } from './lead-lifecycle.js';
 import { normalizeEmail, normalizePhone } from './lead-normalization.js';
@@ -45,14 +46,26 @@ export class LeadsService {
 
   constructor(private readonly audit: AuditService) {}
 
+  /** Bound by the caller's CRM data scope: an OWN profile sees only leads assigned to them. */
   list(scope: TenantScope, filter: ListLeadsFilter): Promise<ListLeadsResult> {
-    return withTenantContext(getDb(), scope, (tx) => listLeads(tx, scope.tenantId, filter));
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const dataScope = await resolveCrmDataScope(tx, scope.tenantId, scope.actorMembershipId);
+      const effective =
+        dataScope === 'OWN' ? { ...filter, assignedMembershipId: scope.actorMembershipId } : filter;
+      return listLeads(tx, scope.tenantId, effective);
+    });
   }
 
   async get(scope: TenantScope, leadId: string): Promise<LeadView> {
-    const view = await withTenantContext(getDb(), scope, (tx) =>
-      loadLeadView(tx, scope.tenantId, leadId),
-    );
+    const view = await withTenantContext(getDb(), scope, async (tx) => {
+      const found = await loadLeadView(tx, scope.tenantId, leadId);
+      if (!found) return undefined;
+      const dataScope = await resolveCrmDataScope(tx, scope.tenantId, scope.actorMembershipId);
+      if (dataScope === 'OWN' && found.assignee?.membershipId !== scope.actorMembershipId) {
+        return undefined; // out of scope reads exactly like "does not exist"
+      }
+      return found;
+    });
     if (!view) throw new AppError('LEAD_NOT_FOUND');
     return view;
   }
@@ -99,7 +112,18 @@ export class LeadsService {
       });
       return id;
     });
-    return this.get(scope, leadId);
+    return this.readBack(scope, leadId);
+  }
+
+  /** The result of a write: the caller just acted on this lead, so it is returned even when
+   *  the action moved it out of their OWN scope (e.g. assigned to someone else, or created
+   *  unassigned). Reads by id go through the scoped `get`. */
+  private async readBack(scope: TenantScope, leadId: string): Promise<LeadView> {
+    const view = await withTenantContext(getDb(), scope, (tx) =>
+      loadLeadView(tx, scope.tenantId, leadId),
+    );
+    if (!view) throw new AppError('LEAD_NOT_FOUND');
+    return view;
   }
 
   async update(scope: TenantScope, leadId: string, patch: LeadContactInput): Promise<LeadView> {
@@ -152,7 +176,7 @@ export class LeadsService {
         },
       });
     });
-    return this.get(scope, leadId);
+    return this.readBack(scope, leadId);
   }
 
   /** Assign or reassign. Bumps NEW -> ASSIGNED; leaves a later status untouched. */
@@ -195,7 +219,7 @@ export class LeadsService {
         changes: { assignedMembershipId: { from: fromMembershipId, to: membershipId } },
       });
     });
-    return this.get(scope, leadId);
+    return this.readBack(scope, leadId);
   }
 
   /** Generic (non-qualification) status transition, e.g. marking a lead CONTACTED. */
@@ -231,7 +255,7 @@ export class LeadsService {
         changes: { status: { from: current.status, to: toStatus } },
       });
     });
-    return this.get(scope, leadId);
+    return this.readBack(scope, leadId);
   }
 
   async qualify(
@@ -268,7 +292,7 @@ export class LeadsService {
         metadata: note ? { note } : undefined,
       });
     });
-    return this.get(scope, leadId);
+    return this.readBack(scope, leadId);
   }
 
   /** Manual call logging (phase brief §4 — no telephony integration yet). */
@@ -296,7 +320,7 @@ export class LeadsService {
         metadata: { outcome },
       });
     });
-    return this.get(scope, leadId);
+    return this.readBack(scope, leadId);
   }
 
   // ---- helpers --------------------------------------------------------

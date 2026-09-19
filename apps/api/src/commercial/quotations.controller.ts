@@ -38,6 +38,7 @@ import {
   QuotationAttachmentDto,
   QuotationDetailDto,
   QuotationListDto,
+  QuotationPipelineSummaryDto,
   ReviseQuotationDto,
   UpdateQuotationDto,
 } from './commercial.dto.js';
@@ -62,12 +63,23 @@ export class QuotationsController {
     return this.quotations.list(scope(ctx), query);
   }
 
+  @Get('pipeline-summary')
+  @RequirePermission('quotations.read')
+  @ApiOperation({
+    operationId: 'quotationPipelineSummary',
+    summary: 'Real quote pipeline counts (qualified leads awaiting a quote, drafts, sent).',
+  })
+  @ApiOkResponse({ type: QuotationPipelineSummaryDto })
+  pipelineSummary(@Security() ctx: SecurityContext) {
+    return this.quotations.pipelineSummary(scope(ctx));
+  }
+
   @Get(':id')
   @RequirePermission('quotations.read')
   @ApiOperation({ operationId: 'getQuotation', summary: 'A quotation with all revisions.' })
   @ApiOkResponse({ type: QuotationDetailDto })
   get(@Security() ctx: SecurityContext, @Param('id') id: string) {
-    return this.quotations.get(scope(ctx), id);
+    return this.quotations.get(scope(ctx), id, visitAccess(ctx));
   }
 
   @Get(':id/activities')
@@ -114,7 +126,15 @@ export class QuotationsController {
   @ApiOperation({ operationId: 'createQuotation', summary: 'Create a quotation for a lead.' })
   @ApiOkResponse({ type: QuotationDetailDto })
   create(@Security() ctx: SecurityContext, @Body() body: CreateQuotationDto) {
-    return this.quotations.create(scope(ctx), body);
+    return this.quotations.create(
+      scope(ctx),
+      body,
+      {
+        entitled: ctx.entitledModules.has('CRM'),
+        canReadLeads: ctx.permissions.has('crm.leads.read'),
+      },
+      visitAccess(ctx),
+    );
   }
 
   @Patch(':id')
@@ -277,4 +297,12 @@ export class LeadQuotationsController {
   list(@Security() ctx: SecurityContext, @Param('leadId') leadId: string) {
     return this.quotations.list(scope(ctx), { leadId, pageSize: 100 });
   }
+}
+
+/** Whether the caller may see a referenced Field visit — server-derived, never client input. */
+function visitAccess(ctx: SecurityContext) {
+  return {
+    allowed: ctx.entitledModules.has('FIELD') && ctx.permissions.has('field.visits.read'),
+    canSeeAll: ctx.permissions.has('crm.leads.read'),
+  };
 }

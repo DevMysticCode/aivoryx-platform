@@ -1234,6 +1234,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/visits/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Real visit counts for dashboards (scheduled, awaiting outcome, follow-up required). */
+    get: operations['visitSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/visits/{visitId}': {
     parameters: {
       query?: never;
@@ -3532,6 +3549,23 @@ export interface paths {
     put?: never;
     /** Create a quotation for a lead. */
     post: operations['createQuotation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/quotations/pipeline-summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Real quote pipeline counts (qualified leads awaiting a quote, drafts, sent). */
+    get: operations['quotationPipelineSummary'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -5934,6 +5968,12 @@ export interface components {
       leadPhone: string | null;
       /** @enum {string} */
       status: 'SCHEDULED' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+      /**
+       * @description What the completed visit concluded. Null until completion (or for older visits).
+       * @enum {string|null}
+       */
+      outcome: 'SUITABLE' | 'NOT_SUITABLE' | 'FOLLOW_UP_REQUIRED' | null;
+      outcomeNote: string | null;
       /** Format: date-time */
       scheduledAt: string;
       addressLine: string | null;
@@ -5973,9 +6013,19 @@ export interface components {
       page: number;
       pageSize: number;
     };
+    VisitSummaryDto: {
+      /** @description Open visits scheduled within the next 7 days. */
+      scheduledNext7Days: number;
+      /** @description Visits completed in the last 30 days with no outcome recorded. */
+      awaitingOutcome: number;
+      /** @description Visits completed in the last 30 days that need a CRM follow-up. */
+      followUpRequired: number;
+    };
     ScheduleVisitRequestDto: {
       /** Format: uuid */
       leadId: string;
+      /** @description Instructions for the field agent — stored as the visit’s first note. */
+      instructions?: string;
       /** Format: date-time */
       scheduledAt: string;
       /** Format: uuid */
@@ -6015,6 +6065,16 @@ export interface components {
       /** @description Operator-entered travel distance, in km. */
       travelKm?: number;
       travelNotes?: string;
+    };
+    CompleteVisitRequestDto: {
+      /** @enum {string} */
+      outcome?: 'SUITABLE' | 'NOT_SUITABLE' | 'FOLLOW_UP_REQUIRED';
+      outcomeNote?: string;
+      /**
+       * Format: date-time
+       * @description When the CRM follow-up is due (FOLLOW_UP_REQUIRED, CRM enabled). Defaults to two days after completion.
+       */
+      followUpDueAt?: string;
     };
     SurveyFieldValueDto: {
       key: string;
@@ -7858,6 +7918,14 @@ export interface components {
       /** @description Auto-generated if omitted. */
       number?: string;
     };
+    QuotationVisitDto: {
+      /** Format: uuid */
+      id: string;
+      status: string;
+      /** Format: date-time */
+      scheduledAt: string;
+      outcome: string | null;
+    };
     QuotationDto: {
       /** Format: uuid */
       id: string;
@@ -7874,6 +7942,12 @@ export interface components {
       /** Format: uuid */
       projectId: string | null;
       projectNumber: string | null;
+      /**
+       * Format: uuid
+       * @description Null unless the caller may see the referenced visit (never a hint that one exists).
+       */
+      visitId: string | null;
+      visit: components['schemas']['QuotationVisitDto'] | null;
       /** Format: date-time */
       validityDate: string | null;
       total: string;
@@ -7889,6 +7963,14 @@ export interface components {
       total: number;
       page: number;
       pageSize: number;
+    };
+    QuotationPipelineSummaryDto: {
+      /** @description Qualified leads that have no quotation yet. */
+      qualifiedAwaitingQuotation: number;
+      /** @description Quotations still in DRAFT. */
+      draft: number;
+      /** @description Quotations sent and awaiting the customer’s acceptance. */
+      sentAwaitingResponse: number;
     };
     QuotationLineDto: {
       /** Format: uuid */
@@ -7948,6 +8030,12 @@ export interface components {
       /** Format: uuid */
       projectId: string | null;
       projectNumber: string | null;
+      /**
+       * Format: uuid
+       * @description Null unless the caller may see the referenced visit (never a hint that one exists).
+       */
+      visitId: string | null;
+      visit: components['schemas']['QuotationVisitDto'] | null;
       /** Format: date-time */
       validityDate: string | null;
       total: string;
@@ -7992,6 +8080,11 @@ export interface components {
     CreateQuotationDto: {
       /** Format: uuid */
       leadId: string;
+      /**
+       * Format: uuid
+       * @description The completed site visit this quotation is prepared from — a reference only (must belong to the same lead and be visible to the caller).
+       */
+      visitId?: string;
       /**
        * Format: uuid
        * @description Link an existing customer.
@@ -12422,6 +12515,41 @@ export interface operations {
       };
     };
   };
+  visitSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisitSummaryDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   getVisit: {
     parameters: {
       query?: never;
@@ -12673,7 +12801,11 @@ export interface operations {
       };
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CompleteVisitRequestDto'];
+      };
+    };
     responses: {
       200: {
         headers: {
@@ -19208,6 +19340,7 @@ export interface operations {
         status?: string;
         customerId?: string;
         leadId?: string;
+        projectId?: string;
         q?: string;
         page?: number;
         pageSize?: number;
@@ -19263,6 +19396,41 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['QuotationDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  quotationPipelineSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QuotationPipelineSummaryDto'];
         };
       };
       401: {

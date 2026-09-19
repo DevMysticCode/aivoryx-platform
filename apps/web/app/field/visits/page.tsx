@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useVisits } from '@/lib/field/use-field';
+import { VisitOutcomeBadge } from '@/components/field/visit-outcome';
 import { EmptyState, ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
 
 const STATUSES = ['SCHEDULED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
@@ -47,7 +48,10 @@ export default function FieldVisitsPage() {
                       {new Date(v.scheduledAt).toLocaleString()}
                     </p>
                   </div>
-                  <StatusBadge status={v.status} />
+                  <div className="flex flex-col items-end gap-1">
+                    <StatusBadge status={v.status} />
+                    {v.status === 'COMPLETED' ? <VisitOutcomeBadge outcome={v.outcome} /> : null}
+                  </div>
                 </div>
               </Link>
             </li>

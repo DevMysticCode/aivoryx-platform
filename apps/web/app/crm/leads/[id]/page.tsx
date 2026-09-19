@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { ArrowLeft, CalendarClock, Mail, MapPin, Pencil, Phone, UserRound } from 'lucide-react';
 import { Button, buttonVariants } from '@aivoryx/ui';
 import { useMembers } from '@/lib/admin/use-admin';
 import { useVisits } from '@/lib/field/use-field';
+import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
 import {
   useActivities,
   useAssignLead,
@@ -26,12 +27,15 @@ import {
 } from '@/lib/crm/use-crm';
 import { useProject, useProjects } from '@/lib/supply/use-supply';
 import { useCreateQuotation, useLeadQuotations } from '@/lib/commercial/use-commercial';
-import { ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
+import { Card, EmptyState, ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { fmtDate, fmtMoney, fmtQty, SupplyStatusBadge } from '@/components/supply/ui';
 import { Dialog } from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
 import { Confirm, ErrorBlock, LoadingBlock } from '@/components/ui/kit';
 import { TabBar } from '@/components/ui/tab-bar';
+import { RelatedLink } from '@/components/ui/related-link';
+import { ScheduleVisitDialog } from '@/components/field/schedule-visit-dialog';
+import { VisitOutcomeBadge, visitOutcomeLabel } from '@/components/field/visit-outcome';
 
 const NEXT_STATUSES: Record<string, string[]> = {
   NEW: ['ASSIGNED', 'CONTACTED', 'QUALIFIED', 'DISQUALIFIED'],
@@ -132,7 +136,7 @@ export default function LeadDetailPage() {
       ) : tab === 'Notes' ? (
         <NotesTab leadId={id} />
       ) : (
-        <RelatedTab leadId={id} />
+        <RelatedTab leadId={id} leadName={l.name} leadStatus={l.status} />
       )}
 
       <EditLeadDialog leadId={id} open={editOpen} onClose={() => setEditOpen(false)} />
@@ -322,6 +326,7 @@ const ACTIVITY_LABEL: Record<string, string> = {
 };
 
 function ActivityTab({ leadId }: { leadId: string }) {
+  const access = useCrossModuleAccess();
   const activities = useActivities(leadId);
   if (activities.isLoading) return <Skeleton rows={4} />;
   if (activities.error) return <ErrorNote error={activities.error} />;
@@ -348,15 +353,54 @@ function ActivityTab({ leadId }: { leadId: string }) {
           </div>
           <p className="text-xs text-muted-foreground">
             {a.actorName ?? a.actorEmail ?? 'System'}
-            {describePayload(a.payload) ? ` · ${describePayload(a.payload)}` : ''}
+            {describePayload(a.type, a.payload) ? ` · ${describePayload(a.type, a.payload)}` : ''}
           </p>
+          <ActivityLink type={a.type} payload={a.payload} access={access} />
         </li>
       ))}
     </ol>
   );
 }
 
-function describePayload(payload: Record<string, unknown>): string {
+/** A real link from a Field / Commercial event to the record it is about — only when the caller may open it. */
+function ActivityLink({
+  type,
+  payload,
+  access,
+}: {
+  type: string;
+  payload: Record<string, unknown>;
+  access: { fieldVisits: boolean; quotations: boolean };
+}) {
+  if (type.startsWith('visit_') && access.fieldVisits && typeof payload.visitId === 'string') {
+    return (
+      <RelatedLink kind="Visit" href={`/crm/visits/${payload.visitId}`} className="mt-0.5 text-xs">
+        Open visit
+      </RelatedLink>
+    );
+  }
+  if (
+    type.startsWith('quotation_') &&
+    access.quotations &&
+    typeof payload.quotationId === 'string'
+  ) {
+    return (
+      <RelatedLink
+        kind="Quotation"
+        href={`/quotations/${payload.quotationId}`}
+        className="mt-0.5 text-xs"
+      >
+        Open quotation
+      </RelatedLink>
+    );
+  }
+  return null;
+}
+
+function describePayload(type: string, payload: Record<string, unknown>): string {
+  if (type === 'visit_completed' && typeof payload.outcome === 'string') {
+    return visitOutcomeLabel(payload.outcome) || payload.outcome.replace(/_/g, ' ');
+  }
   if (payload.from && payload.to) return `${String(payload.from)} → ${String(payload.to)}`;
   if (payload.outcome) return String(payload.outcome).replace(/_/g, ' ');
   if (typeof payload.note === 'string' && payload.note) return payload.note;
@@ -586,46 +630,134 @@ function NotesTab({ leadId }: { leadId: string }) {
 }
 
 // ---- Related ---------------------------------------------------
+// Cross-module cards render ONLY for a user with the owning module's entitlement
+// and permission, and their queries are disabled otherwise — so a CRM-only user
+// makes no Field / Commercial / Execution requests at all.
 
-function RelatedTab({ leadId }: { leadId: string }) {
+type VisitList = ReturnType<typeof useVisits>;
+type QuoteList = ReturnType<typeof useLeadQuotations>;
+
+function RelatedTab({
+  leadId,
+  leadName,
+  leadStatus,
+}: {
+  leadId: string;
+  leadName: string | null;
+  leadStatus: string;
+}) {
+  const access = useCrossModuleAccess();
+  const visits = useVisits({ leadId, pageSize: 10 }, { enabled: access.fieldVisits });
+  const quotes = useLeadQuotations(leadId, { enabled: access.quotations });
+
+  const customer =
+    access.customers && access.quotations
+      ? (quotes.data?.items ?? []).find((q) => q.customerId)
+      : undefined;
+
+  if (!access.fieldVisits && !access.quotations && !access.projects) {
+    return (
+      <EmptyState>
+        Visits, quotations and projects for this lead appear here when your workspace and role
+        include those areas.
+      </EmptyState>
+    );
+  }
+
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <LeadVisitsCard leadId={leadId} />
-      <LeadQuotationsCard leadId={leadId} />
-      <LeadProjectCard leadId={leadId} />
+    <div className="space-y-4">
+      {customer?.customerId ? (
+        <div>
+          <RelatedLink kind="Customer" href={`/customers/${customer.customerId}`}>
+            {customer.customerName ?? 'Open customer'}
+          </RelatedLink>
+        </div>
+      ) : null}
+      <div className="grid gap-4 md:grid-cols-2">
+        {access.fieldVisits ? (
+          <LeadVisitsCard
+            visits={visits}
+            leadId={leadId}
+            leadName={leadName}
+            leadStatus={leadStatus}
+          />
+        ) : null}
+        {access.quotations ? (
+          <LeadQuotationsCard leadId={leadId} quotes={quotes} visits={visits} />
+        ) : null}
+        {access.projects ? <LeadProjectCard leadId={leadId} /> : null}
+      </div>
     </div>
   );
 }
 
-function LeadVisitsCard({ leadId }: { leadId: string }) {
-  const visits = useVisits({ leadId, pageSize: 10 });
-  if (visits.error) return null;
+function LeadVisitsCard({
+  visits,
+  leadId,
+  leadName,
+  leadStatus,
+}: {
+  visits: VisitList;
+  leadId: string;
+  leadName: string | null;
+  leadStatus: string;
+}) {
+  const access = useCrossModuleAccess();
+  const [scheduling, setScheduling] = useState(false);
+  const canSchedule =
+    access.scheduleVisit && leadStatus !== 'DISQUALIFIED' && leadStatus !== 'CONVERTED';
+  const items = visits.data?.items ?? [];
+  const scheduleButton = (
+    <Button size="sm" variant="outline" onClick={() => setScheduling(true)}>
+      Schedule visit
+    </Button>
+  );
+
   return (
-    <div className="rounded-lg border p-4">
-      <h2 className="mb-2 text-sm font-semibold">Site visits</h2>
+    <Card>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold">Site visits</h2>
+        {canSchedule && items.length > 0 ? scheduleButton : null}
+      </div>
       {visits.isLoading ? (
         <Skeleton rows={2} />
-      ) : (visits.data?.items ?? []).length === 0 ? (
-        <p className="text-sm text-muted-foreground">No site visits scheduled yet.</p>
+      ) : visits.error ? (
+        <ErrorNote error={visits.error} />
+      ) : items.length === 0 ? (
+        <EmptyState action={canSchedule ? scheduleButton : undefined}>
+          No site visits scheduled yet.
+        </EmptyState>
       ) : (
         <ul className="space-y-2 text-sm">
-          {visits.data!.items.map((v) => (
+          {items.map((v) => (
             <li
               key={v.id}
-              className="flex items-center justify-between gap-2 border-b pb-2 last:border-0"
+              className="flex flex-wrap items-center justify-between gap-2 border-b pb-2 last:border-0"
             >
-              <Link
-                href={`/crm/visits/${v.id}`}
-                className="font-medium text-primary hover:underline"
-              >
-                {new Date(v.scheduledAt).toLocaleDateString()}
-              </Link>
-              <StatusBadge status={v.status} />
+              <div className="min-w-0">
+                <RelatedLink kind="Visit" href={`/crm/visits/${v.id}`}>
+                  {new Date(v.scheduledAt).toLocaleString()}
+                </RelatedLink>
+                <div className="text-xs text-muted-foreground">
+                  {v.assignee ? (v.assignee.name ?? v.assignee.email) : 'Unassigned'}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <StatusBadge status={v.status} />
+                <VisitOutcomeBadge outcome={v.outcome} />
+              </div>
             </li>
           ))}
         </ul>
       )}
-    </div>
+      {canSchedule ? (
+        <ScheduleVisitDialog
+          open={scheduling}
+          onClose={() => setScheduling(false)}
+          lead={{ id: leadId, name: leadName }}
+        />
+      ) : null}
+    </Card>
   );
 }
 
@@ -633,13 +765,21 @@ function LeadProjectCard({ leadId }: { leadId: string }) {
   const projects = useProjects({ leadId, pageSize: 1 });
   const first = projects.data?.items[0];
   const detail = useProject(first?.id ?? '');
-  if (projects.error || (projects.data && projects.data.items.length === 0)) return null;
+  if (projects.data && projects.data.items.length === 0) return null;
+  if (projects.error) {
+    return (
+      <Card>
+        <h2 className="mb-2 text-sm font-semibold">Project / operations</h2>
+        <ErrorNote error={projects.error} />
+      </Card>
+    );
+  }
   if (projects.isLoading || !first) {
     return (
-      <div className="rounded-lg border p-4">
+      <Card>
         <h2 className="mb-2 text-sm font-semibold">Project / operations</h2>
         <Skeleton rows={2} />
-      </div>
+      </Card>
     );
   }
   const materials = detail.data?.materials ?? [];
@@ -648,17 +788,14 @@ function LeadProjectCard({ leadId }: { leadId: string }) {
   const required = sum('requiredQty');
   const readiness = required > 0 ? Math.round((sum('deliveredQty') / required) * 100) : 0;
   return (
-    <div className="rounded-lg border p-4">
-      <div className="mb-2 flex items-center justify-between">
+    <Card>
+      <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Project / operations</h2>
         <SupplyStatusBadge status={first.status} />
       </div>
-      <Link
-        href={`/projects/${first.id}`}
-        className="block font-medium text-primary hover:underline"
-      >
+      <RelatedLink kind="Project" href={`/projects/${first.id}`}>
         {first.number}
-      </Link>
+      </RelatedLink>
       {materials.length > 0 ? (
         <p className="mt-1 text-xs text-muted-foreground">
           Required {fmtQty(String(required))} · material readiness {readiness}%
@@ -666,34 +803,79 @@ function LeadProjectCard({ leadId }: { leadId: string }) {
       ) : (
         <p className="mt-1 text-sm text-muted-foreground">No material requirements yet.</p>
       )}
-    </div>
+    </Card>
   );
 }
 
-function LeadQuotationsCard({ leadId }: { leadId: string }) {
+function LeadQuotationsCard({
+  leadId,
+  quotes,
+  visits,
+}: {
+  leadId: string;
+  quotes: QuoteList;
+  visits: VisitList;
+}) {
   const router = useRouter();
-  const quotes = useLeadQuotations(leadId);
+  const access = useCrossModuleAccess();
   const create = useCreateQuotation();
-  if (quotes.error) return null;
+  const selectId = useId();
+  const [visitChoice, setVisitChoice] = useState<string | null>(null);
+
+  // most recent COMPLETED visit first — only known when the caller can see Field visits
+  const completed = access.fieldVisits
+    ? [...(visits.data?.items ?? [])]
+        .filter((v) => v.status === 'COMPLETED')
+        .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
+    : [];
+  const visitId = visitChoice ?? completed[0]?.id ?? '';
+
   return (
-    <div className="rounded-lg border p-4">
-      <div className="mb-2 flex items-center justify-between">
+    <Card>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold">Quotations</h2>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={create.isPending}
-          onClick={async () => {
-            const q = await create.mutateAsync({ leadId });
-            router.push(`/quotations/${q.id}`);
-          }}
-        >
-          {create.isPending ? 'Creating…' : 'New'}
-        </Button>
+        {access.createQuotation ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {completed.length > 0 ? (
+              <div className="flex items-center gap-1.5">
+                <label htmlFor={selectId} className="text-xs text-muted-foreground">
+                  Prepared from visit
+                </label>
+                <select
+                  id={selectId}
+                  className="h-8 max-w-44 rounded-md border border-input bg-transparent px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  value={visitId}
+                  onChange={(e) => setVisitChoice(e.target.value)}
+                >
+                  {completed.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {new Date(v.scheduledAt).toLocaleDateString()}
+                      {v.outcome ? ` · ${visitOutcomeLabel(v.outcome)}` : ''}
+                    </option>
+                  ))}
+                  <option value="">No visit reference</option>
+                </select>
+              </div>
+            ) : null}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={create.isPending}
+              onClick={async () => {
+                const q = await create.mutateAsync({ leadId, ...(visitId ? { visitId } : {}) });
+                router.push(`/quotations/${q.id}`);
+              }}
+            >
+              {create.isPending ? 'Creating…' : 'New'}
+            </Button>
+          </div>
+        ) : null}
       </div>
       <ErrorNote error={create.error} />
       {quotes.isLoading ? (
         <Skeleton rows={2} />
+      ) : quotes.error ? (
+        <ErrorNote error={quotes.error} />
       ) : (quotes.data?.items ?? []).length === 0 ? (
         <p className="text-sm text-muted-foreground">No quotations yet.</p>
       ) : (
@@ -701,26 +883,29 @@ function LeadQuotationsCard({ leadId }: { leadId: string }) {
           {quotes.data!.items.map((q) => (
             <li
               key={q.id}
-              className="flex items-center justify-between gap-2 border-b pb-2 last:border-0"
+              className="flex flex-wrap items-center justify-between gap-2 border-b pb-2 last:border-0"
             >
-              <div>
-                <Link
-                  href={`/quotations/${q.id}`}
-                  className="font-medium text-primary hover:underline"
-                >
+              <div className="min-w-0">
+                <RelatedLink kind="Quotation" href={`/quotations/${q.id}`}>
                   {q.number}
-                </Link>
+                </RelatedLink>
                 <div className="text-xs text-muted-foreground">
                   rev {q.currentRevisionNo} · {fmtMoney(q.total)}
                   {q.validityDate ? ` · valid to ${fmtDate(q.validityDate)}` : ''}
                 </div>
+                {q.visit ? (
+                  <div className="text-xs text-muted-foreground">
+                    From visit {new Date(q.visit.scheduledAt).toLocaleDateString()}
+                    {q.visit.outcome ? ` · ${visitOutcomeLabel(q.visit.outcome)}` : ''}
+                  </div>
+                ) : null}
               </div>
               <SupplyStatusBadge status={q.status} />
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </Card>
   );
 }
 
