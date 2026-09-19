@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, ErrorNote, Skeleton, Card, EmptyState } from '@/components/admin/ui';
 import { Table, Select } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import type { HrPerformanceReview } from '@aivoryx/contracts';
@@ -211,7 +211,8 @@ function Goals({ canManage }: { canManage: boolean }) {
           </div>
         </Card>
       )}
-      {goals.data && (
+      {goals.data && goals.data.length === 0 && <EmptyState>No goals.</EmptyState>}
+      {goals.data && goals.data.length > 0 && (
         <Table
           head={
             <tr>
@@ -232,13 +233,6 @@ function Goals({ canManage }: { canManage: boolean }) {
               </td>
             </tr>
           ))}
-          {goals.data.length === 0 && (
-            <tr>
-              <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
-                No goals.
-              </td>
-            </tr>
-          )}
         </Table>
       )}
     </div>
@@ -316,9 +310,7 @@ function Reviews({ canManage }: { canManage: boolean }) {
         </Card>
       )}
       {reviews.data?.map((r) => <ReviewCard key={r.id} r={r} canManage={canManage} />)}
-      {reviews.data && reviews.data.length === 0 && (
-        <p className="text-sm text-muted-foreground">No reviews.</p>
-      )}
+      {reviews.data && reviews.data.length === 0 && <EmptyState>No reviews.</EmptyState>}
     </div>
   );
 }

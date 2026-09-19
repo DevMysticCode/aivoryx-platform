@@ -48,6 +48,7 @@ import {
   EmploymentHistoryItemDto,
   LinkMembershipDto,
   ListEmployeesQueryDto,
+  UpdateEmployeeDocumentDto,
   UpdateEmployeeDto,
   UpsertBankDetailsDto,
 } from './hr.dto.js';
@@ -201,6 +202,8 @@ export class HrEmployeesController {
     if (file.size > DOC_MAX_BYTES)
       throw new AppError('HR_ATTACHMENT_INVALID', { details: { reason: 'file_too_large' } });
     const scope = hrScope(ctx);
+    // existence + data scope BEFORE touching storage (no orphaned objects)
+    await this.employees.ensureAccessible(scope, id);
     const objectKey = buildEntityAttachmentKey(
       scope.tenantId,
       'hr-employees',
@@ -215,7 +218,24 @@ export class HrEmployeesController {
       contentType: file.mimetype,
       sizeBytes: file.size,
       originalFilename: file.originalname ?? null,
+      sharedWithEmployee: meta.sharedWithEmployee === 'true',
     });
+  }
+
+  @Patch(':id/documents/:documentId')
+  @RequirePermission('hr.employee.manage')
+  @ApiOperation({
+    operationId: 'updateHrEmployeeDocument',
+    summary: 'Share or unshare a document with the employee (self-service visibility).',
+  })
+  @ApiOkResponse({ type: [EmployeeDocumentDto] })
+  updateDocument(
+    @Security() ctx: SecurityContext,
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+    @Body() body: UpdateEmployeeDocumentDto,
+  ) {
+    return this.employees.setDocumentSharing(hrScope(ctx), id, documentId, body.sharedWithEmployee);
   }
 
   @Get(':id/documents/:documentId/download')

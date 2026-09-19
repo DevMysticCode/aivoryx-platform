@@ -95,6 +95,23 @@ export class CreateWorkScheduleDto {
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() locationId?: string;
 }
 
+export class UpdateWorkScheduleDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(120) name?: string;
+  @ApiPropertyOptional({ example: '09:00' }) @IsOptional() @Matches(HHMM) startTime?: string;
+  @ApiPropertyOptional({ example: '18:00' }) @IsOptional() @Matches(HHMM) endTime?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(127)
+  workingDaysMask?: number;
+  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(240) graceMinutes?: number;
+  @ApiPropertyOptional({ enum: ['ACTIVE', 'ARCHIVED'] })
+  @IsOptional()
+  @IsIn(['ACTIVE', 'ARCHIVED'])
+  status?: string;
+}
+
 export class UpdateOrgUnitDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(120) name?: string;
   @ApiPropertyOptional({ enum: ['ACTIVE', 'ARCHIVED'] })
@@ -123,6 +140,7 @@ export class OrgChartDto {
 
 const EMPLOYMENT_TYPES = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN', 'TEMPORARY'] as const;
 const EMPLOYEE_STATUSES = [
+  'ONBOARDING',
   'ACTIVE',
   'ON_LEAVE',
   'SUSPENDED',
@@ -130,6 +148,8 @@ const EMPLOYEE_STATUSES = [
   'RESIGNED',
   'INACTIVE',
 ] as const;
+/** The states a new employee record may be created in. */
+const INITIAL_EMPLOYEE_STATUSES = ['ONBOARDING', 'ACTIVE'] as const;
 
 export class EmployeeListItemDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
@@ -201,6 +221,17 @@ export class CreateEmployeeDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(80) category?: string;
   @ApiPropertyOptional({ format: 'date' }) @IsOptional() @IsISO8601() probationEndDate?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(2000) notes?: string;
+  @ApiPropertyOptional({
+    enum: INITIAL_EMPLOYEE_STATUSES,
+    default: 'ACTIVE',
+    description:
+      'Starting lifecycle state. ONBOARDING = created ahead of the start date (excluded from ' +
+      'headcount and payroll until moved to ACTIVE). Defaults to ACTIVE. Ignored on update — ' +
+      'use the status endpoint to change an existing employee.',
+  })
+  @IsOptional()
+  @IsIn(INITIAL_EMPLOYEE_STATUSES as unknown as string[])
+  status?: string;
 }
 
 export class UpdateEmployeeDto extends CreateEmployeeDto {
@@ -238,12 +269,28 @@ export class EmployeeDocumentDto {
   @ApiProperty() contentType!: string;
   @ApiProperty() sizeBytes!: number;
   @ApiProperty({ nullable: true, type: String }) originalFilename!: string | null;
+  @ApiProperty({
+    description: 'Whether the employee can see and download this document in their self-service.',
+  })
+  sharedWithEmployee!: boolean;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
 }
 
 export class AddEmployeeDocumentMetaDto {
   @ApiProperty() @IsString() @MaxLength(60) kind!: string;
   @ApiProperty() @IsString() @MaxLength(160) title!: string;
+  @ApiPropertyOptional({
+    enum: ['true', 'false'],
+    default: 'false',
+    description: 'Multipart form field — share this document with the employee (default: no).',
+  })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  sharedWithEmployee?: string;
+}
+
+export class UpdateEmployeeDocumentDto {
+  @ApiProperty() @IsBoolean() sharedWithEmployee!: boolean;
 }
 
 // --- bank details (highly sensitive; masked) --------------------
@@ -843,9 +890,47 @@ export class HrMeDto {
   todayAttendance!: AttendanceRecordDto | null;
 }
 
+export class HrDashboardEmployeeRefDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() displayName!: string;
+  @ApiProperty({ format: 'date', description: 'Joining date or probation end date.' })
+  date!: string;
+}
+
+export class HrActivityItemDto {
+  @ApiProperty({ format: 'date-time' }) at!: string;
+  @ApiProperty({
+    enum: [
+      'HIRED',
+      'STATUS',
+      'DEPARTMENT',
+      'DESIGNATION',
+      'MANAGER',
+      'LOCATION',
+      'EMPLOYMENT_TYPE',
+    ],
+  })
+  kind!: string;
+  @ApiProperty({ format: 'uuid' }) employeeId!: string;
+  @ApiProperty() employeeName!: string;
+  @ApiProperty({ description: 'Human-readable, never carries compensation or raw identifiers.' })
+  summary!: string;
+}
+
 export class HrDashboardDto {
   @ApiProperty() totalEmployees!: number;
   @ApiProperty() activeEmployees!: number;
+  @ApiProperty({ description: 'Employees created ahead of their start date.' })
+  onboardingEmployees!: number;
+  @ApiProperty({ type: [HrDashboardEmployeeRefDto], description: 'Next onboarding starts.' })
+  upcomingStarts!: HrDashboardEmployeeRefDto[];
+  @ApiProperty({
+    type: [HrDashboardEmployeeRefDto],
+    description: 'Active employees whose probation ends within 30 days.',
+  })
+  probationEnding!: HrDashboardEmployeeRefDto[];
+  @ApiProperty({ type: [HrActivityItemDto], description: 'Most recent workforce changes.' })
+  recentActivity!: HrActivityItemDto[];
   @ApiProperty() presentToday!: number;
   @ApiProperty() onLeaveToday!: number;
   @ApiProperty() absentToday!: number;

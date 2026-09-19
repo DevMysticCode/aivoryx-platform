@@ -26,6 +26,21 @@ export class DesignateFieldAgentRequestDto {
   membershipId!: string;
 }
 
+/** The HR employee record behind a field agent's login — identity only. */
+export class FieldAgentEmployeeDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty()
+  displayName!: string;
+
+  @ApiProperty()
+  employeeNumber!: string;
+
+  @ApiProperty()
+  status!: string;
+}
+
 export class FieldAgentDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
@@ -44,6 +59,15 @@ export class FieldAgentDto {
 
   @ApiProperty({ format: 'date-time' })
   createdAt!: string;
+
+  @ApiProperty({
+    type: FieldAgentEmployeeDto,
+    nullable: true,
+    description:
+      'The linked HR employee record. Present only when the workspace has HR enabled, the ' +
+      'caller may read employees, and this login is linked to an employee — otherwise null.',
+  })
+  employee!: FieldAgentEmployeeDto | null;
 }
 
 // ---- visits ---------------------------------------------------------------

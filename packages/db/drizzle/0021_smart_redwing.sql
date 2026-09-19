@@ -1,0 +1,1 @@
+ALTER TABLE "hr_employee_documents" ADD COLUMN "shared_with_employee" boolean DEFAULT false NOT NULL;

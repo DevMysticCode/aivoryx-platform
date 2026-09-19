@@ -17,9 +17,11 @@ import { CreateFieldExpenseClaimRequestDto } from './field.dto.js';
 /**
  * Field → HR expense-claim seam (Phase 12, ADR 0041).
  *
- * This is the ONLY point where the Field module reaches into HR, and it does so
- * through the narrow, HR-exported `ExpensesService.createFromFieldVisit`
- * capability — never HR tables, HR schema types, or any other HR service.
+ * This and the read-only `WorkforceDirectoryService` lookup on the field-agents
+ * list (Phase 17) are the ONLY points where the Field module reaches into HR, and
+ * they do so through narrow, HR-exported capabilities (`ExpensesService.
+ * createFromFieldVisit`, `WorkforceDirectoryService.linkedByMembership`) — never
+ * HR tables, HR schema types, or any other HR service.
  *
  * Ownership is entirely server-derived:
  *  - tenant + actor: from the authenticated `SecurityContext`;

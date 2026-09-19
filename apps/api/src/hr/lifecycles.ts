@@ -5,6 +5,7 @@
  */
 
 export type EmployeeStatus =
+  | 'ONBOARDING'
   | 'ACTIVE'
   | 'ON_LEAVE'
   | 'SUSPENDED'
@@ -13,6 +14,10 @@ export type EmployeeStatus =
   | 'INACTIVE';
 
 const EMPLOYEE_TRANSITIONS: Record<EmployeeStatus, EmployeeStatus[]> = {
+  // a hire who has been created but has not started yet: can start (ACTIVE), or
+  // fall through before ever starting (RESIGNED = withdrew, TERMINATED = offer
+  // rescinded). Not ON_LEAVE/SUSPENDED/INACTIVE — those presuppose having started.
+  ONBOARDING: ['ACTIVE', 'TERMINATED', 'RESIGNED'],
   ACTIVE: ['ON_LEAVE', 'SUSPENDED', 'TERMINATED', 'RESIGNED', 'INACTIVE'],
   ON_LEAVE: ['ACTIVE', 'SUSPENDED', 'TERMINATED', 'RESIGNED'],
   SUSPENDED: ['ACTIVE', 'TERMINATED', 'RESIGNED', 'INACTIVE'],

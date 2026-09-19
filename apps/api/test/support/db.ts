@@ -393,3 +393,22 @@ export async function createTenantWithModules(input: {
     await handle.close();
   }
 }
+
+/** Add one more active member (user + membership, no roles) to an existing tenant. */
+export async function addTenantMember(tenantId: string): Promise<UserFixture> {
+  return withSuperuser(async (c) => {
+    const userId = uuid();
+    const email = `u-${userId.slice(0, 8)}@example.test`;
+    const { plain, hash } = await pw();
+    await c.query(
+      'insert into users (id, email, password_hash, password_updated_at) values ($1,$2,$3, now())',
+      [userId, email, hash],
+    );
+    const membershipId = uuid();
+    await c.query(
+      `insert into user_tenant_memberships (id, user_id, tenant_id, status) values ($1,$2,$3,'active')`,
+      [membershipId, userId, tenantId],
+    );
+    return { userId, email, password: plain, membershipId };
+  });
+}

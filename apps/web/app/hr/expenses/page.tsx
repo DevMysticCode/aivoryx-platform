@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, ErrorNote, Skeleton, Card, EmptyState } from '@/components/admin/ui';
 import { Table, Select } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import type { HrExpenseClaim } from '@aivoryx/contracts';
@@ -159,6 +159,7 @@ function ClaimList({ status, title }: { status: string; title: string }) {
 }
 
 function ClaimTable({ rows, withEmployee }: { rows: HrExpenseClaim[]; withEmployee?: boolean }) {
+  if (rows.length === 0) return <EmptyState>No claims.</EmptyState>;
   return (
     <Table
       head={
@@ -197,13 +198,6 @@ function ClaimTable({ rows, withEmployee }: { rows: HrExpenseClaim[]; withEmploy
           </td>
         </tr>
       ))}
-      {rows.length === 0 && (
-        <tr>
-          <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
-            No claims.
-          </td>
-        </tr>
-      )}
     </Table>
   );
 }

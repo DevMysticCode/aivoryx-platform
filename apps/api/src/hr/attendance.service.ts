@@ -11,6 +11,7 @@ import {
   resolveMyEmployeeId,
   type Paged,
 } from './common.js';
+import { assertEmployeeVisible, employeeIdFilter } from './data-scope.js';
 import type {
   AttendanceRecordDto,
   CheckInDto,
@@ -64,15 +65,17 @@ export class AttendanceService {
 
   /** Admin check-in/out for a specific employee (`hr.attendance.manage`). */
   checkInFor(scope: HrScope, employeeId: string, body: CheckInDto): Promise<AttendanceRecordDto> {
-    return withTenantContext(getDb(), scope, (tx) =>
-      this.doCheckIn(tx, scope, employeeId, body.point, body.notes, 'ADMIN'),
-    );
+    return withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, employeeId);
+      return this.doCheckIn(tx, scope, employeeId, body.point, body.notes, 'ADMIN');
+    });
   }
 
   checkOutFor(scope: HrScope, employeeId: string, body: CheckInDto): Promise<AttendanceRecordDto> {
-    return withTenantContext(getDb(), scope, (tx) =>
-      this.doCheckOut(tx, scope, employeeId, body.point, 'ADMIN'),
-    );
+    return withTenantContext(getDb(), scope, async (tx) => {
+      await assertEmployeeVisible(tx, scope, employeeId);
+      return this.doCheckOut(tx, scope, employeeId, body.point, 'ADMIN');
+    });
   }
 
   // ---- admin record ------------------------------------
@@ -80,6 +83,7 @@ export class AttendanceService {
   record(scope: HrScope, body: RecordAttendanceDto): Promise<AttendanceRecordDto> {
     return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, body.employeeId);
+      await assertEmployeeVisible(tx, scope, body.employeeId);
       const workDate = body.workDate.slice(0, 10);
       const values = {
         tenantId: scope.tenantId,
@@ -141,6 +145,11 @@ export class AttendanceService {
         .for('update')
         .limit(1);
       if (!rec) throw new AppError('HR_ATTENDANCE_NOT_FOUND');
+      try {
+        await assertEmployeeVisible(tx, scope, rec.employeeId);
+      } catch {
+        throw new AppError('HR_ATTENDANCE_NOT_FOUND');
+      }
 
       const isTime = body.field === 'checkInAt' || body.field === 'checkOutAt';
       const original =
@@ -192,6 +201,8 @@ export class AttendanceService {
       if (query.from) conds.push(gte(attendanceRecords.workDate, query.from.slice(0, 10)));
       if (query.to) conds.push(lte(attendanceRecords.workDate, query.to.slice(0, 10)));
       if (query.status) conds.push(eq(attendanceRecords.status, query.status as 'PRESENT'));
+      const scopeFilter = await employeeIdFilter(tx, scope, attendanceRecords.employeeId);
+      if (scopeFilter) conds.push(scopeFilter);
       const where = and(...conds)!;
       const [countRow] = await tx
         .select({ n: sql<number>`count(*)::int` })

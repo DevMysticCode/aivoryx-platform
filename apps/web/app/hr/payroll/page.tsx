@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, ErrorNote, Skeleton, Card, EmptyState } from '@/components/admin/ui';
 import { ErrorBlock } from '@/components/ui/kit';
 import { Table } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
@@ -98,58 +98,54 @@ export default function PayrollPage() {
 
       {list.isLoading && <Skeleton rows={4} />}
       {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
-      {list.data && (
-        <Table
-          head={
-            <tr>
-              <th className="px-3 py-2">Period</th>
-              <th className="px-3 py-2">Window</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Employees</th>
-              <th className="px-3 py-2">Gross</th>
-              <th className="px-3 py-2">Net</th>
-              <th className="px-3 py-2">Paid / Pending</th>
-            </tr>
-          }
-        >
-          {list.data.items.map((p) => (
-            <tr key={p.id}>
-              <td className="px-3 py-2">
-                <Link
-                  href={`/hr/payroll/${p.id}`}
-                  className="font-medium text-primary hover:underline"
-                >
-                  {p.name}
-                </Link>
-              </td>
-              <td className="px-3 py-2 text-muted-foreground">
-                {fmtDate(p.periodStart)} – {fmtDate(p.periodEnd)}
-              </td>
-              <td className="px-3 py-2">
-                <HrStatusBadge status={p.status} />
-              </td>
-              <td className="px-3 py-2 tabular-nums">{p.employeeCount}</td>
-              <td className="px-3 py-2 tabular-nums">{money(p.grossTotal, p.currency)}</td>
-              <td className="px-3 py-2 font-medium tabular-nums">
-                {money(p.netTotal, p.currency)}
-              </td>
-              <td className="px-3 py-2 tabular-nums">
-                {p.paidCount} / {p.pendingCount}
-                {p.failedCount > 0 && (
-                  <span className="ml-1 text-destructive">({p.failedCount} failed)</span>
-                )}
-              </td>
-            </tr>
-          ))}
-          {list.data.items.length === 0 && (
-            <tr>
-              <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                No payroll periods yet.
-              </td>
-            </tr>
-          )}
-        </Table>
-      )}
+      {list.data &&
+        (list.data.items.length === 0 ? (
+          <EmptyState>No payroll periods yet.</EmptyState>
+        ) : (
+          <Table
+            head={
+              <tr>
+                <th className="px-3 py-2">Period</th>
+                <th className="px-3 py-2">Window</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">Employees</th>
+                <th className="px-3 py-2">Gross</th>
+                <th className="px-3 py-2">Net</th>
+                <th className="px-3 py-2">Paid / Pending</th>
+              </tr>
+            }
+          >
+            {list.data.items.map((p) => (
+              <tr key={p.id}>
+                <td className="px-3 py-2">
+                  <Link
+                    href={`/hr/payroll/${p.id}`}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {p.name}
+                  </Link>
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {fmtDate(p.periodStart)} – {fmtDate(p.periodEnd)}
+                </td>
+                <td className="px-3 py-2">
+                  <HrStatusBadge status={p.status} />
+                </td>
+                <td className="px-3 py-2 tabular-nums">{p.employeeCount}</td>
+                <td className="px-3 py-2 tabular-nums">{money(p.grossTotal, p.currency)}</td>
+                <td className="px-3 py-2 font-medium tabular-nums">
+                  {money(p.netTotal, p.currency)}
+                </td>
+                <td className="px-3 py-2 tabular-nums">
+                  {p.paidCount} / {p.pendingCount}
+                  {p.failedCount > 0 && (
+                    <span className="ml-1 text-destructive">({p.failedCount} failed)</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </Table>
+        ))}
     </div>
   );
 }

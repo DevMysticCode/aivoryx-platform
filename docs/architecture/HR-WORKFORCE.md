@@ -276,3 +276,16 @@ types with an approved/pending/rejected request, 6 expense claims (incl. a field
 fuel claim), compensation history, one DRAFT + one FINALIZED payroll with
 payment records, and an OPEN performance period. `admin@clans-demo.test` links
 to `EMP-000001`; `agent@clans-demo.test` links to `EMP-000004`.
+
+## Phase 17 — HR Core (ADR 0044)
+
+- **Lifecycle:** `ONBOARDING → ACTIVE | RESIGNED | TERMINATED` added; create accepts `status: ONBOARDING | ACTIVE`. Excluded from payroll/headcount until started. UI: onboarding banner + "Mark as started"; the status control offers only valid moves.
+- **Data scope:** `OWN | TEAM | DEPARTMENT | COMPANY` from the caller's profile now bounds employee records, compensation/bank, attendance, leave, expenses, performance and the dashboard (`apps/api/src/hr/data-scope.ts`). Out-of-scope ⇒ 404. Assigned approvers keep access to their queue. Demo: `manager@clans-demo.test` (TEAM).
+- **Self-service (`/hr/me`):** now `@RequireModule('HR')`; adds `documents` (only HR-shared), `performance-reviews` (submitted onward), review acknowledge (audited); UI adds clock in/out, documents, reviews and a precise "not linked" state.
+- **Documents:** `shared_with_employee` (default HR-only); title/type metadata at upload; `PATCH /hr/employees/:id/documents/:docId`.
+- **Organisation:** rename/archive/restore for departments, designations, locations, schedules (schedule update added); archived units can't be newly assigned; updates audited.
+- **Dashboard:** real, scope-bound: key metrics, needs-attention (pending approvals, upcoming starts, probation ending in 30 days), recent workforce activity (no compensation, no raw ids).
+- **Field:** field-agents list shows the linked HR employee via `WorkforceDirectoryService` (optional, permission- and entitlement-gated).
+- **Notifications:** leave/expense submitted → approver; rejected → employee.
+- **Migrations:** 0020 (`ONBOARDING`), 0021 (`shared_with_employee`). **Seed:** `seed:hr-core-demo` (additive, idempotent).
+- **Future roadmap:** see ADR 0044.

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."hr_employee_status" ADD VALUE 'ONBOARDING' BEFORE 'ACTIVE';

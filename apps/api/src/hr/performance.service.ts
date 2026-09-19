@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { and, desc, eq, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
 import { canTransitionReview, type PerformanceReviewStatus } from './lifecycles.js';
 import { HrScope, isUniqueViolation } from './common.js';
+import { assertEmployeeVisible, employeeIdFilter } from './data-scope.js';
 import type {
   CreateGoalDto,
   CreatePerformancePeriodDto,
@@ -99,28 +100,45 @@ export class PerformanceService {
       if (query.performancePeriodId)
         conds.push(eq(performanceGoals.performancePeriodId, query.performancePeriodId));
       if (query.employeeId) conds.push(eq(performanceGoals.employeeId, query.employeeId));
-      const rows = await tx
-        .select({
-          id: performanceGoals.id,
-          performancePeriodId: performanceGoals.performancePeriodId,
-          employeeId: performanceGoals.employeeId,
-          employeeName: employees.displayName,
-          title: performanceGoals.title,
-          description: performanceGoals.description,
-          weight: performanceGoals.weight,
-          status: performanceGoals.status,
-        })
-        .from(performanceGoals)
-        .innerJoin(employees, eq(employees.id, performanceGoals.employeeId))
-        .where(and(...conds))
-        .orderBy(desc(performanceGoals.createdAt));
-      return rows;
+      const scopeFilter = await employeeIdFilter(tx, scope, performanceGoals.employeeId);
+      if (scopeFilter) conds.push(scopeFilter);
+      return this.loadGoals(tx, and(...conds)!);
+    });
+  }
+
+  private loadGoals(tx: Tx, where: SQL): Promise<PerformanceGoalDto[]> {
+    return tx
+      .select({
+        id: performanceGoals.id,
+        performancePeriodId: performanceGoals.performancePeriodId,
+        employeeId: performanceGoals.employeeId,
+        employeeName: employees.displayName,
+        title: performanceGoals.title,
+        description: performanceGoals.description,
+        weight: performanceGoals.weight,
+        status: performanceGoals.status,
+      })
+      .from(performanceGoals)
+      .innerJoin(employees, eq(employees.id, performanceGoals.employeeId))
+      .where(where)
+      .orderBy(desc(performanceGoals.createdAt));
+  }
+
+  private goalById(scope: HrScope, id: string): Promise<PerformanceGoalDto> {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const [g] = await this.loadGoals(
+        tx,
+        and(eq(performanceGoals.tenantId, scope.tenantId), eq(performanceGoals.id, id))!,
+      );
+      if (!g) throw new AppError('HR_PERFORMANCE_NOT_FOUND');
+      return g;
     });
   }
 
   async createGoal(scope: HrScope, body: CreateGoalDto): Promise<PerformanceGoalDto> {
     const id = await withTenantContext(getDb(), scope, async (tx) => {
       await requireEmployee(tx, scope.tenantId, body.employeeId);
+      await assertEmployeeVisible(tx, scope, body.employeeId);
       await requirePeriod(tx, scope.tenantId, body.performancePeriodId);
       const [row] = await tx
         .insert(performanceGoals)
@@ -149,8 +167,7 @@ export class PerformanceService {
       });
       return row!.id;
     });
-    const [g] = await this.listGoals(scope, {}).then((all) => all.filter((x) => x.id === id));
-    return g!;
+    return this.goalById(scope, id);
   }
 
   async setGoalStatus(
@@ -159,15 +176,19 @@ export class PerformanceService {
     status: 'OPEN' | 'ACHIEVED' | 'MISSED' | 'CANCELLED',
   ): Promise<PerformanceGoalDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
-      const [row] = await tx
+      const [goal] = await tx
+        .select({ employeeId: performanceGoals.employeeId })
+        .from(performanceGoals)
+        .where(and(eq(performanceGoals.tenantId, scope.tenantId), eq(performanceGoals.id, id)))
+        .limit(1);
+      if (!goal) throw new AppError('HR_PERFORMANCE_NOT_FOUND');
+      await assertReviewSubjectVisible(tx, scope, goal.employeeId);
+      await tx
         .update(performanceGoals)
         .set({ status, updatedAt: new Date() })
-        .where(and(eq(performanceGoals.tenantId, scope.tenantId), eq(performanceGoals.id, id)))
-        .returning({ id: performanceGoals.id });
-      if (!row) throw new AppError('HR_PERFORMANCE_NOT_FOUND');
+        .where(and(eq(performanceGoals.tenantId, scope.tenantId), eq(performanceGoals.id, id)));
     });
-    const [g] = await this.listGoals(scope, {}).then((all) => all.filter((x) => x.id === id));
-    return g!;
+    return this.goalById(scope, id);
   }
 
   // ---- reviews ------------------------------------
@@ -181,13 +202,32 @@ export class PerformanceService {
       if (query.performancePeriodId)
         conds.push(eq(performanceReviews.performancePeriodId, query.performancePeriodId));
       if (query.employeeId) conds.push(eq(performanceReviews.employeeId, query.employeeId));
+      const scopeFilter = await employeeIdFilter(tx, scope, performanceReviews.employeeId);
+      if (scopeFilter) conds.push(scopeFilter);
       return this.loadReviews(tx, scope.tenantId, and(...conds)!);
     });
+  }
+
+  /** The caller's OWN reviews, as the reviewed employee sees them: drafts are the
+   *  manager's private working copy and are never shown until submitted. */
+  listMyReviews(scope: HrScope, employeeId: string): Promise<PerformanceReviewDto[]> {
+    return withTenantContext(getDb(), scope, (tx) =>
+      this.loadReviews(
+        tx,
+        scope.tenantId,
+        and(
+          eq(performanceReviews.tenantId, scope.tenantId),
+          eq(performanceReviews.employeeId, employeeId),
+          inArray(performanceReviews.status, ['SUBMITTED', 'ACKNOWLEDGED', 'CLOSED']),
+        )!,
+      ),
+    );
   }
 
   async createReview(scope: HrScope, body: CreateReviewDto): Promise<PerformanceReviewDto> {
     const id = await withTenantContext(getDb(), scope, async (tx) => {
       await requireEmployee(tx, scope.tenantId, body.employeeId);
+      await assertEmployeeVisible(tx, scope, body.employeeId);
       await requirePeriod(tx, scope.tenantId, body.performancePeriodId);
       try {
         const [row] = await tx
@@ -222,6 +262,7 @@ export class PerformanceService {
   ): Promise<PerformanceReviewDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
       const row = await lockReview(tx, scope.tenantId, id);
+      await assertReviewSubjectVisible(tx, scope, row.employeeId);
       if (row.status === 'CLOSED')
         throw new AppError('HR_INVALID_STATE', { details: { hint: 'review is closed' } });
       await tx
@@ -241,6 +282,7 @@ export class PerformanceService {
   async submitReview(scope: HrScope, id: string): Promise<PerformanceReviewDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
       const row = await lockReview(tx, scope.tenantId, id);
+      await assertReviewSubjectVisible(tx, scope, row.employeeId);
       assertTransition(row.status, 'SUBMITTED');
       await tx
         .update(performanceReviews)
@@ -281,6 +323,14 @@ export class PerformanceService {
         .update(performanceReviews)
         .set({ status: 'ACKNOWLEDGED', acknowledgedAt: new Date(), updatedAt: new Date() })
         .where(eq(performanceReviews.id, id));
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'hr.performance.review_acknowledged',
+        entityType: 'performance_review',
+        entityId: id,
+        actor: userActor(scope),
+        changes: { status: { from: row.status, to: 'ACKNOWLEDGED' } },
+      });
     });
     return this.getReview(scope, id);
   }
@@ -288,6 +338,7 @@ export class PerformanceService {
   async closeReview(scope: HrScope, id: string): Promise<PerformanceReviewDto> {
     await withTenantContext(getDb(), scope, async (tx) => {
       const row = await lockReview(tx, scope.tenantId, id);
+      await assertReviewSubjectVisible(tx, scope, row.employeeId);
       assertTransition(row.status, 'CLOSED');
       await tx
         .update(performanceReviews)
@@ -303,6 +354,15 @@ export class PerformanceService {
       });
     });
     return this.getReview(scope, id);
+  }
+
+  /** API single-review read, bound by the caller's data scope. */
+  async getReviewForCaller(scope: HrScope, id: string): Promise<PerformanceReviewDto> {
+    const review = await this.getReview(scope, id);
+    await withTenantContext(getDb(), scope, (tx) =>
+      assertReviewSubjectVisible(tx, scope, review.employeeId),
+    );
+    return review;
   }
 
   getReview(scope: HrScope, id: string): Promise<PerformanceReviewDto> {
@@ -371,6 +431,19 @@ async function requireEmployee(tx: Tx, tenantId: string, id: string): Promise<vo
     .where(and(eq(employees.tenantId, tenantId), eq(employees.id, id)))
     .limit(1);
   if (!row) throw new AppError('HR_EMPLOYEE_NOT_FOUND');
+}
+
+/** Data-scope guard for review/goal subjects — a 404, never a 403. */
+async function assertReviewSubjectVisible(
+  tx: Tx,
+  scope: HrScope,
+  employeeId: string,
+): Promise<void> {
+  try {
+    await assertEmployeeVisible(tx, scope, employeeId);
+  } catch {
+    throw new AppError('HR_PERFORMANCE_NOT_FOUND');
+  }
 }
 
 async function requirePeriod(tx: Tx, tenantId: string, id: string): Promise<void> {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, ErrorNote, Skeleton, Card, EmptyState } from '@/components/admin/ui';
 import { ErrorBlock } from '@/components/ui/kit';
 import { Table, Select, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
@@ -167,31 +167,28 @@ export default function AttendancePage() {
       {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
       {list.data && (
         <>
-          <Table
-            head={
-              <tr>
-                <th className="px-3 py-2">Employee</th>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Check in</th>
-                <th className="px-3 py-2">Check out</th>
-                <th className="px-3 py-2">GPS (m)</th>
-                <th className="px-3 py-2">Source</th>
-                {canCorrect && <th className="px-3 py-2" />}
-              </tr>
-            }
-          >
-            {list.data.items.map((a) => (
-              <AttendanceRow key={a.id} a={a} canCorrect={canCorrect} />
-            ))}
-            {list.data.items.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
-                  No attendance records for these filters.
-                </td>
-              </tr>
-            )}
-          </Table>
+          {list.data.items.length === 0 ? (
+            <EmptyState>No attendance records for these filters.</EmptyState>
+          ) : (
+            <Table
+              head={
+                <tr>
+                  <th className="px-3 py-2">Employee</th>
+                  <th className="px-3 py-2">Date</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Check in</th>
+                  <th className="px-3 py-2">Check out</th>
+                  <th className="px-3 py-2">GPS (m)</th>
+                  <th className="px-3 py-2">Source</th>
+                  {canCorrect && <th className="px-3 py-2" />}
+                </tr>
+              }
+            >
+              {list.data.items.map((a) => (
+                <AttendanceRow key={a.id} a={a} canCorrect={canCorrect} />
+              ))}
+            </Table>
+          )}
           <Pager
             page={page}
             totalPages={Math.max(1, Math.ceil(total / pageSize))}

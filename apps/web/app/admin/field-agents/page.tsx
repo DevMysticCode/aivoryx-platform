@@ -100,6 +100,19 @@ export default function FieldAgentsPage() {
                   <td className="px-3 py-2">
                     <div className="font-medium">{agent.userName ?? '—'}</div>
                     <div className="text-xs text-muted-foreground">{agent.userEmail}</div>
+                    {agent.employee ? (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        HR record:{' '}
+                        <a
+                          href={`/hr/employees/${agent.employee.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {agent.employee.displayName}
+                        </a>
+                        {' · '}
+                        {agent.employee.employeeNumber}
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-3 py-2">
                     <StatusBadge status={agent.status} />

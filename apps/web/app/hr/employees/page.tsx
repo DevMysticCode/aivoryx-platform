@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
-import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
+import { PageHeader, ErrorNote, Skeleton, Card, EmptyState } from '@/components/admin/ui';
 import { ErrorBlock } from '@/components/ui/kit';
 import { Select, Table, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { HrStatusBadge, TextField, fmtDate } from '@/components/hr/ui';
+import { ManagerPicker, type ManagerValue } from '@/components/hr/manager-picker';
+import { EMPLOYEE_STATUSES, employeeStatusLabel } from '@/lib/hr/lifecycle';
 import {
   useEmployees,
   useDepartments,
@@ -18,7 +20,6 @@ import {
   useCreateEmployee,
 } from '@/lib/hr/use-hr';
 
-const STATUSES = ['ACTIVE', 'ON_LEAVE', 'SUSPENDED', 'TERMINATED', 'RESIGNED', 'INACTIVE'];
 const TYPES = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN', 'TEMPORARY'];
 
 export default function HrEmployeesPage() {
@@ -56,8 +57,9 @@ export default function HrEmployeesPage() {
     designationId: '',
     workLocationId: '',
     scheduleId: '',
-    managerId: '',
+    startStatus: 'ACTIVE',
   });
+  const [manager, setManager] = useState<ManagerValue | null>(null);
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const submit = async () => {
@@ -71,7 +73,8 @@ export default function HrEmployeesPage() {
       designationId: form.designationId || undefined,
       workLocationId: form.workLocationId || undefined,
       scheduleId: form.scheduleId || undefined,
-      managerId: form.managerId || undefined,
+      managerId: manager?.id,
+      status: form.startStatus,
     });
     setShowNew(false);
     router.push(`/hr/employees/${emp.id}`);
@@ -175,17 +178,14 @@ export default function HrEmployeesPage() {
               ))}
             </Select>
             <Select
-              label="Reporting manager"
-              value={form.managerId}
-              onChange={(e) => set('managerId', e.target.value)}
+              label="Employment start"
+              value={form.startStatus}
+              onChange={(e) => set('startStatus', e.target.value)}
             >
-              <option value="">—</option>
-              {list.data?.items.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.displayName}
-                </option>
-              ))}
+              <option value="ACTIVE">Active now</option>
+              <option value="ONBOARDING">Onboarding — hasn&apos;t started yet</option>
             </Select>
+            <ManagerPicker label="Reporting manager" value={manager} onChange={setManager} />
           </div>
           <ErrorNote error={create.error} />
           <div className="flex gap-2">
@@ -234,9 +234,9 @@ export default function HrEmployeesPage() {
           }}
         >
           <option value="">All</option>
-          {STATUSES.map((s) => (
+          {EMPLOYEE_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s.replace(/_/g, ' ')}
+              {employeeStatusLabel(s)}
             </option>
           ))}
         </Select>
@@ -298,14 +298,10 @@ export default function HrEmployeesPage() {
                 <td className="px-3 py-2 text-muted-foreground">{fmtDate(e.joiningDate)}</td>
               </tr>
             ))}
-            {list.data.items.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
-                  No employees match these filters.
-                </td>
-              </tr>
-            )}
           </Table>
+          {list.data.items.length === 0 && (
+            <EmptyState>No employees match these filters.</EmptyState>
+          )}
           <Pager
             page={page}
             totalPages={Math.max(1, Math.ceil(total / pageSize))}

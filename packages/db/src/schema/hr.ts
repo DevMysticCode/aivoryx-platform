@@ -64,6 +64,7 @@ const ts = {
 // ---- enums ---------------------------------------------------------
 
 export const employeeStatus = pgEnum('hr_employee_status', [
+  'ONBOARDING',
   'ACTIVE',
   'ON_LEAVE',
   'SUSPENDED',
@@ -523,6 +524,10 @@ export const employeeDocuments = pgTable(
     contentType: text('content_type').notNull(),
     sizeBytes: integer('size_bytes').notNull(),
     originalFilename: text('original_filename'),
+    /** Employee self-service may view/download only documents HR has explicitly
+     *  shared — the HR file also holds material (e.g. internal notes) that must
+     *  stay HR-only. Secure by default. */
+    sharedWithEmployee: boolean('shared_with_employee').notNull().default(false),
     uploadedByMembershipId: uuid('uploaded_by_membership_id'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

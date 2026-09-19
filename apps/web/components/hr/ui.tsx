@@ -9,6 +9,8 @@ export { TabBar } from '@/components/ui/tab-bar';
 
 const HR_STATUS_STYLES: Record<string, string> = {
   active: 'bg-success/10 text-success',
+  onboarding: 'bg-info/10 text-info',
+  archived: 'bg-secondary text-muted-foreground',
   approved: 'bg-success/10 text-success',
   paid: 'bg-success/10 text-success',
   reimbursed: 'bg-success/10 text-success',
@@ -140,4 +142,10 @@ export function DefRow({ label, children }: { label: string; children: ReactNode
       <span className="text-right font-medium">{children}</span>
     </div>
   );
+}
+
+export function fmtSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

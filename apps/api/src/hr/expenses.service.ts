@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte, or, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
@@ -19,6 +19,7 @@ import {
   resolveMyEmployeeId,
   type Paged,
 } from './common.js';
+import { assertEmployeeVisible, employeeIdFilter } from './data-scope.js';
 import type {
   CreateExpenseClaimDto,
   ExpenseCategoryDto,
@@ -376,6 +377,14 @@ export class ExpensesService {
       if (query.visitRef) conds.push(eq(expenseClaims.visitRef, query.visitRef));
       if (query.from) conds.push(gte(expenseClaims.expenseDate, query.from.slice(0, 10)));
       if (query.to) conds.push(lte(expenseClaims.expenseDate, query.to.slice(0, 10)));
+      // Data scope — but a claim assigned to the caller for approval stays visible
+      // to them wherever the claimant sits (the approval queue reads through here).
+      const scopeFilter = await employeeIdFilter(tx, scope, expenseClaims.employeeId);
+      if (scopeFilter) {
+        conds.push(
+          or(scopeFilter, eq(expenseClaims.approverMembershipId, scope.actorMembershipId))!,
+        );
+      }
       const where = and(...conds)!;
       const [countRow] = await tx
         .select({ n: sql<number>`count(*)::int` })
@@ -402,6 +411,38 @@ export class ExpensesService {
         pageSize,
       };
     });
+  }
+
+  /** A claim is visible to the caller when its claimant is in their data scope
+   *  or it is assigned to them for approval. 404 otherwise (no existence leak). */
+  private async assertClaimVisible(tx: Tx, scope: HrScope, id: string): Promise<void> {
+    const [c] = await tx
+      .select({
+        employeeId: expenseClaims.employeeId,
+        approver: expenseClaims.approverMembershipId,
+      })
+      .from(expenseClaims)
+      .where(and(eq(expenseClaims.tenantId, scope.tenantId), eq(expenseClaims.id, id)))
+      .limit(1);
+    if (!c) throw new AppError('HR_EXPENSE_NOT_FOUND');
+    if (c.approver === scope.actorMembershipId) return;
+    try {
+      await assertEmployeeVisible(tx, scope, c.employeeId);
+    } catch {
+      throw new AppError('HR_EXPENSE_NOT_FOUND');
+    }
+  }
+
+  /** API single-claim read, bound by the caller's data scope (or approver role). */
+  async getForCaller(scope: HrScope, id: string): Promise<ExpenseClaimDto> {
+    await withTenantContext(getDb(), scope, (tx) => this.assertClaimVisible(tx, scope, id));
+    return this.get(scope, id);
+  }
+
+  /** API receipt download key, bound by the caller's data scope (or approver role). */
+  async receiptObjectKeyForCaller(scope: HrScope, id: string): Promise<string | null> {
+    await withTenantContext(getDb(), scope, (tx) => this.assertClaimVisible(tx, scope, id));
+    return this.receiptObjectKey(scope, id);
   }
 
   get(scope: HrScope, id: string): Promise<ExpenseClaimDto> {

@@ -4,6 +4,7 @@ import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { AuditService, userActor } from '../audit/audit.service.js';
 import { HrScope } from './common.js';
+import { assertEmployeeVisible } from './data-scope.js';
 import type { CompensationDto, CreateCompensationDto } from './hr.dto.js';
 
 const { compensationProfiles, compensationComponents, employmentHistory, employees } = schema;
@@ -22,6 +23,7 @@ export class CompensationService {
   history(scope: HrScope, employeeId: string): Promise<CompensationDto[]> {
     return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, employeeId);
+      await assertEmployeeVisible(tx, scope, employeeId);
       const profiles = await tx
         .select()
         .from(compensationProfiles)
@@ -51,6 +53,7 @@ export class CompensationService {
   current(scope: HrScope, employeeId: string): Promise<CompensationDto | null> {
     return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, employeeId);
+      await assertEmployeeVisible(tx, scope, employeeId);
       return this.loadCurrent(tx, scope.tenantId, employeeId);
     });
   }
@@ -62,6 +65,7 @@ export class CompensationService {
   ): Promise<CompensationDto> {
     const id = await withTenantContext(getDb(), scope, async (tx) => {
       await this.requireEmployee(tx, scope.tenantId, employeeId);
+      await assertEmployeeVisible(tx, scope, employeeId);
       const prev = await this.loadCurrent(tx, scope.tenantId, employeeId);
       // supersede any active profile
       await tx

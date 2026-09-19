@@ -14,6 +14,7 @@ import { IncentivesService } from './incentives.service.js';
 import { PayrollService } from './payroll.service.js';
 import { PerformanceService } from './performance.service.js';
 import { SelfServiceService } from './self-service.service.js';
+import { WorkforceDirectoryService } from './workforce-directory.service.js';
 import { HrOrganizationController } from './hr-organization.controller.js';
 import { HrEmployeesController } from './hr-employees.controller.js';
 import { HrAttendanceController } from './hr-attendance.controller.js';
@@ -65,7 +66,8 @@ import { HrMeController } from './hr-me.controller.js';
     PayrollService,
     PerformanceService,
     SelfServiceService,
+    WorkforceDirectoryService,
   ],
-  exports: [ExpensesService],
+  exports: [ExpensesService, WorkforceDirectoryService],
 })
 export class HrModule {}

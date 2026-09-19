@@ -39,6 +39,8 @@ export const hrKeys = {
   performanceReviews: (f: Record<string, unknown>) => ['hr', 'performance', 'reviews', f] as const,
   me: ['hr', 'me'] as const,
   myPayrollHistory: ['hr', 'me', 'payroll-history'] as const,
+  myDocuments: ['hr', 'me', 'documents'] as const,
+  myReviews: ['hr', 'me', 'performance-reviews'] as const,
 };
 
 const invalidateAll = (qc: ReturnType<typeof useQueryClient>) =>
@@ -77,6 +79,57 @@ export const useCreateDesignation = mutation(api.createDesignation, 'Designation
 export const useCreateLocation = mutation(api.createLocation, 'Location created');
 export const useCreateSchedule = mutation(api.createSchedule, 'Schedule created');
 
+/** Rename or archive/restore a unit. `kind` picks the endpoint; archived units
+ *  stay on the people who already hold them but can't be newly assigned. */
+export type OrgUnitKind = 'department' | 'designation' | 'location' | 'schedule';
+export function useUpdateOrgUnit(kind: OrgUnitKind) {
+  const qc = useQueryClient();
+  return useMutationWithFeedback({
+    mutationFn: async ({
+      id,
+      ...body
+    }: {
+      id: string;
+      name?: string;
+      status?: api.OrgUnitStatus;
+    }): Promise<unknown> => {
+      switch (kind) {
+        case 'department':
+          return api.updateDepartment(id, body);
+        case 'designation':
+          return api.updateDesignation(id, body);
+        case 'location':
+          return api.updateLocation(id, body);
+        default:
+          return api.updateSchedule(id, body);
+      }
+    },
+    successMessage: (_data, variables) =>
+      variables.status === 'ARCHIVED'
+        ? `${kind[0]!.toUpperCase()}${kind.slice(1)} archived`
+        : variables.status === 'ACTIVE'
+          ? `${kind[0]!.toUpperCase()}${kind.slice(1)} restored`
+          : `${kind[0]!.toUpperCase()}${kind.slice(1)} updated`,
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
+/** Edit a work schedule (times, grace, working days) or archive/restore it. */
+export function useUpdateSchedule() {
+  const qc = useQueryClient();
+  return useMutationWithFeedback({
+    mutationFn: ({ id, ...body }: { id: string } & Parameters<typeof api.updateSchedule>[1]) =>
+      api.updateSchedule(id, body),
+    successMessage: (_data, v) =>
+      v.status === 'ARCHIVED'
+        ? 'Schedule archived'
+        : v.status === 'ACTIVE'
+          ? 'Schedule restored'
+          : 'Schedule updated',
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
 // ---- employees ------------------------------------------
 export const useEmployees = (filters: Parameters<typeof api.listEmployees>[0]) =>
   useQuery({ queryKey: hrKeys.employees(filters), queryFn: () => api.listEmployees(filters) });
@@ -99,6 +152,16 @@ export function useDeleteEmployeeDocument(id: string) {
   return useMutationWithFeedback({
     mutationFn: (documentId: string) => api.deleteEmployeeDocument(id, documentId),
     successMessage: 'Document deleted',
+    onSuccess: () => qc.invalidateQueries({ queryKey: hrKeys.employeeDocuments(id) }),
+  });
+}
+export function useSetDocumentSharing(id: string) {
+  const qc = useQueryClient();
+  return useMutationWithFeedback({
+    mutationFn: ({ documentId, shared }: { documentId: string; shared: boolean }) =>
+      api.setEmployeeDocumentSharing(id, documentId, shared),
+    successMessage: (_data, v) =>
+      v.shared ? 'Document shared with the employee' : 'Document is now HR-only',
     onSuccess: () => qc.invalidateQueries({ queryKey: hrKeys.employeeDocuments(id) }),
   });
 }
@@ -381,6 +444,11 @@ export function useReviewActions(id: string) {
       successMessage: 'Review closed',
       onSuccess: ok,
     }),
+    acknowledge: useMutationWithFeedback({
+      mutationFn: () => api.acknowledgePerformanceReview(id),
+      successMessage: 'Review acknowledged',
+      onSuccess: ok,
+    }),
   };
 }
 
@@ -388,3 +456,7 @@ export function useReviewActions(id: string) {
 export const useHrMe = () => useQuery({ queryKey: hrKeys.me, queryFn: api.hrMe, retry: false });
 export const useMyPayrollHistory = () =>
   useQuery({ queryKey: hrKeys.myPayrollHistory, queryFn: api.myPayrollHistory, retry: false });
+export const useMyDocuments = () =>
+  useQuery({ queryKey: hrKeys.myDocuments, queryFn: api.myDocuments, retry: false });
+export const useMyPerformanceReviews = () =>
+  useQuery({ queryKey: hrKeys.myReviews, queryFn: api.myPerformanceReviews, retry: false });
