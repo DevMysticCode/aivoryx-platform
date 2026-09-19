@@ -132,7 +132,7 @@ export default function CreateTenantPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1 text-sm sm:col-span-2">
               <span className="font-medium">
-                Company name <span className="text-destructive">*</span>
+                Company name <span className="text-danger">*</span>
               </span>
               <input
                 value={form.name}
@@ -169,7 +169,7 @@ export default function CreateTenantPage() {
             </label>
             <label className="space-y-1 text-sm">
               <span className="font-medium">
-                Admin email <span className="text-destructive">*</span>
+                Admin email <span className="text-danger">*</span>
               </span>
               <input
                 type="email"
@@ -312,7 +312,7 @@ export default function CreateTenantPage() {
 
       {step === 'done' && createTenant.data ? (
         <section className="space-y-4 rounded-lg border p-6 text-center">
-          <Check className="mx-auto size-10 rounded-full bg-emerald-500/10 p-2 text-emerald-600 dark:text-emerald-400" />
+          <Check className="mx-auto size-10 rounded-full bg-success-soft p-2 text-success" />
           <div>
             <p className="text-lg font-semibold">{createTenant.data.tenant.name} is live</p>
             <p className="mt-1 text-sm text-muted-foreground">

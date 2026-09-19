@@ -5,17 +5,17 @@ import { Spinner } from './spinner.js';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background ' +
     'disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80',
+        primary:
+          'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active',
         secondary:
           'bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70',
-        outline:
-          'border border-input bg-transparent hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
+        outline: 'border border-input bg-surface hover:bg-surface-hover active:bg-secondary',
+        ghost: 'hover:bg-surface-hover hover:text-foreground active:bg-secondary',
         destructive:
           'bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80',
       },

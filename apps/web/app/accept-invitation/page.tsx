@@ -5,7 +5,8 @@ import { Suspense, useState } from 'react';
 import type { AcceptInvitationResponse } from '@aivoryx/contracts';
 import { Button } from '@aivoryx/ui';
 import { apiFetch } from '@/lib/api/client';
-import { ErrorNote, Field, PageHeader } from '@/components/admin/ui';
+import { ErrorNote, Field } from '@/components/admin/ui';
+import { AuthShell } from '@/components/auth-shell';
 
 function AcceptInvitationForm() {
   const params = useSearchParams();
@@ -40,7 +41,10 @@ function AcceptInvitationForm() {
 
   if (done) {
     return (
-      <div className="rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
+      <div
+        role="status"
+        className="rounded-lg border border-primary/30 bg-primary-soft p-4 text-sm"
+      >
         <p className="font-medium">You&apos;re all set.</p>
         <p className="mt-1 text-muted-foreground">
           Your account for <span className="font-mono">{done.email}</span> is active in workspace{' '}
@@ -74,8 +78,8 @@ function AcceptInvitationForm() {
       />
       <Field label="Name (optional)" value={name} onChange={(e) => setName(e.target.value)} />
       <ErrorNote error={error} />
-      <Button type="submit" disabled={busy} className="w-full">
-        {busy ? 'Accepting…' : 'Accept invitation'}
+      <Button type="submit" isLoading={busy} loadingText="Accepting…" className="w-full">
+        Accept invitation
       </Button>
     </form>
   );
@@ -83,11 +87,10 @@ function AcceptInvitationForm() {
 
 export default function AcceptInvitationPage() {
   return (
-    <section className="mx-auto max-w-sm space-y-6">
-      <PageHeader title="Accept your invitation" />
+    <AuthShell title="Accept your invitation">
       <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
         <AcceptInvitationForm />
       </Suspense>
-    </section>
+    </AuthShell>
   );
 }

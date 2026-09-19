@@ -60,10 +60,10 @@ export function TabBar<T extends string>({
               }}
               className={cn(
                 'shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                 active === t.key
-                  ? 'bg-secondary font-medium text-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  ? 'bg-primary-soft font-medium text-primary'
+                  : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
               )}
             >
               {t.label}

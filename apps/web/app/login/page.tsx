@@ -1,13 +1,21 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@aivoryx/ui';
 import { login, switchTenant } from '@/lib/api/admin';
-import { ErrorNote, Field, PageHeader } from '@/components/admin/ui';
+import { ErrorNote, Field } from '@/components/admin/ui';
+import { AuthShell } from '@/components/auth-shell';
+import { themeCssFor } from '@/components/brand-provider';
+import { publicLoginLogoUrl } from '@/lib/api/public';
+import { usePublicLoginBranding } from '@/lib/settings/use-public-branding';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const qc = useQueryClient();
+  const workspace = useSearchParams().get('workspace');
+  const { branding, isLoading } = usePublicLoginBranding(workspace);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<unknown>(null);
@@ -19,6 +27,8 @@ export default function LoginPage() {
     setError(null);
     try {
       const me = await login(email.trim(), password);
+      // never carry another sign-in's cached identity into this session
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'public' });
       let hasWorkspace = !!me.active;
       if (!hasWorkspace) {
         const usable = me.memberships.find(
@@ -39,8 +49,29 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="mx-auto max-w-sm space-y-6">
-      <PageHeader title="Sign in" description="Access your Aivoryx workspace administration." />
+    <AuthShell
+      title={branding?.welcomeMessage || 'Sign in'}
+      description={
+        branding?.description ||
+        (branding ? `Sign in to ${branding.displayName}.` : 'Access your Aivoryx workspace.')
+      }
+      brand={
+        branding
+          ? {
+              displayName: branding.displayName,
+              logoUrl: branding.hasLogo ? publicLoginLogoUrl(branding.slug) : null,
+              showPoweredBy: branding.showPoweredBy,
+            }
+          : null
+      }
+      footer="Trouble signing in? Ask your workspace administrator to reset your access."
+    >
+      {branding ? <style data-aivoryx-brand="">{themeCssFor(branding) ?? ''}</style> : null}
+      {isLoading ? (
+        <span className="sr-only" role="status">
+          Loading workspace…
+        </span>
+      ) : null}
       <form onSubmit={onSubmit} className="space-y-4">
         <Field
           label="Email"
@@ -59,10 +90,18 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <ErrorNote error={error} />
-        <Button type="submit" disabled={busy} className="w-full">
-          {busy ? 'Signing in…' : 'Sign in'}
+        <Button type="submit" isLoading={busy} loadingText="Signing in…" className="w-full">
+          Sign in
         </Button>
       </form>
-    </section>
+    </AuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

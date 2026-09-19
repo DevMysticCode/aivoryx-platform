@@ -13,6 +13,7 @@ import { Card, EmptyState, ErrorNote, Field, Skeleton, StatusBadge } from '@/com
 import { fmtDate, Select, SupplyStatusBadge } from '@/components/supply/ui';
 import { RelatedLink } from '@/components/ui/related-link';
 import { CustomerFinanceCard } from '@/components/finance/summary-card';
+import { CustomerLogoCard } from '@/components/crm/customer-logo-card';
 
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,7 +27,19 @@ export default function CustomerDetailPage() {
 
   if (customer.isLoading) return <Skeleton rows={6} />;
   if (customer.error) return <ErrorNote error={customer.error} />;
-  if (!customer.data) return <EmptyState>Customer not found.</EmptyState>;
+  if (!customer.data)
+    return (
+      <EmptyState
+        title="Customer not found"
+        action={
+          <Link href="/customers" className="font-medium text-primary hover:underline">
+            Back to customers
+          </Link>
+        }
+      >
+        It may have been removed, or you may not have access to it.
+      </EmptyState>
+    );
   const c = customer.data;
 
   const startEdit = () => {
@@ -94,6 +107,11 @@ export default function CustomerDetailPage() {
               <Field
                 key={key}
                 label={label}
+                hint={
+                  key === 'taxReference'
+                    ? 'Optional — GST or tax number shown on quotations.'
+                    : undefined
+                }
                 value={form[key] ?? ''}
                 onChange={(e) => setForm({ ...form, [key]: e.target.value })}
               />
@@ -138,6 +156,13 @@ export default function CustomerDetailPage() {
           ) : null}
         </Card>
       )}
+
+      <CustomerLogoCard
+        customerId={id}
+        hasLogo={c.hasLogo}
+        version={c.updatedAt}
+        canEdit={canUpdate}
+      />
 
       <CustomerFinanceCard customerId={id} />
 
@@ -197,6 +222,12 @@ function Detail({ label, value }: { label: string; value: string | null | undefi
   );
 }
 
+const EMPTY_COPY: Record<string, string> = {
+  Leads: 'No leads linked. The lead this customer came from appears here once booked.',
+  Quotations: 'No quotations yet. They appear here when one is prepared for this customer.',
+  Projects: 'No projects yet. A project is created when a quotation is booked.',
+};
+
 function LinkCard({
   title,
   items,
@@ -221,7 +252,9 @@ function LinkCard({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">None.</p>
+        <p className="text-sm text-muted-foreground">
+          {EMPTY_COPY[title] ?? 'Nothing linked to this customer yet.'}
+        </p>
       )}
     </Card>
   );

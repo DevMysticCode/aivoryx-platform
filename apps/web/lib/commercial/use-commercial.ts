@@ -185,3 +185,32 @@ export function useQuotationPipelineSummary(enabled: boolean) {
     retry: false,
   });
 }
+
+// ---- customer logo ---------------------------------------------
+
+function useInvalidateCustomer(id: string) {
+  const qc = useQueryClient();
+  return () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: commercialKeys.customer(id) }),
+      qc.invalidateQueries({ queryKey: ['commercial', 'customers'] }),
+    ]);
+}
+
+export function useUploadCustomerLogo(id: string) {
+  const invalidate = useInvalidateCustomer(id);
+  return useMutationWithFeedback({
+    mutationFn: (file: File) => api.uploadCustomerLogo(id, file),
+    onSuccess: invalidate,
+    successMessage: 'Customer logo uploaded',
+  });
+}
+
+export function useRemoveCustomerLogo(id: string) {
+  const invalidate = useInvalidateCustomer(id);
+  return useMutationWithFeedback({
+    mutationFn: () => api.removeCustomerLogo(id),
+    onSuccess: invalidate,
+    successMessage: 'Customer logo removed',
+  });
+}

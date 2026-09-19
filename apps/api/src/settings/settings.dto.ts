@@ -1,8 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsIn, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
+import { THEME_PRESET_KEYS } from '@aivoryx/shared';
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const ISO_CURRENCY = /^[A-Z]{3}$/;
+export const DOCUMENT_LOGO_MODES = ['company', 'separate'] as const;
 
 // ---- responses -------------------------------------------------
 
@@ -27,10 +37,29 @@ export class CompanyProfileDto {
   @ApiProperty({ nullable: true, type: String }) defaultCurrency!: string | null;
   @ApiProperty({ nullable: true, type: String, example: '#1E40AF' }) primaryColor!: string | null;
   @ApiProperty({ nullable: true, type: String, example: '#0EA5E9' }) accentColor!: string | null;
+  @ApiProperty({ nullable: true, type: String, enum: THEME_PRESET_KEYS })
+  themePreset!: string | null;
+  @ApiProperty({ nullable: true, type: String, example: '#231D45' }) secondaryColor!: string | null;
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: 'Stored print accent for documents (null = derived from the primary colour).',
+  })
+  documentAccentColor!: string | null;
+  @ApiProperty({ enum: DOCUMENT_LOGO_MODES }) documentLogoMode!: string;
+  @ApiProperty({ description: 'Show the customer logo on their documents.' })
+  documentShowCustomerLogo!: boolean;
+
+  @ApiProperty({ nullable: true, type: String, maxLength: 80 }) loginWelcome!: string | null;
+  @ApiProperty({ nullable: true, type: String, maxLength: 240 }) loginDescription!: string | null;
+  @ApiProperty() loginShowPoweredBy!: boolean;
 
   @ApiProperty({ description: 'True when a primary logo is configured.' }) hasLogo!: boolean;
   @ApiProperty() hasLightLogo!: boolean;
   @ApiProperty() hasDarkLogo!: boolean;
+  @ApiProperty() hasCompactLogo!: boolean;
+  @ApiProperty() hasLoginLogo!: boolean;
+  @ApiProperty() hasDocumentLogo!: boolean;
   @ApiProperty() hasFavicon!: boolean;
 
   @ApiProperty({ format: 'date-time', nullable: true, type: String }) updatedAt!: string | null;
@@ -39,9 +68,17 @@ export class CompanyProfileDto {
 /** The compact branding the app shell + `/auth/me` need — no permission to consume. */
 export class BrandingDto {
   @ApiProperty() displayName!: string;
+  @ApiProperty({ nullable: true, type: String, enum: THEME_PRESET_KEYS })
+  themePreset!: string | null;
   @ApiProperty({ nullable: true, type: String }) primaryColor!: string | null;
+  @ApiProperty({ nullable: true, type: String }) secondaryColor!: string | null;
   @ApiProperty({ nullable: true, type: String }) accentColor!: string | null;
   @ApiProperty() hasLogo!: boolean;
+  @ApiProperty() hasLightLogo!: boolean;
+  @ApiProperty() hasDarkLogo!: boolean;
+  @ApiProperty() hasCompactLogo!: boolean;
+  @ApiProperty() hasLoginLogo!: boolean;
+  @ApiProperty() hasFavicon!: boolean;
 }
 
 export class OnboardingStepDto {
@@ -148,9 +185,51 @@ export class UpdateCompanyProfileDto {
   @IsOptional()
   @Matches(HEX, { message: 'accentColor must be a 6-digit hex value such as #0EA5E9' })
   accentColor?: string;
+  @ApiProperty({ required: false, example: '#231D45' })
+  @IsOptional()
+  @Matches(HEX, { message: 'secondaryColor must be a 6-digit hex value such as #231D45' })
+  secondaryColor?: string;
+  @ApiProperty({ required: false, example: '#8A5A12' })
+  @IsOptional()
+  @Matches(HEX, { message: 'documentAccentColor must be a 6-digit hex value such as #8A5A12' })
+  documentAccentColor?: string;
+  @ApiProperty({ required: false, enum: THEME_PRESET_KEYS })
+  @IsOptional()
+  @IsIn(THEME_PRESET_KEYS as unknown as string[])
+  themePreset?: string;
+  @ApiProperty({ required: false, enum: DOCUMENT_LOGO_MODES })
+  @IsOptional()
+  @IsIn(DOCUMENT_LOGO_MODES as unknown as string[])
+  documentLogoMode?: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  documentShowCustomerLogo?: boolean;
+  @ApiProperty({ required: false, maxLength: 80, description: 'Empty string clears.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  loginWelcome?: string;
+  @ApiProperty({ required: false, maxLength: 240, description: 'Empty string clears.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  loginDescription?: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  loginShowPoweredBy?: boolean;
 }
 
-export const LOGO_KINDS = ['logo', 'logo_light', 'logo_dark', 'favicon'] as const;
+export const LOGO_KINDS = [
+  'logo',
+  'logo_light',
+  'logo_dark',
+  'favicon',
+  'logo_compact',
+  'logo_login',
+  'logo_document',
+] as const;
 
 export class LogoKindQueryDto {
   @ApiProperty({ required: false, enum: LOGO_KINDS })

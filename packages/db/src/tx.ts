@@ -72,6 +72,8 @@ export interface RlsContext {
   invitationTokenHash?: string;
   /** for the public inbound connector webhook (`lead_sources_by_secret` policy, ADR 0032) */
   connectorSecretHash?: string;
+  /** for the public pre-auth login branding lookup (`tenants_by_public_slug` policy, SELECT only) */
+  workspaceSlug?: string;
 }
 
 /** Issue `SET LOCAL` for whichever RLS context keys are provided. */
@@ -91,6 +93,9 @@ export async function applyRlsContext(tx: Tx, ctx: RlsContext): Promise<void> {
     await tx.execute(
       sql`select set_config('app.connector_secret_hash', ${ctx.connectorSecretHash}, true)`,
     );
+  }
+  if (ctx.workspaceSlug !== undefined) {
+    await tx.execute(sql`select set_config('app.workspace_slug', ${ctx.workspaceSlug}, true)`);
   }
 }
 

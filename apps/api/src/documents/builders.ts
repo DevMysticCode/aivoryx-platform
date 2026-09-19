@@ -31,8 +31,17 @@ function date(iso: string | null | undefined): string {
   });
 }
 
-function party(heading: string, name: string | null | undefined, extra: string[] = []): DocParty {
-  return { heading, lines: [name || '—', ...extra.filter(Boolean)] };
+function party(
+  heading: string,
+  name: string | null | undefined,
+  extra: string[] = [],
+  customerId?: string | null,
+): DocParty {
+  return {
+    heading,
+    lines: [name || '—', ...extra.filter(Boolean)],
+    ...(customerId ? { customerId } : {}),
+  };
 }
 
 // ---- quotation ------------------------------------------------
@@ -49,7 +58,7 @@ export function buildQuotationDocument(q: QuotationDetailDto): DocumentDefinitio
       { label: 'Valid until', value: date(rev.validityDate) },
       { label: 'Revision', value: `#${rev.revisionNo}` },
     ],
-    party: party('Prepared for', q.customerName ?? q.leadName),
+    party: party('Prepared for', q.customerName ?? q.leadName, [], q.customerId),
     table: {
       columns: [
         { key: 'desc', label: 'Description' },
@@ -104,7 +113,7 @@ export function buildInvoiceDocument(inv: InvoiceDetailDto): DocumentDefinition 
       { label: 'Currency', value: inv.currency },
       ...(inv.reference ? [{ label: 'Reference', value: inv.reference }] : []),
     ],
-    party: party('Bill to', inv.customerName),
+    party: party('Bill to', inv.customerName, [], inv.customerId),
     table: {
       columns: [
         { key: 'desc', label: 'Description' },
@@ -155,7 +164,7 @@ export function buildReceiptDocument(p: PaymentDetailDto): DocumentDefinition {
       { label: 'Currency', value: p.currency },
       ...(p.reference ? [{ label: 'Reference', value: p.reference }] : []),
     ],
-    party: party('Received from', p.customerName),
+    party: party('Received from', p.customerName, [], p.customerId),
     totals: [
       { label: 'Amount received', value: money(p.amount, p.currency), emphasis: true },
       { label: 'Allocated', value: money(p.allocatedAmount) },
@@ -187,7 +196,7 @@ export function buildCreditNoteDocument(cn: CreditNoteDto): DocumentDefinition {
       { label: 'Currency', value: cn.currency },
       ...(cn.invoiceNumber ? [{ label: 'Against invoice', value: cn.invoiceNumber }] : []),
     ],
-    party: party('Issued to', cn.customerName),
+    party: party('Issued to', cn.customerName, [], cn.customerId),
     sections: [{ heading: 'Reason', lines: [cn.reason] }],
     totals: [{ label: 'Credit amount', value: money(cn.amount, cn.currency), emphasis: true }],
     notes: cn.notes,

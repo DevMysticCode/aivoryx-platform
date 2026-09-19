@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
+import {
+  AppError,
+  deriveTheme,
+  documentAccent,
+  isThemePresetKey,
+  resolveThemeColors,
+} from '@aivoryx/shared';
 import type { TenantScope } from '../supply/common.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
 import { buildChanges } from '../audit/audit.redaction.js';
@@ -15,9 +22,42 @@ export interface DocumentBranding {
   taxLine: string | null;
   contactLines: string[];
   primaryColor: string | null;
+  /** print-safe accent (>= 4.5:1 on white) for rules / titles on documents */
+  accentColor: string;
+  /** tenant flag: may the customer's own logo appear on their documents */
+  showCustomerLogo: boolean;
   documentFooter: string | null;
+  /** the effective logo: the document-specific one when mode is `separate` and it exists */
   logo: { body: Buffer; contentType: string } | null;
 }
+
+/** Which asset kinds to try (in order) for a document logo. Pure - unit tested. */
+export function documentLogoKinds(
+  mode: string | null | undefined,
+): Array<'logo_document' | 'logo'> {
+  return mode === 'separate' ? ['logo_document', 'logo'] : ['logo'];
+}
+
+/** Print-safe document accent: the dedicated colour, else the primary, else the default. */
+export function resolveDocumentAccent(
+  documentAccentColor: string | null | undefined,
+  primaryColor: string | null | undefined,
+): string {
+  return documentAccent(documentAccentColor ?? primaryColor);
+}
+
+const BRANDING_KEYS = [
+  'themePreset',
+  'primaryColor',
+  'secondaryColor',
+  'accentColor',
+  'documentAccentColor',
+  'documentLogoMode',
+  'documentShowCustomerLogo',
+  'loginWelcome',
+  'loginDescription',
+  'loginShowPoweredBy',
+] as const;
 
 /**
  * The workspace's company profile & branding (Phase 10, ADR 0039). One row per
@@ -66,10 +106,54 @@ export class CompanyProfileService {
       if (patch.defaultCurrency !== undefined) {
         set.defaultCurrency = patch.defaultCurrency.toUpperCase() || null;
       }
-      if (patch.primaryColor !== undefined) set.primaryColor = patch.primaryColor.toLowerCase();
-      if (patch.accentColor !== undefined) set.accentColor = patch.accentColor.toLowerCase();
-
       const before = await this.loadProfile(tx, scope.tenantId);
+
+      const namedPreset =
+        patch.themePreset !== undefined &&
+        patch.themePreset !== 'custom' &&
+        isThemePresetKey(patch.themePreset);
+      if (namedPreset) {
+        // a named preset defines the effective colours; stray hexes are ignored
+        set.themePreset = patch.themePreset;
+      } else {
+        const hex = (v: string | undefined) => (v === undefined ? undefined : v.toLowerCase());
+        const primary = hex(patch.primaryColor);
+        const secondary = hex(patch.secondaryColor);
+        const accent = hex(patch.accentColor);
+        if (primary !== undefined) set.primaryColor = primary;
+        if (secondary !== undefined) set.secondaryColor = secondary;
+        if (accent !== undefined) set.accentColor = accent;
+        if (patch.themePreset === 'custom' || primary !== undefined) {
+          set.themePreset = 'custom';
+          const derived = deriveTheme(
+            resolveThemeColors({
+              preset: 'custom',
+              primary: primary ?? before?.primaryColor,
+              secondary: secondary ?? before?.secondaryColor,
+              accent: accent ?? before?.accentColor,
+            }),
+          );
+          if (!derived.report.ok) {
+            throw new AppError('BRANDING_COLOR_LOW_CONTRAST', {
+              details: {
+                suggestedPrimary: derived.report.suggestedPrimary,
+                problems: derived.report.problems,
+              },
+            });
+          }
+        }
+      }
+      if (patch.documentAccentColor !== undefined) {
+        set.documentAccentColor = patch.documentAccentColor.toLowerCase();
+      }
+      for (const key of ['loginWelcome', 'loginDescription'] as const) {
+        if (patch[key] !== undefined) set[key] = patch[key].trim() || null;
+      }
+      if (patch.loginShowPoweredBy !== undefined) set.loginShowPoweredBy = patch.loginShowPoweredBy;
+      if (patch.documentLogoMode !== undefined) set.documentLogoMode = patch.documentLogoMode;
+      if (patch.documentShowCustomerLogo !== undefined) {
+        set.documentShowCustomerLogo = patch.documentShowCustomerLogo;
+      }
 
       await tx
         .insert(tenantCompanyProfiles)
@@ -79,9 +163,9 @@ export class CompanyProfileService {
           set: { ...set, updatedAt: new Date() },
         });
 
-      const brandingFields = (['primaryColor', 'accentColor'] as const).filter((k) => k in set);
+      const brandingFields = BRANDING_KEYS.filter((k) => k in set);
       const companyFields = Object.keys(set).filter(
-        (k) => k !== 'updatedByMembershipId' && k !== 'primaryColor' && k !== 'accentColor',
+        (k) => k !== 'updatedByMembershipId' && !(BRANDING_KEYS as readonly string[]).includes(k),
       );
       const actor = userActor(scope);
       if (companyFields.length > 0) {
@@ -126,16 +210,19 @@ export class CompanyProfileService {
         .where(eq(tenants.id, scope.tenantId))
         .limit(1);
       const profile = await this.loadProfile(tx, scope.tenantId);
-      const [logo] = await tx
-        .select({ id: tenantAssets.id })
-        .from(tenantAssets)
-        .where(and(eq(tenantAssets.tenantId, scope.tenantId), eq(tenantAssets.kind, 'logo')))
-        .limit(1);
+      const kinds = await this.assetKinds(tx, scope.tenantId);
       return {
         displayName: profile?.displayName?.trim() || tenant?.name || 'Workspace',
+        themePreset: profile?.themePreset ?? null,
         primaryColor: profile?.primaryColor ?? null,
+        secondaryColor: profile?.secondaryColor ?? null,
         accentColor: profile?.accentColor ?? null,
-        hasLogo: !!logo,
+        hasLogo: kinds.has('logo'),
+        hasLightLogo: kinds.has('logo_light'),
+        hasDarkLogo: kinds.has('logo_dark'),
+        hasCompactLogo: kinds.has('logo_compact'),
+        hasLoginLogo: kinds.has('logo_login'),
+        hasFavicon: kinds.has('favicon'),
       };
     });
   }
@@ -152,11 +239,15 @@ export class CompanyProfileService {
       .where(eq(tenants.id, tenantId))
       .limit(1);
     const p = await this.loadProfile(tx, tenantId);
-    const [logoRow] = await tx
-      .select({ objectKey: tenantAssets.objectKey })
+    const wanted = documentLogoKinds(p?.documentLogoMode);
+    const logoRows = await tx
+      .select({ kind: tenantAssets.kind, objectKey: tenantAssets.objectKey })
       .from(tenantAssets)
-      .where(and(eq(tenantAssets.tenantId, tenantId), eq(tenantAssets.kind, 'logo')))
-      .limit(1);
+      .where(and(eq(tenantAssets.tenantId, tenantId), inArray(tenantAssets.kind, wanted)));
+    // first available kind in preference order (document logo, then company logo)
+    const logoRow = wanted
+      .map((k) => logoRows.find((r) => r.kind === k))
+      .find((r) => r !== undefined);
     const logo = logoRow ? await storageRead(logoRow.objectKey) : null;
 
     const businessName =
@@ -183,6 +274,8 @@ export class CompanyProfileService {
       taxLine,
       contactLines,
       primaryColor: p?.primaryColor ?? null,
+      accentColor: resolveDocumentAccent(p?.documentAccentColor, p?.primaryColor),
+      showCustomerLogo: p?.documentShowCustomerLogo ?? false,
       documentFooter: p?.documentFooter ?? null,
       logo: logo && /^image\/(png|jpeg|webp)$/.test(logo.contentType) ? logo : null,
     };
@@ -231,9 +324,20 @@ export class CompanyProfileService {
       defaultCurrency: p?.defaultCurrency ?? null,
       primaryColor: p?.primaryColor ?? null,
       accentColor: p?.accentColor ?? null,
+      themePreset: p?.themePreset ?? null,
+      secondaryColor: p?.secondaryColor ?? null,
+      documentAccentColor: p?.documentAccentColor ?? null,
+      documentLogoMode: p?.documentLogoMode ?? 'company',
+      documentShowCustomerLogo: p?.documentShowCustomerLogo ?? false,
+      loginWelcome: p?.loginWelcome ?? null,
+      loginDescription: p?.loginDescription ?? null,
+      loginShowPoweredBy: p?.loginShowPoweredBy ?? true,
       hasLogo: kinds.has('logo'),
       hasLightLogo: kinds.has('logo_light'),
       hasDarkLogo: kinds.has('logo_dark'),
+      hasCompactLogo: kinds.has('logo_compact'),
+      hasLoginLogo: kinds.has('logo_login'),
+      hasDocumentLogo: kinds.has('logo_document'),
       hasFavicon: kinds.has('favicon'),
       updatedAt: p?.updatedAt ? p.updatedAt.toISOString() : null,
     };

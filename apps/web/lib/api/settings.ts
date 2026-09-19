@@ -21,7 +21,14 @@ const json = (body: unknown): RequestInit => ({
   body: JSON.stringify(body),
 });
 
-export type LogoKind = 'logo' | 'logo_light' | 'logo_dark' | 'favicon';
+export type LogoKind =
+  | 'logo'
+  | 'logo_light'
+  | 'logo_dark'
+  | 'logo_compact'
+  | 'logo_login'
+  | 'logo_document'
+  | 'favicon';
 
 export const getCompanyProfile = () =>
   apiFetch<CompanyProfile>('/settings/company', { cache: 'no-store' });

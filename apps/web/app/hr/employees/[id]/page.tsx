@@ -519,7 +519,7 @@ function CompensationTab({ id, canManage }: { id: string; canManage: boolean }) 
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400">
+      <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-xs text-warning">
         Compensation is sensitive and gated by <code>hr.compensation.*</code>. It is never shown in
         the employee list, audit metadata or notifications.
       </div>
@@ -611,7 +611,7 @@ function BankTab({ id, canManage }: { id: string; canManage: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+      <div className="rounded-md border border-danger/30 bg-danger-soft p-3 text-xs text-danger">
         Highly sensitive. The account number is stored masked-on-read; the full number is never
         returned by the API, logged, put in audit metadata, or sent in notifications.
       </div>
@@ -891,7 +891,7 @@ function DocumentsTab({ id, canManage }: { id: string; canManage: boolean }) {
                     <button
                       type="button"
                       disabled={remove.isPending}
-                      className="text-destructive hover:underline disabled:opacity-50"
+                      className="text-danger hover:underline disabled:opacity-50"
                       onClick={() => setDeletingId(d.id)}
                     >
                       {remove.isPending && deletingId === d.id ? 'Deleting…' : 'Delete'}

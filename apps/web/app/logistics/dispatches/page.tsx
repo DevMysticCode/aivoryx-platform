@@ -13,7 +13,17 @@ import {
 } from '@/lib/supply/use-supply';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, PageHeader, Skeleton } from '@/components/admin/ui';
-import { fmtDate, fmtQty, Pager, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
+import {
+  fmtDate,
+  fmtQty,
+  FormDisclosure,
+  JumpToFormButton,
+  Pager,
+  Select,
+  SupplyStatusBadge,
+  Table,
+  Toolbar,
+} from '@/components/supply/ui';
 
 const STATUSES = ['DRAFT', 'DISPATCHED', 'DELIVERED', 'CANCELLED'];
 
@@ -59,88 +69,99 @@ export default function DispatchesPage() {
       <PageHeader
         title="Dispatches"
         description="Move allocated stock from a warehouse to a project site and confirm delivery."
-      />
+      >
+        {canCreate ? (
+          <JumpToFormButton targetId="new-dispatch">New dispatch</JumpToFormButton>
+        ) : null}
+      </PageHeader>
 
       {canCreate ? (
-        <Card className="space-y-3">
-          <h2 className="text-sm font-semibold">New dispatch</h2>
-          <form onSubmit={submit} className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Select
-                label="Project"
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-              >
-                <option value="">Select project…</option>
-                {(projects.data?.items ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.number}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label="Source warehouse"
-                value={warehouseId}
-                onChange={(e) => setWarehouseId(e.target.value)}
-              >
-                <option value="">Select warehouse…</option>
-                {(warehouses.data ?? []).map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.code} — {w.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {projectId ? (
-              allocatable.length > 0 ? (
-                <Table
-                  head={
-                    <tr>
-                      <th className="px-3 py-2 font-medium">Product</th>
-                      <th className="px-3 py-2 text-right font-medium">Allocated (undispatched)</th>
-                      <th className="px-3 py-2 text-right font-medium">Dispatch qty</th>
-                    </tr>
-                  }
+        <FormDisclosure id="new-dispatch">
+          <Card className="space-y-3">
+            <h2 className="text-sm font-semibold">New dispatch</h2>
+            <form onSubmit={submit} className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Select
+                  label="Project"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
                 >
-                  {allocatable.map((m) => (
-                    <tr key={m.id}>
-                      <td className="px-3 py-2">
-                        <div className="font-medium">{m.productName}</div>
-                        <div className="text-xs text-muted-foreground">{m.productSku}</div>
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {fmtQty((Number(m.allocatedQty) - Number(m.dispatchedQty)).toString())}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <input
-                          className="h-8 w-24 rounded-md border border-input bg-transparent px-2 text-right text-sm"
-                          inputMode="decimal"
-                          value={lines[m.productId] ?? ''}
-                          onChange={(e) =>
-                            setLines((l) => ({ ...l, [m.productId]: e.target.value }))
-                          }
-                        />
-                      </td>
-                    </tr>
+                  <option value="">Select project…</option>
+                  {(projects.data?.items ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.number}
+                    </option>
                   ))}
-                </Table>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  This project has no undispatched allocated stock. Allocate materials first.
-                </p>
-              )
-            ) : null}
+                </Select>
+                <Select
+                  label="Source warehouse"
+                  value={warehouseId}
+                  onChange={(e) => setWarehouseId(e.target.value)}
+                >
+                  <option value="">Select warehouse…</option>
+                  {(warehouses.data ?? []).map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.code} — {w.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
 
-            <Button type="submit" disabled={createDispatch.isPending || !projectId || !warehouseId}>
-              {createDispatch.isPending ? 'Creating…' : 'Create dispatch'}
-            </Button>
-          </form>
-          <ErrorNote error={createDispatch.error} />
-        </Card>
+              {projectId ? (
+                allocatable.length > 0 ? (
+                  <Table
+                    head={
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Product</th>
+                        <th className="px-3 py-2 text-right font-medium">
+                          Allocated (undispatched)
+                        </th>
+                        <th className="px-3 py-2 text-right font-medium">Dispatch qty</th>
+                      </tr>
+                    }
+                  >
+                    {allocatable.map((m) => (
+                      <tr key={m.id}>
+                        <td className="px-3 py-2">
+                          <div className="font-medium">{m.productName}</div>
+                          <div className="text-xs text-muted-foreground">{m.productSku}</div>
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {fmtQty((Number(m.allocatedQty) - Number(m.dispatchedQty)).toString())}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <input
+                            className="h-8 w-24 rounded-md border border-input bg-transparent px-2 text-right text-sm"
+                            inputMode="decimal"
+                            value={lines[m.productId] ?? ''}
+                            onChange={(e) =>
+                              setLines((l) => ({ ...l, [m.productId]: e.target.value }))
+                            }
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </Table>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    This project has no undispatched allocated stock. Allocate materials first.
+                  </p>
+                )
+              ) : null}
+
+              <Button
+                type="submit"
+                disabled={createDispatch.isPending || !projectId || !warehouseId}
+              >
+                {createDispatch.isPending ? 'Creating…' : 'Create dispatch'}
+              </Button>
+            </form>
+            <ErrorNote error={createDispatch.error} />
+          </Card>
+        </FormDisclosure>
       ) : null}
 
-      <Card className="grid gap-3 sm:grid-cols-2">
+      <Toolbar count={dispatches.data ? `${dispatches.data.total} dispatch(es)` : undefined}>
         <Select
           label="Status"
           value={status}
@@ -156,10 +177,7 @@ export default function DispatchesPage() {
             </option>
           ))}
         </Select>
-        <div className="flex items-end text-sm text-muted-foreground">
-          {dispatches.data ? `${dispatches.data.total} dispatch(es)` : ''}
-        </div>
-      </Card>
+      </Toolbar>
 
       {dispatches.isLoading ? (
         <Skeleton rows={6} />
@@ -179,7 +197,7 @@ export default function DispatchesPage() {
             }
           >
             {dispatches.data.items.map((d) => (
-              <tr key={d.id} className="hover:bg-accent/40">
+              <tr key={d.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <Link
                     href={`/logistics/dispatches/${d.id}`}
@@ -199,8 +217,22 @@ export default function DispatchesPage() {
           </Table>
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </>
+      ) : status ? (
+        <EmptyState title="No dispatches match this status">
+          Set the status back to all statuses to see every dispatch.
+        </EmptyState>
       ) : (
-        <EmptyState>No dispatches match these filters.</EmptyState>
+        <EmptyState
+          title="No dispatches yet"
+          action={
+            canCreate ? (
+              <JumpToFormButton targetId="new-dispatch">Create a dispatch</JumpToFormButton>
+            ) : undefined
+          }
+        >
+          A dispatch sends allocated project materials from a warehouse to the site. Allocate stock
+          to a project first, then dispatch it and confirm delivery.
+        </EmptyState>
       )}
     </section>
   );

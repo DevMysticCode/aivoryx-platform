@@ -138,6 +138,8 @@ export class CustomerDto {
   @ApiProperty({ nullable: true, type: String, format: 'uuid' }) leadId!: string | null;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
   @ApiProperty({ format: 'date-time' }) updatedAt!: string;
+  @ApiProperty({ description: 'True when a customer logo is stored (never the key).' })
+  hasLogo!: boolean;
 }
 
 export class CustomerLinkDto {

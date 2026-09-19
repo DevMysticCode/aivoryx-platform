@@ -30,7 +30,19 @@ export default function DispatchDetailPage() {
 
   if (dispatch.isLoading) return <Skeleton rows={8} />;
   if (dispatch.error) return <ErrorNote error={dispatch.error} />;
-  if (!dispatch.data) return <EmptyState>Dispatch not found.</EmptyState>;
+  if (!dispatch.data)
+    return (
+      <EmptyState
+        title="Dispatch not found"
+        action={
+          <Link href="/logistics/dispatches" className="text-primary hover:underline">
+            Back to dispatches
+          </Link>
+        }
+      >
+        It may have been removed, or you may not have access to it.
+      </EmptyState>
+    );
 
   const d = dispatch.data;
 
@@ -61,6 +73,7 @@ export default function DispatchDetailPage() {
           {d.status === 'DRAFT' && canUpdate ? (
             <Button
               variant="outline"
+              className="border-danger/40 text-danger hover:bg-danger-soft"
               onClick={() => setConfirmingCancel(true)}
               disabled={cancel.isPending}
             >
@@ -111,8 +124,8 @@ export default function DispatchDetailPage() {
                 <div className="font-medium">{l.productName}</div>
                 <div className="text-xs text-muted-foreground">{l.productSku}</div>
               </td>
-              <td className="px-3 py-2 text-right">{fmtQty(l.quantity)}</td>
-              <td className="px-3 py-2 text-right">{fmtQty(l.deliveredQty)}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{fmtQty(l.quantity)}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{fmtQty(l.deliveredQty)}</td>
             </tr>
           ))}
         </Table>
@@ -185,7 +198,7 @@ function DeliverForm({
         {lines.map((l) => (
           <tr key={l.id}>
             <td className="px-3 py-2 font-medium">{l.productName}</td>
-            <td className="px-3 py-2 text-right">{fmtQty(l.quantity)}</td>
+            <td className="px-3 py-2 text-right tabular-nums">{fmtQty(l.quantity)}</td>
             <td className="px-3 py-2 text-right">
               <input
                 className="h-8 w-24 rounded-md border border-input bg-transparent px-2 text-right text-sm"
@@ -247,7 +260,7 @@ function Attachments({ dispatchId, canManage }: { dispatchId: string; canManage:
                 {canManage ? (
                   <button
                     type="button"
-                    className="ml-3 text-destructive hover:underline disabled:opacity-50"
+                    className="ml-3 text-danger hover:underline disabled:opacity-50"
                     disabled={remove.isPending && deletingId === a.id}
                     onClick={() => setDeletingId(a.id)}
                   >
@@ -259,7 +272,9 @@ function Attachments({ dispatchId, canManage }: { dispatchId: string; canManage:
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">No attachments.</p>
+        <p className="text-sm text-muted-foreground">
+          No attachments yet. Proof of delivery, such as a signed challan photo, is attached here.
+        </p>
       )}
       {canManage ? (
         <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-primary">

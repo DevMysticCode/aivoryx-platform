@@ -1,56 +1,98 @@
 'use client';
 
+import { useEffect } from 'react';
+import { buildThemeCss, isThemePresetKey, resolveThemeColors } from '@aivoryx/shared';
 import { useMe } from '@/lib/admin/use-admin';
+import { useLogoObjectUrl } from '@/lib/settings/use-settings';
+import { BRAND_CACHE_STORAGE_KEY } from '@/lib/theme/appearance';
+
+/** The subset of the branding payload that drives the theme. */
+export interface ThemeInput {
+  themePreset?: string | null;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
+  accentColor?: string | null;
+}
 
 /**
- * Applies the tenant's brand colour to the app by overriding two design
- * tokens — `--primary` and `--ring` — with an HSL triple (Phase 10, ADR 0039).
+ * The CSS a workspace's branding produces, or null when the tenant has not
+ * configured anything (the platform default theme then applies untouched).
+ * A named preset wins; otherwise the stored hex colours are a "custom" theme.
+ * Pure — the same function paints the live preview in Settings.
+ */
+export function themeCssFor(input: ThemeInput): string | null {
+  const preset =
+    input.themePreset && isThemePresetKey(input.themePreset) ? input.themePreset : null;
+  const hasCustom = !!(input.primaryColor || input.secondaryColor || input.accentColor);
+  if (!preset && !hasCustom) return null;
+  return buildThemeCss(
+    resolveThemeColors({
+      preset: preset === 'custom' ? null : preset,
+      primary: input.primaryColor,
+      secondary: input.secondaryColor,
+      accent: input.accentColor,
+    }),
+  );
+}
+
+/**
+ * Applies the tenant's brand to the app by overriding brand design tokens
+ * (`--primary*`, `--ring/--focus`, `--brand-secondary/accent`, `--chart-1..3`) for
+ * BOTH light and dark mode (Phase 10 ADR 0039, extended in Phase 19 ADR 0046).
  *
  * This is a TOKEN override, never arbitrary CSS: the only thing that can reach
- * the page is a colour parsed from a server-validated `#rrggbb` value. The
- * lightness is clamped so that the fixed near-white `--primary-foreground`
- * stays readable on primary-coloured surfaces (buttons, badges) — a tenant
- * cannot pick a colour that breaks contrast.
+ * the page is HSL triples derived by the shared theme engine from server-
+ * validated `#rrggbb` values, and the engine never emits status colours
+ * (success / warning / danger / info stay platform-owned). The derived CSS is
+ * also cached in localStorage so the next page load paints the brand before
+ * `/auth/me` returns (no flash of the default teal).
  */
-export function BrandProvider() {
+export function BrandProvider({ disabled }: { disabled?: boolean }) {
+  // pre-auth / platform routes: never read the session and never show a cached tenant brand
+  return disabled ? <NoBrand /> : <ActiveBrand />;
+}
+
+function NoBrand() {
+  useEffect(() => {
+    document.getElementById('aivoryx-brand-cache')?.remove();
+  }, []);
+  return null;
+}
+
+function ActiveBrand() {
   const me = useMe();
-  const primary = me.data?.active?.branding?.primaryColor ?? null;
-  const css = primary ? buildBrandCss(primary) : null;
+  const branding = me.data?.active?.branding as
+    | (ThemeInput & { hasFavicon?: boolean; displayName?: string })
+    | undefined;
+  const css = branding ? themeCssFor(branding) : null;
+
+  useEffect(() => {
+    if (!me.data) return;
+    try {
+      if (css) localStorage.setItem(BRAND_CACHE_STORAGE_KEY, css);
+      else localStorage.removeItem(BRAND_CACHE_STORAGE_KEY);
+    } catch {
+      /* storage blocked — brand still applies for this session */
+    }
+    // the server-derived <style> below now owns the tokens
+    document.getElementById('aivoryx-brand-cache')?.remove();
+  }, [css, me.data]);
+
+  const faviconUrl = useLogoObjectUrl(
+    !!branding?.hasFavicon,
+    branding?.displayName ?? null,
+    'favicon',
+  );
+  useEffect(() => {
+    if (!faviconUrl) return;
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.href = faviconUrl;
+    link.dataset.aivoryxFavicon = '';
+    document.head.appendChild(link);
+    return () => link.remove();
+  }, [faviconUrl]);
+
   if (!css) return null;
-  // A single scoped custom-property override. No selectors, no declarations
-  // other than the two tokens.
   return <style data-aivoryx-brand="">{css}</style>;
-}
-
-function buildBrandCss(hex: string): string | null {
-  const hsl = hexToHsl(hex);
-  if (!hsl) return null;
-  const [h, s, l] = hsl;
-  const safeL = Math.min(62, Math.max(28, l));
-  const triple = `${Math.round(h)} ${Math.round(s)}% ${Math.round(safeL)}%`;
-  return `:root{--primary:${triple};--ring:${triple};}`;
-}
-
-/** `#rrggbb` → `[h (0-360), s (0-100), l (0-100)]`, or null if malformed. */
-function hexToHsl(hex: string): [number, number, number] | null {
-  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return null;
-  const int = parseInt(m[1]!, 16);
-  const r = ((int >> 16) & 255) / 255;
-  const g = ((int >> 8) & 255) / 255;
-  const b = (int & 255) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-  let h = 0;
-  if (d !== 0) {
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60;
-    if (h < 0) h += 360;
-  }
-  const l = (max + min) / 2;
-  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-  return [h, s * 100, l * 100];
 }

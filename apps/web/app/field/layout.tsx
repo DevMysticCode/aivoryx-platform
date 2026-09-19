@@ -7,6 +7,7 @@ import { CalendarDays, HardHat, ListChecks, UserPlus } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import { ApiError } from '@/lib/api/client';
 import { useMe } from '@/lib/admin/use-admin';
+import { BrandMark } from '@/components/brand-mark';
 import { Skeleton, WorkspaceUnavailable } from '@/components/admin/ui';
 
 const NAV = [
@@ -44,7 +45,7 @@ export default function FieldLayout({ children }: { children: ReactNode }) {
   if (me.error) {
     return (
       <div className="mx-auto max-w-md p-4 text-sm">
-        <p className="font-medium text-destructive">Could not load your session.</p>
+        <p className="font-medium text-danger">Could not load your session.</p>
         <p className="mt-1 text-muted-foreground">{(me.error as Error).message}</p>
       </div>
     );
@@ -78,9 +79,7 @@ export default function FieldLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b bg-card/95 px-4 py-3 backdrop-blur">
-        <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground">
-          <span className="text-sm font-bold">A</span>
-        </span>
+        <BrandMark compact href="/field" />
         <span className="text-sm font-semibold tracking-tight">Field</span>
       </header>
 

@@ -11,8 +11,18 @@ import {
   useWarehouses,
 } from '@/lib/supply/use-supply';
 import { usePermissions } from '@/components/supply/supply-shell';
+import { Badge } from '@/components/ui/status-badge';
 import { Card, EmptyState, ErrorNote, Field, PageHeader, Skeleton } from '@/components/admin/ui';
-import { fmtDate, fmtQty, Pager, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
+import {
+  fmtDate,
+  fmtQty,
+  JumpToFormButton,
+  Pager,
+  Select,
+  SupplyStatusBadge,
+  Table,
+  Toolbar,
+} from '@/components/supply/ui';
 
 export default function StockPage() {
   const perms = usePermissions();
@@ -41,7 +51,14 @@ export default function StockPage() {
       <PageHeader
         title="Stock"
         description="On-hand and reserved quantities per warehouse, derived from the append-only movement ledger."
-      />
+      >
+        {canTransfer ? (
+          <JumpToFormButton targetId="transfer-stock">Transfer stock</JumpToFormButton>
+        ) : null}
+        {canAdjust ? (
+          <JumpToFormButton targetId="adjust-stock">Adjust stock</JumpToFormButton>
+        ) : null}
+      </PageHeader>
 
       {canAdjust || canTransfer ? (
         <div className="grid gap-4 md:grid-cols-2">
@@ -57,7 +74,7 @@ export default function StockPage() {
         </div>
       ) : null}
 
-      <Card className="grid gap-3 sm:grid-cols-3">
+      <Toolbar count={stock.data ? `${stock.data.total} line(s)` : undefined}>
         <Select
           label="Warehouse"
           value={warehouseId}
@@ -73,7 +90,7 @@ export default function StockPage() {
             </option>
           ))}
         </Select>
-        <label className="flex items-end gap-2 pb-1 text-sm">
+        <label className="flex items-center gap-2 pb-2 text-sm">
           <input
             type="checkbox"
             checked={lowStock}
@@ -84,10 +101,7 @@ export default function StockPage() {
           />
           Low stock only
         </label>
-        <div className="flex items-end text-sm text-muted-foreground">
-          {stock.data ? `${stock.data.total} line(s)` : ''}
-        </div>
-      </Card>
+      </Toolbar>
 
       {stock.isLoading ? (
         <Skeleton rows={6} />
@@ -108,7 +122,7 @@ export default function StockPage() {
             }
           >
             {stock.data.items.map((s) => (
-              <tr key={`${s.warehouseId}-${s.productId}`} className="hover:bg-accent/40">
+              <tr key={`${s.warehouseId}-${s.productId}`} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <div className="font-medium">{s.productName}</div>
                   <div className="text-xs text-muted-foreground">
@@ -116,14 +130,22 @@ export default function StockPage() {
                   </div>
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">{s.warehouseCode}</td>
-                <td className="px-3 py-2 text-right">{fmtQty(s.onHand)}</td>
-                <td className="px-3 py-2 text-right text-muted-foreground">{fmtQty(s.reserved)}</td>
-                <td className="px-3 py-2 text-right font-medium">{fmtQty(s.available)}</td>
+                <td
+                  className={`px-3 py-2 text-right tabular-nums ${Number(s.onHand) < 0 ? 'text-danger' : ''}`}
+                >
+                  {fmtQty(s.onHand)}
+                </td>
+                <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                  {fmtQty(s.reserved)}
+                </td>
+                <td
+                  className={`px-3 py-2 text-right font-medium tabular-nums ${Number(s.available) < 0 ? 'text-danger' : ''}`}
+                >
+                  {fmtQty(s.available)}
+                </td>
                 <td className="px-3 py-2">
                   {s.lowStock ? (
-                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                      Low ({fmtQty(s.reorderLevel)})
-                    </span>
+                    <Badge tone="warning">Low ({fmtQty(s.reorderLevel)})</Badge>
                   ) : (
                     <span className="text-xs text-muted-foreground">{fmtQty(s.reorderLevel)}</span>
                   )}
@@ -133,8 +155,15 @@ export default function StockPage() {
           </Table>
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </>
+      ) : warehouseId || lowStock ? (
+        <EmptyState title="No stock lines match these filters">
+          Try a different warehouse, or untick &ldquo;Low stock only&rdquo; to see every line.
+        </EmptyState>
       ) : (
-        <EmptyState>No stock lines match these filters.</EmptyState>
+        <EmptyState title="No stock yet">
+          Stock is the quantity of each product held in a warehouse. It appears here once goods are
+          received against a purchase order or adjusted in manually.
+        </EmptyState>
       )}
 
       <Card className="space-y-3">
@@ -186,7 +215,9 @@ function AdjustForm({ warehouses, products }: { warehouses: WhOpt[]; products: P
 
   return (
     <Card className="space-y-3">
-      <h2 className="text-sm font-semibold">Adjust stock</h2>
+      <h2 id="adjust-stock" className="text-sm font-semibold">
+        Adjust stock
+      </h2>
       <p className="text-xs text-muted-foreground">
         Records an ADJUSTMENT movement. Use a signed delta, e.g. <code>-2</code> for shrinkage.
       </p>
@@ -254,7 +285,9 @@ function TransferForm({ warehouses, products }: { warehouses: WhOpt[]; products:
 
   return (
     <Card className="space-y-3">
-      <h2 className="text-sm font-semibold">Transfer stock</h2>
+      <h2 id="transfer-stock" className="text-sm font-semibold">
+        Transfer stock
+      </h2>
       <p className="text-xs text-muted-foreground">
         Moves on-hand quantity between two warehouses atomically.
       </p>

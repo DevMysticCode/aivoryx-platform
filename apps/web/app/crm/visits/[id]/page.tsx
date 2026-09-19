@@ -233,7 +233,10 @@ export default function VisitDetailPage() {
                 ))}
               </dl>
             ) : (
-              <p className="text-sm text-muted-foreground">No survey questions configured.</p>
+              <p className="text-sm text-muted-foreground">
+                No survey questions configured. An admin can add them under the Site survey
+                questions section on the CRM visits page.
+              </p>
             )}
             {v.surveyCompletedAt ? (
               <p className="border-t pt-3 text-xs text-muted-foreground">
@@ -253,7 +256,10 @@ export default function VisitDetailPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No photos uploaded yet.</p>
+              <p className="text-sm text-muted-foreground">
+                No photos yet. The field agent uploads site photos from the mobile visit screen
+                during the visit.
+              </p>
             )}
           </Card>
 
@@ -299,7 +305,9 @@ export default function VisitDetailPage() {
                 </li>
               ))}
               {(notes.data ?? []).length === 0 ? (
-                <p className="text-xs text-muted-foreground">No notes yet.</p>
+                <p className="text-xs text-muted-foreground">
+                  No notes yet. Notes the field agent adds on site will appear here.
+                </p>
               ) : null}
             </ul>
           </Card>

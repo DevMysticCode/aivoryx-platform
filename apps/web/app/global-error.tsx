@@ -26,8 +26,8 @@ export default function GlobalError({
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-          background: '#f9fafb',
-          color: '#201c33',
+          background: 'Canvas',
+          color: 'CanvasText',
         }}
       >
         <div style={{ textAlign: 'center', maxWidth: 380, padding: '0 16px' }}>
@@ -46,7 +46,7 @@ export default function GlobalError({
           <h1 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 600 }}>
             Aivoryx couldn't load this page
           </h1>
-          <p style={{ margin: '0 0 16px', fontSize: 14, color: '#4b4560' }}>
+          <p style={{ margin: '0 0 16px', fontSize: 14, color: 'GrayText' }}>
             Please try again. If this keeps happening, contact your workspace administrator or
             Aivoryx support.
           </p>
@@ -56,7 +56,7 @@ export default function GlobalError({
                 margin: '0 0 16px',
                 fontFamily: 'ui-monospace, Menlo, Consolas, monospace',
                 fontSize: 12,
-                color: '#4b4560',
+                color: 'GrayText',
               }}
             >
               Reference: {error.digest}

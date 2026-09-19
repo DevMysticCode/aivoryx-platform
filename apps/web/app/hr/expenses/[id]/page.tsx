@@ -190,6 +190,7 @@ export default function ExpenseDetailPage({ params }: { params: Promise<{ id: st
                   <Button
                     size="sm"
                     variant="outline"
+                    className="border-danger/40 text-danger hover:bg-danger-soft"
                     disabled={actions.approve.isPending || actions.reject.isPending}
                     onClick={() => actions.reject.mutate({ reason: reason || undefined })}
                   >

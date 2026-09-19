@@ -35,7 +35,19 @@ export default function PurchaseOrderDetailPage() {
 
   if (po.isLoading) return <Skeleton rows={8} />;
   if (po.error) return <ErrorNote error={po.error} />;
-  if (!po.data) return <EmptyState>Purchase order not found.</EmptyState>;
+  if (!po.data)
+    return (
+      <EmptyState
+        title="Purchase order not found"
+        action={
+          <Link href="/procurement/purchase-orders" className="text-primary hover:underline">
+            Back to purchase orders
+          </Link>
+        }
+      >
+        It may have been removed, or you may not have access to it.
+      </EmptyState>
+    );
 
   const d = po.data;
   const canReceiveNow = d.status === 'APPROVED' || d.status === 'PARTIALLY_RECEIVED';
@@ -77,6 +89,7 @@ export default function PurchaseOrderDetailPage() {
           {['DRAFT', 'SUBMITTED', 'APPROVED'].includes(d.status) && canUpdate ? (
             <Button
               variant="outline"
+              className="border-danger/40 text-danger hover:bg-danger-soft"
               onClick={() => setConfirmingCancel(true)}
               disabled={cancel.isPending}
             >
@@ -133,17 +146,21 @@ export default function PurchaseOrderDetailPage() {
                 <div className="font-medium">{l.productName}</div>
                 <div className="text-xs text-muted-foreground">{l.productSku}</div>
               </td>
-              <td className="px-3 py-2 text-right">{fmtQty(l.orderedQty)}</td>
-              <td className="px-3 py-2 text-right">{fmtQty(l.receivedQty)}</td>
-              <td className="px-3 py-2 text-right text-muted-foreground">
+              <td className="px-3 py-2 text-right tabular-nums">{fmtQty(l.orderedQty)}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{fmtQty(l.receivedQty)}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                 {fmtMoney(l.unitPrice)}
               </td>
-              <td className="px-3 py-2 text-right text-muted-foreground">{fmtQty(l.taxRate)}</td>
-              <td className="px-3 py-2 text-right">{fmtMoney(l.lineTotal)}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                {fmtQty(l.taxRate)}
+              </td>
+              <td className="px-3 py-2 text-right font-medium tabular-nums">
+                {fmtMoney(l.lineTotal)}
+              </td>
             </tr>
           ))}
         </Table>
-        <div className="flex flex-wrap justify-end gap-x-8 gap-y-1 text-sm">
+        <div className="flex flex-wrap justify-end gap-x-8 gap-y-1 text-sm tabular-nums">
           <span className="text-muted-foreground">Subtotal: {fmtMoney(d.subtotal)}</span>
           <span className="text-muted-foreground">Tax: {fmtMoney(d.taxTotal)}</span>
           <span className="text-muted-foreground">Discount: {fmtMoney(d.discountTotal)}</span>
@@ -169,7 +186,12 @@ export default function PurchaseOrderDetailPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">Nothing received yet.</p>
+          <p className="text-sm text-muted-foreground">
+            Nothing received yet.{' '}
+            {canReceive && canReceiveNow
+              ? 'Use Receive goods above when the delivery arrives.'
+              : 'Goods can be received once the order is approved.'}
+          </p>
         )}
       </Card>
     </section>
@@ -248,7 +270,7 @@ function ReceiveForm({
                 <div className="font-medium">{l.productName}</div>
                 <div className="text-xs text-muted-foreground">{l.productSku}</div>
               </td>
-              <td className="px-3 py-2 text-right">{fmtQty(l.remaining)}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{fmtQty(l.remaining)}</td>
               <td className="px-3 py-2 text-right">
                 <input
                   className="h-8 w-24 rounded-md border border-input bg-transparent px-2 text-right text-sm"

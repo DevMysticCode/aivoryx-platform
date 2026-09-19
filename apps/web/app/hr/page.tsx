@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { PageHeader, Skeleton, Card, EmptyState } from '@/components/admin/ui';
-import { StatCard, fmtDate, fmtDateTime } from '@/components/hr/ui';
+import { StatCard, HrStatusBadge, fmtDate, fmtDateTime } from '@/components/hr/ui';
 import { useHrDashboard } from '@/lib/hr/use-hr';
 import { ErrorBlock } from '@/components/ui/kit';
+import { ModuleWelcome } from '@/components/help/module-welcome';
 import { usePermissions } from '@/components/supply/supply-shell';
 
 function SectionGroup({ label, children }: { label: string; children: ReactNode }) {
@@ -46,7 +47,7 @@ function PeopleList({
   return (
     <div>
       <h3 className="text-sm font-medium">{title}</h3>
-      <ul className="divide-y">
+      <ul className="divide-y divide-border-subtle">
         {items.map((p) => (
           <li
             key={p.id}
@@ -72,15 +73,8 @@ export default function HrDashboardPage() {
   const perms = usePermissions();
   const d = q.data;
 
-  const attention = d
-    ? d.pendingLeaveApprovals > 0 ||
-      d.pendingExpenseApprovals > 0 ||
-      d.upcomingStarts.length > 0 ||
-      d.probationEnding.length > 0
-    : false;
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="HR & Workforce"
         description="People, attendance, leave, expenses and payroll at a glance."
@@ -91,6 +85,18 @@ export default function HrDashboardPage() {
 
       {d && (
         <>
+          <ModuleWelcome
+            id="hr"
+            title="Set up your workforce"
+            description="Add employees to track attendance, leave, expenses and payroll in one place."
+            steps={[
+              'Add your first employee',
+              'Assign a manager and department',
+              'Configure leave types',
+            ]}
+            action={{ label: 'Add employee', href: '/hr/employees' }}
+            show={d.totalEmployees === 0 && perms.includes('hr.employee.create')}
+          />
           <SectionGroup label="Key metrics">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <StatCard
@@ -115,27 +121,48 @@ export default function HrDashboardPage() {
             </div>
           </SectionGroup>
 
-          <SectionGroup label="Needs attention">
-            {attention ? (
-              <Card className="space-y-4">
-                {(d.pendingLeaveApprovals > 0 || d.pendingExpenseApprovals > 0) && (
-                  <div className="divide-y">
-                    {d.pendingLeaveApprovals > 0 && (
-                      <CountRow
-                        label="Leave approvals pending"
-                        count={d.pendingLeaveApprovals}
-                        href={perms.includes('hr.leave.read') ? '/hr/leave' : undefined}
-                      />
-                    )}
-                    {d.pendingExpenseApprovals > 0 && (
-                      <CountRow
-                        label="Expense approvals pending"
-                        count={d.pendingExpenseApprovals}
-                        href={perms.includes('hr.expense.read') ? '/hr/expenses' : undefined}
-                      />
-                    )}
-                  </div>
-                )}
+          <SectionGroup label="Primary work">
+            {d.pendingLeaveApprovals > 0 || d.pendingExpenseApprovals > 0 || d.currentPayroll ? (
+              <Card className="space-y-3">
+                <div className="divide-y divide-border-subtle">
+                  {d.pendingLeaveApprovals > 0 && (
+                    <CountRow
+                      label="Leave approvals pending"
+                      count={d.pendingLeaveApprovals}
+                      href={perms.includes('hr.leave.read') ? '/hr/leave' : undefined}
+                    />
+                  )}
+                  {d.pendingExpenseApprovals > 0 && (
+                    <CountRow
+                      label="Expense approvals pending"
+                      count={d.pendingExpenseApprovals}
+                      href={perms.includes('hr.expense.read') ? '/hr/expenses' : undefined}
+                    />
+                  )}
+                  {d.currentPayroll && (
+                    <Link
+                      href={`/hr/payroll/${d.currentPayroll.id}`}
+                      className="flex items-center justify-between gap-3 py-2 text-sm hover:text-primary"
+                    >
+                      <span className="min-w-0 break-words">
+                        Current payroll: {d.currentPayroll.name}
+                      </span>
+                      <HrStatusBadge status={d.currentPayroll.status} />
+                    </Link>
+                  )}
+                </div>
+              </Card>
+            ) : (
+              <EmptyState title="No approvals waiting">
+                Leave and expense requests that need a decision will be listed here. Nothing is
+                pending right now.
+              </EmptyState>
+            )}
+          </SectionGroup>
+
+          {(d.upcomingStarts.length > 0 || d.probationEnding.length > 0) && (
+            <SectionGroup label="Upcoming">
+              <Card className="grid gap-4 md:grid-cols-2">
                 {d.upcomingStarts.length > 0 && (
                   <PeopleList title="Upcoming starts" items={d.upcomingStarts} />
                 )}
@@ -143,29 +170,12 @@ export default function HrDashboardPage() {
                   <PeopleList title="Probation ending soon" items={d.probationEnding} />
                 )}
               </Card>
-            ) : (
-              <EmptyState>Nothing needs attention right now.</EmptyState>
-            )}
-          </SectionGroup>
-
-          {d.currentPayroll && (
-            <SectionGroup label="Primary work">
-              <Card>
-                <h3 className="text-sm font-semibold">Current payroll</h3>
-                <Link
-                  href={`/hr/payroll/${d.currentPayroll.id}`}
-                  className="mt-1 inline-flex flex-wrap items-center gap-2 text-sm text-primary hover:underline"
-                >
-                  {d.currentPayroll.name}
-                  <span className="text-muted-foreground">({d.currentPayroll.status})</span>
-                </Link>
-              </Card>
             </SectionGroup>
           )}
 
           <SectionGroup label="Recent activity">
             {d.recentActivity.length > 0 ? (
-              <ul className="divide-y rounded-lg border bg-card px-4">
+              <ul className="divide-y divide-border-subtle rounded-lg border bg-card px-4">
                 {d.recentActivity.map((a, i) => (
                   <li key={`${a.employeeId}-${a.at}-${i}`} className="py-2.5 text-sm">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -184,7 +194,9 @@ export default function HrDashboardPage() {
                 ))}
               </ul>
             ) : (
-              <EmptyState>No recent workforce changes.</EmptyState>
+              <EmptyState title="No recent changes">
+                Hires, status changes and updates to employee records will show here.
+              </EmptyState>
             )}
           </SectionGroup>
         </>

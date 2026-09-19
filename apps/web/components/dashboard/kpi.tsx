@@ -34,7 +34,7 @@ export function Kpi({
             className={cn(
               'text-xs font-medium tabular-nums',
               delta.changePct > 0 && 'text-success',
-              delta.changePct < 0 && 'text-destructive',
+              delta.changePct < 0 && 'text-danger',
               delta.changePct === 0 && 'text-muted-foreground',
             )}
           >

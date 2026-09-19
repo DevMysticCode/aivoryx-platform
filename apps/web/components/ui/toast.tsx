@@ -65,7 +65,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={cn(
               'pointer-events-auto w-full max-w-sm rounded-lg border bg-card px-4 py-3 text-sm text-card-foreground shadow-lg',
               t.tone === 'success' && 'border-success/30',
-              t.tone === 'error' && 'border-destructive/40',
+              t.tone === 'error' && 'border-danger/40',
               t.tone === 'info' && 'border-border',
             )}
           >

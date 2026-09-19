@@ -5,6 +5,8 @@ import { Check, Minus, ShieldCheck } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import type { AccessRole } from '@aivoryx/contracts';
 import { useToast } from '@/components/ui/toast';
+import { ContextualHelp } from '@/components/help/contextual-help';
+import { HelperText } from '@/components/help/helper-text';
 import { ErrorBlock, LoadingBlock } from '@/components/ui/kit';
 import {
   useEffectiveAccess,
@@ -63,12 +65,15 @@ export function UserAccessPanel({
         <>
           {/* profile */}
           <section className="rounded-lg border">
-            <div className="border-b px-4 py-2.5 text-sm font-semibold">Profile</div>
+            <div className="flex items-center gap-1 border-b px-4 py-2.5 text-sm font-semibold">
+              Profile
+              <ContextualHelp concept="profile" />
+            </div>
             <div className="space-y-3 p-4">
               {data.profile ? (
                 <p className="text-sm">
                   <span className="font-medium">{data.profile.name}</span>
-                  <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">
+                  <span className="ml-2 rounded bg-primary-soft px-1.5 py-0.5 text-[11px] font-medium text-primary">
                     {data.profile.dataScope}
                   </span>
                 </p>
@@ -92,7 +97,10 @@ export function UserAccessPanel({
                   </select>
                 </label>
                 <label className="block space-y-1">
-                  <span className="text-xs font-medium">Data scope</span>
+                  <span className="flex items-center gap-1 text-xs font-medium">
+                    Data scope
+                    <ContextualHelp concept="dataScope" />
+                  </span>
                   <select
                     value={scope}
                     onChange={(e) => setScope(e.target.value as (typeof SCOPES)[number])}
@@ -126,8 +134,11 @@ export function UserAccessPanel({
 
           {/* permission sets */}
           <section className="rounded-lg border">
-            <div className="border-b px-4 py-2.5 text-sm font-semibold">
-              Additional permission sets
+            <div className="border-b px-4 py-2.5">
+              <div className="text-sm font-semibold">Additional permission sets</div>
+              <HelperText>
+                Extra access added on top of the profile. Remove a set to take it back.
+              </HelperText>
             </div>
             <ul className="divide-y">
               {permissionSets.length === 0 ? (
@@ -162,7 +173,7 @@ export function UserAccessPanel({
                         className={cn(
                           'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium',
                           on
-                            ? 'hover:bg-destructive/10 hover:text-destructive'
+                            ? 'hover:bg-danger-soft hover:text-danger'
                             : 'hover:bg-primary/10 hover:text-primary',
                         )}
                       >

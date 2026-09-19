@@ -46,7 +46,7 @@ export function FollowupActionCenter({
                 className={
                   'text-xs font-semibold uppercase tracking-wide ' +
                   (g.tone === 'danger'
-                    ? 'text-destructive'
+                    ? 'text-danger'
                     : g.tone === 'warn'
                       ? 'text-warning'
                       : 'text-muted-foreground')
@@ -61,7 +61,7 @@ export function FollowupActionCenter({
                 <li key={f.followupId}>
                   <Link
                     href={`/crm/leads/${f.leadId}`}
-                    className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-accent/40"
+                    className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-surface-hover"
                   >
                     <span className="min-w-0 truncate">{f.leadName ?? 'Unnamed lead'}</span>
                     <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">

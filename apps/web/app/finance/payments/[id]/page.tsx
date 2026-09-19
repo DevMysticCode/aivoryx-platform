@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { Card, EmptyState, ErrorNote, Skeleton, PageHeader } from '@/components/admin/ui';
-import { ErrorBlock } from '@/components/ui/kit';
+import { Confirm, ErrorBlock } from '@/components/ui/kit';
 import { fmtMoney, fmtDate, SupplyStatusBadge } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { usePayment, usePaymentAction, useInvoices } from '@/lib/finance/use-finance';
@@ -28,7 +28,19 @@ export default function PaymentDetailPage() {
 
   if (q.isLoading) return <Skeleton rows={8} />;
   if (q.error) return <ErrorBlock error={q.error} onRetry={() => q.refetch()} />;
-  if (!q.data) return <EmptyState>Payment not found.</EmptyState>;
+  if (!q.data)
+    return (
+      <EmptyState
+        title="Payment not found"
+        action={
+          <Link href="/finance/payments" className="text-primary hover:underline">
+            Back to payments
+          </Link>
+        }
+      >
+        It may have been removed, or you may not have access to it.
+      </EmptyState>
+    );
   const p = q.data;
 
   const allocatable = [
@@ -51,13 +63,13 @@ export default function PaymentDetailPage() {
             href={paymentPrintUrl(p.id)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
+            className="inline-flex h-8 items-center rounded-md border border-border px-3 text-sm hover:bg-surface-hover"
           >
             Receipt
           </a>
           <a
             href={paymentReceiptPdfUrl(p.id)}
-            className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
+            className="inline-flex h-8 items-center rounded-md border border-border px-3 text-sm hover:bg-surface-hover"
           >
             Download PDF
           </a>
@@ -67,14 +79,19 @@ export default function PaymentDetailPage() {
             </Button>
           )}
           {canReverse && (
-            <Button size="sm" variant="outline" onClick={() => setReversing((v) => !v)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-danger/40 text-danger hover:bg-danger-soft"
+              onClick={() => setReversing(true)}
+            >
               Reverse
             </Button>
           )}
         </div>
       </PageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-3 divide-x divide-border-subtle overflow-hidden rounded-lg border border-border bg-surface">
         <Stat label="Amount" value={`${fmtMoney(p.amount)} ${p.currency}`} />
         <Stat label="Allocated" value={fmtMoney(p.allocatedAmount)} />
         <Stat
@@ -89,7 +106,7 @@ export default function PaymentDetailPage() {
         <Row label="Method" value={p.method.replace(/_/g, ' ')} />
         {p.reference && <Row label="Reference" value={p.reference} />}
         {p.reversedAt && (
-          <p className="border-t pt-2 text-destructive">
+          <p className="border-t border-border-subtle pt-2 text-danger">
             Reversed {fmtDate(p.reversedAt)}
             {p.reversalReason ? ` — ${p.reversalReason}` : ''}
           </p>
@@ -99,26 +116,39 @@ export default function PaymentDetailPage() {
         )}
       </Card>
 
-      {reversing && (
-        <Card className="space-y-3">
-          <label className="space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">Reason (optional)</span>
-            <input
-              className="h-9 w-full rounded-md border px-3 text-sm"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          </label>
-          <ErrorNote error={actions.reverse.error} />
-          <Button
-            variant="outline"
-            onClick={() => actions.reverse.mutate(reason)}
-            disabled={actions.reverse.isPending}
-          >
-            {actions.reverse.isPending ? 'Reversing…' : 'Confirm reversal'}
-          </Button>
-        </Card>
-      )}
+      <ErrorNote error={actions.reverse.error} />
+      <Confirm
+        open={reversing}
+        onClose={() => setReversing(false)}
+        onConfirm={() =>
+          actions.reverse.mutate(reason, {
+            onSuccess: () => {
+              setReversing(false);
+              setReason('');
+            },
+          })
+        }
+        title="Reverse this payment?"
+        body={
+          <div className="space-y-3">
+            <p>
+              The payment will be marked reversed and its allocations removed, so the linked
+              invoices become outstanding again. This cannot be undone.
+            </p>
+            <label className="block space-y-1">
+              <span className="text-xs font-medium">Reason (optional)</span>
+              <input
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </label>
+          </div>
+        }
+        confirmLabel="Confirm reversal"
+        danger
+        pending={actions.reverse.isPending}
+      />
 
       {showAlloc && (
         <Card className="space-y-3">
@@ -170,12 +200,12 @@ export default function PaymentDetailPage() {
       )}
 
       {activeAllocs.length > 0 && (
-        <Card className="p-0">
-          <div className="border-b px-3 py-2 text-xs font-semibold uppercase text-muted-foreground">
+        <Card className="overflow-x-auto p-0">
+          <div className="border-b border-border-subtle px-3 py-2 text-xs font-medium text-muted-foreground">
             Applied to
           </div>
           <table className="w-full text-sm">
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border-subtle">
               {activeAllocs.map((a) => (
                 <tr key={a.id}>
                   <td className="px-3 py-2">
@@ -210,12 +240,10 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: 'warn' }) {
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="px-4 py-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div
-        className={`text-lg font-semibold tabular-nums ${
-          tone === 'warn' ? 'text-amber-600 dark:text-amber-400' : ''
-        }`}
+        className={`text-lg font-semibold tabular-nums ${tone === 'warn' ? 'text-warning' : ''}`}
       >
         {value}
       </div>

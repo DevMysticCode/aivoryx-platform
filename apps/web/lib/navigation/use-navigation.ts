@@ -5,7 +5,7 @@ import { PLATFORM_NAV, TENANT_NAV, type NavEntry } from './registry';
 import { useAccess } from './use-access';
 
 /** Recursively keep entries the caller may see; drop empty groups. */
-function filterEntries(
+export function filterEntries(
   entries: NavEntry[],
   can: (p: string | undefined) => boolean,
   hasModule: (m: string | undefined) => boolean,
@@ -16,7 +16,10 @@ function filterEntries(
     const children = entry.children ? filterEntries(entry.children, can, hasModule) : undefined;
     const selfVisible = can(entry.permission) && (entry.href !== undefined || !entry.children);
     if (entry.children) {
-      if (children && children.length > 0) out.push({ ...entry, children });
+      // a module links to its first section the caller can actually open
+      if (children && children.length > 0) {
+        out.push({ ...entry, href: children[0]!.href ?? entry.href, children });
+      }
       continue;
     }
     if (selfVisible) out.push(entry);

@@ -39,7 +39,7 @@ export default function FieldVisitsPage() {
             <li key={v.id}>
               <Link
                 href={`/field/visits/${v.id}`}
-                className="block rounded-lg border p-4 active:bg-accent/40"
+                className="block rounded-lg border p-4 active:bg-surface-hover"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -58,7 +58,11 @@ export default function FieldVisitsPage() {
           ))}
         </ul>
       ) : (
-        <EmptyState>No visits match this filter.</EmptyState>
+        <EmptyState title={status ? 'No visits with this status' : 'No visits assigned to you'}>
+          {status
+            ? 'Try another status, or choose All statuses to see every visit assigned to you.'
+            : 'Visits are site assessments booked from a lead. When the office assigns one to you it appears here.'}
+        </EmptyState>
       )}
     </section>
   );

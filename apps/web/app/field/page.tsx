@@ -27,7 +27,7 @@ export default function FieldTodayPage() {
             <li key={v.id}>
               <Link
                 href={`/field/visits/${v.id}`}
-                className="block rounded-lg border p-4 active:bg-accent/40"
+                className="block rounded-lg border p-4 active:bg-surface-hover"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -55,7 +55,9 @@ export default function FieldTodayPage() {
           ))}
         </ul>
       ) : (
-        <EmptyState>No visits scheduled for today.</EmptyState>
+        <EmptyState title="No visits scheduled today">
+          Visits are site assessments booked from a lead. Check My visits for upcoming ones.
+        </EmptyState>
       )}
     </section>
   );

@@ -33,17 +33,11 @@ export default function FieldProjectsPage() {
                   {p.siteCity ? ` · ${p.siteCity}` : ''}
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-xs">
-                  <span
-                    className={
-                      p.readinessState === 'READY'
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-amber-600 dark:text-amber-400'
-                    }
-                  >
+                  <span className={p.readinessState === 'READY' ? 'text-success' : 'text-warning'}>
                     Materials: {p.readinessState.replace(/_/g, ' ').toLowerCase()}
                   </span>
                   {p.openDefects > 0 ? (
-                    <span className="text-destructive">
+                    <span className="text-danger">
                       {p.openDefects} defect{p.openDefects === 1 ? '' : 's'}
                     </span>
                   ) : null}
@@ -53,7 +47,10 @@ export default function FieldProjectsPage() {
           ))}
         </ul>
       ) : (
-        <EmptyState>No installation work assigned to you.</EmptyState>
+        <EmptyState title="No installation work assigned">
+          Installations appear here once the office assigns you to a project and materials are
+          planned.
+        </EmptyState>
       )}
     </section>
   );

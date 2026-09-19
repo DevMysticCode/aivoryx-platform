@@ -184,7 +184,7 @@ test.describe('CRM ↔ Field ↔ Commercial (Phase 18)', () => {
     await page.getByRole('tab', { name: 'Activity' }).click();
     await expect(page.getByText(/follow-up required/i).first()).toBeVisible();
     await page.getByRole('tab', { name: 'Follow-ups' }).click();
-    await expect(page.getByText(/Follow-up after site visit/i)).toBeVisible();
+    await expect(page.getByText(/Follow-up after site visit/i).first()).toBeVisible();
   });
 
   test('7–10. prepare a quotation from the visit and navigate the related records', async ({

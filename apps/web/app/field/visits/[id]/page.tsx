@@ -201,7 +201,7 @@ export default function FieldVisitDetailPage() {
                   <label key={f.key} className="block space-y-1.5">
                     <span className="text-sm font-medium">
                       {f.label}
-                      {f.isRequired ? <span className="text-destructive"> *</span> : null}
+                      {f.isRequired ? <span className="text-danger"> *</span> : null}
                     </span>
                     <SurveyInput
                       dataType={f.dataType}
@@ -219,7 +219,10 @@ export default function FieldVisitDetailPage() {
                 ) : null}
               </form>
             ) : (
-              <p className="text-sm text-muted-foreground">No survey questions configured.</p>
+              <p className="text-sm text-muted-foreground">
+                No survey questions configured. An admin can add them under the Site survey
+                questions section on the CRM visits page.
+              </p>
             )}
             <ErrorNote error={submitSurvey.error} />
           </Card>
@@ -271,7 +274,7 @@ export default function FieldVisitDetailPage() {
               {uploadState === 'uploading' ? 'Uploading…' : 'Add photo'}
             </Button>
             {uploadState === 'failed' ? (
-              <p className="text-xs text-destructive">
+              <p className="text-xs text-danger">
                 Upload failed — check your connection and try again.
               </p>
             ) : null}
@@ -346,7 +349,7 @@ export default function FieldVisitDetailPage() {
                     type="number"
                     step="0.1"
                     min="0"
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                    className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                     value={travelKm}
                     onChange={(e) => setTravelKm(e.target.value)}
                   />
@@ -354,7 +357,7 @@ export default function FieldVisitDetailPage() {
                 <label className="block space-y-1.5">
                   <span className="text-sm font-medium">Travel notes (optional)</span>
                   <input
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                    className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                     value={travelNotes}
                     onChange={(e) => setTravelNotes(e.target.value)}
                   />
@@ -404,7 +407,7 @@ export default function FieldVisitDetailPage() {
                   onSubmit={(body) => complete.mutate(body)}
                 />
                 {missing.length > 0 ? (
-                  <p className="text-xs text-destructive">
+                  <p className="text-xs text-danger">
                     Still missing: {missing.join(', ').replace(/_/g, ' ')}
                   </p>
                 ) : (
@@ -433,7 +436,7 @@ function SurveyInput({
   if (dataType === 'select') {
     return (
       <select
-        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+        className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
         value={typeof value === 'string' ? value : ''}
         onChange={(e) => onChange(e.target.value || null)}
       >
@@ -460,7 +463,7 @@ function SurveyInput({
     return (
       <input
         type="number"
-        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+        className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
         value={value === null || value === undefined ? '' : String(value)}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
       />
@@ -470,7 +473,7 @@ function SurveyInput({
     return (
       <input
         type="date"
-        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+        className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
         value={typeof value === 'string' ? value : ''}
         onChange={(e) => onChange(e.target.value || null)}
       />
@@ -478,7 +481,7 @@ function SurveyInput({
   }
   return (
     <input
-      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+      className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
       value={typeof value === 'string' ? value : ''}
       onChange={(e) => onChange(e.target.value)}
     />

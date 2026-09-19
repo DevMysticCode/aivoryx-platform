@@ -139,7 +139,7 @@ export default function PayrollPage() {
                 <td className="px-3 py-2 tabular-nums">
                   {p.paidCount} / {p.pendingCount}
                   {p.failedCount > 0 && (
-                    <span className="ml-1 text-destructive">({p.failedCount} failed)</span>
+                    <span className="ml-1 text-danger">({p.failedCount} failed)</span>
                   )}
                 </td>
               </tr>

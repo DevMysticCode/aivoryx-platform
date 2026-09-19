@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 import { Providers } from './providers';
 import { AppShell } from '@/components/app-shell';
+import { THEME_INIT_SCRIPT } from '@/lib/theme/appearance';
 
 export const metadata: Metadata = {
   title: {
@@ -27,6 +28,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-dvh antialiased">
         <Providers>
           <AppShell>{children}</AppShell>

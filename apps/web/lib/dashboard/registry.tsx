@@ -9,6 +9,8 @@ import { CrmPipelineWidget, CrmFollowupsWidget } from '@/components/dashboard/cr
 import { HrDashboardWidget } from '@/components/dashboard/hr-widgets';
 import { FinanceOverviewWidget } from '@/components/dashboard/finance-widgets';
 import { FieldVisitsWidget } from '@/components/dashboard/field-widgets';
+import { HrSelfWidget } from '@/components/dashboard/hr-self-widget';
+import { LeadTrendWidget } from '@/components/dashboard/report-widgets';
 
 /**
  * The dashboard widget registry (Phase 13C §2–3, extended Phase 13D §5). Each
@@ -44,7 +46,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     title: 'Attention required',
     span: 6,
     priority: 6,
-    section: 'Attention & upcoming work',
+    section: 'Primary work',
     Component: AttentionRequiredWidget,
   },
   {
@@ -52,8 +54,18 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     title: 'Upcoming work',
     span: 6,
     priority: 7,
-    section: 'Attention & upcoming work',
+    section: 'Primary work',
     Component: UpcomingWorkWidget,
+  },
+  {
+    key: 'hr-self',
+    module: 'HR',
+    permissions: ['hr.attendance.self'],
+    title: 'My day',
+    span: 6,
+    priority: 8,
+    section: 'Primary work',
+    Component: HrSelfWidget,
   },
   {
     key: 'crm-pipeline',
@@ -62,7 +74,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     title: 'Lead pipeline',
     span: 6,
     priority: 10,
-    section: 'Module insights',
+    section: 'Analysis',
     Component: CrmPipelineWidget,
   },
   {
@@ -72,8 +84,18 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     title: 'Recent leads',
     span: 6,
     priority: 20,
-    section: 'Module insights',
+    section: 'Analysis',
     Component: CrmFollowupsWidget,
+  },
+  {
+    key: 'crm-lead-trend',
+    module: 'CRM',
+    permissions: ['crm.leads.read'],
+    title: 'Lead activity',
+    span: 6,
+    priority: 25,
+    section: 'Analysis',
+    Component: LeadTrendWidget,
   },
   {
     key: 'field-visits',
@@ -82,7 +104,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     title: 'Field visits',
     span: 6,
     priority: 30,
-    section: 'Module insights',
+    section: 'Analysis',
     Component: FieldVisitsWidget,
   },
   {
@@ -92,7 +114,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     title: 'Receivables',
     span: 6,
     priority: 40,
-    section: 'Module insights',
+    section: 'Analysis',
     Component: FinanceOverviewWidget,
   },
   {
@@ -102,7 +124,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     title: 'Workforce',
     span: 6,
     priority: 50,
-    section: 'Module insights',
+    section: 'Analysis',
     Component: HrDashboardWidget,
   },
 ];

@@ -19,7 +19,7 @@ export function StatCard({
   icon?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-lg border bg-surface p-4">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
         {icon ? <span className="text-muted-foreground">{icon}</span> : null}
@@ -50,7 +50,7 @@ export function ErrorBlock({
       : getErrorMessage(error);
   const ref = error instanceof ApiError ? error.correlationId : undefined;
   return (
-    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-sm">
+    <div role="alert" className="rounded-lg border border-danger/30 bg-danger-soft p-6 text-sm">
       <p className="font-medium text-foreground">{isEntitlement ? 'Access unavailable' : title}</p>
       <p className="mt-1 text-muted-foreground">{message}</p>
       {ref ? <p className="mt-1 font-mono text-xs text-muted-foreground">Ref: {ref}</p> : null}

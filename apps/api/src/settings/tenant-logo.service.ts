@@ -6,7 +6,7 @@ import { AppError } from '@aivoryx/shared';
 import { OBJECT_STORAGE, type ObjectStorageService } from '../storage/object-storage.service.js';
 import type { TenantScope } from '../supply/common.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
-import { ImageValidationError, readImageMeta } from './image-meta.js';
+import { ImageValidationError, readImageMeta, type ImageMeta } from './image-meta.js';
 
 const { tenantAssets } = schema;
 
@@ -14,6 +14,58 @@ const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_DIMENSION = 4000;
 const MIN_DIMENSION = 16;
 type LogoKind = schema.TenantAssetRow['kind'];
+
+export interface LogoFileInput {
+  buffer: Buffer;
+  contentType: string;
+  originalFilename: string | null;
+  size: number;
+}
+
+/**
+ * Validate an uploaded logo image (empty / size / sniffed format / declared-type
+ * mismatch / dimensions). Shared by tenant logos and customer logos so both get
+ * identical rules. The sniffed format is authoritative.
+ */
+export function validateLogoFile(file: LogoFileInput): ImageMeta {
+  if (!file.buffer || file.buffer.length === 0) {
+    throw new AppError('LOGO_INVALID', { details: { reason: 'empty' } });
+  }
+  if (file.size > MAX_BYTES || file.buffer.length > MAX_BYTES) {
+    throw new AppError('LOGO_INVALID', {
+      details: { reason: 'file_too_large', maxBytes: MAX_BYTES },
+    });
+  }
+
+  let meta: ImageMeta;
+  try {
+    meta = readImageMeta(file.buffer);
+  } catch (err) {
+    const reason = err instanceof ImageValidationError ? err.reason : 'unreadable';
+    throw new AppError('LOGO_INVALID', { details: { reason } });
+  }
+  // the sniffed format is authoritative; a mismatched declared type is a red flag
+  if (file.contentType && file.contentType.toLowerCase() !== meta.format) {
+    throw new AppError('LOGO_INVALID', {
+      details: {
+        reason: 'content_type_mismatch',
+        declared: file.contentType,
+        actual: meta.format,
+      },
+    });
+  }
+  if (
+    meta.width < MIN_DIMENSION ||
+    meta.height < MIN_DIMENSION ||
+    meta.width > MAX_DIMENSION ||
+    meta.height > MAX_DIMENSION
+  ) {
+    throw new AppError('LOGO_INVALID', {
+      details: { reason: 'bad_dimensions', width: meta.width, height: meta.height },
+    });
+  }
+  return meta;
+}
 
 /**
  * Tenant logo / favicon upload, removal and authenticated read (Phase 10,
@@ -34,44 +86,9 @@ export class TenantLogoService {
   async upload(
     scope: TenantScope,
     kind: LogoKind,
-    file: { buffer: Buffer; contentType: string; originalFilename: string | null; size: number },
+    file: LogoFileInput,
   ): Promise<{ kind: LogoKind; width: number; height: number }> {
-    if (!file.buffer || file.buffer.length === 0) {
-      throw new AppError('LOGO_INVALID', { details: { reason: 'empty' } });
-    }
-    if (file.size > MAX_BYTES || file.buffer.length > MAX_BYTES) {
-      throw new AppError('LOGO_INVALID', {
-        details: { reason: 'file_too_large', maxBytes: MAX_BYTES },
-      });
-    }
-
-    let meta;
-    try {
-      meta = readImageMeta(file.buffer);
-    } catch (err) {
-      const reason = err instanceof ImageValidationError ? err.reason : 'unreadable';
-      throw new AppError('LOGO_INVALID', { details: { reason } });
-    }
-    // the sniffed format is authoritative; a mismatched declared type is a red flag
-    if (file.contentType && file.contentType.toLowerCase() !== meta.format) {
-      throw new AppError('LOGO_INVALID', {
-        details: {
-          reason: 'content_type_mismatch',
-          declared: file.contentType,
-          actual: meta.format,
-        },
-      });
-    }
-    if (
-      meta.width < MIN_DIMENSION ||
-      meta.height < MIN_DIMENSION ||
-      meta.width > MAX_DIMENSION ||
-      meta.height > MAX_DIMENSION
-    ) {
-      throw new AppError('LOGO_INVALID', {
-        details: { reason: 'bad_dimensions', width: meta.width, height: meta.height },
-      });
-    }
+    const meta = validateLogoFile(file);
 
     const ext = meta.format === 'image/png' ? 'png' : meta.format === 'image/jpeg' ? 'jpg' : 'webp';
     const key = `tenants/${scope.tenantId}/branding/${kind}/${randomUUID()}.${ext}`;

@@ -14,7 +14,17 @@ import {
 } from '@/lib/supply/use-supply';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, PageHeader, Skeleton } from '@/components/admin/ui';
-import { fmtDate, fmtMoney, Pager, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
+import {
+  fmtDate,
+  fmtMoney,
+  FormDisclosure,
+  JumpToFormButton,
+  Pager,
+  Select,
+  SupplyStatusBadge,
+  Table,
+  Toolbar,
+} from '@/components/supply/ui';
 
 const STATUSES = [
   'DRAFT',
@@ -86,112 +96,118 @@ export default function PurchaseOrdersPage() {
       <PageHeader
         title="Purchase orders"
         description="Raise, approve and receive supplier orders. Receiving posts stock automatically."
-      />
+      >
+        {canCreate ? (
+          <JumpToFormButton targetId="new-purchase-order">New purchase order</JumpToFormButton>
+        ) : null}
+      </PageHeader>
 
       {canCreate ? (
-        <Card className="space-y-3">
-          <h2 className="text-sm font-semibold">New purchase order</h2>
-          <form onSubmit={submit} className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Select
-                label="Supplier"
-                value={supplierId}
-                onChange={(e) => setSupplierId(e.target.value)}
-              >
-                <option value="">Select supplier…</option>
-                {(suppliers.data ?? []).map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.code} — {s.name}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label="Project (optional)"
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-              >
-                <option value="">None</option>
-                {(projects.data?.items ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.number}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-sm font-medium">Lines</span>
-              {lines.map((l, i) => (
-                <div
-                  key={i}
-                  className="grid gap-2 sm:grid-cols-[1fr_100px_110px_90px_auto] sm:items-center"
+        <FormDisclosure id="new-purchase-order">
+          <Card className="space-y-3">
+            <h2 className="text-sm font-semibold">New purchase order</h2>
+            <form onSubmit={submit} className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Select
+                  label="Supplier"
+                  value={supplierId}
+                  onChange={(e) => setSupplierId(e.target.value)}
                 >
-                  <Select
-                    value={l.productId}
-                    onChange={(e) => setLine(i, { productId: e.target.value })}
-                  >
-                    <option value="">Product…</option>
-                    {(products.data?.items ?? []).map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.sku} — {p.name}
-                      </option>
-                    ))}
-                  </Select>
-                  <input
-                    className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                    placeholder="Qty"
-                    inputMode="decimal"
-                    value={l.orderedQty}
-                    onChange={(e) => setLine(i, { orderedQty: e.target.value })}
-                  />
-                  <input
-                    className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                    placeholder="Unit price"
-                    inputMode="decimal"
-                    value={l.unitPrice}
-                    onChange={(e) => setLine(i, { unitPrice: e.target.value })}
-                  />
-                  <input
-                    className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                    placeholder="Tax %"
-                    inputMode="decimal"
-                    value={l.taxRate}
-                    onChange={(e) => setLine(i, { taxRate: e.target.value })}
-                  />
-                  <button
-                    type="button"
-                    className="text-xs text-destructive hover:underline disabled:opacity-40"
-                    disabled={lines.length === 1}
-                    onClick={() => setLines((ls) => ls.filter((_, idx) => idx !== i))}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                className="text-xs text-primary hover:underline"
-                onClick={() =>
-                  setLines((ls) => [
-                    ...ls,
-                    { productId: '', orderedQty: '', unitPrice: '', taxRate: '' },
-                  ])
-                }
-              >
-                + Add line
-              </button>
-            </div>
+                  <option value="">Select supplier…</option>
+                  {(suppliers.data ?? []).map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.code} — {s.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  label="Project (optional)"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                >
+                  <option value="">None</option>
+                  {(projects.data?.items ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.number}
+                    </option>
+                  ))}
+                </Select>
+              </div>
 
-            <Button type="submit" disabled={createPo.isPending || !supplierId}>
-              {createPo.isPending ? 'Creating…' : 'Create purchase order'}
-            </Button>
-          </form>
-          <ErrorNote error={createPo.error} />
-        </Card>
+              <div className="space-y-2">
+                <span className="text-sm font-medium">Lines</span>
+                {lines.map((l, i) => (
+                  <div
+                    key={i}
+                    className="grid gap-2 sm:grid-cols-[1fr_100px_110px_90px_auto] sm:items-center"
+                  >
+                    <Select
+                      value={l.productId}
+                      onChange={(e) => setLine(i, { productId: e.target.value })}
+                    >
+                      <option value="">Product…</option>
+                      {(products.data?.items ?? []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.sku} — {p.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <input
+                      className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                      placeholder="Qty"
+                      inputMode="decimal"
+                      value={l.orderedQty}
+                      onChange={(e) => setLine(i, { orderedQty: e.target.value })}
+                    />
+                    <input
+                      className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                      placeholder="Unit price"
+                      inputMode="decimal"
+                      value={l.unitPrice}
+                      onChange={(e) => setLine(i, { unitPrice: e.target.value })}
+                    />
+                    <input
+                      className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                      placeholder="Tax %"
+                      inputMode="decimal"
+                      value={l.taxRate}
+                      onChange={(e) => setLine(i, { taxRate: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      className="text-xs text-danger hover:underline disabled:opacity-40"
+                      disabled={lines.length === 1}
+                      onClick={() => setLines((ls) => ls.filter((_, idx) => idx !== i))}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline"
+                  onClick={() =>
+                    setLines((ls) => [
+                      ...ls,
+                      { productId: '', orderedQty: '', unitPrice: '', taxRate: '' },
+                    ])
+                  }
+                >
+                  + Add line
+                </button>
+              </div>
+
+              <Button type="submit" disabled={createPo.isPending || !supplierId}>
+                {createPo.isPending ? 'Creating…' : 'Create purchase order'}
+              </Button>
+            </form>
+            <ErrorNote error={createPo.error} />
+          </Card>
+        </FormDisclosure>
       ) : null}
 
-      <Card className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <label className="relative w-full sm:min-w-0 sm:max-w-xs sm:flex-1">
+      <Toolbar count={pos.data ? `${pos.data.total} order(s)` : undefined}>
+        <label className="relative">
           <span className="mb-1.5 block text-sm font-medium">Search</span>
           <Search className="pointer-events-none absolute left-2.5 top-[34px] size-4 text-muted-foreground" />
           <input
@@ -201,7 +217,7 @@ export default function PurchaseOrdersPage() {
             className="h-9 w-full rounded-md border border-input bg-transparent pl-8 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
-        <div className="sm:w-48">
+        <div>
           <Select
             label="Status"
             value={status}
@@ -217,10 +233,7 @@ export default function PurchaseOrdersPage() {
             ))}
           </Select>
         </div>
-        <div className="text-sm text-muted-foreground sm:ml-auto">
-          {pos.data ? `${pos.data.total} order(s)` : ''}
-        </div>
-      </Card>
+      </Toolbar>
 
       {pos.isLoading ? (
         <Skeleton rows={6} />
@@ -241,7 +254,7 @@ export default function PurchaseOrdersPage() {
             }
           >
             {pos.data.items.map((po) => (
-              <tr key={po.id} className="hover:bg-accent/40">
+              <tr key={po.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <Link
                     href={`/procurement/purchase-orders/${po.id}`}
@@ -257,15 +270,31 @@ export default function PurchaseOrdersPage() {
                 <td className="px-3 py-2">
                   <SupplyStatusBadge status={po.status} />
                 </td>
-                <td className="px-3 py-2 text-right">{fmtMoney(po.total)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmtMoney(po.total)}</td>
                 <td className="px-3 py-2 text-xs text-muted-foreground">{fmtDate(po.createdAt)}</td>
               </tr>
             ))}
           </Table>
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </>
+      ) : q || status ? (
+        <EmptyState title="No purchase orders match these filters">
+          Try a different PO number or supplier, or set the status back to all statuses.
+        </EmptyState>
       ) : (
-        <EmptyState>No purchase orders match these filters.</EmptyState>
+        <EmptyState
+          title="No purchase orders yet"
+          action={
+            canCreate ? (
+              <JumpToFormButton targetId="new-purchase-order">
+                Create a purchase order
+              </JumpToFormButton>
+            ) : undefined
+          }
+        >
+          A purchase order is a request to a supplier for materials. Approve it, then receive the
+          goods to add them to warehouse stock.
+        </EmptyState>
       )}
     </section>
   );

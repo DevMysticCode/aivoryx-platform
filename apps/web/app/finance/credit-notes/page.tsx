@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
 import { ErrorBlock } from '@/components/ui/kit';
+import { EmptyState } from '@/components/admin/ui';
 import { fmtMoney, Select, SupplyStatusBadge, Table, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useCustomers } from '@/lib/commercial/use-commercial';
@@ -130,7 +131,29 @@ export default function CreditNotesPage() {
       {list.isLoading && <Skeleton rows={5} />}
       {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
 
-      {list.data && (
+      {list.data &&
+        list.data.items.length === 0 &&
+        (status ? (
+          <EmptyState title="No credit notes match this status">
+            Set the status back to all statuses to see every credit note.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            title="No credit notes yet"
+            action={
+              canCreate ? (
+                <Button size="sm" onClick={() => setShowNew(true)}>
+                  New credit note
+                </Button>
+              ) : undefined
+            }
+          >
+            A credit note reduces what a customer owes, for example after a return or a billing
+            correction. Raise one against an issued invoice.
+          </EmptyState>
+        ))}
+
+      {list.data && list.data.items.length > 0 && (
         <>
           <Table
             head={
@@ -143,15 +166,8 @@ export default function CreditNotesPage() {
               </tr>
             }
           >
-            {list.data.items.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-sm text-muted-foreground">
-                  No credit notes.
-                </td>
-              </tr>
-            )}
             {list.data.items.map((cn) => (
-              <tr key={cn.id} className="border-t hover:bg-accent/40">
+              <tr key={cn.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <Link
                     href={`/finance/credit-notes/${cn.id}`}

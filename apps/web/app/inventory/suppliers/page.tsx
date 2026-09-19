@@ -5,7 +5,13 @@ import { Button } from '@aivoryx/ui';
 import { useCreateSupplier, useSuppliers } from '@/lib/supply/use-supply';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Field, PageHeader, Skeleton } from '@/components/admin/ui';
-import { Table } from '@/components/supply/ui';
+import {
+  ActiveBadge,
+  FormDisclosure,
+  JumpToFormButton,
+  Table,
+  Toolbar,
+} from '@/components/supply/ui';
 
 export default function SuppliersPage() {
   const perms = usePermissions();
@@ -27,69 +33,84 @@ export default function SuppliersPage() {
       <PageHeader
         title="Suppliers"
         description="Vendors you raise purchase orders against. Not an accounting ledger."
-      />
+      >
+        {canCreate ? (
+          <JumpToFormButton targetId="new-supplier">New supplier</JumpToFormButton>
+        ) : null}
+      </PageHeader>
 
       {canCreate ? (
-        <Card className="space-y-3">
-          <h2 className="text-sm font-semibold">New supplier</h2>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!form.code || !form.name) return;
-              await createSupplier.mutateAsync({
-                code: form.code,
-                name: form.name,
-                contactName: form.contactName || undefined,
-                contactEmail: form.contactEmail || undefined,
-                contactPhone: form.contactPhone || undefined,
-              });
-              setForm({ code: '', name: '', contactName: '', contactEmail: '', contactPhone: '' });
-            }}
-            className="grid gap-3 sm:grid-cols-3"
-          >
-            <Field
-              label="Code"
-              value={form.code}
-              onChange={(e) => setForm({ ...form, code: e.target.value })}
-            />
-            <Field
-              label="Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <Field
-              label="Contact name"
-              value={form.contactName}
-              onChange={(e) => setForm({ ...form, contactName: e.target.value })}
-            />
-            <Field
-              label="Contact email"
-              value={form.contactEmail}
-              onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
-            />
-            <Field
-              label="Contact phone"
-              value={form.contactPhone}
-              onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
-            />
-            <div className="flex items-end">
-              <Button type="submit" disabled={createSupplier.isPending || !form.code || !form.name}>
-                {createSupplier.isPending ? 'Creating…' : 'Create'}
-              </Button>
-            </div>
-          </form>
-          <ErrorNote error={createSupplier.error} />
-        </Card>
+        <FormDisclosure id="new-supplier">
+          <Card className="space-y-3">
+            <h2 className="text-sm font-semibold">New supplier</h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!form.code || !form.name) return;
+                await createSupplier.mutateAsync({
+                  code: form.code,
+                  name: form.name,
+                  contactName: form.contactName || undefined,
+                  contactEmail: form.contactEmail || undefined,
+                  contactPhone: form.contactPhone || undefined,
+                });
+                setForm({
+                  code: '',
+                  name: '',
+                  contactName: '',
+                  contactEmail: '',
+                  contactPhone: '',
+                });
+              }}
+              className="grid gap-3 sm:grid-cols-3"
+            >
+              <Field
+                label="Code"
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+              />
+              <Field
+                label="Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              <Field
+                label="Contact name"
+                value={form.contactName}
+                onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+              />
+              <Field
+                label="Contact email"
+                value={form.contactEmail}
+                onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
+              />
+              <Field
+                label="Contact phone"
+                value={form.contactPhone}
+                onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
+              />
+              <div className="flex items-end">
+                <Button
+                  type="submit"
+                  disabled={createSupplier.isPending || !form.code || !form.name}
+                >
+                  {createSupplier.isPending ? 'Creating…' : 'Create'}
+                </Button>
+              </div>
+            </form>
+            <ErrorNote error={createSupplier.error} />
+          </Card>
+        </FormDisclosure>
       ) : null}
 
-      <Card>
+      <Toolbar count={suppliers.data ? `${suppliers.data.length} supplier(s)` : undefined}>
         <Field
           label="Search"
           placeholder="Code or name"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-      </Card>
+      </Toolbar>
 
       {suppliers.isLoading ? (
         <Skeleton rows={5} />
@@ -99,26 +120,41 @@ export default function SuppliersPage() {
         <Table
           head={
             <tr>
-              <th className="px-3 py-2 font-medium">Code</th>
               <th className="px-3 py-2 font-medium">Name</th>
+              <th className="px-3 py-2 font-medium">Code</th>
               <th className="px-3 py-2 font-medium">Contact</th>
               <th className="px-3 py-2 font-medium">Active</th>
             </tr>
           }
         >
           {suppliers.data.map((s) => (
-            <tr key={s.id} className="hover:bg-accent/40">
-              <td className="px-3 py-2 font-mono text-xs">{s.code}</td>
+            <tr key={s.id} className="hover:bg-surface-hover">
               <td className="px-3 py-2 font-medium">{s.name}</td>
+              <td className="px-3 py-2 font-mono text-xs">{s.code}</td>
               <td className="px-3 py-2 text-xs text-muted-foreground">
                 {[s.contactName, s.contactEmail, s.contactPhone].filter(Boolean).join(' · ') || '—'}
               </td>
-              <td className="px-3 py-2 text-xs">{s.isActive ? 'Yes' : 'No'}</td>
+              <td className="px-3 py-2">
+                <ActiveBadge active={s.isActive} />
+              </td>
             </tr>
           ))}
         </Table>
+      ) : q ? (
+        <EmptyState title="No suppliers match this search">
+          Check the spelling, or search by supplier code instead of name.
+        </EmptyState>
       ) : (
-        <EmptyState>No suppliers yet.</EmptyState>
+        <EmptyState
+          title="No suppliers yet"
+          action={
+            canCreate ? (
+              <JumpToFormButton targetId="new-supplier">Add a supplier</JumpToFormButton>
+            ) : undefined
+          }
+        >
+          Suppliers are the vendors you buy materials from. Add one before raising a purchase order.
+        </EmptyState>
       )}
     </section>
   );

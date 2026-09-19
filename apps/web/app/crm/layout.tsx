@@ -1,82 +1,8 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import { type ReactNode, useEffect } from 'react';
-import { CalendarClock, Contact, Gauge, Users, type LucideIcon } from 'lucide-react';
-import type { ModuleKey } from '@aivoryx/shared';
-import { ApiError } from '@/lib/api/client';
-import { useMe } from '@/lib/admin/use-admin';
-import { useAccess } from '@/lib/navigation/use-access';
-import { Skeleton, WorkspaceUnavailable } from '@/components/admin/ui';
-import { ModuleTabs } from '@/components/ui/module-tabs';
-
-interface CrmNavItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  exact?: boolean;
-  permission?: string;
-  module?: ModuleKey;
-}
-
-const NAV: CrmNavItem[] = [
-  { href: '/crm', label: 'Overview', icon: Gauge, exact: true },
-  { href: '/crm/leads', label: 'Leads', icon: Users, permission: 'crm.leads.read' },
-  { href: '/customers', label: 'Customers', icon: Contact, permission: 'customers.read' },
-  { href: '/crm/visits', label: 'Visits', icon: CalendarClock, module: 'FIELD' },
-];
+import type { ReactNode } from 'react';
+import { ModuleShell } from '@/components/navigation/module-shell';
 
 export default function CrmLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const me = useMe();
-  const access = useAccess();
-
-  const unauthenticated = me.error instanceof ApiError && me.error.status === 401;
-
-  useEffect(() => {
-    if (unauthenticated) router.replace('/login');
-  }, [unauthenticated, router]);
-
-  if (me.isLoading || unauthenticated) {
-    return (
-      <div className="space-y-4">
-        <Skeleton rows={4} />
-      </div>
-    );
-  }
-
-  if (me.error) {
-    return (
-      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
-        <p className="font-medium text-destructive">Could not load your session.</p>
-        <p className="mt-1 text-muted-foreground">{(me.error as Error).message}</p>
-      </div>
-    );
-  }
-
-  if (!me.data?.active) {
-    return (
-      <WorkspaceUnavailable
-        inactiveMembership={me.data?.inactiveMembership}
-        memberships={me.data?.memberships}
-      />
-    );
-  }
-
-  const items = NAV.filter(
-    (item) => access.can(item.permission) && access.hasModule(item.module),
-  ).map(({ href, label, icon, exact }) => ({
-    href,
-    label,
-    icon,
-    current: exact ? pathname === href : pathname.startsWith(href),
-  }));
-
-  return (
-    <div className="space-y-6">
-      <ModuleTabs items={items} />
-      {children}
-    </div>
-  );
+  return <ModuleShell>{children}</ModuleShell>;
 }

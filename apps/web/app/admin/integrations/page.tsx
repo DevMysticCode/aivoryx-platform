@@ -212,9 +212,7 @@ export default function IntegrationsAdminPage() {
                     <td className="px-3 py-2 text-xs text-muted-foreground">
                       {e.processingAttempts}
                     </td>
-                    <td className="px-3 py-2 text-xs text-destructive">
-                      {e.lastErrorMessage ?? ''}
-                    </td>
+                    <td className="px-3 py-2 text-xs text-danger">{e.lastErrorMessage ?? ''}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">
                       {new Date(e.createdAt).toLocaleString()}
                     </td>

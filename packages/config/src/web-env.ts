@@ -8,6 +8,10 @@ import { appEnvSchema, formatEnvError } from './shared.js';
 export const webEnvSchema = z.object({
   NEXT_PUBLIC_API_BASE_URL: z.string().url().default('http://localhost:4000'),
   NEXT_PUBLIC_APP_ENV: appEnvSchema.default('development'),
+  /** Base URL of the external help/docs site (no trailing slash). Unset = links hidden. */
+  NEXT_PUBLIC_HELP_BASE_URL: z.string().url().optional(),
+  /** Where "Contact support" points. Unset = the entry is hidden. */
+  NEXT_PUBLIC_SUPPORT_EMAIL: z.string().email().optional(),
 });
 
 export type WebEnv = z.infer<typeof webEnvSchema>;

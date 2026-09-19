@@ -138,7 +138,7 @@ export default function QuotationsPage() {
             }
           >
             {quotations.data.items.map((qt) => (
-              <tr key={qt.id} className="hover:bg-accent/40">
+              <tr key={qt.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <Link
                     href={`/quotations/${qt.id}`}
@@ -165,7 +165,15 @@ export default function QuotationsPage() {
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </>
       ) : (
-        <EmptyState>No quotations match these filters yet.</EmptyState>
+        <EmptyState title="No quotations yet">
+          Quotations price a solar proposal for a lead or customer and move from draft to sent,
+          accepted and booked.{' '}
+          {q || status
+            ? 'Nothing matches the current filters; clear them to see all quotations.'
+            : canCreate
+              ? 'Create one from the form above.'
+              : 'Ask a sales user with quotation access to create the first one.'}
+        </EmptyState>
       )}
     </section>
   );

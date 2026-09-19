@@ -5,6 +5,8 @@ import { TenantLogoService } from './tenant-logo.service.js';
 import { OnboardingService } from './onboarding.service.js';
 import { PlanService } from './plan.service.js';
 import { SettingsController } from './settings.controller.js';
+import { PublicBrandingController } from './public-branding.controller.js';
+import { PublicBrandingService } from './public-branding.service.js';
 import { OnboardingController } from './onboarding.controller.js';
 
 /**
@@ -16,8 +18,14 @@ import { OnboardingController } from './onboarding.controller.js';
  */
 @Module({
   imports: [StorageModule],
-  controllers: [SettingsController, OnboardingController],
-  providers: [CompanyProfileService, TenantLogoService, OnboardingService, PlanService],
+  controllers: [SettingsController, OnboardingController, PublicBrandingController],
+  providers: [
+    CompanyProfileService,
+    TenantLogoService,
+    OnboardingService,
+    PlanService,
+    PublicBrandingService,
+  ],
   exports: [CompanyProfileService, TenantLogoService],
 })
 export class SettingsModule {}

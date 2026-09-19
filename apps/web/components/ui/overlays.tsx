@@ -60,7 +60,7 @@ export interface DialogProps {
   children?: ReactNode;
   footer?: ReactNode;
   /** wider modal for editors */
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 /** An accessible modal dialog: backdrop, Esc, focus trap, labelled by its title. */
@@ -93,10 +93,11 @@ export function Dialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         className={cn(
-          'w-full rounded-xl border bg-card shadow-xl',
+          'w-full rounded-xl border bg-surface-raised shadow-xl',
           size === 'sm' && 'max-w-sm',
           size === 'md' && 'max-w-lg',
           size === 'lg' && 'max-w-2xl',
+          size === 'xl' && 'max-w-4xl',
         )}
       >
         <div className="border-b px-5 py-4">
@@ -111,7 +112,7 @@ export function Dialog({
         </div>
         {children ? <div className="px-5 py-4">{children}</div> : null}
         {footer ? (
-          <div className="flex items-center justify-end gap-2 border-t bg-secondary/30 px-5 py-3">
+          <div className="flex items-center justify-end gap-2 border-t bg-background-muted px-5 py-3">
             {footer}
           </div>
         ) : null}
@@ -152,7 +153,7 @@ export function Sheet({ open, onClose, title, children, side = 'right', size = '
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          'absolute inset-y-0 flex flex-col border bg-card shadow-xl',
+          'absolute inset-y-0 flex flex-col border bg-surface-raised shadow-xl',
           size === 'sm' ? 'w-[min(20rem,85vw)]' : 'w-[min(28rem,90vw)]',
           side === 'right' ? 'right-0' : 'left-0',
         )}
@@ -211,7 +212,7 @@ export function Menu({ trigger, children, align = 'end', open, onOpenChange }: M
         <div
           role="menu"
           className={cn(
-            'absolute z-40 mt-2 min-w-56 rounded-lg border bg-card p-1 shadow-lg',
+            'absolute z-40 mt-2 min-w-56 rounded-lg border bg-surface-raised p-1 shadow-lg',
             align === 'end' ? 'right-0' : 'left-0',
           )}
         >
@@ -238,7 +239,7 @@ export function MenuItem({
   const cls = cn(
     'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
     danger
-      ? 'text-destructive hover:bg-destructive/10'
+      ? 'text-danger hover:bg-danger-soft'
       : 'text-foreground hover:bg-accent hover:text-accent-foreground',
   );
   if (href) {

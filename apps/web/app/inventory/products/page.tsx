@@ -12,7 +12,16 @@ import {
 } from '@/lib/supply/use-supply';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Field, PageHeader, Skeleton } from '@/components/admin/ui';
-import { fmtQty, Pager, Select, Table } from '@/components/supply/ui';
+import {
+  ActiveBadge,
+  fmtQty,
+  FormDisclosure,
+  JumpToFormButton,
+  Pager,
+  Select,
+  Table,
+  Toolbar,
+} from '@/components/supply/ui';
 
 export default function ProductsPage() {
   const perms = usePermissions();
@@ -38,14 +47,27 @@ export default function ProductsPage() {
       <PageHeader
         title="Products"
         description="Provider-neutral item master used across procurement, inventory and dispatch."
-      />
+      >
+        {canCreate ? (
+          <JumpToFormButton targetId="master-data" variant="outline">
+            Units &amp; categories
+          </JumpToFormButton>
+        ) : null}
+        {canCreate ? <JumpToFormButton targetId="new-product">New product</JumpToFormButton> : null}
+      </PageHeader>
 
-      {canCreate ? <MasterDataForms /> : null}
       {canCreate ? (
-        <NewProductForm units={units.data ?? []} categories={categories.data ?? []} />
+        <FormDisclosure id="master-data">
+          <MasterDataForms />
+        </FormDisclosure>
+      ) : null}
+      {canCreate ? (
+        <FormDisclosure id="new-product">
+          <NewProductForm units={units.data ?? []} categories={categories.data ?? []} />
+        </FormDisclosure>
       ) : null}
 
-      <Card className="grid gap-3 sm:grid-cols-3">
+      <Toolbar count={products.data ? `${products.data.total} product(s)` : undefined}>
         <Field
           label="Search"
           placeholder="SKU or name"
@@ -70,10 +92,7 @@ export default function ProductsPage() {
             </option>
           ))}
         </Select>
-        <div className="flex items-end text-sm text-muted-foreground">
-          {products.data ? `${products.data.total} product(s)` : ''}
-        </div>
-      </Card>
+      </Toolbar>
 
       {products.isLoading ? (
         <Skeleton rows={6} />
@@ -84,8 +103,8 @@ export default function ProductsPage() {
           <Table
             head={
               <tr>
-                <th className="px-3 py-2 font-medium">SKU</th>
                 <th className="px-3 py-2 font-medium">Name</th>
+                <th className="px-3 py-2 font-medium">SKU</th>
                 <th className="px-3 py-2 font-medium">Category</th>
                 <th className="px-3 py-2 font-medium">Unit</th>
                 <th className="px-3 py-2 text-right font-medium">Reorder level</th>
@@ -94,8 +113,7 @@ export default function ProductsPage() {
             }
           >
             {products.data.items.map((p) => (
-              <tr key={p.id} className="hover:bg-accent/40">
-                <td className="px-3 py-2 font-mono text-xs">{p.sku}</td>
+              <tr key={p.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <div className="font-medium">{p.name}</div>
                   {p.brand || p.model ? (
@@ -104,19 +122,36 @@ export default function ProductsPage() {
                     </div>
                   ) : null}
                 </td>
+                <td className="px-3 py-2 font-mono text-xs">{p.sku}</td>
                 <td className="px-3 py-2 text-muted-foreground">{p.categoryName ?? '—'}</td>
                 <td className="px-3 py-2 text-muted-foreground">{p.unitCode}</td>
                 <td className="px-3 py-2 text-right text-muted-foreground">
                   {fmtQty(p.reorderLevel)}
                 </td>
-                <td className="px-3 py-2 text-xs">{p.isActive ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">
+                  <ActiveBadge active={p.isActive} />
+                </td>
               </tr>
             ))}
           </Table>
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </>
+      ) : q || categoryId ? (
+        <EmptyState title="No products match these filters">
+          Try a different SKU or name, or set the category back to all categories.
+        </EmptyState>
       ) : (
-        <EmptyState>No products yet.</EmptyState>
+        <EmptyState
+          title="No products yet"
+          action={
+            canCreate ? (
+              <JumpToFormButton targetId="new-product">Add your first product</JumpToFormButton>
+            ) : undefined
+          }
+        >
+          Products are the items you stock, buy and quote. Add each one with a SKU and unit; they
+          then appear in purchase orders, stock and dispatches.
+        </EmptyState>
       )}
     </section>
   );

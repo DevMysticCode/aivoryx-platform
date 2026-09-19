@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import { ErrorNote, PageHeader, Skeleton } from '@/components/admin/ui';
 import { Pager, Select, Table } from '@/components/supply/ui';
+import { Badge, type Tone } from '@/components/ui/status-badge';
 import { NotifTabs } from '@/components/admin/notif-tabs';
 import { useNotificationDeliveries } from '@/lib/notifications/use-notifications';
 
-const STATUS_STYLE: Record<string, string> = {
-  sent: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-  pending: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-  processing: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
-  failed: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
-  cancelled: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+const STATUS_TONE: Record<string, Tone> = {
+  sent: 'success',
+  pending: 'muted',
+  processing: 'info',
+  failed: 'danger',
+  cancelled: 'warning',
 };
 
 function fmt(iso: string | null): string {
@@ -92,13 +93,7 @@ export default function NotificationDeliveriesPage() {
                 <td className="px-3 py-2 text-sm capitalize">{d.channel.replace('_', '-')}</td>
                 <td className="px-3 py-2 text-xs text-muted-foreground">{d.recipientRef}</td>
                 <td className="px-3 py-2">
-                  <span
-                    className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
-                      STATUS_STYLE[d.status] ?? ''
-                    }`}
-                  >
-                    {d.status}
-                  </span>
+                  <Badge tone={STATUS_TONE[d.status] ?? 'neutral'}>{d.status}</Badge>
                   {d.attempts > 1 && (
                     <span className="ml-1 text-[11px] text-muted-foreground">×{d.attempts}</span>
                   )}

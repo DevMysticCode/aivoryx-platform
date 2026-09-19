@@ -1,0 +1,34 @@
+%% Phase 19 (ADR 0046) — how the workspace, theme and sign-in are composed.
+flowchart TD
+  subgraph PRE[Before authentication]
+    URL["/login?workspace=slug"] -->|GET public login-branding| PUB["@Public endpoint<br/>minimal safe fields or generic 404"]
+    PUB -->|slug bound via app.workspace_slug RLS policy| T[(tenants + profile + assets<br/>tenant-scoped reads)]
+    PUB --> LB[Tenant sign-in branding]
+    URL -.unknown / no workspace.-> NB[Neutral Aivoryx branding]
+    LB --> AUTH[[Existing login — unchanged]]
+    NB --> AUTH
+  end
+
+  AUTH --> ME["/auth/me<br/>entitled modules · effective permissions · branding"]
+
+  subgraph WS[Personalised workspace — no role names]
+    ME --> REG[Navigation registry: Module → Section]
+    REG -->|entitlement AND permission filter| NAV[Sidebar · rail · mobile More · section strip]
+    ME --> DASH[Dashboard registry: module + permissions]
+    DASH --> W[Widgets: Identity → KPIs → Primary work → Analysis]
+  end
+
+  subgraph THEME[Theme]
+    ME -->|themePreset / primary / secondary / accent| ENG["@aivoryx/shared theme engine<br/>deriveTheme · AA contrast"]
+    ENG -->|brand tokens only, light + dark| CSS[":root / .dark token override"]
+    PREF["User appearance: Light · Dark · System<br/>(localStorage, inline head script)"] --> CLS[".dark class before first paint"]
+    CSS --> UI[Components read semantic tokens]
+    CLS --> UI
+    STAT["Status colours: success · warning · danger · info"] -.never tenant-driven.-> UI
+  end
+
+  subgraph DOCS[Documents]
+    ME --> DB["Document branding<br/>company or separate logo · print-safe accent · footer"]
+    DB --> PDF[Quotation · invoice · receipt · credit note · payslip PDFs]
+    CL[Customer logo] -->|only if tenant flag on AND party.customerId| PDF
+  end

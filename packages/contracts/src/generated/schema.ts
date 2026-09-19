@@ -211,6 +211,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/public/workspaces/{slug}/login-branding': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Safe login-page branding for a workspace slug (no authentication). */
+    get: operations['getPublicLoginBranding'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/public/workspaces/{slug}/login-logo': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Stream the workspace login logo (falls back to the primary logo). */
+    get: operations['getPublicLoginLogo'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/audit': {
     parameters: {
       query?: never;
@@ -3502,6 +3536,25 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/customers/{id}/logo': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Stream the customer logo (tenant-scoped; the storage key is never exposed). */
+    get: operations['getCustomerLogo'];
+    put?: never;
+    /** Upload / replace the customer logo. */
+    post: operations['uploadCustomerLogo'];
+    /** Remove the customer logo. */
+    delete: operations['removeCustomerLogo'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/customers/{id}': {
     parameters: {
       query?: never;
@@ -4967,8 +5020,16 @@ export interface components {
       primaryColor: string | null;
       /** @example #f97316 */
       accentColor: string | null;
+      /** @example #231d45 */
+      secondaryColor: string | null;
+      /** @example aivoryx-teal */
+      themePreset: string | null;
       /** @description True when the workspace has uploaded a logo. */
       hasLogo: boolean;
+      hasLightLogo: boolean;
+      hasDarkLogo: boolean;
+      hasCompactLogo: boolean;
+      hasFavicon: boolean;
     };
     ActiveContextDto: {
       membership: components['schemas']['MembershipSummaryDto'];
@@ -5096,10 +5157,34 @@ export interface components {
       primaryColor: string | null;
       /** @example #0EA5E9 */
       accentColor: string | null;
+      /** @enum {string|null} */
+      themePreset:
+        | 'aivoryx-teal'
+        | 'ocean'
+        | 'indigo'
+        | 'emerald'
+        | 'royal'
+        | 'warm'
+        | 'custom'
+        | null;
+      /** @example #231D45 */
+      secondaryColor: string | null;
+      /** @description Stored print accent for documents (null = derived from the primary colour). */
+      documentAccentColor: string | null;
+      /** @enum {string} */
+      documentLogoMode: 'company' | 'separate';
+      /** @description Show the customer logo on their documents. */
+      documentShowCustomerLogo: boolean;
+      loginWelcome: string | null;
+      loginDescription: string | null;
+      loginShowPoweredBy: boolean;
       /** @description True when a primary logo is configured. */
       hasLogo: boolean;
       hasLightLogo: boolean;
       hasDarkLogo: boolean;
+      hasCompactLogo: boolean;
+      hasLoginLogo: boolean;
+      hasDocumentLogo: boolean;
       hasFavicon: boolean;
       /** Format: date-time */
       updatedAt: string | null;
@@ -5126,12 +5211,42 @@ export interface components {
       primaryColor?: string;
       /** @example #0EA5E9 */
       accentColor?: string;
+      /** @example #231D45 */
+      secondaryColor?: string;
+      /** @example #8A5A12 */
+      documentAccentColor?: string;
+      /** @enum {string} */
+      themePreset?: 'aivoryx-teal' | 'ocean' | 'indigo' | 'emerald' | 'royal' | 'warm' | 'custom';
+      /** @enum {string} */
+      documentLogoMode?: 'company' | 'separate';
+      documentShowCustomerLogo?: boolean;
+      /** @description Empty string clears. */
+      loginWelcome?: string;
+      /** @description Empty string clears. */
+      loginDescription?: string;
+      loginShowPoweredBy?: boolean;
     };
     BrandingDto: {
       displayName: string;
+      /** @enum {string|null} */
+      themePreset:
+        | 'aivoryx-teal'
+        | 'ocean'
+        | 'indigo'
+        | 'emerald'
+        | 'royal'
+        | 'warm'
+        | 'custom'
+        | null;
       primaryColor: string | null;
+      secondaryColor: string | null;
       accentColor: string | null;
       hasLogo: boolean;
+      hasLightLogo: boolean;
+      hasDarkLogo: boolean;
+      hasCompactLogo: boolean;
+      hasLoginLogo: boolean;
+      hasFavicon: boolean;
     };
     OnboardingStepDto: {
       key: string;
@@ -5150,6 +5265,28 @@ export interface components {
       /** @description True when the checklist should be shown to this user right now. */
       show: boolean;
       steps: components['schemas']['OnboardingStepDto'][];
+    };
+    PublicLoginBrandingDto: {
+      slug: string;
+      displayName: string;
+      /** @enum {string|null} */
+      themePreset:
+        | 'aivoryx-teal'
+        | 'ocean'
+        | 'indigo'
+        | 'emerald'
+        | 'royal'
+        | 'warm'
+        | 'custom'
+        | null;
+      primaryColor: string | null;
+      secondaryColor: string | null;
+      accentColor: string | null;
+      welcomeMessage: string | null;
+      description: string | null;
+      showPoweredBy: boolean;
+      /** @description A login logo or the primary logo exists. */
+      hasLogo: boolean;
     };
     AuditLogDto: {
       /** Format: uuid */
@@ -7836,6 +7973,8 @@ export interface components {
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
+      /** @description True when a customer logo is stored (never the key). */
+      hasLogo: boolean;
     };
     CustomerListDto: {
       items: components['schemas']['CustomerDto'][];
@@ -7874,6 +8013,8 @@ export interface components {
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
+      /** @description True when a customer logo is stored (never the key). */
+      hasLogo: boolean;
       leads: components['schemas']['CustomerLinkDto'][];
       quotations: components['schemas']['CustomerLinkDto'][];
       projects: components['schemas']['CustomerLinkDto'][];
@@ -9222,7 +9363,14 @@ export interface operations {
   getTenantLogo: {
     parameters: {
       query?: {
-        kind?: 'logo' | 'logo_light' | 'logo_dark' | 'favicon';
+        kind?:
+          | 'logo'
+          | 'logo_light'
+          | 'logo_dark'
+          | 'favicon'
+          | 'logo_compact'
+          | 'logo_login'
+          | 'logo_document';
       };
       header?: never;
       path?: never;
@@ -9257,7 +9405,14 @@ export interface operations {
   uploadTenantLogo: {
     parameters: {
       query?: {
-        kind?: 'logo' | 'logo_light' | 'logo_dark' | 'favicon';
+        kind?:
+          | 'logo'
+          | 'logo_light'
+          | 'logo_dark'
+          | 'favicon'
+          | 'logo_compact'
+          | 'logo_login'
+          | 'logo_document';
       };
       header?: never;
       path?: never;
@@ -9292,7 +9447,14 @@ export interface operations {
   removeTenantLogo: {
     parameters: {
       query?: {
-        kind?: 'logo' | 'logo_light' | 'logo_dark' | 'favicon';
+        kind?:
+          | 'logo'
+          | 'logo_light'
+          | 'logo_dark'
+          | 'favicon'
+          | 'logo_compact'
+          | 'logo_login'
+          | 'logo_document';
       };
       header?: never;
       path?: never;
@@ -9385,6 +9547,58 @@ export interface operations {
         };
       };
       403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPublicLoginBranding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublicLoginBrandingDto'];
+        };
+      };
+      /** @description WORKSPACE_NOT_FOUND */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPublicLoginLogo: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description WORKSPACE_NOT_FOUND */
+      404: {
         headers: {
           [name: string]: unknown;
         };
@@ -19188,6 +19402,115 @@ export interface operations {
         'application/json': components['schemas']['CreateCustomerDto'];
       };
     };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getCustomerLogo: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadCustomerLogo: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removeCustomerLogo: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
     responses: {
       200: {
         headers: {

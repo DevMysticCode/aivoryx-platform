@@ -157,7 +157,7 @@ export default function VisitsPage() {
               </thead>
               <tbody className="divide-y">
                 {visits.data.items.map((visit) => (
-                  <tr key={visit.id} className="hover:bg-accent/40">
+                  <tr key={visit.id} className="hover:bg-surface-hover">
                     <td className="px-3 py-2">
                       <Link
                         href={`/crm/visits/${visit.id}`}
@@ -211,7 +211,10 @@ export default function VisitsPage() {
           </div>
         </>
       ) : (
-        <EmptyState>No visits match these filters yet.</EmptyState>
+        <EmptyState title="No visits scheduled">
+          Visits are site assessments booked from a lead. Use Schedule a visit above to book one and
+          assign a field agent{status ? ', or clear the status filter to see all visits' : ''}.
+        </EmptyState>
       )}
 
       <Card className="space-y-3">

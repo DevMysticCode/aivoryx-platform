@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, cn } from '@aivoryx/ui';
+import { Button } from '@aivoryx/ui';
+import { Badge, type Tone } from '@/components/ui/status-badge';
+import { ContextualHelp } from '@/components/help/contextual-help';
 import type { CompleteVisitRequest } from '@aivoryx/contracts';
 
 /** Visit outcomes (Phase 18) — the three that fit the Field domain. Field owns them; CRM surfaces them. */
@@ -29,25 +31,16 @@ export function visitOutcomeLabel(outcome: string | null | undefined): string {
   return VISIT_OUTCOMES.find((o) => o.value === outcome)?.label ?? '';
 }
 
-const TONE: Record<string, string> = {
-  SUITABLE: 'bg-success/10 text-success',
-  NOT_SUITABLE: 'bg-secondary text-muted-foreground',
-  FOLLOW_UP_REQUIRED: 'bg-warning/10 text-warning',
+const TONE: Record<string, Tone> = {
+  SUITABLE: 'success',
+  NOT_SUITABLE: 'muted',
+  FOLLOW_UP_REQUIRED: 'warning',
 };
 
 /** A small status pill for a recorded outcome; renders nothing when there is none. */
 export function VisitOutcomeBadge({ outcome }: { outcome: string | null | undefined }) {
   if (!outcome) return null;
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium',
-        TONE[outcome] ?? 'bg-secondary text-secondary-foreground',
-      )}
-    >
-      {visitOutcomeLabel(outcome) || outcome}
-    </span>
-  );
+  return <Badge tone={TONE[outcome] ?? 'neutral'}>{visitOutcomeLabel(outcome) || outcome}</Badge>;
 }
 
 /**
@@ -84,7 +77,10 @@ export function VisitOutcomeForm({
       }}
     >
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Visit outcome (optional)</legend>
+        <legend className="flex items-center gap-1.5 text-sm font-medium">
+          Visit outcome (optional)
+          <ContextualHelp concept="visitOutcome" />
+        </legend>
         {VISIT_OUTCOMES.map((o) => (
           <label
             key={o.value}

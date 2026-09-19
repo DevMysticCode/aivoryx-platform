@@ -19,7 +19,9 @@ import {
   parseViewConfig,
   type LeadViewConfig,
 } from '@/lib/crm/use-saved-views';
-import { PageHeader, StatusBadge } from '@/components/admin/ui';
+import { EmptyState, PageHeader, StatusBadge } from '@/components/admin/ui';
+import { ModuleWelcome } from '@/components/help/module-welcome';
+import { HelperText } from '@/components/help/helper-text';
 import { LoadingBlock, ErrorBlock, Confirm } from '@/components/ui/kit';
 import { Dialog, Menu, MenuItem } from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
@@ -33,6 +35,14 @@ const STATUSES = [
   'CONVERTED',
 ] as const;
 const PAGE_SIZE = 25;
+/** In-page stage quick filter — drives the same `status` filter as the select. */
+const STAGE_TABS = [
+  { label: 'All', value: undefined },
+  { label: 'New', value: 'NEW' },
+  { label: 'Contacted', value: 'CONTACTED' },
+  { label: 'Qualified', value: 'QUALIFIED' },
+  { label: 'Converted', value: 'CONVERTED' },
+] as const;
 
 export default function LeadsPage() {
   const router = useRouter();
@@ -114,25 +124,67 @@ export default function LeadsPage() {
 
   return (
     <section className="space-y-4">
-      <PageHeader title="Leads" description="Search, filter, and work your pipeline.">
+      <PageHeader
+        title="Leads"
+        description="Prospects you're tracking through your sales pipeline."
+      >
         <button
           type="button"
           onClick={() => setQuickOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Plus className="size-4" aria-hidden /> New lead
         </button>
       </PageHeader>
 
+      <ModuleWelcome
+        id="crm-leads"
+        title="Welcome to Leads"
+        description="Leads are prospects you're tracking through your sales pipeline. They arrive from your connected sources or you can add them by hand."
+        steps={['Add or import a lead', 'Assign it to someone', 'Follow up and qualify it']}
+        action={{ label: 'Add your first lead', onClick: () => setQuickOpen(true) }}
+        show={!leads.isLoading && !leads.error && total === 0 && filterChips.length === 0 && !q}
+      />
+
+      {/* stage quick filter (in-page, not navigation) */}
+      <div
+        role="group"
+        aria-label="Filter by stage"
+        className="flex max-w-full flex-wrap items-center gap-1"
+      >
+        {STAGE_TABS.map((t) => {
+          const active = (filter.status ?? undefined) === t.value;
+          return (
+            <button
+              key={t.label}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setFilter((f) => ({ ...f, status: t.value }))}
+              className={cn(
+                'min-h-9 rounded-md px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+                active
+                  ? 'bg-primary-soft text-primary'
+                  : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground',
+              )}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* toolbar */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <div
+        data-tour="lead-filters"
+        className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
+      >
         <label className="relative w-full sm:min-w-0 sm:max-w-xs sm:flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <input
             value={rawQuery}
             onChange={(e) => setRawQuery(e.target.value)}
             placeholder="Search name, phone, email…"
-            className="h-9 w-full rounded-md border bg-transparent pl-8 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-9 w-full rounded-md border bg-transparent pl-8 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           />
         </label>
 
@@ -196,7 +248,7 @@ export default function LeadsPage() {
             onClick={() => setFilter((f) => ({ ...f, board: false }))}
             className={cn(
               'rounded p-1.5',
-              !filter.board ? 'bg-secondary text-foreground' : 'text-muted-foreground',
+              !filter.board ? 'bg-background-muted text-foreground' : 'text-muted-foreground',
             )}
             aria-label="Table view"
           >
@@ -208,7 +260,7 @@ export default function LeadsPage() {
             onClick={() => setFilter((f) => ({ ...f, board: true }))}
             className={cn(
               'rounded p-1.5',
-              filter.board ? 'bg-secondary text-foreground' : 'text-muted-foreground',
+              filter.board ? 'bg-background-muted text-foreground' : 'text-muted-foreground',
             )}
             aria-label="Board view"
           >
@@ -223,7 +275,7 @@ export default function LeadsPage() {
           {filterChips.map((chip) => (
             <span
               key={chip.key}
-              className="inline-flex items-center gap-1 rounded-full border bg-secondary/50 py-0.5 pl-2.5 pr-1 text-xs"
+              className="inline-flex items-center gap-1 rounded-full border bg-background-muted py-0.5 pl-2.5 pr-1 text-xs"
             >
               {chip.label}
               <button
@@ -233,7 +285,7 @@ export default function LeadsPage() {
                   if (chip.key === 'q') setRawQuery('');
                   else setFilter((f) => ({ ...f, [chip.key]: undefined }));
                 }}
-                className="rounded-full p-0.5 hover:bg-accent"
+                className="rounded-full p-0.5 hover:bg-surface-hover"
               >
                 <X className="size-3" />
               </button>
@@ -251,7 +303,7 @@ export default function LeadsPage() {
 
       {/* bulk bar */}
       {selected.size > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-secondary/40 px-3 py-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-background-muted px-3 py-2 text-sm">
           <span className="font-medium">{selected.size} selected</span>
           <BulkAssign
             members={members.data ?? []}
@@ -433,9 +485,9 @@ function LeadTable({
   memberName: (id?: string | null) => string;
 }) {
   return (
-    <div data-testid="lead-table" className="hidden overflow-hidden rounded-lg border md:block">
+    <div data-testid="lead-table" className="hidden overflow-x-auto rounded-lg border md:block">
       <table className="w-full text-sm">
-        <thead className="border-b bg-secondary/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+        <thead className="border-b border-border-subtle bg-background-muted text-left text-xs font-medium text-muted-foreground">
           <tr>
             <th className="w-10 px-3 py-2">
               <input
@@ -453,11 +505,11 @@ function LeadTable({
             <th className="px-3 py-2 font-medium">Updated</th>
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody className="divide-y divide-border-subtle">
           {items.map((l) => (
             <tr
               key={l.id}
-              className={cn('hover:bg-accent/40', selected.has(l.id) && 'bg-primary/5')}
+              className={cn('hover:bg-surface-hover', selected.has(l.id) && 'bg-primary-soft')}
             >
               <td className="px-3 py-2">
                 <input
@@ -510,7 +562,7 @@ function LeadCards({
         <li key={l.id}>
           <Link
             href={`/crm/leads/${l.id}`}
-            className="block rounded-lg border p-3 hover:bg-accent/40"
+            className="block rounded-lg border p-3 hover:bg-surface-hover"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate font-medium">{leadTitle(l)}</span>
@@ -541,7 +593,7 @@ function LeadBoard({
       className="grid gap-3 overflow-x-auto sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
     >
       {columns.map((col) => (
-        <div key={col.status} className="min-w-[14rem] rounded-lg border bg-secondary/20">
+        <div key={col.status} className="min-w-[14rem] rounded-lg border bg-background-muted">
           <div className="flex items-center justify-between border-b px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {titleCase(col.status)}
             <span className="tabular-nums">{col.leads.length}</span>
@@ -582,35 +634,37 @@ function EmptyLeads({
   onClear: () => void;
   onCreate: () => void;
 }) {
-  return (
-    <div className="rounded-lg border p-10 text-center text-sm">
-      {filtered ? (
-        <>
-          <p className="font-medium">No leads match these filters</p>
-          <button
-            type="button"
-            onClick={onClear}
-            className="mt-3 rounded-md border px-3 py-1.5 font-medium hover:bg-accent"
-          >
-            Clear filters
-          </button>
-        </>
-      ) : (
-        <>
-          <p className="font-medium">No leads yet</p>
-          <p className="mt-1 text-muted-foreground">
-            Leads from your configured sources will appear here.
-          </p>
-          <button
-            type="button"
-            onClick={onCreate}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground"
-          >
-            <Plus className="size-4" aria-hidden /> Create lead
-          </button>
-        </>
-      )}
-    </div>
+  return filtered ? (
+    <EmptyState
+      title="No leads match these filters"
+      action={
+        <button
+          type="button"
+          onClick={onClear}
+          className="rounded-md border px-3 py-1.5 font-medium hover:bg-surface-hover"
+        >
+          Clear filters
+        </button>
+      }
+    >
+      Try a different search or stage, or clear the filters to see every lead.
+    </EmptyState>
+  ) : (
+    <EmptyState
+      title="No leads yet"
+      action={
+        <button
+          type="button"
+          onClick={onCreate}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground hover:bg-primary-hover"
+        >
+          <Plus className="size-4" aria-hidden /> Create lead
+        </button>
+      }
+    >
+      Leads are prospects you&apos;re tracking through your sales pipeline. They appear here when
+      they arrive from a connected source, or add one yourself.
+    </EmptyState>
   );
 }
 
@@ -636,7 +690,7 @@ function SavedViewsMenu({
           type="button"
           onClick={toggle}
           aria-expanded={open}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm hover:bg-accent"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm hover:bg-surface-hover"
         >
           <Bookmark className="size-4" aria-hidden /> Saved views
         </button>
@@ -650,7 +704,7 @@ function SavedViewsMenu({
             onApply({});
             setOpen(false);
           }}
-          className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm hover:bg-accent"
+          className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm hover:bg-surface-hover"
         >
           All leads
         </button>
@@ -663,7 +717,7 @@ function SavedViewsMenu({
                 onApply(v.config);
                 setOpen(false);
               }}
-              className="flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm hover:bg-accent"
+              className="flex flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm hover:bg-surface-hover"
             >
               {v.name}
             </button>
@@ -674,7 +728,7 @@ function SavedViewsMenu({
                 setOpen(false);
                 onDelete(v.id, v.name);
               }}
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
             >
               <Trash2 className="size-3.5" />
             </button>
@@ -779,7 +833,7 @@ function QuickCreate({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
+            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-surface-hover"
           >
             Cancel
           </button>
@@ -818,7 +872,7 @@ function QuickCreate({
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           />
         </Labelled>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -826,7 +880,7 @@ function QuickCreate({
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             />
           </Labelled>
           <Labelled label="Email">
@@ -834,10 +888,11 @@ function QuickCreate({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             />
           </Labelled>
         </div>
+        <HelperText>Add at least a name, phone or email so the lead can be found later.</HelperText>
       </form>
     </Dialog>
   );
@@ -870,7 +925,7 @@ function SaveViewDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
+            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-surface-hover"
           >
             Cancel
           </button>
@@ -891,7 +946,7 @@ function SaveViewDialog({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="My qualified leads"
-          className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         />
       </Labelled>
     </Dialog>

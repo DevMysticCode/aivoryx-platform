@@ -83,7 +83,11 @@ export function useDismissOnboarding() {
 }
 
 /** Load the authenticated logo as an object URL, revoking it on change/unmount. */
-export function useLogoObjectUrl(enabled: boolean, cacheBust?: string | null): string | null {
+export function useLogoObjectUrl(
+  enabled: boolean,
+  cacheBust?: string | null,
+  kind: api.LogoKind = 'logo',
+): string | null {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let revoked: string | null = null;
@@ -92,7 +96,7 @@ export function useLogoObjectUrl(enabled: boolean, cacheBust?: string | null): s
       setUrl(null);
       return;
     }
-    void api.fetchLogoObjectUrl('logo').then((next) => {
+    void api.fetchLogoObjectUrl(kind).then((next) => {
       if (!active) {
         if (next) URL.revokeObjectURL(next);
         return;
@@ -104,6 +108,6 @@ export function useLogoObjectUrl(enabled: boolean, cacheBust?: string | null): s
       active = false;
       if (revoked) URL.revokeObjectURL(revoked);
     };
-  }, [enabled, cacheBust]);
+  }, [enabled, cacheBust, kind]);
   return url;
 }

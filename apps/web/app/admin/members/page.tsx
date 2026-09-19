@@ -221,8 +221,7 @@ function MemberRow({
                   className="group"
                 >
                   <RoleChip>
-                    {r.key}{' '}
-                    <span className="text-muted-foreground group-hover:text-destructive">×</span>
+                    {r.key} <span className="text-muted-foreground group-hover:text-danger">×</span>
                   </RoleChip>
                 </button>
               ))

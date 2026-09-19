@@ -71,6 +71,7 @@ export default function CustomersPage() {
             <Field
               label="Tax / GST ref"
               value={form.taxReference}
+              hint="Optional — GST or tax number shown on quotations."
               onChange={(e) => setForm({ ...form, taxReference: e.target.value })}
             />
             <div className="sm:col-span-4">
@@ -130,7 +131,7 @@ export default function CustomersPage() {
             }
           >
             {customers.data.items.map((c) => (
-              <tr key={c.id} className="hover:bg-accent/40">
+              <tr key={c.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <Link
                     href={`/customers/${c.id}`}
@@ -153,7 +154,30 @@ export default function CustomersPage() {
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </>
       ) : (
-        <EmptyState>No customers match these filters yet.</EmptyState>
+        <EmptyState
+          title={q || status ? 'No customers match these filters' : 'No customers yet'}
+          action={
+            q || status ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setQ('');
+                  setStatus('');
+                  setPage(1);
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : undefined
+          }
+        >
+          {q || status
+            ? 'Try a different search or status, or clear the filters to see every customer.'
+            : canCreate
+              ? 'Customers are the people and companies you sell to. Add one above, or promote a qualified lead when it is booked.'
+              : 'Customers are the people and companies you sell to. A qualified lead becomes a customer when it is booked.'}
+        </EmptyState>
       )}
     </section>
   );

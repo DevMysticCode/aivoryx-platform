@@ -1,4 +1,21 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { AppError } from '@aivoryx/shared';
 import {
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -11,6 +28,7 @@ import type { SecurityContext } from '../security/security-context.js';
 import { ApiErrorDto } from '../auth/auth.dto.js';
 import { scope } from '../supply/common.js';
 import { CustomersService } from './customers.service.js';
+import { CustomerLogoService } from './customer-logo.service.js';
 import {
   CreateCustomerDto,
   CustomerDetailDto,
@@ -29,7 +47,10 @@ import {
 @ApiForbiddenResponse({ type: ApiErrorDto })
 @Controller('customers')
 export class CustomersController {
-  constructor(private readonly customers: CustomersService) {}
+  constructor(
+    private readonly customers: CustomersService,
+    private readonly logos: CustomerLogoService,
+  ) {}
 
   @Get()
   @RequirePermission('customers.read')
@@ -37,6 +58,53 @@ export class CustomersController {
   @ApiOkResponse({ type: CustomerListDto })
   list(@Security() ctx: SecurityContext, @Query() query: ListCustomersQueryDto) {
     return this.customers.list(scope(ctx), query);
+  }
+
+  @Get(':id/logo')
+  @RequirePermission('customers.read')
+  @Header('Cache-Control', 'private, max-age=60')
+  @ApiOperation({
+    operationId: 'getCustomerLogo',
+    summary: 'Stream the customer logo (tenant-scoped; the storage key is never exposed).',
+  })
+  async getLogo(@Security() ctx: SecurityContext, @Param('id', ParseUUIDPipe) id: string) {
+    const s = scope(ctx);
+    const obj = await this.logos.read({ tenantId: s.tenantId, userId: s.userId }, id);
+    return new StreamableFile(obj.body, { type: obj.contentType });
+  }
+
+  @Post(':id/logo')
+  @HttpCode(200)
+  @RequirePermission('customers.update')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({
+    operationId: 'uploadCustomerLogo',
+    summary: 'Upload / replace the customer logo.',
+  })
+  @ApiOkResponse({ type: CustomerDetailDto })
+  async uploadLogo(
+    @Security() ctx: SecurityContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new AppError('LOGO_INVALID', { details: { reason: 'no_file' } });
+    await this.logos.upload(scope(ctx), id, {
+      buffer: file.buffer,
+      contentType: file.mimetype,
+      originalFilename: file.originalname,
+      size: file.size,
+    });
+    return this.customers.get(scope(ctx), id);
+  }
+
+  @Delete(':id/logo')
+  @HttpCode(200)
+  @RequirePermission('customers.update')
+  @ApiOperation({ operationId: 'removeCustomerLogo', summary: 'Remove the customer logo.' })
+  @ApiOkResponse({ type: CustomerDetailDto })
+  async removeLogo(@Security() ctx: SecurityContext, @Param('id', ParseUUIDPipe) id: string) {
+    await this.logos.remove(scope(ctx), id);
+    return this.customers.get(scope(ctx), id);
   }
 
   @Get(':id')
