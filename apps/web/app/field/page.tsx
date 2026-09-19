@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useVisits } from '@/lib/field/use-field';
+import { VisitOutcomeBadge } from '@/components/field/visit-outcome';
 import { EmptyState, ErrorNote, Skeleton, StatusBadge } from '@/components/admin/ui';
 
 /**
@@ -38,7 +39,10 @@ export default function FieldTodayPage() {
                       })}
                     </p>
                   </div>
-                  <StatusBadge status={v.status} />
+                  <div className="flex flex-col items-end gap-1">
+                    <StatusBadge status={v.status} />
+                    {v.status === 'COMPLETED' ? <VisitOutcomeBadge outcome={v.outcome} /> : null}
+                  </div>
                 </div>
                 {v.addressLine ? (
                   <p className="mt-2 text-sm text-muted-foreground">

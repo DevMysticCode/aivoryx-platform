@@ -9,6 +9,7 @@ import type {
   CustomerList,
   PromoteLeadRequest,
   Quotation,
+  QuotationPipelineSummary,
   QuotationActivity,
   QuotationAttachment,
   QuotationDetail,
@@ -62,6 +63,7 @@ export interface ListQuotationsParams {
   status?: string;
   customerId?: string;
   leadId?: string;
+  projectId?: string;
   q?: string;
   page?: number;
   pageSize?: number;
@@ -140,3 +142,7 @@ export async function fetchQuotationAttachmentBlob(
 }
 
 export type { Customer, Quotation };
+
+/** Real quote-pipeline counts for the CRM dashboard (bound server-side to the caller's CRM scope). */
+export const quotationPipelineSummary = () =>
+  apiFetch<QuotationPipelineSummary>('/quotations/pipeline-summary', { cache: 'no-store' });

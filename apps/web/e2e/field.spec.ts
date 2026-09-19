@@ -92,7 +92,12 @@ test.describe('Field operations golden path', () => {
     await expect(page.getByText(surveyKey)).toBeVisible();
 
     // ---- 4. admin: schedule + assign the visit ------------------------
-    await page.getByLabel('Lead id').fill(leadId);
+    // the lead is chosen through a server-searched combobox (no pasted ids)
+    await page.getByRole('combobox', { name: 'Lead', exact: true }).fill(leadName);
+    await page
+      .getByRole('option', { name: new RegExp(leadName) })
+      .first()
+      .click();
     const scheduledAt = new Date(Date.now() + 3_600_000).toISOString().slice(0, 16);
     await page.getByLabel('Scheduled for').fill(scheduledAt);
     // the field-agent list loads asynchronously — wait until it has an option
@@ -123,7 +128,7 @@ test.describe('Field operations golden path', () => {
     await agentPage.waitForURL('**/admin');
 
     await agentPage.goto(`/field/visits/${visitId}`);
-    await expect(agentPage.getByText(leadName)).toBeVisible();
+    await expect(agentPage.getByRole('heading', { name: leadName })).toBeVisible();
 
     // 5a. CHECK IN
     await agentPage.getByRole('button', { name: 'Check in' }).click();

@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { recordActivity } from './activities.js';
+import { createLeadFollowupTx } from './lead-access.js';
 import { membershipExistsInTenant } from './lead-queries.js';
 
 const { leadFollowups, leads } = schema;
@@ -44,23 +45,15 @@ export class FollowupsService {
       if (!(await membershipExistsInTenant(tx, scope.tenantId, assignee))) {
         throw new AppError('LEAD_ASSIGNEE_INVALID');
       }
-      const [row] = await tx
-        .insert(leadFollowups)
-        .values({
-          tenantId: scope.tenantId,
-          leadId,
-          assignedMembershipId: assignee,
-          dueAt: new Date(input.dueAt),
-          note: input.note ?? null,
-        })
-        .returning();
-      await recordActivity(tx, {
+      const created = await createLeadFollowupTx(tx, {
         tenantId: scope.tenantId,
         leadId,
-        type: 'followup_created',
+        assignedMembershipId: assignee,
+        dueAt: new Date(input.dueAt),
+        note: input.note ?? null,
         actorMembershipId: scope.actorMembershipId,
-        payload: { followupId: row!.id, dueAt: input.dueAt },
       });
+      const [row] = await tx.select().from(leadFollowups).where(eq(leadFollowups.id, created.id));
       return toView(row!);
     });
   }

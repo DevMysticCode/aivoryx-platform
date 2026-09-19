@@ -59,8 +59,12 @@ export function useUpdateCustomer(id: string) {
 
 // ---- quotations ------------------------------------------
 
-export const useQuotations = (p: ListQuotationsParams = {}) =>
-  useQuery({ queryKey: commercialKeys.quotations(p), queryFn: () => api.listQuotations(p) });
+export const useQuotations = (p: ListQuotationsParams = {}, opts: { enabled?: boolean } = {}) =>
+  useQuery({
+    queryKey: commercialKeys.quotations(p),
+    queryFn: () => api.listQuotations(p),
+    enabled: opts.enabled ?? true,
+  });
 export const useQuotation = (id: string) =>
   useQuery({
     queryKey: commercialKeys.quotation(id),
@@ -79,11 +83,11 @@ export const useQuotationAttachments = (id: string) =>
     queryFn: () => api.listQuotationAttachments(id),
     enabled: !!id,
   });
-export const useLeadQuotations = (leadId: string) =>
+export const useLeadQuotations = (leadId: string, options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: commercialKeys.leadQuotations(leadId),
     queryFn: () => api.listLeadQuotations(leadId),
-    enabled: !!leadId,
+    enabled: !!leadId && (options?.enabled ?? true),
   });
 
 function useInvalidateQuotation(id: string) {
@@ -170,5 +174,14 @@ export function useDeleteQuotationAttachment(id: string) {
     mutationFn: (attachmentId: string) => api.deleteQuotationAttachment(id, attachmentId),
     onSuccess: () => qc.invalidateQueries({ queryKey: commercialKeys.quotationAttachments(id) }),
     successMessage: 'Attachment deleted',
+  });
+}
+
+export function useQuotationPipelineSummary(enabled: boolean) {
+  return useQuery({
+    queryKey: ['commercial', 'pipeline-summary'],
+    queryFn: api.quotationPipelineSummary,
+    enabled,
+    retry: false,
   });
 }

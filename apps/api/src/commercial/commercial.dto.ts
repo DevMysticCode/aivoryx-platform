@@ -234,6 +234,16 @@ export class CreateQuotationDto {
   @IsString()
   leadId!: string;
 
+  @ApiProperty({
+    required: false,
+    format: 'uuid',
+    description:
+      'The completed site visit this quotation is prepared from — a reference only (must belong to the same lead and be visible to the caller).',
+  })
+  @IsOptional()
+  @IsString()
+  visitId?: string;
+
   @ApiProperty({ required: false, format: 'uuid', description: 'Link an existing customer.' })
   @IsOptional()
   @IsString()
@@ -391,6 +401,14 @@ export class QuotationAttachmentDto {
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
 }
 
+/** The visit a quotation was prepared from — only ever present for callers who may see that visit. */
+export class QuotationVisitDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() status!: string;
+  @ApiProperty({ format: 'date-time' }) scheduledAt!: string;
+  @ApiProperty({ nullable: true, type: String }) outcome!: string | null;
+}
+
 export class QuotationDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() number!: string;
@@ -402,6 +420,15 @@ export class QuotationDto {
   @ApiProperty({ nullable: true, type: String }) customerName!: string | null;
   @ApiProperty({ nullable: true, type: String, format: 'uuid' }) projectId!: string | null;
   @ApiProperty({ nullable: true, type: String }) projectNumber!: string | null;
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    format: 'uuid',
+    description:
+      'Null unless the caller may see the referenced visit (never a hint that one exists).',
+  })
+  visitId!: string | null;
+  @ApiProperty({ nullable: true, type: QuotationVisitDto }) visit!: QuotationVisitDto | null;
   @ApiProperty({ nullable: true, type: String, format: 'date-time' }) validityDate!: string | null;
   @ApiProperty() total!: string;
   @ApiProperty({ nullable: true, type: String, format: 'date-time' }) bookedAt!: string | null;
@@ -425,6 +452,7 @@ export class ListQuotationsQueryDto {
   @ApiProperty({ required: false }) @IsOptional() @IsString() status?: string;
   @ApiProperty({ required: false, format: 'uuid' }) @IsOptional() @IsString() customerId?: string;
   @ApiProperty({ required: false, format: 'uuid' }) @IsOptional() @IsString() leadId?: string;
+  @ApiProperty({ required: false, format: 'uuid' }) @IsOptional() @IsString() projectId?: string;
   @ApiProperty({ required: false }) @IsOptional() @IsString() q?: string;
   @ApiProperty({ required: false, default: 1 })
   @IsOptional()
@@ -439,6 +467,17 @@ export class ListQuotationsQueryDto {
   @Min(1)
   @Max(100)
   pageSize?: number;
+}
+
+export class QuotationPipelineSummaryDto {
+  @ApiProperty({ description: 'Qualified leads that have no quotation yet.' })
+  qualifiedAwaitingQuotation!: number;
+
+  @ApiProperty({ description: 'Quotations still in DRAFT.' })
+  draft!: number;
+
+  @ApiProperty({ description: 'Quotations sent and awaiting the customer’s acceptance.' })
+  sentAwaitingResponse!: number;
 }
 
 export class BookingResultDto {

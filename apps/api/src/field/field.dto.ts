@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsISO8601,
+  IsIn,
   IsInt,
   IsLatitude,
   IsLongitude,
@@ -76,6 +77,16 @@ export class ScheduleVisitRequestDto {
   @ApiProperty({ format: 'uuid' })
   @IsString()
   leadId!: string;
+
+  @ApiProperty({
+    required: false,
+    maxLength: 2000,
+    description: 'Instructions for the field agent — stored as the visit’s first note.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  instructions?: string;
 
   @ApiProperty({ format: 'date-time' })
   @IsISO8601()
@@ -205,6 +216,42 @@ export class VisitAssigneeDto {
   email!: string;
 }
 
+export const VISIT_OUTCOMES = ['SUITABLE', 'NOT_SUITABLE', 'FOLLOW_UP_REQUIRED'] as const;
+
+export class CompleteVisitRequestDto {
+  @ApiProperty({ required: false, enum: VISIT_OUTCOMES })
+  @IsOptional()
+  @IsIn(VISIT_OUTCOMES as unknown as string[])
+  outcome?: string;
+
+  @ApiProperty({ required: false, maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  outcomeNote?: string;
+
+  @ApiProperty({
+    required: false,
+    format: 'date-time',
+    description:
+      'When the CRM follow-up is due (FOLLOW_UP_REQUIRED, CRM enabled). Defaults to two days after completion.',
+  })
+  @IsOptional()
+  @IsISO8601()
+  followUpDueAt?: string;
+}
+
+export class VisitSummaryDto {
+  @ApiProperty({ description: 'Open visits scheduled within the next 7 days.' })
+  scheduledNext7Days!: number;
+
+  @ApiProperty({ description: 'Visits completed in the last 30 days with no outcome recorded.' })
+  awaitingOutcome!: number;
+
+  @ApiProperty({ description: 'Visits completed in the last 30 days that need a CRM follow-up.' })
+  followUpRequired!: number;
+}
+
 export class VisitDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
@@ -220,6 +267,16 @@ export class VisitDto {
 
   @ApiProperty({ enum: ['SCHEDULED', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] })
   status!: string;
+
+  @ApiProperty({
+    enum: VISIT_OUTCOMES,
+    nullable: true,
+    description: 'What the completed visit concluded. Null until completion (or for older visits).',
+  })
+  outcome!: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  outcomeNote!: string | null;
 
   @ApiProperty({ format: 'date-time' })
   scheduledAt!: string;

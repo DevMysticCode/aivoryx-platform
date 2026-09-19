@@ -318,6 +318,35 @@ export async function buildEventContext(
     };
   }
 
+  // --- visit.completed (Phase 18) — notify the lead owner --------------
+  if (type === 'visit.completed') {
+    const visitId = str(payload, 'visitId');
+    if (!visitId) return null;
+    const [v] = await tx
+      .select({ leadId: visits.leadId, outcome: visits.outcome })
+      .from(visits)
+      .where(and(eq(visits.tenantId, tenantId), eq(visits.id, visitId)))
+      .limit(1);
+    if (!v) return null;
+    const owner = await leadOwnerAndName(tx, tenantId, v.leadId);
+    const outcomeLabel =
+      v.outcome === 'SUITABLE'
+        ? 'suitable — ready for a quotation'
+        : v.outcome === 'NOT_SUITABLE'
+          ? 'not suitable'
+          : v.outcome === 'FOLLOW_UP_REQUIRED'
+            ? 'follow-up required'
+            : 'completed';
+    return {
+      context: {
+        tenant,
+        visit: { id: visitId, outcomeLabel },
+        lead: { id: v.leadId, name: owner.name },
+      },
+      refs: { ...baseRefs, assignedMembershipId: owner.assigned },
+    };
+  }
+
   // --- qc.failed / defect.created --------------------------------
   if (type === 'qc.failed' || type === 'defect.created') {
     const projectId = str(payload, 'projectId');

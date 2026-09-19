@@ -17,6 +17,9 @@ import {
 import { Card, ErrorNote, Field, PageHeader, Skeleton, StatusBadge } from '@/components/admin/ui';
 import { AttachmentThumb } from '@/components/field/attachment-thumb';
 import { Confirm, ErrorBlock } from '@/components/ui/kit';
+import { RelatedLink } from '@/components/ui/related-link';
+import { VisitOutcomeBadge } from '@/components/field/visit-outcome';
+import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
 
 export default function VisitDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +29,7 @@ export default function VisitDetailPage() {
   const survey = useVisitSurvey(id);
   const attachments = useVisitAttachments(id);
   const fieldAgents = useFieldAgents();
+  const access = useCrossModuleAccess();
 
   const assign = useAssignVisit(id);
   const reschedule = useRescheduleVisit(id);
@@ -50,11 +54,36 @@ export default function VisitDetailPage() {
           title={v.leadName ?? 'Site visit'}
           description={`Scheduled for ${new Date(v.scheduledAt).toLocaleString()}`}
         />
-        <StatusBadge status={v.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={v.status} />
+          <VisitOutcomeBadge outcome={v.outcome} />
+        </div>
       </div>
+
+      {access.crmLeads ? (
+        <div>
+          <RelatedLink kind="Lead" href={`/crm/leads/${v.leadId}`} meta={v.leadPhone ?? undefined}>
+            {v.leadName ?? 'Open lead'}
+          </RelatedLink>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {v.status === 'COMPLETED' && (v.outcome || v.outcomeNote) ? (
+            <Card className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-sm font-semibold">Visit outcome</h2>
+                <VisitOutcomeBadge outcome={v.outcome} />
+              </div>
+              {v.outcomeNote ? (
+                <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
+                  {v.outcomeNote}
+                </p>
+              ) : null}
+            </Card>
+          ) : null}
+
           <Card className="space-y-3">
             <h2 className="text-sm font-semibold">Site</h2>
             <dl className="grid grid-cols-2 gap-3 text-sm">

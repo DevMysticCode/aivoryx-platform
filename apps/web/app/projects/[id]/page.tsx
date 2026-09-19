@@ -15,6 +15,9 @@ import {
   useRemoveMaterial,
   useSetProjectStatus,
 } from '@/lib/supply/use-supply';
+import { useQuotations } from '@/lib/commercial/use-commercial';
+import { RelatedLink } from '@/components/ui/related-link';
+import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Skeleton } from '@/components/admin/ui';
 import { Confirm } from '@/components/ui/kit';
@@ -41,6 +44,12 @@ export default function ProjectDetailPage() {
   const activities = useProjectActivities(id);
   const approve = useApproveProject(id);
   const setStatus = useSetProjectStatus(id);
+  const access = useCrossModuleAccess();
+  const relatedQuotation = useQuotations(
+    { projectId: id, pageSize: 1 },
+    { enabled: access.quotations },
+  );
+  const qt = access.quotations ? relatedQuotation.data?.items[0] : undefined;
 
   if (project.isLoading) return <Skeleton rows={8} />;
   if (project.error) return <ErrorNote error={project.error} />;
@@ -58,11 +67,30 @@ export default function ProjectDetailPage() {
             <SupplyStatusBadge status={p.status} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {p.customerName ?? p.leadName ?? 'Project'} ·{' '}
-            <Link href={`/crm/leads/${p.leadId}`} className="text-primary hover:underline">
-              View CRM lead
-            </Link>
+            {p.customerName ?? p.leadName ?? 'Project'}
           </p>
+          {access.crmLeads || qt ? (
+            <nav
+              aria-label="Related records"
+              className="flex flex-wrap items-baseline gap-x-4 gap-y-1"
+            >
+              {access.crmLeads ? (
+                <RelatedLink kind="Lead" href={`/crm/leads/${p.leadId}`}>
+                  {p.leadName ?? 'CRM lead'}
+                </RelatedLink>
+              ) : null}
+              {qt ? (
+                <RelatedLink kind="Quotation" href={`/quotations/${qt.id}`}>
+                  {qt.number}
+                </RelatedLink>
+              ) : null}
+              {qt && access.customers && qt.customerId ? (
+                <RelatedLink kind="Customer" href={`/customers/${qt.customerId}`}>
+                  {qt.customerName ?? 'Customer'}
+                </RelatedLink>
+              ) : null}
+            </nav>
+          ) : null}
           {[p.siteAddressLine, p.siteCity, p.siteState].some(Boolean) ? (
             <p className="text-xs text-muted-foreground">
               Site: {[p.siteAddressLine, p.siteCity, p.siteState].filter(Boolean).join(', ')}

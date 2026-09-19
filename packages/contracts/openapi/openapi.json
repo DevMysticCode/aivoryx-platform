@@ -5460,6 +5460,53 @@
         ]
       }
     },
+    "/visits/summary": {
+      "get": {
+        "operationId": "visitSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitSummaryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Real visit counts for dashboards (scheduled, awaiting outcome, follow-up required).",
+        "tags": [
+          "field"
+        ]
+      }
+    },
     "/visits/{visitId}": {
       "get": {
         "operationId": "getVisit",
@@ -5859,6 +5906,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteVisitRequestDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -16518,6 +16575,15 @@
             }
           },
           {
+            "name": "projectId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -16637,6 +16703,53 @@
           }
         ],
         "summary": "Create a quotation for a lead.",
+        "tags": [
+          "quotations"
+        ]
+      }
+    },
+    "/quotations/pipeline-summary": {
+      "get": {
+        "operationId": "quotationPipelineSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationPipelineSummaryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Real quote pipeline counts (qualified leads awaiting a quote, drafts, sent).",
         "tags": [
           "quotations"
         ]
@@ -25790,6 +25903,20 @@
               "CANCELLED"
             ]
           },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "SUITABLE",
+              "NOT_SUITABLE",
+              "FOLLOW_UP_REQUIRED"
+            ],
+            "nullable": true,
+            "description": "What the completed visit concluded. Null until completion (or for older visits)."
+          },
+          "outcomeNote": {
+            "type": "string",
+            "nullable": true
+          },
           "scheduledAt": {
             "type": "string",
             "format": "date-time"
@@ -25901,6 +26028,8 @@
           "leadName",
           "leadPhone",
           "status",
+          "outcome",
+          "outcomeNote",
           "scheduledAt",
           "addressLine",
           "city",
@@ -25953,12 +26082,39 @@
           "pageSize"
         ]
       },
+      "VisitSummaryDto": {
+        "type": "object",
+        "properties": {
+          "scheduledNext7Days": {
+            "type": "number",
+            "description": "Open visits scheduled within the next 7 days."
+          },
+          "awaitingOutcome": {
+            "type": "number",
+            "description": "Visits completed in the last 30 days with no outcome recorded."
+          },
+          "followUpRequired": {
+            "type": "number",
+            "description": "Visits completed in the last 30 days that need a CRM follow-up."
+          }
+        },
+        "required": [
+          "scheduledNext7Days",
+          "awaitingOutcome",
+          "followUpRequired"
+        ]
+      },
       "ScheduleVisitRequestDto": {
         "type": "object",
         "properties": {
           "leadId": {
             "type": "string",
             "format": "uuid"
+          },
+          "instructions": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Instructions for the field agent — stored as the visit’s first note."
           },
           "scheduledAt": {
             "type": "string",
@@ -26080,6 +26236,28 @@
           "lat",
           "lng"
         ]
+      },
+      "CompleteVisitRequestDto": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "SUITABLE",
+              "NOT_SUITABLE",
+              "FOLLOW_UP_REQUIRED"
+            ]
+          },
+          "outcomeNote": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "followUpDueAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the CRM follow-up is due (FOLLOW_UP_REQUIRED, CRM enabled). Defaults to two days after completion."
+          }
+        }
       },
       "SurveyFieldValueDto": {
         "type": "object",
@@ -31988,6 +32166,32 @@
           }
         }
       },
+      "QuotationVisitDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "outcome": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "scheduledAt",
+          "outcome"
+        ]
+      },
       "QuotationDto": {
         "type": "object",
         "properties": {
@@ -32038,6 +32242,20 @@
             "type": "string",
             "nullable": true
           },
+          "visitId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "Null unless the caller may see the referenced visit (never a hint that one exists)."
+          },
+          "visit": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVisitDto"
+              }
+            ]
+          },
           "validityDate": {
             "type": "string",
             "nullable": true,
@@ -32071,6 +32289,8 @@
           "customerName",
           "projectId",
           "projectNumber",
+          "visitId",
+          "visit",
           "validityDate",
           "total",
           "bookedAt",
@@ -32102,6 +32322,28 @@
           "total",
           "page",
           "pageSize"
+        ]
+      },
+      "QuotationPipelineSummaryDto": {
+        "type": "object",
+        "properties": {
+          "qualifiedAwaitingQuotation": {
+            "type": "number",
+            "description": "Qualified leads that have no quotation yet."
+          },
+          "draft": {
+            "type": "number",
+            "description": "Quotations still in DRAFT."
+          },
+          "sentAwaitingResponse": {
+            "type": "number",
+            "description": "Quotations sent and awaiting the customer’s acceptance."
+          }
+        },
+        "required": [
+          "qualifiedAwaitingQuotation",
+          "draft",
+          "sentAwaitingResponse"
         ]
       },
       "QuotationLineDto": {
@@ -32311,6 +32553,20 @@
             "type": "string",
             "nullable": true
           },
+          "visitId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "Null unless the caller may see the referenced visit (never a hint that one exists)."
+          },
+          "visit": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuotationVisitDto"
+              }
+            ]
+          },
           "validityDate": {
             "type": "string",
             "nullable": true,
@@ -32353,6 +32609,8 @@
           "customerName",
           "projectId",
           "projectNumber",
+          "visitId",
+          "visit",
           "validityDate",
           "total",
           "bookedAt",
@@ -32438,6 +32696,11 @@
           "leadId": {
             "type": "string",
             "format": "uuid"
+          },
+          "visitId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The completed site visit this quotation is prepared from — a reference only (must belong to the same lead and be visible to the caller)."
           },
           "customerId": {
             "type": "string",

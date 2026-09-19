@@ -6,8 +6,11 @@ import { Inbox, Plus, TrendingUp, UserRoundX, Users } from 'lucide-react';
 import { PageHeader } from '@/components/admin/ui';
 import { ErrorBlock, LoadingBlock } from '@/components/ui/kit';
 import { Kpi } from '@/components/dashboard/kpi';
-import { WidgetCard } from '@/components/dashboard/widget-card';
+import { WidgetCard, WidgetSkeleton } from '@/components/dashboard/widget-card';
 import { useCrmAnalytics } from '@/lib/crm/use-crm-analytics';
+import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
+import { useVisitSummary } from '@/lib/field/use-field';
+import { useQuotationPipelineSummary } from '@/lib/commercial/use-commercial';
 import { PipelineVisualization, ConversionFunnelTable } from '@/components/crm/dashboard/pipeline';
 import { TrendChart } from '@/components/crm/dashboard/trend-chart';
 import { FollowupActionCenter } from '@/components/crm/dashboard/followups';
@@ -29,6 +32,84 @@ function SectionGroup({ label, children }: { label: string; children: React.Reac
       </h2>
       {children}
     </div>
+  );
+}
+
+/** One count row that links to the screen that owns the work. */
+function CountRow({ href, label, value }: { href: string; label: string; value: number }) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="flex items-center justify-between gap-3 rounded-sm py-2 text-sm hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span className="min-w-0">{label}</span>
+        <span className="shrink-0 font-semibold tabular-nums">{value}</span>
+      </Link>
+    </li>
+  );
+}
+
+/** Field visits + quotation pipeline — real counts from the owning modules, shown only where the caller has access. */
+function CrossModuleWidgets() {
+  const access = useCrossModuleAccess();
+  const visits = useVisitSummary(access.fieldVisits);
+  const pipeline = useQuotationPipelineSummary(access.quotations);
+  const showVisits = access.fieldVisits && !visits.isError;
+  const showPipeline = access.quotations && !pipeline.isError;
+  if (!showVisits && !showPipeline) return null;
+
+  return (
+    <SectionGroup label="Field & quotations">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {showVisits ? (
+          <WidgetCard title="Field visits" href="/crm/visits" linkLabel="All visits">
+            {visits.data ? (
+              <ul className="divide-y">
+                <CountRow
+                  href="/crm/visits"
+                  label="Scheduled in the next 7 days"
+                  value={visits.data.scheduledNext7Days}
+                />
+                <CountRow
+                  href="/crm/visits"
+                  label="Completed, awaiting an outcome"
+                  value={visits.data.awaitingOutcome}
+                />
+                <CountRow
+                  href="/crm/visits"
+                  label="Follow-up required"
+                  value={visits.data.followUpRequired}
+                />
+              </ul>
+            ) : (
+              <WidgetSkeleton rows={3} />
+            )}
+          </WidgetCard>
+        ) : null}
+        {showPipeline ? (
+          <WidgetCard title="Quotation pipeline" href="/quotations" linkLabel="All quotations">
+            {pipeline.data ? (
+              <ul className="divide-y">
+                <CountRow
+                  href="/crm/leads?status=QUALIFIED"
+                  label="Qualified leads awaiting a quotation"
+                  value={pipeline.data.qualifiedAwaitingQuotation}
+                />
+                <CountRow href="/quotations" label="Drafts" value={pipeline.data.draft} />
+                <CountRow
+                  href="/quotations"
+                  label="Sent, awaiting response"
+                  value={pipeline.data.sentAwaitingResponse}
+                />
+              </ul>
+            ) : (
+              <WidgetSkeleton rows={3} />
+            )}
+          </WidgetCard>
+        ) : null}
+      </div>
+    </SectionGroup>
   );
 }
 
@@ -91,6 +172,8 @@ export default function CrmOverviewPage() {
               </WidgetCard>
             </div>
           </SectionGroup>
+
+          <CrossModuleWidgets />
 
           {/* Analysis — diagnostic/secondary information, visually the same
               weight as Primary work (no extra border/shadow) but positioned

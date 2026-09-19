@@ -161,8 +161,12 @@ export function useTransferStock() {
 
 // ---- projects --------------------------------------------------
 
-export const useProjects = (p: ListProjectsParams = {}) =>
-  useQuery({ queryKey: supplyKeys.projects(p), queryFn: () => api.listProjects(p) });
+export const useProjects = (p: ListProjectsParams = {}, options?: { enabled?: boolean }) =>
+  useQuery({
+    queryKey: supplyKeys.projects(p),
+    queryFn: () => api.listProjects(p),
+    enabled: options?.enabled ?? true,
+  });
 export const useProject = (id: string) =>
   useQuery({ queryKey: supplyKeys.project(id), queryFn: () => api.getProject(id), enabled: !!id });
 export const useProjectActivities = (id: string) =>

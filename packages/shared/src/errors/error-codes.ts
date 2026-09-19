@@ -217,6 +217,28 @@ export const ERROR_CODES = {
     httpStatus: 409,
     message: 'This visit has already been checked out.',
   },
+  VISIT_CRM_ACCESS_REQUIRED: {
+    httpStatus: 403,
+    message:
+      'Scheduling a visit needs access to the lead in CRM. Ask an administrator for CRM access, or have someone with CRM access schedule it.',
+  },
+  QUOTATION_CRM_ACCESS_REQUIRED: {
+    httpStatus: 403,
+    message:
+      'Creating a quotation for a lead needs access to that lead in CRM. Ask an administrator for CRM access.',
+  },
+  QUOTATION_VISIT_LEAD_MISMATCH: {
+    httpStatus: 422,
+    message: 'That visit belongs to a different lead than this quotation.',
+  },
+  QUOTATION_VISIT_NOT_COMPLETED: {
+    httpStatus: 422,
+    message: 'Only a completed site visit can be referenced from a quotation.',
+  },
+  VISIT_LEAD_NOT_ELIGIBLE: {
+    httpStatus: 422,
+    message: 'A visit cannot be scheduled for a disqualified lead.',
+  },
   VISIT_INCOMPLETE: {
     httpStatus: 409,
     message:

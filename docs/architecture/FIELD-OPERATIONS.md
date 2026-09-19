@@ -173,3 +173,13 @@ AI lead-scoring or survey analysis; route optimization or a paid mapping
 provider; territory management or round-robin assignment; a general
 workflow engine; a global `audit_logs` system; native mobile apps;
 microservices.
+
+## Phase 18 — CRM ↔ Field ↔ Commercial workflow (ADR 0045)
+
+- **Schedule a visit from a lead** (`POST /visits`): needs `field.visits.create` AND, where CRM is enabled, `crm.leads.read` with the lead inside the caller's CRM data scope; disqualified leads are refused; the lead's address is snapshotted and `instructions` becomes the first note. Where CRM is not enabled Field stands alone.
+- **Visit outcome** (`POST /visits/:id/complete` body `{outcome?, outcomeNote?, followUpDueAt?}`): `SUITABLE | NOT_SUITABLE | FOLLOW_UP_REQUIRED`. `FOLLOW_UP_REQUIRED` creates the CRM follow-up in the same transaction (only with CRM enabled). The outcome shows on the lead timeline, in audit and on the `visit.completed` event (which notifies the lead owner).
+- **Quotation ← visit:** `CreateQuotationDto.visitId` (completed visit of the same lead, visible to the caller) → `quotations.visit_id`. Shown back only to callers who can see the visit.
+- **CRM data scope** (OWN) now applies to lead list/get and to visits/quotations reached through CRM; out-of-scope = 404.
+- **Dashboards:** `GET /visits/summary`, `GET /quotations/pipeline-summary` — real counts, bound to the caller.
+- **UI:** lead Related tab (visits, schedule dialog, quotation "prepared from visit", project, customer), timeline links, visit ↔ lead links, quotation "Related records", project related row — each shown only when module + permission allow (`useCrossModuleAccess`).
+- **Migration 0022**; **seed** `seed:crm-field-demo` (additive, idempotent).

@@ -93,9 +93,11 @@ test.describe('Commercial golden path', () => {
     await expect(page.getByText('booked', { exact: false }).first()).toBeVisible();
 
     // the quotation now links a project
-    const projectLink = page.getByRole('link', { name: /^PRJ-/ });
+    const projectLink = page
+      .getByRole('navigation', { name: /related records/i })
+      .getByRole('link', { name: /PRJ-/ });
     await expect(projectLink).toBeVisible();
-    const projectNumber = (await projectLink.textContent())!.trim();
+    const projectNumber = /PRJ-[\w-]+/.exec((await projectLink.textContent()) ?? '')![0];
 
     // ---- 6. CRM lead shows the quotation + the project -------
     await page.goto(`/crm/leads/${leadId}`);

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import { useCreateCustomField, useCustomFields } from '@/lib/crm/use-crm';
+import { LeadPicker, type LeadPickerValue } from '@/components/crm/lead-picker';
+import { VisitOutcomeBadge } from '@/components/field/visit-outcome';
 import { useFieldAgents, useScheduleVisit, useVisits } from '@/lib/field/use-field';
 import {
   Card,
@@ -30,7 +32,8 @@ export default function VisitsPage() {
   const fieldAgents = useFieldAgents();
   const scheduleVisit = useScheduleVisit();
 
-  const [leadId, setLeadId] = useState('');
+  const [lead, setLead] = useState<LeadPickerValue | null>(null);
+  const [instructions, setInstructions] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [assignedMembershipId, setAssignedMembershipId] = useState('');
 
@@ -53,25 +56,22 @@ export default function VisitsPage() {
         <form
           onSubmit={async (e) => {
             e.preventDefault();
-            if (!leadId || !scheduledAt) return;
+            if (!lead || !scheduledAt) return;
             const visit = await scheduleVisit.mutateAsync({
-              leadId,
+              leadId: lead.id,
               scheduledAt: new Date(scheduledAt).toISOString(),
               assignedMembershipId: assignedMembershipId || undefined,
+              ...(instructions.trim() ? { instructions: instructions.trim() } : {}),
             });
-            setLeadId('');
+            setLead(null);
+            setInstructions('');
             setScheduledAt('');
             setAssignedMembershipId('');
             router.push(`/crm/visits/${visit.id}`);
           }}
-          className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end"
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end"
         >
-          <Field
-            label="Lead id"
-            hint="Paste the lead's id from its detail page"
-            value={leadId}
-            onChange={(e) => setLeadId(e.target.value)}
-          />
+          <LeadPicker label="Lead" value={lead} onChange={setLead} />
           <Field
             label="Scheduled for"
             type="datetime-local"
@@ -95,7 +95,17 @@ export default function VisitsPage() {
                 ))}
             </select>
           </label>
-          <Button type="submit" disabled={scheduleVisit.isPending || !leadId || !scheduledAt}>
+          <label className="block space-y-1.5 sm:col-span-2 lg:col-span-3">
+            <span className="text-sm font-medium">Instructions for the agent (optional)</span>
+            <textarea
+              className="min-h-16 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              maxLength={2000}
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Access details, what to measure, who to ask for…"
+            />
+          </label>
+          <Button type="submit" disabled={scheduleVisit.isPending || !lead || !scheduledAt}>
             {scheduleVisit.isPending ? 'Scheduling…' : 'Schedule'}
           </Button>
         </form>
@@ -140,8 +150,9 @@ export default function VisitsPage() {
                 <tr>
                   <th className="px-3 py-2 font-medium">Lead</th>
                   <th className="px-3 py-2 font-medium">Status</th>
+                  <th className="hidden px-3 py-2 font-medium sm:table-cell">Outcome</th>
                   <th className="px-3 py-2 font-medium">Scheduled</th>
-                  <th className="px-3 py-2 font-medium">Agent</th>
+                  <th className="hidden px-3 py-2 font-medium md:table-cell">Agent</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -157,11 +168,17 @@ export default function VisitsPage() {
                     </td>
                     <td className="px-3 py-2">
                       <StatusBadge status={visit.status} />
+                      <span className="mt-1 block sm:hidden">
+                        <VisitOutcomeBadge outcome={visit.outcome} />
+                      </span>
+                    </td>
+                    <td className="hidden px-3 py-2 sm:table-cell">
+                      <VisitOutcomeBadge outcome={visit.outcome} />
                     </td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">
                       {new Date(visit.scheduledAt).toLocaleString()}
                     </td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                    <td className="hidden px-3 py-2 text-xs text-muted-foreground md:table-cell">
                       {visit.assignee
                         ? (visit.assignee.name ?? visit.assignee.email)
                         : 'Unassigned'}

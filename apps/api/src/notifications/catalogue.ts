@@ -119,6 +119,14 @@ const RAW_TEMPLATES: Omit<DefaultTemplate, 'requiredVars'>[] = [
     emailBody: 'You have been assigned a site visit for {{lead.name}}.\n\n{{tenant.name}}',
   },
   {
+    key: 'visit_completed',
+    title: 'Visit completed — {{lead.name}}',
+    body: 'The site visit for {{lead.name}} is complete. Outcome: {{visit.outcomeLabel}}.',
+    emailSubject: 'Site visit completed: {{lead.name}}',
+    emailBody:
+      'The site visit for {{lead.name}} is complete.\nOutcome: {{visit.outcomeLabel}}.\n\n{{tenant.name}}',
+  },
+  {
     key: 'qc_failed',
     title: 'QC failed — {{project.number}}',
     body: 'A QC inspection failed for project {{project.number}}.',
@@ -358,6 +366,18 @@ export const DEFAULT_RULES: DefaultRule[] = [
     suppressible: true,
     deepLink: '/field/projects/{{project.id}}',
     description: 'Notify the assigned field agent when an installation is assigned to them.',
+  },
+  {
+    key: 'visit_completed.owner',
+    eventType: 'visit.completed',
+    templateKey: 'visit_completed',
+    channels: ['in_app'],
+    recipientStrategy: 'ASSIGNED_USER',
+    entity: 'lead',
+    notificationType: 'info',
+    suppressible: true,
+    deepLink: '/crm/leads/{{lead.id}}',
+    description: 'Tell the lead owner in-app when a site visit for their lead is completed.',
   },
   {
     key: 'visit_assigned.agent',
