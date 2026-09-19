@@ -1,9 +1,15 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { platformAssetHref, usePlatformBranding } from '@/lib/branding/use-branding';
+import { resolveBranding } from '@aivoryx/shared';
 
 export interface AuthBrand {
   displayName: string;
   logoUrl: string | null;
   showPoweredBy: boolean;
+  /** a tenant's own identity (monogram in the tenant primary) vs the platform's */
+  tenantBranded?: boolean;
 }
 
 /**
@@ -27,22 +33,33 @@ export function AuthShell({
   children: ReactNode;
   footer?: ReactNode;
 }) {
-  const name = brand?.displayName ?? 'Aivoryx';
+  // No explicit brand (e.g. accept-invitation): the PLATFORM identity, resolved
+  // through the same shared resolver - never a hard-coded logo.
+  const platform = usePlatformBranding();
+  const resolved = resolveBranding(platform, null);
+  const fallback: AuthBrand = {
+    displayName: resolved.name,
+    logoUrl: platformAssetHref(resolved.logo('login', 'light'), platform),
+    showPoweredBy: false,
+    tenantBranded: false,
+  };
+  const b = brand ?? fallback;
+  const name = b.displayName;
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-background-muted px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center justify-center gap-2.5">
-          {brand?.logoUrl ? (
+          {b.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={brand.logoUrl}
+              src={b.logoUrl}
               alt={`${name} logo`}
               className="h-10 max-w-[12rem] object-contain"
             />
           ) : (
             <>
               <span
-                className={`grid size-9 place-items-center rounded-lg text-base font-bold ${brand ? 'bg-primary text-primary-foreground' : 'bg-brand text-brand-foreground'}`}
+                className={`grid size-9 place-items-center rounded-lg text-base font-bold ${b.tenantBranded ? 'bg-primary text-primary-foreground' : 'bg-brand text-brand-foreground'}`}
                 aria-hidden
               >
                 {name.charAt(0).toUpperCase()}
@@ -58,7 +75,7 @@ export function AuthShell({
         </section>
         <div className="mt-4 space-y-1 text-center text-xs text-subtle">
           {footer ? <div>{footer}</div> : null}
-          {brand?.showPoweredBy ? <div>Powered by Aivoryx™</div> : null}
+          {b.showPoweredBy ? <div>Powered by Aivoryx™</div> : null}
         </div>
       </div>
     </div>

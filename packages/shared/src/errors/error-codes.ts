@@ -608,6 +608,10 @@ export const ERROR_CODES = {
     httpStatus: 404,
     message: 'No logo of that kind is configured for this workspace.',
   },
+  PLATFORM_ASSET_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That platform branding asset is not configured.',
+  },
   DOCUMENT_RENDER_FAILED: {
     httpStatus: 500,
     message: 'The document could not be generated. Please try again.',

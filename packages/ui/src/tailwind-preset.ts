@@ -31,6 +31,16 @@ const preset = {
           'active-foreground': 'hsl(var(--sidebar-active-foreground))',
           border: 'hsl(var(--sidebar-border))',
         },
+        tone: {
+          orange: {
+            DEFAULT: 'hsl(var(--tone-orange))',
+            soft: 'hsl(var(--tone-orange-soft))',
+          },
+          purple: {
+            DEFAULT: 'hsl(var(--tone-purple))',
+            soft: 'hsl(var(--tone-purple-soft))',
+          },
+        },
         chart: {
           1: 'hsl(var(--chart-1))',
           2: 'hsl(var(--chart-2))',

@@ -75,3 +75,15 @@ export {
   type DerivedTheme,
   type ModeTokens,
 } from './theme/index.js';
+export {
+  DEFAULT_PLATFORM_NAME,
+  hasTheme,
+  resolveBranding,
+  type AssetRef,
+  type BrandSource,
+  type LogoVariant,
+  type PlatformBrandingLike,
+  type ResolvedBranding,
+  type Surface,
+  type TenantBrandingLike,
+} from './branding/resolve.js';

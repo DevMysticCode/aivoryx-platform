@@ -60,7 +60,7 @@ export default function FieldAgentsPage() {
           <label className="block space-y-1.5">
             <span className="text-sm font-medium">Member</span>
             <select
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+              className="h-9 w-full rounded-md border border-input bg-surface px-3 text-sm"
               value={membershipId}
               onChange={(e) => setMembershipId(e.target.value)}
             >

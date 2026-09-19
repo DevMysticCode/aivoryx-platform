@@ -1855,6 +1855,301 @@
         ]
       }
     },
+    "/platform/branding": {
+      "get": {
+        "operationId": "getPlatformBranding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformBrandingDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The platform branding config.",
+        "tags": [
+          "platform"
+        ]
+      },
+      "put": {
+        "operationId": "updatePlatformBranding",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlatformBrandingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformBrandingDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Edit platform branding.",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/platform/branding/assets": {
+      "post": {
+        "operationId": "uploadPlatformBrandingAsset",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "logo_light",
+                "logo_dark",
+                "mark",
+                "favicon",
+                "login_logo",
+                "apple_touch",
+                "pwa_192",
+                "pwa_512"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformBrandingDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Upload a platform logo / icon.",
+        "tags": [
+          "platform"
+        ]
+      },
+      "delete": {
+        "operationId": "removePlatformBrandingAsset",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "logo_light",
+                "logo_dark",
+                "mark",
+                "favicon",
+                "login_logo",
+                "apple_touch",
+                "pwa_192",
+                "pwa_512"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformBrandingDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove a platform logo / icon.",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/public/platform/branding": {
+      "get": {
+        "operationId": "getPublicPlatformBranding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPlatformBrandingDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Safe platform branding (defaults when unconfigured; no authentication).",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/public/platform/branding/asset": {
+      "get": {
+        "operationId": "getPublicPlatformBrandingAsset",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "logo_light",
+                "logo_dark",
+                "mark",
+                "favicon",
+                "login_logo",
+                "apple_touch",
+                "pwa_192",
+                "pwa_512"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "PLATFORM_ASSET_NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Stream a platform branding asset.",
+        "tags": [
+          "public"
+        ]
+      }
+    },
     "/admin/tenant": {
       "get": {
         "operationId": "getTenant",
@@ -24375,6 +24670,257 @@
           "enabledModules"
         ]
       },
+      "PlatformBrandingDto": {
+        "type": "object",
+        "properties": {
+          "platformName": {
+            "type": "string",
+            "nullable": true
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true
+          },
+          "themePreset": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "aivoryx-teal",
+              "ocean",
+              "indigo",
+              "emerald",
+              "royal",
+              "warm",
+              "custom"
+            ]
+          },
+          "primaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "secondaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "loginHeading": {
+            "type": "string",
+            "nullable": true
+          },
+          "loginText": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasLogoLight": {
+            "type": "boolean"
+          },
+          "hasLogoDark": {
+            "type": "boolean"
+          },
+          "hasMark": {
+            "type": "boolean"
+          },
+          "hasFavicon": {
+            "type": "boolean"
+          },
+          "hasLoginLogo": {
+            "type": "boolean"
+          },
+          "hasAppleTouch": {
+            "type": "boolean"
+          },
+          "hasPwa192": {
+            "type": "boolean"
+          },
+          "hasPwa512": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string",
+            "description": "Cache-busting token; changes on any branding or asset change."
+          }
+        },
+        "required": [
+          "platformName",
+          "tagline",
+          "themePreset",
+          "primaryColor",
+          "secondaryColor",
+          "accentColor",
+          "loginHeading",
+          "loginText",
+          "hasLogoLight",
+          "hasLogoDark",
+          "hasMark",
+          "hasFavicon",
+          "hasLoginLogo",
+          "hasAppleTouch",
+          "hasPwa192",
+          "hasPwa512",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "UpdatePlatformBrandingDto": {
+        "type": "object",
+        "properties": {
+          "platformName": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Empty string clears."
+          },
+          "tagline": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "Empty string clears."
+          },
+          "themePreset": {
+            "type": "string",
+            "enum": [
+              "aivoryx-teal",
+              "ocean",
+              "indigo",
+              "emerald",
+              "royal",
+              "warm",
+              "custom"
+            ]
+          },
+          "primaryColor": {
+            "type": "string",
+            "example": "#1E40AF"
+          },
+          "secondaryColor": {
+            "type": "string",
+            "example": "#231D45"
+          },
+          "accentColor": {
+            "type": "string",
+            "example": "#0EA5E9"
+          },
+          "loginHeading": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Empty string clears."
+          },
+          "loginText": {
+            "type": "string",
+            "maxLength": 240,
+            "description": "Empty string clears."
+          }
+        }
+      },
+      "PublicPlatformAssetFlagsDto": {
+        "type": "object",
+        "properties": {
+          "logoLight": {
+            "type": "boolean"
+          },
+          "logoDark": {
+            "type": "boolean"
+          },
+          "mark": {
+            "type": "boolean"
+          },
+          "favicon": {
+            "type": "boolean"
+          },
+          "loginLogo": {
+            "type": "boolean"
+          },
+          "appleTouch": {
+            "type": "boolean"
+          },
+          "pwa192": {
+            "type": "boolean"
+          },
+          "pwa512": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "logoLight",
+          "logoDark",
+          "mark",
+          "favicon",
+          "loginLogo",
+          "appleTouch",
+          "pwa192",
+          "pwa512"
+        ]
+      },
+      "PublicPlatformBrandingDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true
+          },
+          "themePreset": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "aivoryx-teal",
+              "ocean",
+              "indigo",
+              "emerald",
+              "royal",
+              "warm",
+              "custom"
+            ]
+          },
+          "primaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "secondaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "loginHeading": {
+            "type": "string",
+            "nullable": true
+          },
+          "loginText": {
+            "type": "string",
+            "nullable": true
+          },
+          "assets": {
+            "$ref": "#/components/schemas/PublicPlatformAssetFlagsDto"
+          },
+          "version": {
+            "type": "string",
+            "description": "Cache-busting token (updatedAt ms; \"0\" when unconfigured)."
+          }
+        },
+        "required": [
+          "name",
+          "tagline",
+          "themePreset",
+          "primaryColor",
+          "secondaryColor",
+          "accentColor",
+          "loginHeading",
+          "loginText",
+          "assets",
+          "version"
+        ]
+      },
       "TenantMemberCountsDto": {
         "type": "object",
         "properties": {
@@ -27160,6 +27706,53 @@
           "createdAt"
         ]
       },
+      "HrAttendanceDayDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "present": {
+            "type": "number"
+          },
+          "onLeave": {
+            "type": "number"
+          },
+          "absent": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "present",
+          "onLeave",
+          "absent"
+        ]
+      },
+      "HrDepartmentHeadcountDto": {
+        "type": "object",
+        "properties": {
+          "departmentId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Department name, or \"Unassigned\" when the employee has none."
+          },
+          "count": {
+            "type": "number",
+            "description": "ACTIVE employees in the caller’s data scope."
+          }
+        },
+        "required": [
+          "departmentId",
+          "name",
+          "count"
+        ]
+      },
       "HrDashboardEmployeeRefDto": {
         "type": "object",
         "properties": {
@@ -27224,6 +27817,20 @@
       "HrDashboardDto": {
         "type": "object",
         "properties": {
+          "attendanceTrend": {
+            "description": "Attendance per calendar day for the last 14 days (today included), from the same records and data scope as the \"today\" counts. Days with no records are present with zeros.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HrAttendanceDayDto"
+            }
+          },
+          "departmentDistribution": {
+            "description": "ACTIVE headcount per department within the caller’s data scope, largest first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HrDepartmentHeadcountDto"
+            }
+          },
           "totalEmployees": {
             "type": "number"
           },
@@ -27279,6 +27886,8 @@
           }
         },
         "required": [
+          "attendanceTrend",
+          "departmentDistribution",
           "totalEmployees",
           "activeEmployees",
           "onboardingEmployees",

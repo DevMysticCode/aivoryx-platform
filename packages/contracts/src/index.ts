@@ -264,6 +264,10 @@ export type CompanyProfile = components['schemas']['CompanyProfileDto'];
 export type UpdateCompanyProfileRequest = components['schemas']['UpdateCompanyProfileDto'];
 export type Branding = components['schemas']['BrandingDto'];
 export type PublicLoginBranding = components['schemas']['PublicLoginBrandingDto'];
+export type PlatformBranding = components['schemas']['PlatformBrandingDto'];
+export type UpdatePlatformBrandingRequest = components['schemas']['UpdatePlatformBrandingDto'];
+export type PublicPlatformBranding = components['schemas']['PublicPlatformBrandingDto'];
+export type PublicPlatformAssetFlags = components['schemas']['PublicPlatformAssetFlagsDto'];
 export type Onboarding = components['schemas']['OnboardingDto'];
 export type OnboardingStep = components['schemas']['OnboardingStepDto'];
 

@@ -86,7 +86,7 @@ export function UserAccessPanel({
                   <select
                     value={profileId}
                     onChange={(e) => setProfileId(e.target.value)}
-                    className="h-9 rounded-md border bg-transparent px-2 text-sm"
+                    className="h-9 rounded-md border bg-surface px-2 text-sm"
                   >
                     <option value="">Select…</option>
                     {profiles.map((p) => (
@@ -104,7 +104,7 @@ export function UserAccessPanel({
                   <select
                     value={scope}
                     onChange={(e) => setScope(e.target.value as (typeof SCOPES)[number])}
-                    className="h-9 rounded-md border bg-transparent px-2 text-sm"
+                    className="h-9 rounded-md border bg-surface px-2 text-sm"
                   >
                     {SCOPES.map((s) => (
                       <option key={s} value={s}>

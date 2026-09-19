@@ -4,22 +4,17 @@ import Link from 'next/link';
 import { cn } from '@aivoryx/ui';
 import { useMe } from '@/lib/admin/use-admin';
 import { useLogoObjectUrl } from '@/lib/settings/use-settings';
+import { platformAssetHref, useResolvedBranding } from '@/lib/branding/use-branding';
 import { useAppearance } from '@/components/theme-provider';
 import type { LogoKind } from '@/lib/api/settings';
 
-interface BrandingAssets {
-  displayName?: string;
-  hasLogo?: boolean;
-  hasLightLogo?: boolean;
-  hasDarkLogo?: boolean;
-  hasCompactLogo?: boolean;
-}
-
 /**
- * The workspace identity in the shell: the tenant's logo (compact in the
- * collapsed rail, light/dark variant matching the appearance) or, without one, a
- * monogram, plus the display name. Platform-admin mode keeps a fixed Aivoryx navy
- * mark — a deliberate cue that this is platform identity, not a tenant workspace.
+ * The identity in the shell. Which logo shows is decided by the shared branding
+ * resolver: the tenant's own logo (compact in the collapsed rail, light/dark
+ * variant matching the appearance) when it has one, otherwise the PLATFORM
+ * (Aivoryx) logo, otherwise a monogram - never a broken image. Platform-admin
+ * mode ignores the tenant layer and keeps the fixed navy Aivoryx monogram as a
+ * cue that this is platform identity, not a tenant workspace.
  */
 export function BrandMark({
   platformRoute,
@@ -35,25 +30,23 @@ export function BrandMark({
 }) {
   const me = useMe();
   const { resolved } = useAppearance();
-  const branding = me.data?.active?.branding as BrandingAssets | undefined;
   const platformMode = platformRoute || (me.data?.isPlatformAdmin && !me.data.active);
-  const name = platformMode ? 'Aivoryx Platform' : branding?.displayName?.trim() || 'Aivoryx';
+  const { branding, platform } = useResolvedBranding({ ignoreTenant: !!platformMode });
 
-  const kind: LogoKind | null = platformMode
-    ? null
-    : compact
-      ? branding?.hasCompactLogo
-        ? 'logo_compact'
-        : null
-      : resolved === 'dark' && branding?.hasDarkLogo
-        ? 'logo_dark'
-        : resolved === 'light' && branding?.hasLightLogo
-          ? 'logo_light'
-          : branding?.hasLogo
-            ? 'logo'
-            : null;
+  const platformName = platform?.name?.trim() || 'Aivoryx';
+  const name = platformMode
+    ? /platform/i.test(platformName)
+      ? platformName
+      : `${platformName} Platform`
+    : branding.name;
 
-  const logoUrl = useLogoObjectUrl(!!kind, name, kind ?? 'logo');
+  const ref = branding.logo(compact ? 'compact' : 'full', resolved);
+  const tenantUrl = useLogoObjectUrl(
+    ref?.source === 'tenant',
+    name,
+    (ref?.source === 'tenant' ? ref.kind : 'logo') as LogoKind,
+  );
+  const logoUrl = ref?.source === 'platform' ? platformAssetHref(ref, platform) : tenantUrl;
 
   return (
     <Link
@@ -84,7 +77,7 @@ export function BrandMark({
       )}
       {compact ? null : (
         <span className="truncate text-sm font-semibold tracking-tight">
-          {logoUrl && !platformMode ? <span className="sr-only">{name}</span> : name}
+          {logoUrl && ref?.source === 'tenant' ? <span className="sr-only">{name}</span> : name}
         </span>
       )}
     </Link>

@@ -4,6 +4,7 @@ import type { ModuleKey } from '@aivoryx/shared';
 import type { ChartData } from '@/components/charts/chart-model';
 import type { RangeOption } from '@/components/charts/interactive-chart';
 import { useCrmAnalytics } from '@/lib/crm/use-crm-analytics';
+import { useHrDashboard } from '@/lib/hr/use-hr';
 
 /**
  * Reports that have a meaningful standalone representation (Phase 19). A report
@@ -117,6 +118,109 @@ export const REPORTS: ReportDefinition[] = [
               points: q.data.sources.map((s) => ({ label: s.sourceName, value: s.total })),
             }
           : null,
+        isLoading: q.isLoading,
+        error: q.error,
+        refetch: () => void q.refetch(),
+      };
+    },
+  },
+  {
+    id: 'crm-conversion-rate',
+    title: 'Lead conversion',
+    description: 'Share of new leads that reached Converted (as reported by the CRM funnel).',
+    module: 'CRM',
+    permission: 'crm.leads.read',
+    useData: () => {
+      const q = useCrmAnalytics(30);
+      const converted = q.data?.funnel.find((s) => s.stage === 'CONVERTED');
+      const first = q.data?.funnel[0]?.count ?? 0;
+      const rate = converted?.conversionFromStart ?? null;
+      return {
+        data:
+          rate === null
+            ? null
+            : {
+                shape: 'target',
+                label: 'New → converted',
+                value: rate,
+                min: 0,
+                max: 100,
+                unit: '%',
+                secondary: `${converted?.count ?? 0} of ${first} new leads`,
+              },
+        isLoading: q.isLoading,
+        error: q.error,
+        refetch: () => void q.refetch(),
+      };
+    },
+  },
+  {
+    id: 'hr-attendance-trend',
+    title: 'Attendance trend',
+    description: 'Employees present per day over the last 14 days.',
+    module: 'HR',
+    permission: 'hr.employee.read',
+    useData: () => {
+      const q = useHrDashboard();
+      return {
+        data: q.data
+          ? {
+              shape: 'timeseries',
+              points: q.data.attendanceTrend.map((d) => ({
+                label: shortDate(d.date),
+                value: d.present,
+              })),
+            }
+          : null,
+        isLoading: q.isLoading,
+        error: q.error,
+        refetch: () => void q.refetch(),
+      };
+    },
+  },
+  {
+    id: 'hr-department-headcount',
+    title: 'Headcount by department',
+    description: 'Active employees per department.',
+    module: 'HR',
+    permission: 'hr.employee.read',
+    useData: () => {
+      const q = useHrDashboard();
+      return {
+        data: q.data
+          ? {
+              shape: 'categorical',
+              points: q.data.departmentDistribution.map((d) => ({ label: d.name, value: d.count })),
+            }
+          : null,
+        isLoading: q.isLoading,
+        error: q.error,
+        refetch: () => void q.refetch(),
+      };
+    },
+  },
+  {
+    id: 'hr-attendance-rate',
+    title: 'Attendance today',
+    description: 'Employees present today as a share of active employees.',
+    module: 'HR',
+    permission: 'hr.employee.read',
+    useData: () => {
+      const q = useHrDashboard();
+      const d = q.data;
+      return {
+        data:
+          d && d.activeEmployees > 0
+            ? {
+                shape: 'target',
+                label: 'Attendance today',
+                value: Math.round((d.presentToday / d.activeEmployees) * 100),
+                min: 0,
+                max: 100,
+                unit: '%',
+                secondary: `${d.presentToday} of ${d.activeEmployees} active employees`,
+              }
+            : null,
         isLoading: q.isLoading,
         error: q.error,
         refetch: () => void q.refetch(),

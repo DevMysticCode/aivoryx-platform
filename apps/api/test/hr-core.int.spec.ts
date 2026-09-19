@@ -560,6 +560,15 @@ describe.skipIf(!INTEGRATION_ENABLED)('HR Core (Phase 17)', () => {
       const admin = await adminCookie();
       const all = await http.get('/api/v1/hr/dashboard').set('Cookie', admin);
       expect(all.body.totalEmployees).toBeGreaterThan(dash.body.totalEmployees);
+
+      // the workforce aggregates are real and bound by the same scope
+      expect(dash.body.attendanceTrend).toHaveLength(14);
+      expect(new Set(dash.body.attendanceTrend.map((d: { date: string }) => d.date)).size).toBe(14);
+      const headcount = (b: { departmentDistribution: { count: number }[] }) =>
+        b.departmentDistribution.reduce((a, d) => a + d.count, 0);
+      expect(headcount(all.body)).toBe(all.body.activeEmployees);
+      expect(headcount(dash.body)).toBe(dash.body.activeEmployees);
+      expect(headcount(dash.body)).toBeLessThan(headcount(all.body));
     });
 
     it('narrowing scope takes effect immediately for the same member', async () => {

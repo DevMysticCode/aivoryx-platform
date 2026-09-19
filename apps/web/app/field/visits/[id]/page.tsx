@@ -436,7 +436,7 @@ function SurveyInput({
   if (dataType === 'select') {
     return (
       <select
-        className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+        className="h-11 w-full rounded-md border border-input bg-surface px-3 text-sm"
         value={typeof value === 'string' ? value : ''}
         onChange={(e) => onChange(e.target.value || null)}
       >

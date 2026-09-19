@@ -245,7 +245,7 @@ function OverviewTab({
           <label className="block space-y-1">
             <span className="text-xs font-medium">Owner</span>
             <select
-              className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
+              className="h-9 w-full rounded-md border bg-surface px-2 text-sm"
               value={l.assignee?.membershipId ?? ''}
               onChange={(e) => e.target.value && assign.mutate(e.target.value)}
               disabled={assign.isPending}
@@ -315,7 +315,7 @@ function OverviewTab({
             <select
               value={callOutcome}
               onChange={(e) => setCallOutcome(e.target.value)}
-              className="h-9 flex-1 rounded-md border bg-transparent px-2 text-sm"
+              className="h-9 flex-1 rounded-md border bg-surface px-2 text-sm"
             >
               <option value="connected">Connected</option>
               <option value="no_answer">No answer</option>
@@ -889,7 +889,7 @@ function LeadQuotationsCard({
                 </label>
                 <select
                   id={selectId}
-                  className="h-8 max-w-44 rounded-md border border-input bg-transparent px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  className="h-8 max-w-44 rounded-md border border-input bg-surface px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                   value={visitId}
                   onChange={(e) => setVisitChoice(e.target.value)}
                 >

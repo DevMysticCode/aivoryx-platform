@@ -102,7 +102,7 @@ export default function VisitDetailPage() {
             <h2 className="text-sm font-semibold">Assignment &amp; scheduling</h2>
             <div className="flex flex-wrap items-center gap-2">
               <select
-                className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                className="h-9 rounded-md border border-input bg-surface px-2 text-sm"
                 value={v.assignee?.membershipId ?? ''}
                 onChange={(e) => e.target.value && assign.mutate({ membershipId: e.target.value })}
                 disabled={assign.isPending || !canReassignOrReschedule}

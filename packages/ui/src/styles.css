@@ -100,6 +100,13 @@
   --chart-5: 142 60% 30%;
   --chart-6: 0 72% 51%;
 
+  /* categorical dashboard accents (KPI icons / tints) — orange & purple have no
+     status meaning; teal/blue/green/amber/red map to primary/info/success/warning/danger */
+  --tone-orange: 22 85% 33%;
+  --tone-orange-soft: 24 90% 94%;
+  --tone-purple: 268 60% 44%;
+  --tone-purple-soft: 268 70% 96%;
+
   --radius: 0.5rem;
 }
 
@@ -168,6 +175,11 @@
   --chart-4: 213 80% 62%;
   --chart-5: 142 45% 45%;
   --chart-6: 0 63% 58%;
+
+  --tone-orange: 28 90% 62%;
+  --tone-orange-soft: 24 45% 17%;
+  --tone-purple: 268 80% 76%;
+  --tone-purple-soft: 268 35% 20%;
 }
 
 /* Light/dark/system: the shell sets `color-scheme` so native controls,
@@ -194,4 +206,20 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Native <select> popups are drawn by the browser. Give the control and its
+   options theme tokens (and let `color-scheme` on html/.dark do the rest) so the
+   opened list is never a white slab in dark mode. */
+select,
+select option,
+select optgroup {
+  background-color: hsl(var(--surface-raised));
+  color: hsl(var(--foreground));
+}
+select:disabled {
+  color: hsl(var(--text-subtle));
+}
+select option:disabled {
+  color: hsl(var(--text-subtle));
 }

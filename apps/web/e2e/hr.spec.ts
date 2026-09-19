@@ -436,6 +436,8 @@ test.describe('HR & Workforce golden path', () => {
 
     // browser: the principal HR screens render with the created data
     await page.goto('/hr/employees');
+    // the list is paginated and the demo workspace grows with every run: search for the new hire
+    await page.getByPlaceholder('Name, number, email').fill(`E2E${s}`);
     await expect(page.getByRole('link', { name: `Rep E2E${s}` })).toBeVisible({ timeout: 15_000 });
     await page.getByRole('link', { name: `Rep E2E${s}` }).click();
     await page.waitForURL(/\/hr\/employees\/[0-9a-f-]+$/);

@@ -1,13 +1,24 @@
 'use client';
 
 import { cn } from '@aivoryx/ui';
-import type { ChartData, ChartKind, ChartPoint } from './chart-model';
+import type { ReactNode } from 'react';
+import { Gauge } from './gauge';
+import {
+  type ChartData,
+  type ChartKind,
+  type ChartPoint,
+  type GaugeStatus,
+  type TargetData,
+  gaugeScale,
+} from './chart-model';
 
 const SERIES = [1, 2, 3, 4, 5, 6].map((n) => `hsl(var(--chart-${n}))`);
 const AXIS = 'hsl(var(--border))';
 const TEXT = 'hsl(var(--muted-foreground))';
 
-const W = 640;
+/** viewBox widths: the compact card view is drawn narrower so its text stays legible when scaled to a ~330px card */
+const W_MD = 400;
+const W_LG = 640;
 
 interface CanvasProps {
   kind: ChartKind;
@@ -25,61 +36,47 @@ interface CanvasProps {
  * readers the same numbers.
  */
 export function ChartCanvas({ kind, data, size = 'md', ariaLabel }: CanvasProps) {
-  const H = size === 'lg' ? 380 : 220;
+  const H = size === 'lg' ? 380 : 200;
   return (
     <figure className="m-0">
-      <div role="img" aria-label={ariaLabel}>
-        {data.shape === 'target' ? (
-          kind === 'gauge' ? (
-            <Gauge data={data} />
-          ) : kind === 'bar' ? (
-            <Bars
-              points={[
-                { label: data.label, value: data.value },
-                { label: 'Target', value: data.target },
-              ]}
-              h={H}
-              horizontal
-            />
-          ) : (
-            <Progress data={data} />
-          )
-        ) : data.points.length === 0 ? (
+      <div
+        role={kind === 'gauge' ? undefined : 'img'}
+        aria-label={kind === 'gauge' ? undefined : ariaLabel}
+      >
+        {data.shape !== 'target' && data.points.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
             No data for this period.
           </p>
-        ) : kind === 'line' || kind === 'area' ? (
-          <LineArea points={data.points} h={H} area={kind === 'area'} />
-        ) : kind === 'donut' || kind === 'pie' ? (
-          <Slices points={data.points} donut={kind === 'donut'} size={size} />
         ) : (
-          <Bars points={data.points} h={H} horizontal={kind === 'bar'} />
+          RENDERERS[kind]({ data, h: H, size })
         )}
       </div>
-      <table className="sr-only">
-        <caption>{ariaLabel}</caption>
-        <tbody>
-          {data.shape === 'target' ? (
-            <>
-              <tr>
-                <th scope="row">{data.label}</th>
-                <td>{data.value}</td>
-              </tr>
-              <tr>
-                <th scope="row">Target</th>
-                <td>{data.target}</td>
-              </tr>
-            </>
-          ) : (
-            data.points.map((p) => (
-              <tr key={p.label}>
-                <th scope="row">{p.label}</th>
-                <td>{p.value}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="sr-only">
+        <table>
+          <caption>{ariaLabel}</caption>
+          <tbody>
+            {data.shape === 'target' ? (
+              <>
+                <tr>
+                  <th scope="row">{data.label}</th>
+                  <td>{data.value}</td>
+                </tr>
+                <tr>
+                  <th scope="row">{data.target !== undefined ? 'Target' : 'Max'}</th>
+                  <td>{data.target ?? gaugeScale(data).max}</td>
+                </tr>
+              </>
+            ) : (
+              data.points.map((p) => (
+                <tr key={p.label}>
+                  <th scope="row">{p.label}</th>
+                  <td>{p.value}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
@@ -90,13 +87,23 @@ function niceMax(v: number): number {
   return Math.ceil(v / pow) * pow;
 }
 
-function LineArea({ points, h, area }: { points: ChartPoint[]; h: number; area: boolean }) {
+function LineArea({
+  points,
+  h,
+  w,
+  area,
+}: {
+  points: ChartPoint[];
+  h: number;
+  w: number;
+  area: boolean;
+}) {
   const padL = 34;
   const padR = 10;
   const padT = 12;
   const padB = 24;
   const max = niceMax(Math.max(1, ...points.map((p) => p.value)));
-  const plotW = W - padL - padR;
+  const plotW = w - padL - padR;
   const plotH = h - padT - padB;
   const step = points.length > 1 ? plotW / (points.length - 1) : 0;
   const xy = points.map((p, i) => ({
@@ -108,12 +115,12 @@ function LineArea({ points, h, area }: { points: ChartPoint[]; h: number; area: 
   const base = padT + plotH;
   const labelIdx = new Set([0, Math.floor((points.length - 1) / 2), points.length - 1]);
   return (
-    <svg viewBox={`0 0 ${W} ${h}`} className="h-auto w-full">
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-auto w-full">
       {[0, 0.5, 1].map((f) => {
         const y = padT + plotH * (1 - f);
         return (
           <g key={f}>
-            <line x1={padL} x2={W - padR} y1={y} y2={y} stroke={AXIS} />
+            <line x1={padL} x2={w - padR} y1={y} y2={y} stroke={AXIS} />
             <text x={padL - 6} y={y + 4} textAnchor="end" fontSize={11} fill={TEXT}>
               {Math.round(max * f)}
             </text>
@@ -153,10 +160,12 @@ function LineArea({ points, h, area }: { points: ChartPoint[]; h: number; area: 
 function Bars({
   points,
   h,
+  w,
   horizontal,
 }: {
   points: ChartPoint[];
   h: number;
+  w: number;
   horizontal?: boolean;
 }) {
   const max = niceMax(Math.max(1, ...points.map((p) => p.value)));
@@ -165,10 +174,10 @@ function Bars({
     const labelW = 120;
     const height = points.length * rowH + 8;
     return (
-      <svg viewBox={`0 0 ${W} ${height}`} className="h-auto w-full">
+      <svg viewBox={`0 0 ${w} ${height}`} className="h-auto w-full">
         {points.map((p, i) => {
           const y = 4 + i * rowH;
-          const w = ((W - labelW - 56) * p.value) / max;
+          const barW = ((w - labelW - 56) * p.value) / max;
           return (
             <g key={p.label + i}>
               <text x={0} y={y + rowH / 2 + 4} fontSize={12} fill="hsl(var(--foreground))">
@@ -177,14 +186,19 @@ function Bars({
               <rect
                 x={labelW}
                 y={y + 3}
-                width={Math.max(2, w)}
+                width={Math.max(2, barW)}
                 height={rowH - 8}
                 rx={3}
                 fill={SERIES[0]}
               >
                 <title>{`${p.label}: ${p.value}`}</title>
               </rect>
-              <text x={labelW + Math.max(2, w) + 6} y={y + rowH / 2 + 4} fontSize={12} fill={TEXT}>
+              <text
+                x={labelW + Math.max(2, barW) + 6}
+                y={y + rowH / 2 + 4}
+                fontSize={12}
+                fill={TEXT}
+              >
                 {p.value}
               </text>
             </g>
@@ -196,18 +210,18 @@ function Bars({
   const padL = 34;
   const padB = 24;
   const padT = 12;
-  const plotW = W - padL - 10;
+  const plotW = w - padL - 10;
   const plotH = h - padT - padB;
   const slot = plotW / Math.max(1, points.length);
   const bw = Math.min(46, slot * 0.66);
   const every = Math.ceil(points.length / 10);
   return (
-    <svg viewBox={`0 0 ${W} ${h}`} className="h-auto w-full">
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-auto w-full">
       {[0, 0.5, 1].map((f) => {
         const y = padT + plotH * (1 - f);
         return (
           <g key={f}>
-            <line x1={padL} x2={W - 10} y1={y} y2={y} stroke={AXIS} />
+            <line x1={padL} x2={w - 10} y1={y} y2={y} stroke={AXIS} />
             <text x={padL - 6} y={y + 4} textAnchor="end" fontSize={11} fill={TEXT}>
               {Math.round(max * f)}
             </text>
@@ -327,62 +341,73 @@ function Slices({
   );
 }
 
-function Gauge({ data }: { data: Extract<ChartData, { shape: 'target' }> }) {
-  const frac = data.target > 0 ? Math.min(1, data.value / data.target) : 0;
-  const R = 80;
-  const end = Math.PI * (1 - frac);
-  const x = 100 + R * Math.cos(end);
-  const y = 100 - R * Math.sin(end);
+function Progress({ data }: { data: TargetData }) {
+  const sc = gaugeScale(data);
+  const u = data.unit ?? '';
+  const status = data.status ?? 'neutral';
+  const fill: Record<GaugeStatus, string> = {
+    good: 'bg-success',
+    warn: 'bg-warning',
+    bad: 'bg-danger',
+    neutral: 'bg-chart-1',
+  };
   return (
-    <svg viewBox="0 0 200 120" className="mx-auto h-auto w-full max-w-xs">
-      <path
-        d={`M20,100 A${R},${R} 0 0 1 180,100`}
-        fill="none"
-        stroke="hsl(var(--secondary))"
-        strokeWidth={16}
-        strokeLinecap="round"
-      />
-      {frac > 0 ? (
-        <path
-          d={`M20,100 A${R},${R} 0 0 1 ${x},${y}`}
-          fill="none"
-          stroke={SERIES[0]}
-          strokeWidth={16}
-          strokeLinecap="round"
-        >
-          <title>{`${data.value} of ${data.target}`}</title>
-        </path>
-      ) : null}
-      <text
-        x={100}
-        y={92}
-        textAnchor="middle"
-        fontSize={26}
-        fontWeight={600}
-        fill="hsl(var(--foreground))"
-      >
-        {Math.round(frac * 100)}%
-      </text>
-      <text x={100} y={112} textAnchor="middle" fontSize={11} fill={TEXT}>
-        {data.value} of {data.target}
-      </text>
-    </svg>
+    <div className="space-y-2 py-4">
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="font-medium">{data.label}</span>
+        <span className="tabular-nums text-muted-foreground">
+          {data.value}
+          {u}
+          {data.target !== undefined ? ` of ${data.target}${u}` : ` (${sc.pct}%)`}
+        </span>
+      </div>
+      <div className="relative h-3 overflow-hidden rounded-full bg-secondary" role="presentation">
+        <div
+          className={`h-full rounded-full ${fill[status]}`}
+          style={{ width: `${sc.frac * 100}%` }}
+        />
+        {sc.targetFrac !== null ? (
+          <span
+            className="absolute inset-y-0 w-0.5 bg-foreground"
+            style={{ left: `${sc.targetFrac * 100}%` }}
+            aria-hidden
+          />
+        ) : null}
+      </div>
+      {data.secondary ? <p className="text-xs text-muted-foreground">{data.secondary}</p> : null}
+    </div>
   );
 }
 
-function Progress({ data }: { data: Extract<ChartData, { shape: 'target' }> }) {
-  const frac = data.target > 0 ? Math.min(1, data.value / data.target) : 0;
-  return (
-    <div className="space-y-2 py-4">
-      <div className="flex items-baseline justify-between text-sm">
-        <span className="font-medium">{data.label}</span>
-        <span className="tabular-nums text-muted-foreground">
-          {data.value} of {data.target}
-        </span>
-      </div>
-      <div className="h-3 overflow-hidden rounded-full bg-secondary" role="presentation">
-        <div className="h-full rounded-full bg-chart-1" style={{ width: `${frac * 100}%` }} />
-      </div>
-    </div>
-  );
+/**
+ * The renderer registry: EVERY chart kind must have a renderer here (the Record
+ * type makes a missing kind a compile error), so adding a kind to `ChartKind`
+ * cannot silently produce an undrawable chart.
+ */
+const RENDERERS: Record<
+  ChartKind,
+  (p: { data: ChartData; h: number; size: 'md' | 'lg' }) => ReactNode
+> = {
+  line: ({ data, h, size }) => (
+    <LineArea points={pointsOf(data)} h={h} w={wOf(size)} area={false} />
+  ),
+  area: ({ data, h, size }) => <LineArea points={pointsOf(data)} h={h} w={wOf(size)} area />,
+  column: ({ data, h, size }) => <Bars points={pointsOf(data)} h={h} w={wOf(size)} />,
+  bar: ({ data, h, size }) => <Bars points={pointsOf(data)} h={h} w={wOf(size)} horizontal />,
+  donut: ({ data, size }) => <Slices points={pointsOf(data)} donut size={size} />,
+  pie: ({ data, size }) => <Slices points={pointsOf(data)} donut={false} size={size} />,
+  gauge: ({ data }) => (data.shape === 'target' ? <Gauge data={data} /> : null),
+  progress: ({ data }) => (data.shape === 'target' ? <Progress data={data} /> : null),
+};
+
+const wOf = (size: 'md' | 'lg') => (size === 'lg' ? W_LG : W_MD);
+
+/** Points for kinds that draw a series; a target dataset drawn as `bar` becomes value vs target/max. */
+function pointsOf(data: ChartData): ChartPoint[] {
+  if (data.shape !== 'target') return data.points;
+  const sc = gaugeScale(data);
+  return [
+    { label: data.label, value: data.value },
+    { label: data.target !== undefined ? 'Target' : 'Max', value: data.target ?? sc.max },
+  ];
 }

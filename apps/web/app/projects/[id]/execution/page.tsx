@@ -575,7 +575,7 @@ function DefectsCard({
               <td className="px-3 py-2 text-right">
                 {can('projects.defects.update') && d.status !== 'VERIFIED' ? (
                   <select
-                    className="h-8 rounded-md border border-input bg-transparent px-2 text-xs"
+                    className="h-8 rounded-md border border-input bg-surface px-2 text-xs"
                     value=""
                     onChange={(e) =>
                       e.target.value &&
