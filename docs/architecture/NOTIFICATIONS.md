@@ -33,7 +33,7 @@ business mutation → outbox_events (commit)
 | `notification-engine.service.ts`                          | event → rules → context → recipients → `notifications` + `notification_deliveries` (idempotent) → enqueue  |
 | `notification-delivery.service.ts`                        | one delivery row: preference gate → adapter → status transitions → retry                                   |
 | `outbox-dispatcher.service.ts`                            | drains undelivered `outbox_events` cross-tenant, stamps `dispatched_at`                                    |
-| `notifications.worker.ts`                                 | BullMQ worker (`drain` repeatable + `deliver`) on the shared Redis connection                              |
+| `notifications.worker.ts`                                 | BullMQ worker (`deliver` jobs) + in-process outbox poll timer; purges legacy `drain` repeatables at boot   |
 | `notifications.user.service.ts` / `.controller.ts`        | the signed-in user's own inbox (self-scoped, no permission)                                                |
 | `notifications.admin.service.ts` / `-admin.controller.ts` | tenant rule/template/delivery administration (permission-gated)                                            |
 
@@ -173,7 +173,7 @@ Under `/api/v1`, tenant/user from `SecurityContext`, never a DTO.
 | Variable                     | Default                            | Purpose                                                                 |
 | ---------------------------- | ---------------------------------- | ----------------------------------------------------------------------- |
 | `NOTIFICATIONS_ENABLED`      | `true`                             | master switch for the dispatcher + delivery worker                      |
-| `NOTIFICATIONS_POLL_MS`      | `2000`                             | outbox drain interval                                                   |
+| `NOTIFICATIONS_POLL_MS`      | `30000`                            | outbox poll interval (in-process Postgres query; no Redis while idle)   |
 | `NOTIFICATIONS_MAX_ATTEMPTS` | `5`                                | BullMQ delivery attempts before `FAILED`                                |
 | `EMAIL_PROVIDER`             | `console`                          | `fake` (tests) · `console` (dev/default) · `smtp`                       |
 | `EMAIL_FROM`                 | `Aivoryx <no-reply@aivoryx.local>` | `From:` identity                                                        |

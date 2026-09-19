@@ -126,8 +126,9 @@ export const serverEnvSchema = z
       .enum(['true', 'false'])
       .default('true')
       .transform((v) => v === 'true'),
-    /** How often the outbox dispatcher drains undelivered `outbox_events`. */
-    NOTIFICATIONS_POLL_MS: z.coerce.number().int().min(250).max(60_000).default(2000),
+    /** How often the outbox dispatcher drains undelivered `outbox_events`. A cheap Postgres
+     *  query run in-process (no Redis traffic while idle); default 30s. */
+    NOTIFICATIONS_POLL_MS: z.coerce.number().int().min(250).max(300_000).default(30_000),
     /** BullMQ delivery attempts before a delivery is marked permanently FAILED. */
     NOTIFICATIONS_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(5),
     /**
