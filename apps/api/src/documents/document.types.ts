@@ -15,6 +15,8 @@ export interface DocMetaItem {
 export interface DocParty {
   heading: string; // "Bill to", "Received from", …
   lines: string[];
+  /** the CRM customer behind this party; used ONLY when the tenant enables customer logos */
+  customerId?: string;
 }
 
 export interface DocColumn {
@@ -70,6 +72,12 @@ export interface DocumentBrandingContext {
   contactLines: string[];
   /** validated 6-digit hex, or null for the platform default */
   primaryColor: string | null;
+  /** print-safe accent for rules/titles; falls back to primaryColor when absent */
+  accentColor?: string;
+  /** tenant flag: customer logos may be shown on documents */
+  showCustomerLogo?: boolean;
+  /** the customer's logo, loaded by the render service only when showCustomerLogo is true */
+  customerLogo?: { body: Buffer; contentType: string } | null;
   /** tenant document footer line */
   documentFooter: string | null;
   /** logo bytes (png/jpeg/webp) or null */

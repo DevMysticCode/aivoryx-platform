@@ -58,13 +58,7 @@ export default function FieldProjectExecutionPage() {
 
       <div className="rounded-lg border p-3 text-sm">
         <div className="font-medium">Materials</div>
-        <div
-          className={
-            v.readiness.state === 'READY'
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-amber-600 dark:text-amber-400'
-          }
-        >
+        <div className={v.readiness.state === 'READY' ? 'text-success' : 'text-warning'}>
           {v.readiness.state.replace(/_/g, ' ').toLowerCase()} · delivered{' '}
           {v.readiness.deliveredQty} of {v.readiness.requiredQty}
         </div>
@@ -185,7 +179,7 @@ export default function FieldProjectExecutionPage() {
       )}
 
       {inst.status === 'COMPLETED' && (
-        <p className="rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400">
+        <p className="rounded-lg bg-success-soft p-3 text-sm text-success">
           Installation complete. QC and handover are handled by the office team.
         </p>
       )}
@@ -219,7 +213,7 @@ function FieldChecklist({
           />
           <span className={it.status === 'done' ? 'text-muted-foreground line-through' : ''}>
             {it.label}
-            {it.required ? <span className="ml-1 text-xs text-destructive">*</span> : null}
+            {it.required ? <span className="ml-1 text-xs text-danger">*</span> : null}
           </span>
         </li>
       ))}

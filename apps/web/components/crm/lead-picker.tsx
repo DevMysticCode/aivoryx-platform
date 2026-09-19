@@ -138,7 +138,7 @@ export function LeadPicker({
       >
         {search.isLoading && <li className="px-2 py-1.5 text-muted-foreground">Searching…</li>}
         {search.error ? (
-          <li className="px-2 py-1.5 text-destructive">Search failed. Try again.</li>
+          <li className="px-2 py-1.5 text-danger">Search failed. Try again.</li>
         ) : null}
         {!search.isLoading && !search.error && options.length === 0 && (
           <li className="px-2 py-1.5 text-muted-foreground">No matches</li>

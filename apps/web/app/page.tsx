@@ -9,7 +9,7 @@ import { useAccess } from '@/lib/navigation/use-access';
 import { useDashboardWidgets } from '@/lib/dashboard/use-dashboard';
 import { groupWidgetsBySection } from '@/lib/dashboard/select';
 import { LoadingBlock } from '@/components/ui/kit';
-import { WorkspaceUnavailable } from '@/components/admin/ui';
+import { EmptyState, WorkspaceUnavailable } from '@/components/admin/ui';
 import { OnboardingCard } from '@/components/onboarding-card';
 
 const SPAN_CLASS: Record<number, string> = {
@@ -46,20 +46,23 @@ export default function DashboardPage() {
 
   const firstName = (me.data?.user.email ?? '').split('@')[0]?.split(/[.\-_]/)[0] ?? '';
 
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">
-            {firstName
-              ? `Welcome back, ${firstName[0]!.toUpperCase()}${firstName.slice(1)}`
-              : 'Dashboard'}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {access.tenantName ?? 'Your workspace'} · {widgets.length} widget
-            {widgets.length === 1 ? '' : 's'} available to you
-          </p>
-        </div>
+    <div className="space-y-7">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+          {firstName
+            ? `Welcome back, ${firstName[0]!.toUpperCase()}${firstName.slice(1)}`
+            : 'Dashboard'}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {access.tenantName ?? 'Your workspace'} · {today}
+        </p>
       </div>
 
       <OnboardingCard />
@@ -67,18 +70,20 @@ export default function DashboardPage() {
       {isLoading ? (
         <LoadingBlock />
       ) : widgets.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center text-sm">
-          <p className="font-medium">Nothing to show yet</p>
-          <p className="mt-1 text-muted-foreground">
-            Your dashboard fills in as your workspace enables modules and your access is configured.
-          </p>
-        </div>
+        <EmptyState title="Nothing to show yet">
+          Your dashboard fills in as your company enables modules and your access is configured. Ask
+          a workspace administrator which areas you should have.
+        </EmptyState>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-7">
           {groupWidgetsBySection(widgets).map((group, i) => (
-            <div key={group.section ?? `_${i}`} className="space-y-3">
+            <section
+              key={group.section ?? `_${i}`}
+              aria-label={group.section}
+              className="space-y-3"
+            >
               {group.section ? (
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-subtle">
                   {group.section}
                 </h2>
               ) : null}
@@ -93,7 +98,7 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}

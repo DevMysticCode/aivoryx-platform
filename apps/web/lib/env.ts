@@ -8,4 +8,6 @@ import { parseWebEnv } from '@aivoryx/config/web';
 export const webEnv = parseWebEnv({
   NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+  NEXT_PUBLIC_HELP_BASE_URL: process.env.NEXT_PUBLIC_HELP_BASE_URL || undefined,
+  NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || undefined,
 });

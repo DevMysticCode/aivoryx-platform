@@ -46,7 +46,7 @@ test.describe('HR Core (Phase 17)', () => {
     await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD);
     await page.goto('/hr');
     await expect(page.getByRole('heading', { level: 1, name: 'HR & Workforce' })).toBeVisible();
-    for (const section of ['Key metrics', 'Needs attention', 'Recent activity']) {
+    for (const section of ['Key metrics', 'Primary work', 'Recent activity']) {
       await expect(page.getByRole('heading', { level: 2, name: section })).toBeVisible();
     }
     await expect(page.getByText('Present today')).toBeVisible();

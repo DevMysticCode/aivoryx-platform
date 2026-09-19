@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
   foreignKey,
   index,
@@ -43,6 +44,9 @@ export const tenantAssetKind = pgEnum('tenant_asset_kind', [
   'logo_light',
   'logo_dark',
   'favicon',
+  'logo_compact',
+  'logo_login',
+  'logo_document',
 ]);
 
 const HEX_COLOR = sql`'^#[0-9a-fA-F]{6}$'`;
@@ -82,6 +86,19 @@ export const tenantCompanyProfiles = pgTable(
     /** validated hex, applied as a CSS token — never raw CSS */
     primaryColor: text('primary_color'),
     accentColor: text('accent_color'),
+    /** Phase 19: named theme preset key (see THEME_PRESET_KEYS), or `custom` */
+    themePreset: text('theme_preset'),
+    secondaryColor: text('secondary_color'),
+    /** print-safe accent for generated documents; falls back to the primary */
+    documentAccentColor: text('document_accent_color'),
+    /** `company` = use the app logo on documents; `separate` = use the logo_document asset */
+    documentLogoMode: text('document_logo_mode').notNull().default('company'),
+    /** when true, a customer's own logo may appear on their documents */
+    documentShowCustomerLogo: boolean('document_show_customer_logo').notNull().default(false),
+    /** Phase 19: pre-auth login page copy (industry-neutral, tenant-configured) */
+    loginWelcome: text('login_welcome'),
+    loginDescription: text('login_description'),
+    loginShowPoweredBy: boolean('login_show_powered_by').notNull().default(true),
     updatedByMembershipId: uuid('updated_by_membership_id'),
     ...entityTimestamps,
   },
@@ -94,6 +111,30 @@ export const tenantCompanyProfiles = pgTable(
     check(
       'tenant_company_profiles_accent_hex',
       sql`"accent_color" is null or "accent_color" ~ ${HEX_COLOR}`,
+    ),
+    check(
+      'tenant_company_profiles_secondary_hex',
+      sql`"secondary_color" is null or "secondary_color" ~ ${HEX_COLOR}`,
+    ),
+    check(
+      'tenant_company_profiles_doc_accent_hex',
+      sql`"document_accent_color" is null or "document_accent_color" ~ ${HEX_COLOR}`,
+    ),
+    check(
+      'tenant_company_profiles_theme_preset_chk',
+      sql`"theme_preset" is null or "theme_preset" in ('aivoryx-teal','ocean','indigo','emerald','royal','warm','custom')`,
+    ),
+    check(
+      'tenant_company_profiles_doc_logo_mode_chk',
+      sql`"document_logo_mode" in ('company','separate')`,
+    ),
+    check(
+      'tenant_company_profiles_login_welcome_len',
+      sql`"login_welcome" is null or char_length("login_welcome") <= 80`,
+    ),
+    check(
+      'tenant_company_profiles_login_desc_len',
+      sql`"login_description" is null or char_length("login_description") <= 240`,
     ),
     check(
       'tenant_company_profiles_currency_iso',

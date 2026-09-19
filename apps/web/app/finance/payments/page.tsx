@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
 import { ErrorBlock } from '@/components/ui/kit';
+import { EmptyState } from '@/components/admin/ui';
 import { fmtMoney, fmtDate, Select, SupplyStatusBadge, Table, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useCustomers } from '@/lib/commercial/use-commercial';
@@ -171,7 +172,29 @@ export default function PaymentsPage() {
       {list.isLoading && <Skeleton rows={6} />}
       {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
 
-      {list.data && (
+      {list.data &&
+        list.data.items.length === 0 &&
+        (status || unallocatedOnly ? (
+          <EmptyState title="No payments match these filters">
+            Clear the status filter or untick &ldquo;Unallocated only&rdquo; to see every payment.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            title="No payments yet"
+            action={
+              canCreate ? (
+                <Button size="sm" onClick={() => setShowNew(true)}>
+                  Record payment
+                </Button>
+              ) : undefined
+            }
+          >
+            Payments are money received from customers. Record one, then allocate it to the invoices
+            it settles.
+          </EmptyState>
+        ))}
+
+      {list.data && list.data.items.length > 0 && (
         <>
           <Table
             head={
@@ -185,15 +208,8 @@ export default function PaymentsPage() {
               </tr>
             }
           >
-            {list.data.items.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-sm text-muted-foreground">
-                  No payments.
-                </td>
-              </tr>
-            )}
             {list.data.items.map((p) => (
-              <tr key={p.id} className="border-t hover:bg-accent/40">
+              <tr key={p.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <Link
                     href={`/finance/payments/${p.id}`}
@@ -209,7 +225,9 @@ export default function PaymentsPage() {
                 <td className="px-3 py-2 text-right tabular-nums">
                   {fmtMoney(p.amount)} {p.currency}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td
+                  className={`px-3 py-2 text-right tabular-nums ${Number(p.unallocatedAmount) > 0 ? 'text-warning' : 'text-muted-foreground'}`}
+                >
                   {fmtMoney(p.unallocatedAmount)}
                 </td>
                 <td className="px-3 py-2">

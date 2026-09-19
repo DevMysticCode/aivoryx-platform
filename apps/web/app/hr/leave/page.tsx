@@ -184,6 +184,7 @@ function DecisionCard({ r }: { r: HrLeaveRequest }) {
         <Button
           size="sm"
           variant="outline"
+          className="border-danger/40 text-danger hover:bg-danger-soft"
           disabled={dec.approve.isPending || dec.reject.isPending}
           onClick={() => dec.reject.mutate({ reason: reason || undefined })}
         >

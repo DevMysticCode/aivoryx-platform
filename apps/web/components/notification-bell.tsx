@@ -121,7 +121,7 @@ export function NotificationBell() {
                 }`}
               >
                 <span
-                  className={`mt-1.5 size-2 shrink-0 rounded-full ${TYPE_DOT[n.type] ?? 'bg-slate-400'}`}
+                  className={`mt-1.5 size-2 shrink-0 rounded-full ${TYPE_DOT[n.type] ?? 'bg-muted-foreground'}`}
                   aria-hidden
                 />
                 <span className="min-w-0 flex-1">

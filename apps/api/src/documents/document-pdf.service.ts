@@ -38,10 +38,10 @@ export class DocumentPdfService {
       // A stored logo that pdfkit cannot decode (corrupt / truncated bytes)
       // must never take down document generation — fall back to the text
       // identity header and try once more.
-      if (branding.logo) {
+      if (branding.logo || branding.customerLogo) {
         this.logger.warn(`document render failed with logo; retrying without it: ${String(err)}`);
         try {
-          return await this.renderOnce(def, { ...branding, logo: null });
+          return await this.renderOnce(def, { ...branding, logo: null, customerLogo: null });
         } catch (retryErr) {
           this.logger.error(`document render failed: ${String(retryErr)}`);
           throw new AppError('DOCUMENT_RENDER_FAILED');
@@ -68,7 +68,8 @@ export class DocumentPdfService {
   }
 
   private build(def: DocumentDefinition, b: DocumentBrandingContext): TDocumentDefinitions {
-    const accent = normaliseHex(b.primaryColor) ?? '#1e3a8a';
+    // print-safe accent (documentAccent) when supplied; never the raw app primary
+    const accent = normaliseHex(b.accentColor ?? null) ?? normaliseHex(b.primaryColor) ?? '#1e3a8a';
     const ink = '#1a1a1a';
     const muted = '#6b7280';
     const rule = '#e5e7eb';
@@ -125,7 +126,9 @@ export class DocumentPdfService {
       margin: [0, 0, 0, 10],
     };
 
-    const partyBlock: Content = def.party
+    // the customer logo is only ever present when the tenant enabled it
+    const customerLogoImage = b.customerLogo ? logoDataUri(b.customerLogo) : null;
+    const partyText: Content = def.party
       ? {
           stack: [
             { text: def.party.heading.toUpperCase(), style: 'sectionLabel' },
@@ -134,8 +137,19 @@ export class DocumentPdfService {
               style: i === 0 ? 'partyName' : 'partyLine',
             })),
           ],
-          margin: [0, 4, 0, 12],
         }
+      : { text: '' };
+    const partyBlock: Content = def.party
+      ? customerLogoImage
+        ? {
+            columns: [
+              { ...partyText, width: '*' },
+              { image: customerLogoImage, fit: [110, 40], width: 110, alignment: 'right' },
+            ],
+            columnGap: 16,
+            margin: [0, 4, 0, 12],
+          }
+        : { ...partyText, margin: [0, 4, 0, 12] }
       : { text: '', margin: [0, 0, 0, 0] };
 
     const lineTable: Content = def.table

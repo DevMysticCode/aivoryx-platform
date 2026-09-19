@@ -34,6 +34,8 @@ import { useToast } from '@/components/ui/toast';
 import { Confirm, ErrorBlock, LoadingBlock } from '@/components/ui/kit';
 import { TabBar } from '@/components/ui/tab-bar';
 import { RelatedLink } from '@/components/ui/related-link';
+import { Badge } from '@/components/ui/status-badge';
+import { HelperText } from '@/components/help/helper-text';
 import { ScheduleVisitDialog } from '@/components/field/schedule-visit-dialog';
 import { VisitOutcomeBadge, visitOutcomeLabel } from '@/components/field/visit-outcome';
 
@@ -123,6 +125,7 @@ export default function LeadDetailPage() {
             </Button>
           </div>
         </div>
+        <NextAction leadId={id} onSchedule={() => setFollowupOpen(true)} />
       </div>
 
       <TabBar tabs={TABS.map((t) => ({ key: t, label: t }))} active={tab} onChange={setTab} />
@@ -142,6 +145,42 @@ export default function LeadDetailPage() {
       <EditLeadDialog leadId={id} open={editOpen} onClose={() => setEditOpen(false)} />
       <FollowupDialog leadId={id} open={followupOpen} onClose={() => setFollowupOpen(false)} />
     </section>
+  );
+}
+
+/** The single most useful thing to do next: the earliest pending follow-up, or a prompt to schedule one. */
+function NextAction({ leadId, onSchedule }: { leadId: string; onSchedule: () => void }) {
+  const followups = useFollowups(leadId);
+  if (!followups.data) return null;
+  const next = followups.data
+    .filter((f) => f.status === 'pending')
+    .sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime())[0];
+  const overdue = next ? new Date(next.dueAt).getTime() < Date.now() : false;
+  return (
+    <div
+      data-testid="lead-next-action"
+      className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle pt-3 text-sm"
+    >
+      <div className="min-w-0">
+        <span className="text-xs font-medium text-muted-foreground">Next action</span>
+        {next ? (
+          <p className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">Follow up {new Date(next.dueAt).toLocaleString()}</span>
+            {overdue ? <Badge tone="danger">Overdue</Badge> : null}
+            {next.note ? <span className="text-muted-foreground">{next.note}</span> : null}
+          </p>
+        ) : (
+          <p className="text-muted-foreground">
+            Nothing scheduled. Schedule a follow-up so this lead doesn&apos;t go quiet.
+          </p>
+        )}
+      </div>
+      {!next ? (
+        <Button variant="outline" size="sm" onClick={onSchedule}>
+          Set a reminder
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
@@ -333,9 +372,10 @@ function ActivityTab({ leadId }: { leadId: string }) {
   const items = activities.data ?? [];
   if (items.length === 0)
     return (
-      <p className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
-        No activity yet.
-      </p>
+      <EmptyState title="No activity yet">
+        Every call, note, status change and follow-up on this lead is recorded here. Log a call or
+        add a note from the Overview and Notes tabs to start the timeline.
+      </EmptyState>
     );
 
   return (
@@ -427,7 +467,7 @@ function FollowupsTab({ leadId }: { leadId: string }) {
     <li className="rounded-lg border p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-medium">{new Date(f.dueAt).toLocaleString()}</span>
-        <span className="text-[11px] uppercase text-muted-foreground">{f.status}</span>
+        <Badge tone={f.status === 'completed' ? 'success' : 'neutral'}>{f.status}</Badge>
       </div>
       {f.note ? <p className="mt-0.5 text-sm text-muted-foreground">{f.note}</p> : null}
       {f.status === 'pending' ? (
@@ -473,7 +513,7 @@ function FollowupsTab({ leadId }: { leadId: string }) {
       </div>
       {overdue.length > 0 ? (
         <section>
-          <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-destructive">
+          <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-danger">
             Overdue ({overdue.length})
           </h3>
           <ul className="space-y-2">
@@ -494,7 +534,10 @@ function FollowupsTab({ leadId }: { leadId: string }) {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">Nothing scheduled.</p>
+          <EmptyState title="Nothing scheduled">
+            Follow-ups are reminders to contact this lead again. Use the Schedule follow-up button
+            above so it doesn&apos;t go quiet.
+          </EmptyState>
         )}
       </section>
       {done.length > 0 ? (
@@ -564,7 +607,9 @@ function NotesTab({ leadId }: { leadId: string }) {
       {notes.isLoading ? (
         <Skeleton rows={3} />
       ) : (notes.data ?? []).length === 0 ? (
-        <p className="text-sm text-muted-foreground">No notes yet.</p>
+        <EmptyState title="No notes yet">
+          Notes are a shared record of what you learned about this lead. Add the first one above.
+        </EmptyState>
       ) : (
         <ul className="space-y-2">
           {(notes.data ?? []).map((n) => (
@@ -612,7 +657,7 @@ function NotesTab({ leadId }: { leadId: string }) {
                       </button>
                       <button
                         type="button"
-                        className="hover:text-destructive hover:underline"
+                        className="hover:text-danger hover:underline"
                         onClick={() => setDeletingId(n.id)}
                       >
                         Delete
@@ -724,8 +769,9 @@ function LeadVisitsCard({
       ) : visits.error ? (
         <ErrorNote error={visits.error} />
       ) : items.length === 0 ? (
-        <EmptyState action={canSchedule ? scheduleButton : undefined}>
-          No site visits scheduled yet.
+        <EmptyState title="No site visits yet" action={canSchedule ? scheduleButton : undefined}>
+          A site visit is when someone goes to the customer&apos;s location to survey. Schedule one
+          once the lead is qualified.
         </EmptyState>
       ) : (
         <ul className="space-y-2 text-sm">
@@ -843,7 +889,7 @@ function LeadQuotationsCard({
                 </label>
                 <select
                   id={selectId}
-                  className="h-8 max-w-44 rounded-md border border-input bg-transparent px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-8 max-w-44 rounded-md border border-input bg-transparent px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                   value={visitId}
                   onChange={(e) => setVisitChoice(e.target.value)}
                 >
@@ -877,7 +923,11 @@ function LeadQuotationsCard({
       ) : quotes.error ? (
         <ErrorNote error={quotes.error} />
       ) : (quotes.data?.items ?? []).length === 0 ? (
-        <p className="text-sm text-muted-foreground">No quotations yet.</p>
+        <EmptyState title="No quotations yet">
+          {access.createQuotation
+            ? 'Quotations priced for this lead appear here. Use New above to start one.'
+            : 'Quotations prepared for this lead will appear here.'}
+        </EmptyState>
       ) : (
         <ul className="space-y-2 text-sm">
           {quotes.data!.items.map((q) => (
@@ -948,7 +998,7 @@ function EditLeadDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
+            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-surface-hover"
           >
             Cancel
           </button>
@@ -1060,7 +1110,7 @@ function FollowupDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
+            className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-surface-hover"
           >
             Cancel
           </button>
@@ -1089,6 +1139,7 @@ function FollowupDialog({
       <div className="space-y-3">
         <LabelledInput label="Due" type="datetime-local" value={due} onChange={setDue} />
         <LabelledInput label="Note (optional)" value={note} onChange={setNote} />
+        <HelperText>What should you raise or check when you follow up?</HelperText>
       </div>
     </Dialog>
   );
@@ -1125,7 +1176,7 @@ function LabelledInput({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-9 w-full rounded-md border bg-transparent px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       />
     </label>
   );

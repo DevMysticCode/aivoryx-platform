@@ -427,7 +427,10 @@
                 "logo",
                 "logo_light",
                 "logo_dark",
-                "favicon"
+                "favicon",
+                "logo_compact",
+                "logo_login",
+                "logo_document"
               ],
               "type": "string"
             }
@@ -480,7 +483,10 @@
                 "logo",
                 "logo_light",
                 "logo_dark",
-                "favicon"
+                "favicon",
+                "logo_compact",
+                "logo_login",
+                "logo_document"
               ],
               "type": "string"
             }
@@ -533,7 +539,10 @@
                 "logo",
                 "logo_light",
                 "logo_dark",
-                "favicon"
+                "favicon",
+                "logo_compact",
+                "logo_login",
+                "logo_document"
               ],
               "type": "string"
             }
@@ -666,6 +675,78 @@
         "summary": "Dismiss the onboarding checklist.",
         "tags": [
           "settings"
+        ]
+      }
+    },
+    "/public/workspaces/{slug}/login-branding": {
+      "get": {
+        "operationId": "getPublicLoginBranding",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLoginBrandingDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "WORKSPACE_NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Safe login-page branding for a workspace slug (no authentication).",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/public/workspaces/{slug}/login-logo": {
+      "get": {
+        "operationId": "getPublicLoginLogo",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "WORKSPACE_NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Stream the workspace login logo (falls back to the primary logo).",
+        "tags": [
+          "public"
         ]
       }
     },
@@ -16358,6 +16439,163 @@
         ]
       }
     },
+    "/customers/{id}/logo": {
+      "get": {
+        "operationId": "getCustomerLogo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Stream the customer logo (tenant-scoped; the storage key is never exposed).",
+        "tags": [
+          "customers"
+        ]
+      },
+      "post": {
+        "operationId": "uploadCustomerLogo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Upload / replace the customer logo.",
+        "tags": [
+          "customers"
+        ]
+      },
+      "delete": {
+        "operationId": "removeCustomerLogo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Remove the customer logo.",
+        "tags": [
+          "customers"
+        ]
+      }
+    },
     "/customers/{id}": {
       "get": {
         "operationId": "getCustomer",
@@ -22547,16 +22785,44 @@
             "nullable": true,
             "example": "#f97316"
           },
+          "secondaryColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#231d45"
+          },
+          "themePreset": {
+            "type": "string",
+            "nullable": true,
+            "example": "aivoryx-teal"
+          },
           "hasLogo": {
             "type": "boolean",
             "description": "True when the workspace has uploaded a logo."
+          },
+          "hasLightLogo": {
+            "type": "boolean"
+          },
+          "hasDarkLogo": {
+            "type": "boolean"
+          },
+          "hasCompactLogo": {
+            "type": "boolean"
+          },
+          "hasFavicon": {
+            "type": "boolean"
           }
         },
         "required": [
           "displayName",
           "primaryColor",
           "accentColor",
-          "hasLogo"
+          "secondaryColor",
+          "themePreset",
+          "hasLogo",
+          "hasLightLogo",
+          "hasDarkLogo",
+          "hasCompactLogo",
+          "hasFavicon"
         ]
       },
       "ActiveContextDto": {
@@ -22996,6 +23262,53 @@
             "nullable": true,
             "example": "#0EA5E9"
           },
+          "themePreset": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "aivoryx-teal",
+              "ocean",
+              "indigo",
+              "emerald",
+              "royal",
+              "warm",
+              "custom"
+            ]
+          },
+          "secondaryColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#231D45"
+          },
+          "documentAccentColor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stored print accent for documents (null = derived from the primary colour)."
+          },
+          "documentLogoMode": {
+            "type": "string",
+            "enum": [
+              "company",
+              "separate"
+            ]
+          },
+          "documentShowCustomerLogo": {
+            "type": "boolean",
+            "description": "Show the customer logo on their documents."
+          },
+          "loginWelcome": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80
+          },
+          "loginDescription": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 240
+          },
+          "loginShowPoweredBy": {
+            "type": "boolean"
+          },
           "hasLogo": {
             "type": "boolean",
             "description": "True when a primary logo is configured."
@@ -23004,6 +23317,15 @@
             "type": "boolean"
           },
           "hasDarkLogo": {
+            "type": "boolean"
+          },
+          "hasCompactLogo": {
+            "type": "boolean"
+          },
+          "hasLoginLogo": {
+            "type": "boolean"
+          },
+          "hasDocumentLogo": {
             "type": "boolean"
           },
           "hasFavicon": {
@@ -23034,9 +23356,20 @@
           "defaultCurrency",
           "primaryColor",
           "accentColor",
+          "themePreset",
+          "secondaryColor",
+          "documentAccentColor",
+          "documentLogoMode",
+          "documentShowCustomerLogo",
+          "loginWelcome",
+          "loginDescription",
+          "loginShowPoweredBy",
           "hasLogo",
           "hasLightLogo",
           "hasDarkLogo",
+          "hasCompactLogo",
+          "hasLoginLogo",
+          "hasDocumentLogo",
           "hasFavicon",
           "updatedAt"
         ]
@@ -23098,6 +23431,49 @@
           "accentColor": {
             "type": "string",
             "example": "#0EA5E9"
+          },
+          "secondaryColor": {
+            "type": "string",
+            "example": "#231D45"
+          },
+          "documentAccentColor": {
+            "type": "string",
+            "example": "#8A5A12"
+          },
+          "themePreset": {
+            "type": "string",
+            "enum": [
+              "aivoryx-teal",
+              "ocean",
+              "indigo",
+              "emerald",
+              "royal",
+              "warm",
+              "custom"
+            ]
+          },
+          "documentLogoMode": {
+            "type": "string",
+            "enum": [
+              "company",
+              "separate"
+            ]
+          },
+          "documentShowCustomerLogo": {
+            "type": "boolean"
+          },
+          "loginWelcome": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Empty string clears."
+          },
+          "loginDescription": {
+            "type": "string",
+            "maxLength": 240,
+            "description": "Empty string clears."
+          },
+          "loginShowPoweredBy": {
+            "type": "boolean"
           }
         }
       },
@@ -23107,7 +23483,24 @@
           "displayName": {
             "type": "string"
           },
+          "themePreset": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "aivoryx-teal",
+              "ocean",
+              "indigo",
+              "emerald",
+              "royal",
+              "warm",
+              "custom"
+            ]
+          },
           "primaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "secondaryColor": {
             "type": "string",
             "nullable": true
           },
@@ -23117,13 +23510,35 @@
           },
           "hasLogo": {
             "type": "boolean"
+          },
+          "hasLightLogo": {
+            "type": "boolean"
+          },
+          "hasDarkLogo": {
+            "type": "boolean"
+          },
+          "hasCompactLogo": {
+            "type": "boolean"
+          },
+          "hasLoginLogo": {
+            "type": "boolean"
+          },
+          "hasFavicon": {
+            "type": "boolean"
           }
         },
         "required": [
           "displayName",
+          "themePreset",
           "primaryColor",
+          "secondaryColor",
           "accentColor",
-          "hasLogo"
+          "hasLogo",
+          "hasLightLogo",
+          "hasDarkLogo",
+          "hasCompactLogo",
+          "hasLoginLogo",
+          "hasFavicon"
         ]
       },
       "OnboardingStepDto": {
@@ -23186,6 +23601,69 @@
           "dismissed",
           "show",
           "steps"
+        ]
+      },
+      "PublicLoginBrandingDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "themePreset": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "aivoryx-teal",
+              "ocean",
+              "indigo",
+              "emerald",
+              "royal",
+              "warm",
+              "custom"
+            ]
+          },
+          "primaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "secondaryColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "welcomeMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "showPoweredBy": {
+            "type": "boolean"
+          },
+          "hasLogo": {
+            "type": "boolean",
+            "description": "A login logo or the primary logo exists."
+          }
+        },
+        "required": [
+          "slug",
+          "displayName",
+          "themePreset",
+          "primaryColor",
+          "secondaryColor",
+          "accentColor",
+          "welcomeMessage",
+          "description",
+          "showPoweredBy",
+          "hasLogo"
         ]
       },
       "AuditLogDto": {
@@ -31824,6 +32302,10 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "hasLogo": {
+            "type": "boolean",
+            "description": "True when a customer logo is stored (never the key)."
           }
         },
         "required": [
@@ -31845,7 +32327,8 @@
           "status",
           "leadId",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "hasLogo"
         ]
       },
       "CustomerListDto": {
@@ -31977,6 +32460,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "hasLogo": {
+            "type": "boolean",
+            "description": "True when a customer logo is stored (never the key)."
+          },
           "leads": {
             "type": "array",
             "items": {
@@ -32016,6 +32503,7 @@
           "leadId",
           "createdAt",
           "updatedAt",
+          "hasLogo",
           "leads",
           "quotations",
           "projects"

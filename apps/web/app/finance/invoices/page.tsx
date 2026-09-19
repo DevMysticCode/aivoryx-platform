@@ -7,6 +7,8 @@ import { Search } from 'lucide-react';
 import { Button } from '@aivoryx/ui';
 import { PageHeader, ErrorNote, Skeleton, Card } from '@/components/admin/ui';
 import { ErrorBlock } from '@/components/ui/kit';
+import { Badge } from '@/components/ui/status-badge';
+import { EmptyState } from '@/components/admin/ui';
 import { fmtMoney, fmtDate, Select, SupplyStatusBadge, Table, Pager } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useCustomers } from '@/lib/commercial/use-commercial';
@@ -163,7 +165,7 @@ export default function InvoicesPage() {
                 />
                 <button
                   type="button"
-                  className="text-xs text-destructive hover:underline disabled:opacity-40"
+                  className="text-xs text-danger hover:underline disabled:opacity-40"
                   disabled={lines.length === 1}
                   onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))}
                 >
@@ -190,7 +192,7 @@ export default function InvoicesPage() {
         </Card>
       )}
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="flex flex-wrap items-center gap-2">
         <label className="relative w-full sm:min-w-0 sm:max-w-xs sm:flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <input
@@ -236,7 +238,29 @@ export default function InvoicesPage() {
       {list.isLoading && <Skeleton rows={6} />}
       {list.error && <ErrorBlock error={list.error} onRetry={() => list.refetch()} />}
 
-      {list.data && (
+      {list.data &&
+        list.data.items.length === 0 &&
+        (q || status || overdue ? (
+          <EmptyState title="No invoices match these filters">
+            Try a different invoice number or customer, or clear the status and overdue filters.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            title="No invoices yet"
+            action={
+              canCreate ? (
+                <Button size="sm" onClick={() => setShowNew(true)}>
+                  New invoice
+                </Button>
+              ) : undefined
+            }
+          >
+            Invoices bill a customer for work or materials. Draft one, issue it, then record
+            payments against it.
+          </EmptyState>
+        ))}
+
+      {list.data && list.data.items.length > 0 && (
         <>
           <Table
             head={
@@ -250,15 +274,8 @@ export default function InvoicesPage() {
               </tr>
             }
           >
-            {list.data.items.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-sm text-muted-foreground">
-                  No invoices.
-                </td>
-              </tr>
-            )}
             {list.data.items.map((inv) => (
-              <tr key={inv.id} className="border-t hover:bg-accent/40">
+              <tr key={inv.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <Link
                     href={`/finance/invoices/${inv.id}`}
@@ -278,9 +295,9 @@ export default function InvoicesPage() {
                 <td className="px-3 py-2">
                   <SupplyStatusBadge status={inv.status} />
                   {inv.overdue && (
-                    <span className="ml-1 rounded bg-destructive/10 px-1.5 py-0.5 text-[11px] text-destructive">
-                      {inv.daysOverdue}d
-                    </span>
+                    <Badge tone="danger" className="ml-1">
+                      {inv.daysOverdue}d overdue
+                    </Badge>
                   )}
                 </td>
               </tr>

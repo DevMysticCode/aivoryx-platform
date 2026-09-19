@@ -1,8 +1,9 @@
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@aivoryx/ui';
 import type { InactiveMembership, MembershipSummary } from '@aivoryx/contracts';
 import { ApiError } from '@/lib/api/client';
 import { getErrorMessage } from '@/lib/api/error-message';
+import { Badge, type Tone } from '@/components/ui/status-badge';
 
 /**
  * Small presentational primitives for the admin surface, built only from
@@ -93,61 +94,57 @@ export const Field = forwardRef<
   HTMLInputElement,
   { label: string; hint?: string } & InputHTMLAttributes<HTMLInputElement>
 >(function Field({ label, hint, className, ...props }, ref) {
+  const hintId = useId();
   return (
     <label className="block space-y-1.5">
       <span className="text-sm font-medium">{label}</span>
       <input
         ref={ref}
+        aria-describedby={hint ? hintId : undefined}
         className={cn(
-          'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          'h-9 w-full rounded-md border border-input bg-surface px-3 text-sm placeholder:text-subtle',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:cursor-not-allowed disabled:opacity-50',
           className,
         )}
         {...props}
       />
-      {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
+      {hint ? (
+        <span id={hintId} className="block text-xs text-subtle">
+          {hint}
+        </span>
+      ) : null}
     </label>
   );
 });
 
-const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-primary/10 text-primary',
-  invited: 'bg-warning/10 text-warning',
-  suspended: 'bg-destructive/10 text-destructive',
+const STATUS_STYLES: Record<string, Tone> = {
+  active: 'primary',
+  invited: 'warning',
+  suspended: 'danger',
   // CRM lead lifecycle (ADR 0031)
-  new: 'bg-secondary text-secondary-foreground',
-  assigned: 'bg-warning/10 text-warning',
-  contacted: 'bg-info/10 text-info',
-  qualified: 'bg-primary/10 text-primary',
-  disqualified: 'bg-destructive/10 text-destructive',
-  converted: 'bg-success/10 text-success',
+  new: 'neutral',
+  assigned: 'warning',
+  contacted: 'info',
+  qualified: 'primary',
+  disqualified: 'danger',
+  converted: 'success',
   // visit lifecycle (ADR 0033)
-  scheduled: 'bg-secondary text-secondary-foreground',
-  in_progress: 'bg-info/10 text-info',
-  completed: 'bg-success/10 text-success',
-  cancelled: 'bg-destructive/10 text-destructive',
+  scheduled: 'neutral',
+  in_progress: 'info',
+  completed: 'success',
+  cancelled: 'danger',
   // tenant lifecycle (Phase 14 §14) — using the new semantic warning/success
   // tokens (packages/ui styles.css) rather than another ad hoc amber literal;
   // pre-existing statuses above are left as-is (see PRODUCT-UX.md "Design
   // tokens" — a full repaint of every existing badge is deliberately out of
   // scope for this phase, not an oversight).
-  provisioning: 'bg-warning/10 text-warning',
-  archived: 'bg-secondary text-muted-foreground',
+  provisioning: 'warning',
+  archived: 'muted',
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  const key = status.toLowerCase();
-  return (
-    <span
-      className={cn(
-        'inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize',
-        STATUS_STYLES[key] ?? 'bg-secondary text-secondary-foreground',
-      )}
-    >
-      {status}
-    </span>
-  );
+  return <Badge tone={STATUS_STYLES[status.toLowerCase()] ?? 'neutral'}>{status}</Badge>;
 }
 
 export function RoleChip({ children }: { children: ReactNode }) {
@@ -164,8 +161,8 @@ export function ErrorNote({ error }: { error: unknown }) {
   const message = getErrorMessage(error);
   const correlationId = error instanceof ApiError ? error.correlationId : undefined;
   return (
-    <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
-      <p className="font-medium text-destructive">{message}</p>
+    <div role="alert" className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm">
+      <p className="font-medium text-danger">{message}</p>
       {correlationId ? (
         <p className="mt-1 font-mono text-xs text-muted-foreground">Reference: {correlationId}</p>
       ) : null}
@@ -175,21 +172,25 @@ export function ErrorNote({ error }: { error: unknown }) {
 
 export function EmptyState({
   children,
+  title,
   icon: Icon,
   action,
 }: {
-  children: ReactNode;
-  /** Optional — most empty states don't need one; reach for it only when a
-   *  glance-able icon genuinely helps (e.g. "no results" vs. "nothing here yet"). */
+  /** The explanation: what this area is, why it is empty, what to do next. */
+  children?: ReactNode;
+  /** A short headline, e.g. "No leads yet". Prefer it over a bare sentence. */
+  title?: string;
+  /** Optional — reach for it only when a glance-able icon genuinely helps. */
   icon?: (props: { className?: string }) => ReactNode;
   /** Optional call-to-action rendered below the message (e.g. a "Create…" button). */
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-      {Icon ? <Icon className="size-8 text-muted-foreground/60" /> : null}
-      <div>{children}</div>
-      {action}
+    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-surface px-6 py-10 text-center text-sm text-muted-foreground">
+      {Icon ? <Icon className="size-8 text-subtle" /> : null}
+      {title ? <p className="text-sm font-medium text-foreground">{title}</p> : null}
+      {children ? <div className="max-w-md">{children}</div> : null}
+      {action ? <div className="mt-1">{action}</div> : null}
     </div>
   );
 }

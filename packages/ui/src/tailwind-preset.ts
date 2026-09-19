@@ -11,7 +11,34 @@ const preset = {
   theme: {
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
+        border: {
+          DEFAULT: 'hsl(var(--border))',
+          subtle: 'hsl(var(--border-subtle))',
+        },
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+          raised: 'hsl(var(--surface-raised))',
+          hover: 'hsl(var(--surface-hover))',
+        },
+        'background-muted': 'hsl(var(--background-muted))',
+        subtle: 'hsl(var(--text-subtle))',
+        focus: 'hsl(var(--focus))',
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar-background))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          muted: 'hsl(var(--sidebar-muted))',
+          active: 'hsl(var(--sidebar-active))',
+          'active-foreground': 'hsl(var(--sidebar-active-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+        },
+        chart: {
+          1: 'hsl(var(--chart-1))',
+          2: 'hsl(var(--chart-2))',
+          3: 'hsl(var(--chart-3))',
+          4: 'hsl(var(--chart-4))',
+          5: 'hsl(var(--chart-5))',
+          6: 'hsl(var(--chart-6))',
+        },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
@@ -23,6 +50,8 @@ const preset = {
         brand: {
           DEFAULT: 'hsl(var(--brand))',
           foreground: 'hsl(var(--brand-foreground))',
+          secondary: 'hsl(var(--brand-secondary))',
+          accent: 'hsl(var(--brand-accent))',
         },
         gold: {
           DEFAULT: 'hsl(var(--gold))',
@@ -30,6 +59,9 @@ const preset = {
         },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
+          hover: 'hsl(var(--primary-hover))',
+          active: 'hsl(var(--primary-active))',
+          soft: 'hsl(var(--primary-soft))',
           foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
@@ -48,17 +80,24 @@ const preset = {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        danger: {
+          DEFAULT: 'hsl(var(--danger))',
+          soft: 'hsl(var(--danger-soft))',
+        },
         success: {
           DEFAULT: 'hsl(var(--success))',
           foreground: 'hsl(var(--success-foreground))',
+          soft: 'hsl(var(--success-soft))',
         },
         warning: {
           DEFAULT: 'hsl(var(--warning))',
           foreground: 'hsl(var(--warning-foreground))',
+          soft: 'hsl(var(--warning-soft))',
         },
         info: {
           DEFAULT: 'hsl(var(--info))',
           foreground: 'hsl(var(--info-foreground))',
+          soft: 'hsl(var(--info-soft))',
         },
       },
       borderRadius: {

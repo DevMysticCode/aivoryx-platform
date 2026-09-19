@@ -23,7 +23,7 @@ export function ActivityFeed({ activity }: { activity: CrmRecentActivityItem[] }
         <li key={a.id}>
           <Link
             href={`/crm/leads/${a.leadId}`}
-            className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-accent/40"
+            className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-surface-hover"
           >
             <span className="min-w-0 truncate">
               <span className="font-medium">{TYPE_LABEL[a.type] ?? a.type}</span>

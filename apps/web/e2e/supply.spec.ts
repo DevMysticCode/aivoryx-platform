@@ -73,6 +73,7 @@ test.describe('Supply chain golden path', () => {
 
     // ---- 6. raise a purchase order ----------------------------
     await page.goto('/procurement/purchase-orders');
+    await page.getByRole('button', { name: 'New purchase order' }).click();
     await page.getByLabel('Supplier').selectOption({ index: 1 });
     await page.getByLabel('Project (optional)').selectOption({ label: projectNumber });
     // single line: product + qty
@@ -105,6 +106,7 @@ test.describe('Supply chain golden path', () => {
 
     // ---- 10. create a dispatch --------------------------------
     await page.goto('/logistics/dispatches');
+    await page.getByRole('button', { name: 'New dispatch' }).click();
     await page.getByLabel('Project').selectOption({ label: projectNumber });
     await page.getByLabel('Source warehouse').selectOption({ index: 1 });
     await page.locator('form input[inputmode="decimal"]').first().fill(QTY);

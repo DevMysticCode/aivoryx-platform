@@ -263,6 +263,7 @@ export type BrandingContext = components['schemas']['BrandingContextDto'];
 export type CompanyProfile = components['schemas']['CompanyProfileDto'];
 export type UpdateCompanyProfileRequest = components['schemas']['UpdateCompanyProfileDto'];
 export type Branding = components['schemas']['BrandingDto'];
+export type PublicLoginBranding = components['schemas']['PublicLoginBrandingDto'];
 export type Onboarding = components['schemas']['OnboardingDto'];
 export type OnboardingStep = components['schemas']['OnboardingStepDto'];
 

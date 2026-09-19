@@ -2,53 +2,48 @@
 
 import type { InputHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@aivoryx/ui';
+import { Badge, type Tone } from '@/components/ui/status-badge';
 
 /** Presentational helpers shared across the Phase 12 HR surface (ADR 0041). */
 
 export { TabBar } from '@/components/ui/tab-bar';
 
-const HR_STATUS_STYLES: Record<string, string> = {
-  active: 'bg-success/10 text-success',
-  onboarding: 'bg-info/10 text-info',
-  archived: 'bg-secondary text-muted-foreground',
-  approved: 'bg-success/10 text-success',
-  paid: 'bg-success/10 text-success',
-  reimbursed: 'bg-success/10 text-success',
-  finalized: 'bg-info/10 text-info',
-  present: 'bg-success/10 text-success',
-  submitted: 'bg-warning/10 text-warning',
-  pending: 'bg-warning/10 text-warning',
-  processing: 'bg-warning/10 text-warning',
-  payment_processing: 'bg-warning/10 text-warning',
-  partially_paid: 'bg-warning/10 text-warning',
-  draft: 'bg-secondary text-secondary-foreground',
-  on_leave: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  late: 'bg-warning/10 text-warning',
-  half_day: 'bg-warning/10 text-warning',
-  rejected: 'bg-destructive/10 text-destructive',
-  reimbursement_failed: 'bg-destructive/10 text-destructive',
-  failed: 'bg-destructive/10 text-destructive',
-  absent: 'bg-destructive/10 text-destructive',
-  suspended: 'bg-destructive/10 text-destructive',
-  terminated: 'bg-destructive/10 text-destructive',
-  cancelled: 'bg-secondary text-muted-foreground',
-  superseded: 'bg-secondary text-muted-foreground',
-  weekend: 'bg-secondary text-muted-foreground',
-  holiday: 'bg-secondary text-muted-foreground',
+const HR_STATUS_STYLES: Record<string, Tone> = {
+  active: 'success',
+  onboarding: 'info',
+  archived: 'muted',
+  approved: 'success',
+  paid: 'success',
+  reimbursed: 'success',
+  finalized: 'info',
+  present: 'success',
+  submitted: 'warning',
+  pending: 'warning',
+  processing: 'warning',
+  payment_processing: 'warning',
+  partially_paid: 'warning',
+  draft: 'neutral',
+  on_leave: 'primary',
+  late: 'warning',
+  half_day: 'warning',
+  rejected: 'danger',
+  reimbursement_failed: 'danger',
+  failed: 'danger',
+  absent: 'danger',
+  suspended: 'danger',
+  terminated: 'danger',
+  cancelled: 'muted',
+  superseded: 'muted',
+  weekend: 'muted',
+  holiday: 'muted',
 };
 
 export function HrStatusBadge({ status }: { status: string | null | undefined }) {
   if (!status) return <span className="text-muted-foreground">—</span>;
-  const key = status.toLowerCase();
   return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize',
-        HR_STATUS_STYLES[key] ?? 'bg-secondary text-secondary-foreground',
-      )}
-    >
+    <Badge tone={HR_STATUS_STYLES[status.toLowerCase()] ?? 'neutral'}>
       {status.replace(/_/g, ' ').toLowerCase()}
-    </span>
+    </Badge>
   );
 }
 
@@ -119,7 +114,7 @@ export function StatCard({
         className={cn(
           'mt-1 text-2xl font-semibold tabular-nums',
           tone === 'pos' && 'text-success',
-          tone === 'neg' && 'text-destructive',
+          tone === 'neg' && 'text-danger',
           tone === 'warn' && 'text-warning',
         )}
       >

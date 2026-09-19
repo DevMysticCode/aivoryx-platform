@@ -44,7 +44,7 @@ export function CrmPipelineWidget() {
                       className={cn(
                         'absolute inset-y-0 left-0 rounded',
                         s === 'CONVERTED'
-                          ? 'bg-emerald-500'
+                          ? 'bg-success'
                           : s === 'DISQUALIFIED'
                             ? 'bg-destructive/70'
                             : 'bg-primary',

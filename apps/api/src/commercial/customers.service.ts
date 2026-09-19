@@ -19,6 +19,7 @@ const { customers, leads, quotations, projects } = schema;
 
 function toDto(row: typeof customers.$inferSelect): CustomerDto {
   return {
+    hasLogo: !!row.logoObjectKey,
     id: row.id,
     number: row.number,
     name: row.name,

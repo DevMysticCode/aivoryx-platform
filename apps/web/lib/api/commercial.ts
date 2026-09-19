@@ -146,3 +146,27 @@ export type { Customer, Quotation };
 /** Real quote-pipeline counts for the CRM dashboard (bound server-side to the caller's CRM scope). */
 export const quotationPipelineSummary = () =>
   apiFetch<QuotationPipelineSummary>('/quotations/pipeline-summary', { cache: 'no-store' });
+
+// ---- customer logo (Phase 19 — optional, shown on documents only if the tenant enables it) ----
+
+export async function uploadCustomerLogo(id: string, file: File): Promise<CustomerDetail> {
+  const form = new FormData();
+  form.append('file', file);
+  return apiFetch<CustomerDetail>(`/customers/${id}/logo`, { method: 'POST', body: form });
+}
+
+export const removeCustomerLogo = (id: string) =>
+  apiFetch<CustomerDetail>(`/customers/${id}/logo`, { method: 'DELETE' });
+
+/** The authenticated logo stream as an object URL (credentials, so it works cross-site). */
+export async function fetchCustomerLogoObjectUrl(id: string): Promise<string | null> {
+  const res = await fetch(
+    `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/customers/${id}/logo`,
+    {
+      credentials: 'include',
+      cache: 'no-store',
+    },
+  );
+  if (!res.ok) return null;
+  return URL.createObjectURL(await res.blob());
+}

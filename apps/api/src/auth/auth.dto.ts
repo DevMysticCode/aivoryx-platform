@@ -71,8 +71,19 @@ export class BrandingContextDto {
   @ApiProperty({ nullable: true, type: String, example: '#f97316' })
   accentColor!: string | null;
 
+  @ApiProperty({ nullable: true, type: String, example: '#231d45' })
+  secondaryColor!: string | null;
+
+  @ApiProperty({ nullable: true, type: String, example: 'aivoryx-teal' })
+  themePreset!: string | null;
+
   @ApiProperty({ description: 'True when the workspace has uploaded a logo.' })
   hasLogo!: boolean;
+
+  @ApiProperty() hasLightLogo!: boolean;
+  @ApiProperty() hasDarkLogo!: boolean;
+  @ApiProperty() hasCompactLogo!: boolean;
+  @ApiProperty() hasFavicon!: boolean;
 }
 
 export class ActiveContextDto {

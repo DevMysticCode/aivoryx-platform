@@ -126,6 +126,10 @@ export const customers = pgTable(
     status: customerStatus('status').notNull().default('prospect'),
     /** the CRM lead this customer was promoted from, when applicable */
     leadId: uuid('lead_id'),
+    /** Phase 19: optional customer logo (opaque tenant-namespaced key, never exposed) */
+    logoObjectKey: text('logo_object_key'),
+    logoContentType: text('logo_content_type'),
+    logoUpdatedAt: timestamp('logo_updated_at', { withTimezone: true }),
     createdByMembershipId: uuid('created_by_membership_id').notNull(),
     ...entityTimestamps,
   },

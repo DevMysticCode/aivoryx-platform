@@ -233,7 +233,7 @@ function MaterialsCard({
                   {canUpdate && Number(m.allocatedQty) === 0 && Number(m.dispatchedQty) === 0 ? (
                     <button
                       type="button"
-                      className="ml-3 text-xs text-destructive hover:underline disabled:opacity-50"
+                      className="ml-3 text-xs text-danger hover:underline disabled:opacity-50"
                       disabled={removeMaterial.isPending && removingId === m.id}
                       onClick={() => setRemovingId(m.id)}
                     >

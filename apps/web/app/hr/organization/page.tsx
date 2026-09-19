@@ -734,7 +734,7 @@ function ScheduleEditor({
           </div>
         </fieldset>
         {problem && (
-          <p role="alert" className="text-sm font-medium text-destructive">
+          <p role="alert" className="text-sm font-medium text-danger">
             {problem}
           </p>
         )}

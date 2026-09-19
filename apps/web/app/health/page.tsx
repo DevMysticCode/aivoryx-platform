@@ -25,8 +25,8 @@ export default async function HealthPage() {
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
-          <p className="font-medium text-destructive">API unavailable</p>
+        <div className="rounded-lg border border-danger/40 bg-danger-soft p-4 text-sm">
+          <p className="font-medium text-danger">API unavailable</p>
           <p className="mt-1 text-muted-foreground">{error}</p>
           <p className="mt-2 text-muted-foreground">
             Start the API with <code className="font-mono">pnpm --filter @aivoryx/api dev</code> and
@@ -74,7 +74,7 @@ function StatusRow({
         className={
           status === 'ok'
             ? 'rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary'
-            : 'rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive'
+            : 'rounded-full bg-danger-soft px-2.5 py-1 text-xs font-medium text-danger'
         }
       >
         {status === 'ok' ? 'Operational' : 'Degraded'}

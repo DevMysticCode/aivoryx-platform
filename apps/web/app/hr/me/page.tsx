@@ -15,6 +15,7 @@ import {
   useMyPerformanceReviews,
   useReviewActions,
 } from '@/lib/hr/use-hr';
+import { ContextualHelp } from '@/components/help/contextual-help';
 import { ErrorBlock } from '@/components/ui/kit';
 import { ApiError } from '@/lib/api/client';
 import { usePermissions } from '@/components/supply/supply-shell';
@@ -93,9 +94,9 @@ export default function MyHrPage() {
       <div className="space-y-4">
         <PageHeader title="My HR" description="Your own profile, leave, expenses and payslips." />
         {notLinked ? (
-          <EmptyState>
-            Your account isn&apos;t linked to an employee record yet. Ask HR to link it — until
-            then, personal HR features aren&apos;t available.
+          <EmptyState title="Account not linked to an employee record">
+            Your sign-in isn&apos;t connected to an employee record yet, so personal HR features
+            aren&apos;t available. Ask HR to link your account.
           </EmptyState>
         ) : (
           <ErrorBlock error={me.error} onRetry={() => me.refetch()} />
@@ -115,14 +116,6 @@ export default function MyHrPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <h2 className="mb-2 text-sm font-semibold">Profile</h2>
-          <DefRow label="Department">{e.department ?? '—'}</DefRow>
-          <DefRow label="Designation">{e.designation ?? '—'}</DefRow>
-          <DefRow label="Manager">{e.managerName ?? '—'}</DefRow>
-          <DefRow label="Work location">{e.workLocation ?? '—'}</DefRow>
-          <DefRow label="Joined">{fmtDate(e.joiningDate)}</DefRow>
-        </Card>
-        <Card>
           <h2 className="mb-2 text-sm font-semibold">Today</h2>
           {today ? (
             <>
@@ -133,7 +126,10 @@ export default function MyHrPage() {
               <DefRow label="Checked out">{fmtTime(today.checkOutAt)}</DefRow>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">No attendance recorded today.</p>
+            <p className="text-sm text-muted-foreground">
+              You haven&apos;t clocked in today. Use Check in when you start work; your hours appear
+              here.
+            </p>
           )}
           {canSelf && (
             <div className="mt-3 space-y-2">
@@ -163,6 +159,14 @@ export default function MyHrPage() {
             </div>
           )}
         </Card>
+        <Card>
+          <h2 className="mb-2 text-sm font-semibold">Profile</h2>
+          <DefRow label="Department">{e.department ?? '—'}</DefRow>
+          <DefRow label="Designation">{e.designation ?? '—'}</DefRow>
+          <DefRow label="Manager">{e.managerName ?? '—'}</DefRow>
+          <DefRow label="Work location">{e.workLocation ?? '—'}</DefRow>
+          <DefRow label="Joined">{fmtDate(e.joiningDate)}</DefRow>
+        </Card>
       </div>
 
       <Card>
@@ -171,24 +175,25 @@ export default function MyHrPage() {
           head={
             <tr>
               <th className="px-3 py-2">Type</th>
-              <th className="px-3 py-2">Opening</th>
-              <th className="px-3 py-2">Consumed</th>
-              <th className="px-3 py-2">Balance</th>
+              <th className="px-3 py-2 text-right">Opening</th>
+              <th className="px-3 py-2 text-right">Consumed</th>
+              <th className="px-3 py-2 text-right">Balance</th>
             </tr>
           }
         >
           {me.data.leaveBalances.map((b) => (
             <tr key={b.leaveTypeId}>
               <td className="px-3 py-2">{b.leaveTypeName}</td>
-              <td className="px-3 py-2 tabular-nums">{b.opening}</td>
-              <td className="px-3 py-2 tabular-nums">{b.consumed}</td>
-              <td className="px-3 py-2 font-medium tabular-nums">{b.balance}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{b.opening}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{b.consumed}</td>
+              <td className="px-3 py-2 text-right font-medium tabular-nums">{b.balance}</td>
             </tr>
           ))}
           {me.data.leaveBalances.length === 0 && (
             <tr>
               <td colSpan={4} className="px-3 py-4 text-center text-muted-foreground">
-                No leave balances yet.
+                No leave balances yet. HR assigns your leave entitlement; it will appear here once
+                set.
               </td>
             </tr>
           )}
@@ -196,7 +201,9 @@ export default function MyHrPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-2 text-sm font-semibold">My leave requests</h2>
+        <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+          My leave requests <ContextualHelp concept="leaveStates" />
+        </h2>
         {leave.data && leave.data.items.length > 0 ? (
           <Table
             head={
@@ -222,7 +229,10 @@ export default function MyHrPage() {
             ))}
           </Table>
         ) : (
-          <EmptyState>No leave requests yet.</EmptyState>
+          <EmptyState title="No leave requests">
+            Requests you submit are listed here with their approval status. Ask your manager or HR
+            to raise one if you need time off.
+          </EmptyState>
         )}
       </Card>
 
@@ -251,49 +261,9 @@ export default function MyHrPage() {
             ))}
           </Table>
         ) : (
-          <EmptyState>No expense claims yet.</EmptyState>
-        )}
-      </Card>
-
-      <Card>
-        <h2 className="mb-2 text-sm font-semibold">Payslips</h2>
-        {payroll.data && payroll.data.length > 0 ? (
-          <Table
-            head={
-              <tr>
-                <th className="px-3 py-2">Period</th>
-                <th className="px-3 py-2">Pay date</th>
-                <th className="px-3 py-2">Net</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2" />
-              </tr>
-            }
-          >
-            {payroll.data.map((h) => (
-              <tr key={h.payrollEntryId}>
-                <td className="px-3 py-2">{h.periodName}</td>
-                <td className="px-3 py-2">{fmtDate(h.payDate)}</td>
-                <td className="px-3 py-2 font-medium tabular-nums">
-                  {money(h.netPay, h.currency)}
-                </td>
-                <td className="px-3 py-2">
-                  <HrStatusBadge status={h.paymentStatus} />
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <a
-                    href={hrApi.myPayslipPdfUrl(h.payrollEntryId)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Download payslip
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </Table>
-        ) : (
-          <EmptyState>No finalized payroll yet.</EmptyState>
+          <EmptyState title="No expense claims">
+            Work expenses you claim are listed here with their status. Ask HR how to submit a claim.
+          </EmptyState>
         )}
       </Card>
 
@@ -335,7 +305,9 @@ export default function MyHrPage() {
             ))}
           </Table>
         ) : (
-          <EmptyState>HR hasn&apos;t shared any documents with you yet.</EmptyState>
+          <EmptyState title="No shared documents">
+            Contracts, letters and policies HR shares with you will appear here.
+          </EmptyState>
         )}
       </Card>
 
@@ -352,7 +324,54 @@ export default function MyHrPage() {
             ))}
           </ul>
         ) : (
-          <EmptyState>No performance reviews have been shared with you yet.</EmptyState>
+          <EmptyState title="No performance reviews">
+            Reviews appear here once your manager submits them. You can acknowledge them from this
+            page.
+          </EmptyState>
+        )}
+      </Card>
+
+      <Card>
+        <h2 className="mb-2 text-sm font-semibold">Payslips</h2>
+        {payroll.data && payroll.data.length > 0 ? (
+          <Table
+            head={
+              <tr>
+                <th className="px-3 py-2">Period</th>
+                <th className="px-3 py-2">Pay date</th>
+                <th className="px-3 py-2">Net</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2" />
+              </tr>
+            }
+          >
+            {payroll.data.map((h) => (
+              <tr key={h.payrollEntryId}>
+                <td className="px-3 py-2">{h.periodName}</td>
+                <td className="px-3 py-2">{fmtDate(h.payDate)}</td>
+                <td className="px-3 py-2 font-medium tabular-nums">
+                  {money(h.netPay, h.currency)}
+                </td>
+                <td className="px-3 py-2">
+                  <HrStatusBadge status={h.paymentStatus} />
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <a
+                    href={hrApi.myPayslipPdfUrl(h.payrollEntryId)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Download payslip
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </Table>
+        ) : (
+          <EmptyState title="No payslips yet">
+            Payslips appear here after each payroll run is finalized.
+          </EmptyState>
         )}
       </Card>
     </div>

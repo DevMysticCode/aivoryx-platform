@@ -1,5 +1,6 @@
 'use client';
 
+import { ContextualHelp } from '@/components/help/contextual-help';
 import { useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
@@ -121,10 +122,11 @@ function RolesTab({ kind }: { kind: 'profiles' | 'permission-sets' }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="flex items-center gap-1 text-sm text-muted-foreground">
           {kind === 'profiles'
             ? 'A profile is a member’s baseline capability set.'
             : 'Permission sets grant extra access on top of a profile — they are additive.'}
+          {kind === 'profiles' ? <ContextualHelp concept="profile" /> : null}
         </p>
         <button
           type="button"
@@ -170,7 +172,7 @@ function RolesTab({ kind }: { kind: 'profiles' | 'permission-sets' }) {
                   type="button"
                   onClick={() => setDeleting(r)}
                   aria-label={`Delete ${r.name}`}
-                  className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-danger-soft hover:text-danger"
                 >
                   <Trash2 className="size-4" />
                 </button>

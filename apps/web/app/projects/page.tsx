@@ -144,7 +144,7 @@ export default function ProjectsPage() {
             }
           >
             {projects.data.items.map((p) => (
-              <tr key={p.id} className="hover:bg-accent/40">
+              <tr key={p.id} className="hover:bg-surface-hover">
                 <td className="px-3 py-2">
                   <Link
                     href={`/projects/${p.id}`}
@@ -168,7 +168,10 @@ export default function ProjectsPage() {
           <Pager page={page} totalPages={totalPages} onPage={setPage} />
         </>
       ) : (
-        <EmptyState>No projects match these filters yet.</EmptyState>
+        <EmptyState title="No projects yet">
+          Projects are created when a booked quotation is handed to execution. They track
+          installation, net metering and handover. Clear any filters to see all projects.
+        </EmptyState>
       )}
     </section>
   );

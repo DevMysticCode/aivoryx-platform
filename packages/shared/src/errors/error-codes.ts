@@ -591,6 +591,15 @@ export const ERROR_CODES = {
     httpStatus: 422,
     message: 'Brand colours must be a 6-digit hex value such as #1E40AF.',
   },
+  BRANDING_COLOR_LOW_CONTRAST: {
+    httpStatus: 422,
+    message:
+      'That brand colour does not have enough contrast to keep text readable. Try the suggested colour or pick a preset.',
+  },
+  WORKSPACE_NOT_FOUND: {
+    httpStatus: 404,
+    message: 'That workspace could not be found.',
+  },
   LOGO_INVALID: {
     httpStatus: 422,
     message: 'That file could not be used as a logo — check the format, size and dimensions.',

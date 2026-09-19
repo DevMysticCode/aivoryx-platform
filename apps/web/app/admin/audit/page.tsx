@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { cn } from '@aivoryx/ui';
 import { ErrorNote, Field, PageHeader, Skeleton } from '@/components/admin/ui';
 import { Pager, Select, Table } from '@/components/supply/ui';
+import { Badge, type Tone } from '@/components/ui/status-badge';
 import { Sheet } from '@/components/ui/overlays';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useAuditLog, useAuditEntry } from '@/lib/audit/use-audit';
@@ -24,18 +25,18 @@ const MODULES = [
   'settings',
 ];
 
-const MODULE_STYLE: Record<string, string> = {
-  auth: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-  identity: 'bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300',
-  crm: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
-  integrations: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300',
-  field: 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300',
-  supply: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
-  commercial: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300',
-  execution: 'bg-lime-100 text-lime-800 dark:bg-lime-950 dark:text-lime-300',
-  notifications: 'bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-950 dark:text-fuchsia-300',
-  finance: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-  settings: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
+const MODULE_TONE: Record<string, Tone> = {
+  auth: 'muted',
+  identity: 'primary',
+  crm: 'info',
+  integrations: 'info',
+  field: 'success',
+  supply: 'warning',
+  commercial: 'primary',
+  execution: 'success',
+  notifications: 'neutral',
+  finance: 'success',
+  settings: 'neutral',
 };
 
 /** Best-effort deep link from an audit entry back to the affected record. */
@@ -65,16 +66,7 @@ function actorLabel(row: {
 }
 
 function ModuleBadge({ module }: { module: string }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium capitalize',
-        MODULE_STYLE[module] ?? 'bg-secondary text-secondary-foreground',
-      )}
-    >
-      {module}
-    </span>
-  );
+  return <Badge tone={MODULE_TONE[module] ?? 'neutral'}>{module}</Badge>;
 }
 
 export default function AuditLogPage() {

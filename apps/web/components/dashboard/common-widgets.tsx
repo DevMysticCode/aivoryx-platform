@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { type Plus, Users, FileText, Wallet, CalendarClock } from 'lucide-react';
 import { useAccess } from '@/lib/navigation/use-access';
-import { WidgetCard } from './widget-card';
 
 /** Fast entry points, each gated by module + permission (§4 "quick create"). */
 export function QuickActionsWidget() {
@@ -44,19 +43,19 @@ export function QuickActionsWidget() {
   if (actions.length === 0) return null;
 
   return (
-    <WidgetCard title="Quick actions">
+    <nav aria-label="Quick actions">
       <div className="flex flex-wrap gap-2">
         {actions.map((a) => (
           <Link
             key={a.href}
             href={a.href}
-            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-accent"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <a.icon className="size-4" aria-hidden />
             {a.label}
           </Link>
         ))}
       </div>
-    </WidgetCard>
+    </nav>
   );
 }

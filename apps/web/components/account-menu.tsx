@@ -17,6 +17,8 @@ import * as api from '@/lib/api/admin';
 import { useMe, adminKeys } from '@/lib/admin/use-admin';
 import { Menu, MenuItem } from '@/components/ui/overlays';
 import { useToast } from '@/components/ui/toast';
+import { useAppearance } from '@/components/theme-provider';
+import { APPEARANCE_OPTIONS, BRAND_CACHE_STORAGE_KEY } from '@/lib/theme/appearance';
 
 /**
  * The account menu (§18) + company switcher (§19). Logout is a first-class,
@@ -31,11 +33,17 @@ export function AccountMenu() {
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const appearance = useAppearance();
 
   const logout = useMutation({
     mutationFn: api.logout,
     onSuccess: () => {
       qc.clear();
+      try {
+        localStorage.removeItem(BRAND_CACHE_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
       router.replace('/login');
     },
   });
@@ -79,7 +87,7 @@ export function AccountMenu() {
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={`Account menu — ${label}`}
-          className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm hover:bg-accent"
+          className="flex h-9 items-center gap-2 rounded-md border border-transparent px-1.5 text-sm hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <span
             className="grid size-6 place-items-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground"
@@ -97,6 +105,35 @@ export function AccountMenu() {
         <p className="truncate text-xs text-muted-foreground">
           {me.data?.isPlatformAdmin ? 'Platform administrator' : label}
         </p>
+      </div>
+
+      <div className="border-b px-2.5 py-2">
+        <p className="pb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Appearance
+        </p>
+        <div
+          role="radiogroup"
+          aria-label="Appearance"
+          className="grid grid-cols-3 gap-0.5 rounded-md bg-background-muted p-0.5"
+        >
+          {APPEARANCE_OPTIONS.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={appearance.preference === o.value}
+              onClick={() => appearance.setPreference(o.value)}
+              className={cn(
+                'rounded px-2 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+                appearance.preference === o.value
+                  ? 'bg-surface-raised text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {memberships.length > 1 ? (

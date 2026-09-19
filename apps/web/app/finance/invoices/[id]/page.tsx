@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { Button } from '@aivoryx/ui';
 import { Card, EmptyState, ErrorNote, Skeleton, PageHeader } from '@/components/admin/ui';
 import { Confirm, ErrorBlock } from '@/components/ui/kit';
+import { Badge } from '@/components/ui/status-badge';
+import { ContextualHelp } from '@/components/help/contextual-help';
 import { fmtMoney, fmtDate, SupplyStatusBadge } from '@/components/supply/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import { useInvoice, useInvoiceAction, useRecordPayment } from '@/lib/finance/use-finance';
@@ -28,7 +30,19 @@ export default function InvoiceDetailPage() {
 
   if (q.isLoading) return <Skeleton rows={8} />;
   if (q.error) return <ErrorBlock error={q.error} onRetry={() => q.refetch()} />;
-  if (!q.data) return <EmptyState>Invoice not found.</EmptyState>;
+  if (!q.data)
+    return (
+      <EmptyState
+        title="Invoice not found"
+        action={
+          <Link href="/finance/invoices" className="text-primary hover:underline">
+            Back to invoices
+          </Link>
+        }
+      >
+        It may have been removed, or you may not have access to it.
+      </EmptyState>
+    );
   const inv = q.data;
 
   const canIssue = perms.includes('finance.invoices.issue') && inv.status === 'DRAFT';
@@ -68,22 +82,19 @@ export default function InvoiceDetailPage() {
       >
         <div className="flex flex-wrap items-center gap-2">
           <SupplyStatusBadge status={inv.status} />
-          {inv.overdue && (
-            <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs text-destructive">
-              Overdue {inv.daysOverdue}d
-            </span>
-          )}
+          {inv.overdue && <Badge tone="danger">Overdue {inv.daysOverdue}d</Badge>}
+          <ContextualHelp concept="invoiceStates" />
           <a
             href={invoicePrintUrl(inv.id)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
+            className="inline-flex h-8 items-center rounded-md border border-border px-3 text-sm hover:bg-surface-hover"
           >
             Print
           </a>
           <a
             href={invoicePdfUrl(inv.id)}
-            className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
+            className="inline-flex h-8 items-center rounded-md border border-border px-3 text-sm hover:bg-surface-hover"
           >
             Download PDF
           </a>
@@ -100,6 +111,7 @@ export default function InvoiceDetailPage() {
             <Button
               size="sm"
               variant="outline"
+              className="border-danger/40 text-danger hover:bg-danger-soft"
               onClick={() => setCancelling(true)}
               disabled={actions.cancel.isPending}
             >
@@ -192,9 +204,9 @@ export default function InvoiceDetailPage() {
         </Card>
       )}
 
-      <Card className="p-0">
+      <Card className="overflow-x-auto p-0">
         <table className="w-full text-sm">
-          <thead className="border-b bg-secondary/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
+          <thead className="border-b border-border-subtle bg-background-muted text-left text-xs font-medium text-muted-foreground">
             <tr>
               <th className="px-3 py-2">Description</th>
               <th className="px-3 py-2 text-right">Qty</th>
@@ -204,7 +216,7 @@ export default function InvoiceDetailPage() {
               <th className="px-3 py-2 text-right">Total</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-border-subtle">
             {inv.lines.map((l) => (
               <tr key={l.lineNo}>
                 <td className="px-3 py-2">
@@ -236,14 +248,16 @@ export default function InvoiceDetailPage() {
           <Row label="Currency" value={inv.currency} />
           {inv.reference && <Row label="Reference" value={inv.reference} />}
           {inv.notes && (
-            <p className="border-t pt-2 text-muted-foreground whitespace-pre-wrap">{inv.notes}</p>
+            <p className="border-t border-border-subtle pt-2 text-muted-foreground whitespace-pre-wrap">
+              {inv.notes}
+            </p>
           )}
         </Card>
         <Card className="space-y-1 text-sm tabular-nums">
           <Row label="Subtotal" value={fmtMoney(inv.subtotal)} />
           <Row label="Discount" value={`-${fmtMoney(inv.discountTotal)}`} />
           <Row label="Tax" value={fmtMoney(inv.taxTotal)} />
-          <div className="flex justify-between border-t pt-2 font-semibold">
+          <div className="flex justify-between border-t border-border-subtle pt-2 font-semibold">
             <span>Grand total</span>
             <span>
               {fmtMoney(inv.grandTotal)} {inv.currency}
@@ -253,9 +267,9 @@ export default function InvoiceDetailPage() {
           {Number(inv.amountCredited) > 0 && (
             <Row label="Credited" value={fmtMoney(inv.amountCredited)} />
           )}
-          <div className="flex justify-between border-t pt-2 font-semibold">
+          <div className="flex justify-between border-t border-border-subtle pt-2 font-semibold">
             <span>Outstanding</span>
-            <span className={Number(inv.amountOutstanding) > 0 ? 'text-destructive' : ''}>
+            <span className={Number(inv.amountOutstanding) > 0 ? 'text-danger' : ''}>
               {fmtMoney(inv.amountOutstanding)}
             </span>
           </div>
@@ -264,11 +278,11 @@ export default function InvoiceDetailPage() {
 
       {activeAllocs.length > 0 && (
         <Card className="p-0">
-          <div className="border-b px-3 py-2 text-xs font-semibold uppercase text-muted-foreground">
+          <div className="border-b border-border-subtle px-3 py-2 text-xs font-medium text-muted-foreground">
             Payments
           </div>
           <table className="w-full text-sm">
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border-subtle">
               {activeAllocs.map((a) => (
                 <tr key={a.id}>
                   <td className="px-3 py-2">

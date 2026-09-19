@@ -23,6 +23,7 @@ import { usePermissions } from '@/components/supply/supply-shell';
 import { Card, EmptyState, ErrorNote, Skeleton } from '@/components/admin/ui';
 import { fmtDate, fmtMoney, Select, SupplyStatusBadge, Table } from '@/components/supply/ui';
 import { Confirm } from '@/components/ui/kit';
+import { ContextualHelp } from '@/components/help/contextual-help';
 import { RelatedLink } from '@/components/ui/related-link';
 import { VisitOutcomeBadge } from '@/components/field/visit-outcome';
 import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
@@ -152,6 +153,7 @@ export default function QuotationDetailPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">{qd.number}</h1>
             <SupplyStatusBadge status={qd.status} />
+            <ContextualHelp concept="quotationStates" />
             <span className="text-xs text-muted-foreground">revision {qd.currentRevisionNo}</span>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -362,7 +364,7 @@ export default function QuotationDetailPage() {
               />
               <button
                 type="button"
-                className="text-xs text-destructive hover:underline disabled:opacity-40"
+                className="text-xs text-danger hover:underline disabled:opacity-40"
                 disabled={lines.length === 1}
                 onClick={() => setLines((ls) => ls.filter((_, idx) => idx !== i))}
               >
@@ -581,7 +583,7 @@ function QuotationAttachments({
                   <button
                     type="button"
                     disabled={remove.isPending}
-                    className="ml-3 text-destructive hover:underline disabled:opacity-50"
+                    className="ml-3 text-danger hover:underline disabled:opacity-50"
                     onClick={() => setDeletingId(a.id)}
                   >
                     {remove.isPending && deletingId === a.id ? 'Deleting…' : 'Delete'}

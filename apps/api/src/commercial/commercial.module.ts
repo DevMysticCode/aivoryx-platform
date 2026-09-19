@@ -4,6 +4,7 @@ import { StorageModule } from '../storage/storage.module.js';
 import { DocumentsModule } from '../documents/documents.module.js';
 import { CustomersController } from './customers.controller.js';
 import { CustomersService } from './customers.service.js';
+import { CustomerLogoService } from './customer-logo.service.js';
 import { LeadQuotationsController, QuotationsController } from './quotations.controller.js';
 import { QuotationsService } from './quotations.service.js';
 
@@ -18,7 +19,7 @@ import { QuotationsService } from './quotations.service.js';
 @Module({
   imports: [AdminModule, StorageModule, DocumentsModule],
   controllers: [CustomersController, QuotationsController, LeadQuotationsController],
-  providers: [CustomersService, QuotationsService],
+  providers: [CustomersService, CustomerLogoService, QuotationsService],
   exports: [CustomersService, QuotationsService],
 })
 export class CommercialModule {}

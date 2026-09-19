@@ -189,7 +189,7 @@ function OverviewTab({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-emerald-600 dark:text-emerald-400">
+          <p className="text-sm text-success">
             All requirements met — the project can be completed.
           </p>
         )}
@@ -850,7 +850,7 @@ function ChecklistCard({
                 <span className={it.status === 'done' ? 'text-muted-foreground line-through' : ''}>
                   {it.label}
                 </span>
-                {it.required ? <span className="text-xs text-destructive">*</span> : null}
+                {it.required ? <span className="text-xs text-danger">*</span> : null}
               </label>
               {canToggle ? (
                 <button
@@ -917,7 +917,7 @@ function ExecFiles({
                 {canManage ? (
                   <button
                     type="button"
-                    className="ml-3 text-destructive hover:underline disabled:opacity-50"
+                    className="ml-3 text-danger hover:underline disabled:opacity-50"
                     disabled={del.isPending}
                     onClick={() => setDeleting(a.id)}
                   >

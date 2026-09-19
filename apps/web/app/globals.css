@@ -15,3 +15,10 @@
       'calt' 1;
   }
 }
+
+/* Feature tour: the highlighted target gets a focus-coloured outline. */
+[data-tour-active] {
+  outline: 2px solid hsl(var(--focus));
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+}

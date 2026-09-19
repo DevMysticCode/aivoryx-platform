@@ -24,8 +24,8 @@ export function WidgetCard({
   className?: string;
 }) {
   return (
-    <section className={cn('flex flex-col rounded-lg border bg-card', className)}>
-      <div className="flex items-center justify-between border-b px-4 py-2.5">
+    <section className={cn('flex flex-col rounded-lg border bg-surface', className)}>
+      <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5">
         <h2 className="text-sm font-semibold">{title}</h2>
         {action ??
           (href ? (
@@ -59,7 +59,7 @@ export function WidgetStat({
         className={cn(
           'text-xl font-semibold tabular-nums',
           tone === 'warn' && 'text-warning',
-          tone === 'danger' && 'text-destructive',
+          tone === 'danger' && 'text-danger',
           tone === 'good' && 'text-success',
         )}
       >

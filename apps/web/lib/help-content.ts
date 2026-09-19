@@ -63,10 +63,6 @@ export const HELP_CONTENT = {
     title: 'Notifications',
     body: 'Choose how you are notified. System-critical alerts are always delivered regardless of these preferences.',
   },
-  'settings-company': {
-    title: 'Company profile & branding',
-    body: 'Your company details, logo and brand colour appear in the app, on your documents (quotations, invoices, receipts) and in notification emails. They never change security, tenancy or permissions. (This is different from the internal "workspace name" under Administration → Workspace settings, which only platform administrators see.)',
-  },
 } satisfies Record<string, HelpEntry>;
 
 export type HelpKey = keyof typeof HELP_CONTENT;

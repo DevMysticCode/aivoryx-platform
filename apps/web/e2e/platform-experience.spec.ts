@@ -67,24 +67,31 @@ test.describe('Platform experience golden path', () => {
       (r) => r.url().includes('/api/v1/settings/company') && r.request().method() === 'GET',
     );
     await page.goto('/settings/company');
-    await expect(
-      page.getByRole('heading', { name: 'Company profile & branding', level: 1 }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Company profile', level: 1 })).toBeVisible();
     await profileLoaded;
 
     const displayName = page.getByLabel('Display name');
     await displayName.fill(companyName);
     await expect(displayName).toHaveValue(companyName);
-    await page.getByLabel('Primary brand colour').last().fill('#0f766e');
-    await page
-      .getByPlaceholder('Bank details, payment terms, registration lines…')
-      .fill(`Pay to Clans Renewables ${stamp}`);
 
     const saved = page.waitForResponse(
       (r) => r.url().includes('/api/v1/settings/company') && r.request().method() === 'PUT',
     );
     await page.getByRole('button', { name: 'Save changes' }).click();
     expect((await saved).status()).toBe(200);
+
+    // branding lives on its own page (Phase 19): a preset theme + the document footer
+    await page.goto('/settings/branding');
+    await expect(page.getByRole('heading', { name: 'Branding & themes', level: 1 })).toBeVisible();
+    await page.getByRole('radio', { name: 'Ocean' }).check({ force: true });
+    await page
+      .getByPlaceholder('Bank details, payment terms, registration lines…')
+      .fill(`Pay to Clans Renewables ${stamp}`);
+    const brandingSaved = page.waitForResponse(
+      (r) => r.url().includes('/api/v1/settings/company') && r.request().method() === 'PUT',
+    );
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    expect((await brandingSaved).status()).toBe(200);
 
     // ---- 2. it reaches the app shell after reload --------------
     await page.reload();
@@ -121,7 +128,7 @@ test.describe('Platform experience golden path', () => {
       // …but cannot open or edit the company settings
       await memberPage.goto('/settings/company');
       await expect(
-        memberPage.getByText(/access to company settings|Company profile & branding/i),
+        memberPage.getByText(/access to company settings|Company profile/i).first(),
       ).toBeVisible();
       await expect(memberPage.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
       await memberCtx.close();

@@ -1,6 +1,7 @@
 'use client';
 
 import { ErrorNote, PageHeader, Skeleton } from '@/components/admin/ui';
+import { Badge, type Tone } from '@/components/ui/status-badge';
 import { NotifTabs } from '@/components/admin/notif-tabs';
 import type { UpdateNotificationRuleRequest } from '@aivoryx/contracts';
 import {
@@ -18,11 +19,11 @@ const STRATEGY_LABEL: Record<string, string> = {
   CUSTOMER: 'Customer (email)',
 };
 
-const TYPE_BADGE: Record<string, string> = {
-  info: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300',
-  success: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
-  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
-  action_required: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
+const TYPE_TONE: Record<string, Tone> = {
+  info: 'info',
+  success: 'success',
+  warning: 'warning',
+  action_required: 'danger',
 };
 
 /**
@@ -57,18 +58,10 @@ export default function NotificationRulesPage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{rule.description}</span>
-                  <span
-                    className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${
-                      TYPE_BADGE[rule.notificationType] ?? 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
+                  <Badge tone={TYPE_TONE[rule.notificationType] ?? 'neutral'}>
                     {rule.notificationType.replace('_', ' ')}
-                  </span>
-                  {rule.overridden && (
-                    <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                      customised
-                    </span>
-                  )}
+                  </Badge>
+                  {rule.overridden && <Badge tone="muted">customised</Badge>}
                 </div>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
                   {rule.eventType} →{' '}

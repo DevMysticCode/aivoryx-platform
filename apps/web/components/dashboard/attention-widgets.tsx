@@ -97,9 +97,7 @@ export function AttentionRequiredWidget() {
                 className="flex items-center justify-between gap-2 py-2 text-sm hover:opacity-80"
               >
                 <span>{i.label}</span>
-                <span className="font-semibold text-amber-600 tabular-nums dark:text-amber-400">
-                  {i.count}
-                </span>
+                <span className="font-semibold text-warning tabular-nums">{i.count}</span>
               </Link>
             </li>
           ))}

@@ -133,7 +133,7 @@ export default function PlatformTenantDetailPage({
                     className={cn(
                       'rounded-md border px-3 py-1.5 text-sm font-medium disabled:opacity-50',
                       s === 'archived'
-                        ? 'hover:bg-destructive/10 hover:text-destructive'
+                        ? 'hover:bg-danger-soft hover:text-danger'
                         : 'hover:bg-primary/10 hover:text-primary',
                     )}
                   >
@@ -244,7 +244,7 @@ export default function PlatformTenantDetailPage({
                         </p>
                       ) : null}
                       {m.state === 'ENABLED' && blockingDependants.length > 0 ? (
-                        <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
+                        <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-warning">
                           <Lock className="size-3" aria-hidden />
                           {blockingDependants.join(', ')} depend
                           {blockingDependants.length === 1 ? 's' : ''} on this
@@ -263,7 +263,7 @@ export default function PlatformTenantDetailPage({
                       className={cn(
                         'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50',
                         m.state === 'ENABLED'
-                          ? 'hover:bg-destructive/10 hover:text-destructive'
+                          ? 'hover:bg-danger-soft hover:text-danger'
                           : 'hover:bg-primary/10 hover:text-primary',
                       )}
                     >

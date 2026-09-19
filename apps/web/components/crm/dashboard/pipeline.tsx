@@ -25,12 +25,12 @@ export function PipelineVisualization({ funnel }: { funnel: CrmFunnelStage[] }) 
         <li key={s.stage}>
           <Link
             href={`/crm/leads?status=${s.stage}`}
-            className="group flex items-center gap-4 rounded-md px-1 py-1 hover:bg-accent/40"
+            className="group flex items-center gap-4 rounded-md px-1 py-1 hover:bg-surface-hover"
           >
             <span className="w-24 shrink-0 text-sm font-medium text-muted-foreground group-hover:text-foreground">
               {STAGE_LABEL[s.stage] ?? s.stage}
             </span>
-            <span className="relative h-7 flex-1 overflow-hidden rounded bg-secondary">
+            <span className="relative h-7 flex-1 overflow-hidden rounded bg-background-muted">
               <span
                 className="absolute inset-y-0 left-0 rounded bg-primary transition-[width]"
                 style={{ width: `${(s.count / max) * 100}%` }}

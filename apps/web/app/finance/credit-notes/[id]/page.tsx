@@ -20,7 +20,19 @@ export default function CreditNoteDetailPage() {
 
   if (q.isLoading) return <Skeleton rows={6} />;
   if (q.error) return <ErrorBlock error={q.error} onRetry={() => q.refetch()} />;
-  if (!q.data) return <EmptyState>Credit note not found.</EmptyState>;
+  if (!q.data)
+    return (
+      <EmptyState
+        title="Credit note not found"
+        action={
+          <Link href="/finance/credit-notes" className="text-primary hover:underline">
+            Back to credit notes
+          </Link>
+        }
+      >
+        It may have been removed, or you may not have access to it.
+      </EmptyState>
+    );
   const cn = q.data;
 
   const canIssue = perms.includes('finance.credit_notes.issue') && cn.status === 'DRAFT';
@@ -34,7 +46,7 @@ export default function CreditNoteDetailPage() {
           <SupplyStatusBadge status={cn.status} />
           <a
             href={creditNotePdfUrl(cn.id)}
-            className="inline-flex h-8 items-center rounded-md border px-3 text-sm hover:bg-accent"
+            className="inline-flex h-8 items-center rounded-md border border-border px-3 text-sm hover:bg-surface-hover"
           >
             Download PDF
           </a>
@@ -51,6 +63,7 @@ export default function CreditNoteDetailPage() {
             <Button
               size="sm"
               variant="outline"
+              className="border-danger/40 text-danger hover:bg-danger-soft"
               onClick={() => setCancelling(true)}
               disabled={actions.cancel.isPending}
             >
@@ -88,7 +101,9 @@ export default function CreditNoteDetailPage() {
           </div>
         )}
         {cn.notes && (
-          <p className="border-t pt-2 text-muted-foreground whitespace-pre-wrap">{cn.notes}</p>
+          <p className="border-t border-border-subtle pt-2 text-muted-foreground whitespace-pre-wrap">
+            {cn.notes}
+          </p>
         )}
       </Card>
       <p className="text-xs text-muted-foreground">
