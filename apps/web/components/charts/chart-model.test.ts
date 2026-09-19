@@ -34,8 +34,10 @@ describe('summaries and export', () => {
     ]);
   });
 
-  it('summarises a target dataset without dividing by zero', () => {
-    expect(summarize({ shape: 'target', value: 3, target: 0, label: 'x' })[2]!.value).toBe('0%');
+  it('summarises a target dataset without dividing by zero (a zero target falls back to a 0-100 scale)', () => {
+    const m = summarize({ shape: 'target', value: 3, target: 0, label: 'x' });
+    expect(m.map((x) => x.label)).toEqual(['Value', 'Target', 'Of scale']);
+    expect(m[2]!.value).toBe('3%');
   });
 
   it('CSV neutralises formula-looking cells and quotes commas', () => {

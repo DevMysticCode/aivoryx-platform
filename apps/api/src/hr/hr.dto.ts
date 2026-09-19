@@ -917,7 +917,32 @@ export class HrActivityItemDto {
   summary!: string;
 }
 
+export class HrAttendanceDayDto {
+  @ApiProperty({ format: 'date' }) date!: string;
+  @ApiProperty() present!: number;
+  @ApiProperty() onLeave!: number;
+  @ApiProperty() absent!: number;
+}
+
+export class HrDepartmentHeadcountDto {
+  @ApiProperty({ nullable: true, type: String, format: 'uuid' }) departmentId!: string | null;
+  @ApiProperty({ description: 'Department name, or "Unassigned" when the employee has none.' })
+  name!: string;
+  @ApiProperty({ description: 'ACTIVE employees in the caller’s data scope.' }) count!: number;
+}
+
 export class HrDashboardDto {
+  @ApiProperty({
+    type: [HrAttendanceDayDto],
+    description:
+      'Attendance per calendar day for the last 14 days (today included), from the same records and data scope as the "today" counts. Days with no records are present with zeros.',
+  })
+  attendanceTrend!: HrAttendanceDayDto[];
+  @ApiProperty({
+    type: [HrDepartmentHeadcountDto],
+    description: 'ACTIVE headcount per department within the caller’s data scope, largest first.',
+  })
+  departmentDistribution!: HrDepartmentHeadcountDto[];
   @ApiProperty() totalEmployees!: number;
   @ApiProperty() activeEmployees!: number;
   @ApiProperty({ description: 'Employees created ahead of their start date.' })

@@ -1,129 +1,246 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Inbox, Plus, TrendingUp, UserRoundX, Users } from 'lucide-react';
-import { EmptyState, PageHeader } from '@/components/admin/ui';
+import {
+  AlarmClock,
+  CalendarCheck,
+  CalendarClock,
+  CalendarX2,
+  ClipboardList,
+  FileClock,
+  FileText,
+  Filter,
+  Inbox,
+  LineChart,
+  Plus,
+  Send,
+  Target,
+  TrendingUp,
+  UserRoundX,
+  Users,
+} from 'lucide-react';
 import { ErrorBlock, LoadingBlock } from '@/components/ui/kit';
-import { Kpi } from '@/components/dashboard/kpi';
-import { WidgetCard, WidgetSkeleton } from '@/components/dashboard/widget-card';
+import { StatusBadge } from '@/components/admin/ui';
+import { ReportChart } from '@/components/charts/report-chart';
+import { ModuleWelcome } from '@/components/help/module-welcome';
+import {
+  type ActionCenterItem,
+  DashboardActionCenter,
+  DashboardCard,
+  DashboardEmptyState,
+  DashboardGrid,
+  DashboardHeader,
+  DashboardKpiCard,
+  DashboardKpiGrid,
+  DashboardList,
+  DashboardListItem,
+  DashboardRangeToggle,
+  DashboardSection,
+  DashboardShell,
+} from '@/components/dashboard-kit';
+import { ConversionFunnel, SourceBars, STAGE_LABEL } from '@/components/crm/dashboard/visuals';
+import { TeamPerformanceTable } from '@/components/crm/dashboard/sources-team';
+import { ActivityFeed } from '@/components/crm/dashboard/activity';
 import { useCrmAnalytics } from '@/lib/crm/use-crm-analytics';
 import { useCrossModuleAccess } from '@/lib/navigation/use-cross-module';
 import { useVisitSummary } from '@/lib/field/use-field';
 import { useQuotationPipelineSummary } from '@/lib/commercial/use-commercial';
-import { PipelineVisualization, ConversionFunnelTable } from '@/components/crm/dashboard/pipeline';
-import { ReportChart } from '@/components/charts/report-chart';
-import { ModuleWelcome } from '@/components/help/module-welcome';
-import { FollowupActionCenter } from '@/components/crm/dashboard/followups';
-import {
-  SourcePerformanceTable,
-  TeamPerformanceTable,
-} from '@/components/crm/dashboard/sources-team';
-import { ActivityFeed } from '@/components/crm/dashboard/activity';
 
-/** Matches the global Dashboard's section-eyebrow treatment (app/page.tsx) —
- *  the same visual grouping device, so the two dashboards read as one product. */
-function SectionGroup({ label, children }: { label: string; children: React.ReactNode }) {
+const RANGES = [
+  { value: 7, label: '7d' },
+  { value: 30, label: '30d' },
+  { value: 90, label: '90d' },
+] as const;
+type Range = (typeof RANGES)[number]['value'];
+
+/** Compact pipeline: the real count per stage, each bar a link to the filtered lead list. */
+function PipelineBars({ funnel }: { funnel: { stage: string; count: number }[] }) {
+  const max = Math.max(1, ...funnel.map((s) => s.count));
+  return (
+    <ul className="space-y-3">
+      {funnel.map((s) => (
+        <li key={s.stage}>
+          <Link
+            href={`/crm/leads?status=${s.stage}`}
+            className="group block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            <div className="mb-1 flex items-baseline justify-between text-sm">
+              <span className="text-muted-foreground group-hover:text-foreground">
+                {STAGE_LABEL[s.stage] ?? s.stage}
+              </span>
+              <span className="font-semibold tabular-nums">{s.count}</span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full rounded-full bg-primary transition-[width] group-hover:bg-primary-hover"
+                style={{ width: `${s.count === 0 ? 0 : Math.max(3, (s.count / max) * 100)}%` }}
+              />
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Follow-up action center: real counts from the CRM analytics, plus (where the
+ * caller has access) the real counts owned by Field and Commercial. Rows with
+ * nothing to do stay quiet; every row with a destination is a link.
+ */
+function FollowupCenter({
+  followups,
+}: {
+  followups: NonNullable<ReturnType<typeof useCrmAnalytics>['data']>['followups'];
+}) {
+  const access = useCrossModuleAccess();
+  const visits = useVisitSummary(access.fieldVisits);
+  const pipeline = useQuotationPipelineSummary(access.quotations);
+
+  const items: ActionCenterItem[] = [
+    {
+      key: 'overdue',
+      label: 'Overdue follow-ups',
+      hint: 'Past their due date',
+      count: followups.overdueCount,
+      icon: AlarmClock,
+      tone: 'red',
+      href: '/crm/leads',
+    },
+    {
+      key: 'today',
+      label: 'Due today',
+      count: followups.dueTodayCount,
+      icon: CalendarCheck,
+      tone: 'amber',
+      href: '/crm/leads',
+    },
+    {
+      key: 'upcoming',
+      label: 'Upcoming follow-ups',
+      count: followups.upcomingCount,
+      icon: CalendarClock,
+      tone: 'blue',
+      href: '/crm/leads',
+    },
+  ];
+  if (access.fieldVisits && visits.data && !visits.isError) {
+    items.push(
+      {
+        key: 'visits-outcome',
+        label: 'Visits awaiting an outcome',
+        hint: 'Completed, no outcome recorded',
+        count: visits.data.awaitingOutcome,
+        icon: ClipboardList,
+        tone: 'orange',
+        href: '/crm/visits',
+      },
+      {
+        key: 'visits-followup',
+        label: 'Visits needing follow-up',
+        count: visits.data.followUpRequired,
+        icon: CalendarX2,
+        tone: 'amber',
+        href: '/crm/visits',
+      },
+      {
+        key: 'visits-next',
+        label: 'Visits in the next 7 days',
+        count: visits.data.scheduledNext7Days,
+        icon: CalendarClock,
+        tone: 'blue',
+        href: '/crm/visits',
+      },
+    );
+  }
+  if (access.quotations && pipeline.data && !pipeline.isError) {
+    items.push(
+      {
+        key: 'q-await',
+        label: 'Qualified leads awaiting a quotation',
+        count: pipeline.data.qualifiedAwaitingQuotation,
+        icon: FileClock,
+        tone: 'purple',
+        href: '/crm/leads?status=QUALIFIED',
+      },
+      {
+        key: 'q-draft',
+        label: 'Quotation drafts',
+        count: pipeline.data.draft,
+        icon: FileText,
+        tone: 'teal',
+        href: '/quotations',
+      },
+      {
+        key: 'q-sent',
+        label: 'Sent, awaiting response',
+        count: pipeline.data.sentAwaitingResponse,
+        icon: Send,
+        tone: 'blue',
+        href: '/quotations',
+      },
+    );
+  }
+
+  const next = [...followups.overdue, ...followups.dueToday, ...followups.upcoming].slice(0, 4);
+
   return (
     <div className="space-y-3">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </h2>
-      {children}
+      <DashboardActionCenter
+        items={items}
+        allClearText="No follow-ups pending. You’re all caught up."
+      />
+      {next.length > 0 ? (
+        <div className="-mx-4 border-t border-border-subtle pt-1">
+          <DashboardList>
+            {next.map((f) => (
+              <DashboardListItem
+                key={f.followupId}
+                href={`/crm/leads/${f.leadId}`}
+                title={f.leadName ?? 'Unnamed lead'}
+                subtitle={f.note ?? undefined}
+                trailing={
+                  <span className="text-muted-foreground">
+                    {new Date(f.dueAt).toLocaleDateString()}
+                  </span>
+                }
+                tone="amber"
+              />
+            ))}
+          </DashboardList>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-/** One count row that links to the screen that owns the work. */
-function CountRow({ href, label, value }: { href: string; label: string; value: number }) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className="flex items-center justify-between gap-3 rounded-sm py-2 text-sm hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      >
-        <span className="min-w-0">{label}</span>
-        <span className="shrink-0 font-semibold tabular-nums">{value}</span>
-      </Link>
-    </li>
-  );
-}
-
-/** Field visits + quotation pipeline — real counts from the owning modules, shown only where the caller has access. */
-function CrossModuleWidgets() {
-  const access = useCrossModuleAccess();
-  const visits = useVisitSummary(access.fieldVisits);
-  const pipeline = useQuotationPipelineSummary(access.quotations);
-  const showVisits = access.fieldVisits && !visits.isError;
-  const showPipeline = access.quotations && !pipeline.isError;
-  if (!showVisits && !showPipeline) return null;
-
-  return (
-    <SectionGroup label="Field & quotations">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {showVisits ? (
-          <WidgetCard title="Field visits" href="/crm/visits" linkLabel="All visits">
-            {visits.data ? (
-              <ul className="divide-y">
-                <CountRow
-                  href="/crm/visits"
-                  label="Scheduled in the next 7 days"
-                  value={visits.data.scheduledNext7Days}
-                />
-                <CountRow
-                  href="/crm/visits"
-                  label="Completed, awaiting an outcome"
-                  value={visits.data.awaitingOutcome}
-                />
-                <CountRow
-                  href="/crm/visits"
-                  label="Follow-up required"
-                  value={visits.data.followUpRequired}
-                />
-              </ul>
-            ) : (
-              <WidgetSkeleton rows={3} />
-            )}
-          </WidgetCard>
-        ) : null}
-        {showPipeline ? (
-          <WidgetCard title="Quotation pipeline" href="/quotations" linkLabel="All quotations">
-            {pipeline.data ? (
-              <ul className="divide-y">
-                <CountRow
-                  href="/crm/leads?status=QUALIFIED"
-                  label="Qualified leads awaiting a quotation"
-                  value={pipeline.data.qualifiedAwaitingQuotation}
-                />
-                <CountRow href="/quotations" label="Drafts" value={pipeline.data.draft} />
-                <CountRow
-                  href="/quotations"
-                  label="Sent, awaiting response"
-                  value={pipeline.data.sentAwaitingResponse}
-                />
-              </ul>
-            ) : (
-              <WidgetSkeleton rows={3} />
-            )}
-          </WidgetCard>
-        ) : null}
-      </div>
-    </SectionGroup>
-  );
-}
-
 export default function CrmOverviewPage() {
-  const { data, isLoading, error, refetch } = useCrmAnalytics(30);
+  const [days, setDays] = useState<Range>(30);
+  const { data, isLoading, error, refetch } = useCrmAnalytics(days);
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="CRM overview" description="Your sales pipeline at a glance.">
-        <Link
-          href="/crm/leads?new=1"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
-        >
-          <Plus className="size-4" aria-hidden /> New lead
-        </Link>
-      </PageHeader>
+    <DashboardShell>
+      <DashboardHeader
+        title="CRM overview"
+        description="Your sales pipeline at a glance."
+        controls={
+          <DashboardRangeToggle
+            value={days}
+            options={[...RANGES]}
+            onChange={setDays}
+            label="Date range for trends and sources"
+          />
+        }
+        actions={
+          <Link
+            href="/crm/leads?new=1"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <Plus className="size-4" aria-hidden /> New lead
+          </Link>
+        }
+      />
 
       <ModuleWelcome
         id="crm"
@@ -144,125 +261,168 @@ export default function CrmOverviewPage() {
         <ErrorBlock error={error} onRetry={refetch} />
       ) : !data ? null : (
         <>
-          {/* Key metrics — a single quiet bordered strip, not a card per fact. */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border border-border-subtle bg-surface px-4 py-3 sm:grid-cols-4">
-            <Kpi
+          <DashboardKpiGrid>
+            <DashboardKpiCard
               label="Total leads"
               value={data.totals.total}
-              icon={<Users className="size-3.5" />}
+              icon={Users}
+              tone="teal"
+              description={`${data.totals.open} open`}
+              href="/crm/leads"
             />
-            <Kpi
+            <DashboardKpiCard
               label="Open"
               value={data.totals.open}
-              hint="New · Assigned · Contacted"
-              icon={<Inbox className="size-3.5" />}
+              icon={Inbox}
+              tone="blue"
+              description="New · Assigned · Contacted"
+              href="/crm/leads"
             />
-            <Kpi
+            <DashboardKpiCard
               label="Unassigned"
               value={data.totals.unassigned}
-              icon={<UserRoundX className="size-3.5" />}
+              icon={UserRoundX}
+              tone="amber"
+              description={data.totals.unassigned > 0 ? 'Need an owner' : 'Every lead has an owner'}
+              href="/crm/leads"
             />
-            <Kpi
+            <DashboardKpiCard
               label="New this week"
-              value={data.trendDelta?.thisWeek ?? '—'}
-              delta={data.trendDelta}
-              icon={<TrendingUp className="size-3.5" />}
+              value={data.trendDelta?.thisWeek ?? null}
+              emptyText="No weekly comparison available"
+              icon={TrendingUp}
+              tone="green"
+              description={
+                data.trendDelta ? `${data.trendDelta.previousWeek} the week before` : undefined
+              }
+              delta={
+                data.trendDelta && data.trendDelta.changePct !== null
+                  ? { changePct: data.trendDelta.changePct, label: 'vs prior week' }
+                  : null
+              }
             />
-          </div>
+          </DashboardKpiGrid>
 
-          {/* Primary work — what needs attention and where the pipeline stands right now. */}
-          <SectionGroup label="Primary work">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <WidgetCard title="Pipeline" href="/crm/leads" linkLabel="All leads">
-                <PipelineVisualization funnel={data.funnel} />
-              </WidgetCard>
-              <WidgetCard title="Follow-up action center">
-                <FollowupActionCenter followups={data.followups} />
-              </WidgetCard>
-            </div>
-          </SectionGroup>
+          <DashboardSection label="Primary work">
+            <DashboardGrid cols={3}>
+              <DashboardCard
+                title="Pipeline"
+                icon={Filter}
+                tone="teal"
+                href="/crm/leads"
+                linkLabel="All leads"
+              >
+                <PipelineBars funnel={data.funnel} />
+              </DashboardCard>
+              <DashboardCard
+                title="Lead activity trend"
+                description={`Leads created, last ${days} days`}
+                icon={LineChart}
+                tone="blue"
+                href="/reports/crm-lead-trend"
+                linkLabel="Report"
+              >
+                <ReportChart
+                  id="crm-lead-trend"
+                  range={days}
+                  onRangeChange={(v) => setDays(v as Range)}
+                  hideRanges
+                />
+              </DashboardCard>
+              <DashboardCard
+                title="Follow-up action center"
+                icon={AlarmClock}
+                tone="amber"
+                className="md:col-span-2 xl:col-span-1"
+              >
+                <FollowupCenter followups={data.followups} />
+              </DashboardCard>
+            </DashboardGrid>
+          </DashboardSection>
 
-          <CrossModuleWidgets />
+          <DashboardSection label="Analysis">
+            <DashboardGrid cols={2}>
+              <DashboardCard
+                title="Conversion funnel"
+                description="Share of leads reaching each stage"
+                icon={Target}
+                tone="green"
+              >
+                <ConversionFunnel funnel={data.funnel} />
+              </DashboardCard>
+              <DashboardCard
+                title="Lead source performance"
+                description={`Last ${days} days`}
+                icon={ClipboardList}
+                tone="purple"
+                href="/reports/crm-lead-sources"
+                linkLabel="Report"
+              >
+                <SourceBars sources={data.sources} />
+              </DashboardCard>
+            </DashboardGrid>
+            {data.team !== null ? (
+              <DashboardCard title="Team performance" icon={Users} tone="orange">
+                <TeamPerformanceTable team={data.team} />
+              </DashboardCard>
+            ) : null}
+          </DashboardSection>
 
-          {/* Analysis — diagnostic/secondary information, visually the same
-              weight as Primary work (no extra border/shadow) but positioned
-              and labelled as the quieter, "look into it" tier. */}
-          <SectionGroup label="Analysis">
-            <div className="space-y-4">
-              <WidgetCard title="Lead activity trend">
-                <ReportChart id="crm-lead-trend" />
-              </WidgetCard>
-
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <WidgetCard title="Lead source performance">
-                  <SourcePerformanceTable sources={data.sources} />
-                </WidgetCard>
-                <WidgetCard title="Conversion funnel">
-                  <ConversionFunnelTable funnel={data.funnel} />
-                </WidgetCard>
-              </div>
-
-              {data.team !== null ? (
-                <WidgetCard title="Team performance">
-                  <TeamPerformanceTable team={data.team} />
-                </WidgetCard>
-              ) : null}
-            </div>
-          </SectionGroup>
-
-          {/* Recent activity — the trailing, lowest-priority tier. */}
-          <SectionGroup label="Recent activity">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <WidgetCard title="Recent leads" href="/crm/leads" linkLabel="Open leads">
+          <DashboardSection label="Recent activity">
+            <DashboardGrid cols={2}>
+              <DashboardCard
+                title="Recent leads"
+                icon={Inbox}
+                tone="teal"
+                href="/crm/leads"
+                linkLabel="Open leads"
+                padded={false}
+              >
                 {data.recent.length === 0 ? (
-                  <EmptyState
-                    title="No leads yet"
-                    action={
-                      <Link
-                        href="/crm/leads?new=1"
-                        className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-surface-hover"
-                      >
-                        <Plus className="size-4" aria-hidden /> Create lead
-                      </Link>
-                    }
-                  >
-                    New prospects from your connected sources, or ones you add yourself, are listed
-                    here.
-                  </EmptyState>
-                ) : (
-                  <ul className="divide-y">
-                    {data.recent.map((lead) => (
-                      <li key={lead.id}>
+                  <div className="p-4">
+                    <DashboardEmptyState
+                      title="No leads yet"
+                      description="Leads from your configured sources will appear here."
+                      action={
                         <Link
-                          href={`/crm/leads/${lead.id}`}
-                          className="flex items-center justify-between gap-3 py-2 text-sm transition-colors hover:bg-surface-hover"
+                          href="/crm/leads?new=1"
+                          className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-surface-hover"
                         >
-                          <span className="min-w-0">
-                            <span className="block truncate font-medium">
-                              {lead.name ?? lead.phone ?? 'Unnamed lead'}
-                            </span>
-                            <span className="block truncate text-xs text-muted-foreground">
-                              {[lead.sourceName ?? 'Manual', lead.assigneeName]
-                                .filter(Boolean)
-                                .join(' · ')}
-                            </span>
-                          </span>
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {new Date(lead.updatedAt).toLocaleDateString()}
-                          </span>
+                          <Plus className="size-4" aria-hidden /> Create lead
                         </Link>
-                      </li>
+                      }
+                    />
+                  </div>
+                ) : (
+                  <DashboardList>
+                    {data.recent.map((lead) => (
+                      <DashboardListItem
+                        key={lead.id}
+                        href={`/crm/leads/${lead.id}`}
+                        title={lead.name ?? lead.phone ?? 'Unnamed lead'}
+                        subtitle={[lead.sourceName ?? 'Manual', lead.assigneeName]
+                          .filter(Boolean)
+                          .join(' · ')}
+                        trailing={
+                          <>
+                            <StatusBadge status={lead.status} />
+                            <span className="text-muted-foreground">
+                              {new Date(lead.updatedAt).toLocaleDateString()}
+                            </span>
+                          </>
+                        }
+                      />
                     ))}
-                  </ul>
+                  </DashboardList>
                 )}
-              </WidgetCard>
-              <WidgetCard title="Activity">
+              </DashboardCard>
+              <DashboardCard title="Activity" icon={LineChart} tone="blue">
                 <ActivityFeed activity={data.recentActivity} />
-              </WidgetCard>
-            </div>
-          </SectionGroup>
+              </DashboardCard>
+            </DashboardGrid>
+          </DashboardSection>
         </>
       )}
-    </div>
+    </DashboardShell>
   );
 }

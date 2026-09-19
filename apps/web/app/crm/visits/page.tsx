@@ -81,7 +81,7 @@ export default function VisitsPage() {
           <label className="block space-y-1.5">
             <span className="text-sm font-medium">Assign to (optional)</span>
             <select
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+              className="h-9 w-full rounded-md border border-input bg-surface px-3 text-sm"
               value={assignedMembershipId}
               onChange={(e) => setAssignedMembershipId(e.target.value)}
             >
@@ -116,7 +116,7 @@ export default function VisitsPage() {
         <label className="block space-y-1.5">
           <span className="text-sm font-medium">Status</span>
           <select
-            className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+            className="h-9 w-full rounded-md border border-input bg-surface px-3 text-sm"
             value={status}
             onChange={(e) => {
               setStatus(e.target.value);
@@ -263,7 +263,7 @@ export default function VisitsPage() {
           <label className="block space-y-1.5">
             <span className="text-sm font-medium">Type</span>
             <select
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+              className="h-9 w-full rounded-md border border-input bg-surface px-3 text-sm"
               value={surveyType}
               onChange={(e) => setSurveyType(e.target.value as (typeof SURVEY_DATA_TYPES)[number])}
             >

@@ -9,8 +9,8 @@ import { financeKeys } from '@/lib/finance/use-finance';
 import * as financeApi from '@/lib/api/finance';
 import { hrKeys } from '@/lib/hr/use-hr';
 import * as hrApi from '@/lib/api/hr';
-import { Kpi } from './kpi';
-import { WidgetCard, WidgetSkeleton } from './widget-card';
+import { ClipboardCheck, FolderKanban, Users, Wallet } from 'lucide-react';
+import { DashboardKpiCard, DashboardKpiGrid } from '@/components/dashboard-kit';
 
 /**
  * Global Dashboard "Key business metrics" (Phase 13D §5) — up to four tiles,
@@ -49,82 +49,88 @@ export function KeyMetricsWidget() {
     enabled: showApprovals,
   });
 
-  const tiles: { key: string; node: React.ReactNode }[] = [];
+  const tiles: React.ReactNode[] = [];
 
   if (showLeads) {
-    tiles.push({
-      key: 'leads',
-      node: leads.isLoading ? (
-        <WidgetSkeleton rows={1} />
-      ) : (
-        <Kpi
-          label="Total leads"
-          value={leads.data?.totals.total ?? 0}
-          delta={leads.data?.trendDelta}
-        />
-      ),
-    });
+    const d = leads.data?.trendDelta;
+    tiles.push(
+      <DashboardKpiCard
+        key="leads"
+        label="Total leads"
+        icon={Users}
+        tone="teal"
+        isLoading={leads.isLoading}
+        value={leads.data?.totals.total ?? 0}
+        description={leads.data ? `${leads.data.totals.open} open` : undefined}
+        delta={
+          d && d.changePct !== null ? { changePct: d.changePct, label: 'vs prior week' } : null
+        }
+        href="/crm"
+      />,
+    );
   }
 
   if (showProjects) {
-    tiles.push({
-      key: 'projects',
-      node: projects.isLoading ? (
-        <WidgetSkeleton rows={1} />
-      ) : (
-        <Kpi label="Projects" value={projects.data?.total ?? 0} />
-      ),
-    });
+    tiles.push(
+      <DashboardKpiCard
+        key="projects"
+        label="Projects"
+        icon={FolderKanban}
+        tone="purple"
+        isLoading={projects.isLoading}
+        value={projects.data?.total ?? 0}
+        href="/projects"
+      />,
+    );
   }
 
   if (showOutstanding) {
     const rows = finance.data?.byCurrency ?? [];
     const primary = rows[0];
-    tiles.push({
-      key: 'outstanding',
-      node: finance.isLoading ? (
-        <WidgetSkeleton rows={1} />
-      ) : primary ? (
-        <Kpi
-          label={`Outstanding (${primary.currency})`}
-          value={new Intl.NumberFormat(undefined, {
-            style: 'currency',
-            currency: primary.currency,
-            maximumFractionDigits: 0,
-          }).format(Number(primary.outstandingTotal))}
-          hint={
-            rows.length > 1
-              ? `+${rows.length - 1} more currenc${rows.length > 2 ? 'ies' : 'y'}`
-              : undefined
-          }
-        />
-      ) : (
-        <Kpi label="Outstanding" value="—" hint="No invoices raised yet" />
-      ),
-    });
+    tiles.push(
+      <DashboardKpiCard
+        key="outstanding"
+        label={primary ? `Outstanding (${primary.currency})` : 'Outstanding'}
+        icon={Wallet}
+        tone="orange"
+        isLoading={finance.isLoading}
+        value={
+          primary
+            ? new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: primary.currency,
+                maximumFractionDigits: 0,
+              }).format(Number(primary.outstandingTotal))
+            : null
+        }
+        emptyText="No invoices raised yet"
+        description={
+          rows.length > 1
+            ? `+${rows.length - 1} more currenc${rows.length > 2 ? 'ies' : 'y'}`
+            : undefined
+        }
+        href="/finance"
+      />,
+    );
   }
 
   if (showApprovals) {
     const pending = (hr.data?.pendingLeaveApprovals ?? 0) + (hr.data?.pendingExpenseApprovals ?? 0);
-    tiles.push({
-      key: 'approvals',
-      node: hr.isLoading ? (
-        <WidgetSkeleton rows={1} />
-      ) : (
-        <Kpi label="Pending approvals" value={pending} hint="Leave · Expense" />
-      ),
-    });
+    tiles.push(
+      <DashboardKpiCard
+        key="approvals"
+        label="Pending approvals"
+        icon={ClipboardCheck}
+        tone="amber"
+        isLoading={hr.isLoading}
+        value={pending}
+        description="Leave · Expense"
+        href="/hr"
+      />,
+    );
   }
 
   if (tiles.length === 0) return null;
 
-  return (
-    <WidgetCard title="Key business metrics">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {tiles.map((t) => (
-          <div key={t.key}>{t.node}</div>
-        ))}
-      </div>
-    </WidgetCard>
-  );
+  return <DashboardKpiGrid>{tiles}</DashboardKpiGrid>;
 }

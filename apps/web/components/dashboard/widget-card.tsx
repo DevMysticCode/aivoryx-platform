@@ -1,11 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ArrowRight } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
+import { DashboardCard } from '@/components/dashboard-kit';
 
-/** The shared frame every dashboard widget renders inside (§5 — hierarchy, not card-spam). */
+/** The frame every module-insight widget renders inside — now the shared DashboardCard. */
 export function WidgetCard({
   title,
   href,
@@ -17,29 +16,21 @@ export function WidgetCard({
   title: string;
   href?: string;
   linkLabel?: string;
-  /** Arbitrary header-right content (e.g. a range toggle) — takes precedence
-   *  over `href`/`linkLabel` when both are given. */
+  /** Arbitrary header-right content (wins over `href`/`linkLabel`). */
   action?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cn('flex flex-col rounded-lg border bg-surface', className)}>
-      <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        {action ??
-          (href ? (
-            <Link
-              href={href}
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-            >
-              {linkLabel}
-              <ArrowRight className="size-3" aria-hidden />
-            </Link>
-          ) : null)}
-      </div>
-      <div className="flex-1 p-4">{children}</div>
-    </section>
+    <DashboardCard
+      title={title}
+      href={href}
+      linkLabel={linkLabel}
+      action={action}
+      className={cn('h-full', className)}
+    >
+      {children}
+    </DashboardCard>
   );
 }
 

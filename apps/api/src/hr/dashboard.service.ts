@@ -73,6 +73,55 @@ export class DashboardService {
           ),
         );
 
+      // attendance per day, last 14 days — same table + data scope as "today"
+      const TREND_DAYS = 14;
+      const trendFrom = new Date(now.getTime() - (TREND_DAYS - 1) * 86_400_000)
+        .toISOString()
+        .slice(0, 10);
+      const trendRows = await tx
+        .select({
+          day: attendanceRecords.workDate,
+          present: sql<number>`count(*) filter (where ${attendanceRecords.status} in ('PRESENT','LATE','HALF_DAY','EARLY_DEPARTURE'))::int`,
+          onLeave: sql<number>`count(*) filter (where ${attendanceRecords.status} = 'ON_LEAVE')::int`,
+          absent: sql<number>`count(*) filter (where ${attendanceRecords.status} = 'ABSENT')::int`,
+        })
+        .from(attendanceRecords)
+        .where(
+          and(
+            eq(attendanceRecords.tenantId, scope.tenantId),
+            gte(attendanceRecords.workDate, trendFrom),
+            lte(attendanceRecords.workDate, today),
+            attScope ?? undefined,
+          ),
+        )
+        .groupBy(attendanceRecords.workDate);
+      const byDay = new Map(trendRows.map((r) => [String(r.day), r]));
+      const attendanceTrend = Array.from({ length: TREND_DAYS }, (_, i) => {
+        const date = new Date(now.getTime() - (TREND_DAYS - 1 - i) * 86_400_000)
+          .toISOString()
+          .slice(0, 10);
+        const r = byDay.get(date);
+        return { date, present: r?.present ?? 0, onLeave: r?.onLeave ?? 0, absent: r?.absent ?? 0 };
+      });
+
+      const deptRows = await tx
+        .select({
+          departmentId: employees.departmentId,
+          name: departments.name,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(employees)
+        .leftJoin(departments, eq(departments.id, employees.departmentId))
+        .where(and(empWhere, eq(employees.status, 'ACTIVE')))
+        .groupBy(employees.departmentId, departments.name);
+      const departmentDistribution = deptRows
+        .map((d) => ({
+          departmentId: d.departmentId,
+          name: d.name ?? 'Unassigned',
+          count: d.count,
+        }))
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
       const leaveScope = await employeeIdFilter(tx, scope, leaveRequests.employeeId);
       const [leave] = await tx
         .select({ n: sql<number>`count(*)::int` })
@@ -208,6 +257,8 @@ export class DashboardService {
       }
 
       return {
+        attendanceTrend,
+        departmentDistribution,
         totalEmployees: emp?.total ?? 0,
         activeEmployees: emp?.active ?? 0,
         onboardingEmployees: emp?.onboarding ?? 0,

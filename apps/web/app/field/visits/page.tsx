@@ -17,7 +17,7 @@ export default function FieldVisitsPage() {
       <h1 className="text-lg font-semibold">My visits</h1>
 
       <select
-        className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+        className="h-10 w-full rounded-md border border-input bg-surface px-3 text-sm"
         value={status}
         onChange={(e) => setStatus(e.target.value)}
       >

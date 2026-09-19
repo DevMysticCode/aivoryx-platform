@@ -1,0 +1,29 @@
+# ADR 0047 — Dashboard system, first-class gauge chart, and platform vs tenant branding
+
+Status: accepted (Phase 20). Builds on 0046 (UI 2.0), 0039 (branding/documents), 0042 (entitlements/navigation), 0044/0045 (data scope, cross-module access).
+
+## Context
+
+The CRM and HR dashboards were functionally correct but visually plain, each styled its own cards, and the chart system could only draw a gauge as an edge case. Branding existed only at tenant level, so the "Aivoryx" identity (logo, favicon, PWA icons, default theme, sign-in when no workspace is known) was hard-coded.
+
+## Decisions
+
+1. **One dashboard kit** (`components/dashboard-kit`): `DashboardShell/Header/Section/Grid`, `DashboardKpiCard/KpiGrid`, `DashboardCard` (+ `ChartCard`), `DashboardActionCenter`, `DashboardList/ListItem`, `DashboardQuickActions`, `DashboardEmptyState`, `DashboardRangeToggle`. It composes the existing tokens, `Badge`, skeletons and charts; `WidgetCard` (global dashboard) is now a thin wrapper over `DashboardCard`. CRM, HR and the global dashboard use it; future modules do too.
+2. **KPI cards follow the approved reference**: compact white card, small label top-left, tinted icon chip top-right, large value, one supporting line, optional comparison. `variant="tinted"` fills the card with the tone's soft tint for attention tiles. Accent tones are teal/blue/green/amber/red (existing semantic tokens) plus orange/purple (`--tone-*`, contrast-checked, light+dark).
+3. **Data integrity is a rule of the kit, not a convention.** Nothing in the kit computes or invents a number. A comparison (`delta`) renders only if the caller passes it, and callers pass it only from a real API value (CRM `trendDelta.changePct`, labelled "vs prior week"); otherwise the card shows the value and its real supporting text. Gauge values are real ratios of real numbers with explicit scales; **no status thresholds are assumed** (`neutral` unless a caller supplies real thresholds via `gaugeStatus`). Where the dashboard needed data that did not exist, two small read-only aggregates were added to `GET /hr/dashboard` — `attendanceTrend` (per-day present/on-leave/absent, 14 days) and `departmentDistribution` (ACTIVE headcount per department) — computed from the same tables and **the same HR data scope** as the existing counts. Payroll shows only what the API returns (period, status). No mock or estimated values anywhere.
+4. **Gauge is a first-class chart type.** `TargetData` (value, min/max, optional target, unit, secondary text, semantic status) with `gaugeScale`, `gaugeStatus`, `validateChartData` and `isChartKind`; the renderer registry is a `Record<ChartKind, …>` so every kind must have a renderer (compile-time). One `Gauge` component (semicircle, status via `--success/--warning/--danger/--chart-1`, target tick, min/max ends, tooltip, text equivalent, container-responsive) is used by the canvas, reports and dashboards. Two gauge reports exist (`crm-conversion-rate`, `hr-attendance-rate`) plus HR trend/department reports in the report registry; `ReportChart` gained a controlled range so a dashboard header owns the date range.
+5. **Native selects are themed globally** (`select, option, optgroup` use surface/foreground tokens; disabled states covered) and every `bg-transparent` select was moved to `bg-surface`, instead of patching one page.
+6. **Two branding layers, one resolver.** `@aivoryx/shared/branding` `resolveBranding(platform, tenant)` decides everything: name, theme (tenant → platform → built-in), sign-in copy, and which logo/favicon asset to use per surface (light/dark, full/compact/login), returning an `AssetRef` or `null` (a monogram is drawn — never a broken image). A tenant with its own logo but no compact mark gets its own monogram, never Aivoryx's mark.
+7. **Platform branding is separate at every boundary.** New singleton table `platform_branding` and `platform_assets` (migration 0025; no tenant RLS — like `users`/`permissions`, access control is at the API); storage keys under `platform/branding/…` (tenant assets stay under `tenants/<id>/…`); separate services and routes. Writes and the admin read require `@PlatformAdmin()`; a tenant admin with every tenant permission gets 403. Public read is a minimal DTO (defaults when unconfigured — never 404) and an asset stream. Asset validation reuses the tenant validator (extended with PWA/apple-touch square/size rules). Changes are recorded as structured log lines plus `updated_by_user_id`; a durable platform audit table is a follow-up (the tenant audit table requires a tenant id).
+8. **Favicon / metadata / manifest.** The root layout reads platform branding server-side (5-minute cache, 2.5 s timeout, fail-soft to defaults): title, description, favicon, apple-touch icon, the platform theme `<style>` (no flash, also on sign-in) and the PWA manifest (name, theme colour, 192/512 icons with built-in fallbacks). The tenant favicon needs the session, which the server cannot read (cookie is on the API origin), so it is applied client-side in exactly one place (`BrandProvider`), not per page.
+9. **Sign-in** resolves tenant (when `?workspace=` is known) over platform over defaults; the neutral page now shows the _platform_ identity (name, logo, heading, text) instead of hard-coded copy. `accept-invitation` uses the same shell.
+
+## Consequences
+
+- Existing behaviour is unchanged when platform branding is unset (defaults equal today's).
+- Adding a dashboard is composition; the honesty rules are enforced by the kit's API shape and tests.
+- Deliberate limits: no durable platform audit table yet; the public platform routes are unthrottled (the API has no facility); a workspace's _document_ branding remains tenant-only.
+
+## Deferred
+
+Platform audit table; per-tenant scheduled comparisons (e.g. lead deltas beyond week-on-week) once the API provides them; employee-status donut (needs status counts beyond active/onboarding); custom-domain sign-in.

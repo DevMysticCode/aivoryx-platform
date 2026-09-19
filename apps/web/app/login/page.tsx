@@ -10,12 +10,38 @@ import { AuthShell } from '@/components/auth-shell';
 import { themeCssFor } from '@/components/brand-provider';
 import { publicLoginLogoUrl } from '@/lib/api/public';
 import { usePublicLoginBranding } from '@/lib/settings/use-public-branding';
+import { platformAssetHref, usePlatformBranding } from '@/lib/branding/use-branding';
+import { resolveBranding } from '@aivoryx/shared';
 
 function LoginForm() {
   const router = useRouter();
   const qc = useQueryClient();
   const workspace = useSearchParams().get('workspace');
   const { branding, isLoading } = usePublicLoginBranding(workspace);
+  const platform = usePlatformBranding();
+  // ONE resolver: tenant branding (when the workspace is known) over platform branding over defaults
+  const resolved = resolveBranding(
+    platform,
+    branding
+      ? {
+          displayName: branding.displayName,
+          themePreset: branding.themePreset,
+          primaryColor: branding.primaryColor,
+          secondaryColor: branding.secondaryColor,
+          accentColor: branding.accentColor,
+          hasLoginLogo: branding.hasLogo,
+          welcomeMessage: branding.welcomeMessage,
+          description: branding.description,
+          showPoweredBy: branding.showPoweredBy,
+        }
+      : null,
+  );
+  const themeCss = resolved.theme ? themeCssFor(resolved.theme) : null;
+  const ref = resolved.logo('login', 'light');
+  const logoUrl =
+    ref?.source === 'tenant' && branding
+      ? publicLoginLogoUrl(branding.slug)
+      : platformAssetHref(ref, platform);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<unknown>(null);
@@ -50,23 +76,22 @@ function LoginForm() {
 
   return (
     <AuthShell
-      title={branding?.welcomeMessage || 'Sign in'}
+      title={resolved.login.heading || 'Sign in'}
       description={
-        branding?.description ||
-        (branding ? `Sign in to ${branding.displayName}.` : 'Access your Aivoryx workspace.')
+        resolved.login.text ||
+        (branding
+          ? `Sign in to ${branding.displayName}.`
+          : `Access your ${resolved.name} workspace.`)
       }
-      brand={
-        branding
-          ? {
-              displayName: branding.displayName,
-              logoUrl: branding.hasLogo ? publicLoginLogoUrl(branding.slug) : null,
-              showPoweredBy: branding.showPoweredBy,
-            }
-          : null
-      }
+      brand={{
+        displayName: resolved.name,
+        logoUrl,
+        showPoweredBy: !!branding && resolved.login.showPoweredBy,
+        tenantBranded: !!branding,
+      }}
       footer="Trouble signing in? Ask your workspace administrator to reset your access."
     >
-      {branding ? <style data-aivoryx-brand="">{themeCssFor(branding) ?? ''}</style> : null}
+      {themeCss ? <style data-aivoryx-brand="">{themeCss}</style> : null}
       {isLoading ? (
         <span className="sr-only" role="status">
           Loading workspace…

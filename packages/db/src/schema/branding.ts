@@ -13,7 +13,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { newUuidV7 } from '../id.js';
-import { tenants, userTenantMemberships } from './identity.js';
+import { tenants, userTenantMemberships, users } from './identity.js';
 
 /**
  * Tenant Company Profile, Branding & Onboarding (Phase 10, ADR 0039).
@@ -220,6 +220,99 @@ export const tenantOnboarding = pgTable(
   ],
 );
 
+// --- platform branding (GLOBAL � Aivoryx-level identity, no tenant) --
+
+/**
+ * Platform branding (Phase 20). The Aivoryx-level identity managed only by
+ * Platform Admins; the default/fallback for the login page, favicon/manifest
+ * and tenants with no theme or logo. These tables are GLOBAL and deliberately
+ * NOT tenant-scoped (no tenant_id, no tenant RLS policy) � like `users` /
+ * `permissions` � because the public pre-auth pages must read them. Access
+ * control is enforced at the API layer (`@PlatformAdmin()` on every write).
+ * Tenant assets and platform assets live in separate tables AND separate
+ * object-key namespaces (`platform/branding/�` vs `tenants/<id>/�`).
+ */
+export const platformAssetKind = pgEnum('platform_asset_kind', [
+  'logo_light',
+  'logo_dark',
+  'mark',
+  'favicon',
+  'login_logo',
+  'apple_touch',
+  'pwa_192',
+  'pwa_512',
+]);
+
+export const platformBranding = pgTable(
+  'platform_branding',
+  {
+    /** constant PK + CHECK => at most one row can ever exist */
+    singleton: boolean('singleton').primaryKey().default(true),
+    platformName: text('platform_name'),
+    tagline: text('tagline'),
+    themePreset: text('theme_preset'),
+    primaryColor: text('primary_color'),
+    secondaryColor: text('secondary_color'),
+    accentColor: text('accent_color'),
+    loginHeading: text('login_heading'),
+    loginText: text('login_text'),
+    updatedByUserId: uuid('updated_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    ...entityTimestamps,
+  },
+  () => [
+    check('platform_branding_singleton_chk', sql`"singleton" = true`),
+    check(
+      'platform_branding_primary_hex',
+      sql`"primary_color" is null or "primary_color" ~ ${HEX_COLOR}`,
+    ),
+    check(
+      'platform_branding_secondary_hex',
+      sql`"secondary_color" is null or "secondary_color" ~ ${HEX_COLOR}`,
+    ),
+    check(
+      'platform_branding_accent_hex',
+      sql`"accent_color" is null or "accent_color" ~ ${HEX_COLOR}`,
+    ),
+    check(
+      'platform_branding_theme_preset_chk',
+      sql`"theme_preset" is null or "theme_preset" in ('aivoryx-teal','ocean','indigo','emerald','royal','warm','custom')`,
+    ),
+    check(
+      'platform_branding_login_heading_len',
+      sql`"login_heading" is null or char_length("login_heading") <= 80`,
+    ),
+    check(
+      'platform_branding_login_text_len',
+      sql`"login_text" is null or char_length("login_text") <= 240`,
+    ),
+  ],
+);
+
+export const platformAssets = pgTable(
+  'platform_assets',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => newUuidV7()),
+    kind: platformAssetKind('kind').notNull(),
+    /** opaque `platform/branding/<kind>/<uuid>.<ext>` key � never exposed to clients */
+    objectKey: text('object_key').notNull(),
+    contentType: text('content_type').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    width: integer('width'),
+    height: integer('height'),
+    originalFilename: text('original_filename'),
+    ...entityTimestamps,
+  },
+  (t) => [
+    unique('platform_assets_kind_uq').on(t.kind),
+    unique('platform_assets_object_key_uq').on(t.objectKey),
+    check('platform_assets_size_pos', sql`"size_bytes" > 0`),
+  ],
+);
+
 // --- row types --------------------------------------------------------
 
 export type TenantCompanyProfileRow = typeof tenantCompanyProfiles.$inferSelect;
@@ -228,3 +321,5 @@ export type TenantAssetRow = typeof tenantAssets.$inferSelect;
 export type NewTenantAssetRow = typeof tenantAssets.$inferInsert;
 export type TenantOnboardingRow = typeof tenantOnboarding.$inferSelect;
 export type NewTenantOnboardingRow = typeof tenantOnboarding.$inferInsert;
+export type PlatformBrandingRow = typeof platformBranding.$inferSelect;
+export type PlatformAssetRow = typeof platformAssets.$inferSelect;

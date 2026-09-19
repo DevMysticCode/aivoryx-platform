@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { buildThemeCss, isThemePresetKey, resolveThemeColors } from '@aivoryx/shared';
 import { useMe } from '@/lib/admin/use-admin';
+import { useResolvedBranding } from '@/lib/branding/use-branding';
 import { useLogoObjectUrl } from '@/lib/settings/use-settings';
 import { BRAND_CACHE_STORAGE_KEY } from '@/lib/theme/appearance';
 
@@ -47,9 +48,16 @@ export function themeCssFor(input: ThemeInput): string | null {
  * also cached in localStorage so the next page load paints the brand before
  * `/auth/me` returns (no flash of the default teal).
  */
-export function BrandProvider({ disabled }: { disabled?: boolean }) {
-  // pre-auth / platform routes: never read the session and never show a cached tenant brand
-  return disabled ? <NoBrand /> : <ActiveBrand />;
+export function BrandProvider({
+  disabled,
+  platformOnly,
+}: {
+  disabled?: boolean;
+  /** platform-admin routes: paint the platform theme only (no tenant layer, no cache) */
+  platformOnly?: boolean;
+}) {
+  // pre-auth routes: never read the session and never show a cached tenant brand
+  return disabled ? <NoBrand /> : <ActiveBrand platformOnly={platformOnly} />;
 }
 
 function NoBrand() {
@@ -59,14 +67,17 @@ function NoBrand() {
   return null;
 }
 
-function ActiveBrand() {
+function ActiveBrand({ platformOnly }: { platformOnly?: boolean }) {
   const me = useMe();
-  const branding = me.data?.active?.branding as
-    | (ThemeInput & { hasFavicon?: boolean; displayName?: string })
-    | undefined;
-  const css = branding ? themeCssFor(branding) : null;
+  const { branding } = useResolvedBranding({ ignoreTenant: platformOnly });
+  // ONE resolved theme: the tenant's when it configured one, else the platform's
+  const css = branding.theme ? themeCssFor(branding.theme) : null;
 
   useEffect(() => {
+    if (platformOnly) {
+      document.getElementById('aivoryx-brand-cache')?.remove();
+      return;
+    }
     if (!me.data) return;
     try {
       if (css) localStorage.setItem(BRAND_CACHE_STORAGE_KEY, css);
@@ -74,15 +85,14 @@ function ActiveBrand() {
     } catch {
       /* storage blocked — brand still applies for this session */
     }
-    // the server-derived <style> below now owns the tokens
+    // the derived <style> below now owns the tokens
     document.getElementById('aivoryx-brand-cache')?.remove();
-  }, [css, me.data]);
+  }, [css, me.data, platformOnly]);
 
-  const faviconUrl = useLogoObjectUrl(
-    !!branding?.hasFavicon,
-    branding?.displayName ?? null,
-    'favicon',
-  );
+  // Tenant favicon (platform favicon is server-rendered metadata). Managed here,
+  // once, rather than per page.
+  const fav = platformOnly ? null : branding.favicon();
+  const faviconUrl = useLogoObjectUrl(fav?.source === 'tenant', branding.name, 'favicon');
   useEffect(() => {
     if (!faviconUrl) return;
     const link = document.createElement('link');

@@ -248,6 +248,8 @@ test.describe('Aivoryx UI 2.0 (Phase 19)', () => {
   });
 
   test.describe('branding & themes', () => {
+    // both tests edit the same workspace theme, so they must not interleave
+    test.describe.configure({ mode: 'serial' });
     test('a preset is applied app-wide, an unreadable custom colour is refused, then reset', async ({
       page,
     }) => {
@@ -344,13 +346,16 @@ test.describe('Aivoryx UI 2.0 (Phase 19)', () => {
 
     for (const mode of ['light', 'dark'] as const) {
       test(`no horizontal overflow at 390 / 768 / 1024 / 1440 (${mode})`, async ({ page }) => {
+        test.setTimeout(120_000); // 24 full page loads
         await page.addInitScript((m) => localStorage.setItem('aivoryx.appearance', m), mode);
         await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD);
         for (const w of widths) {
           await page.setViewportSize({ width: w, height: w < 500 ? 844 : 900 });
           for (const route of routes) {
             await page.goto(route);
-            await page.waitForLoadState('networkidle');
+            // not 'networkidle': Next's router prefetches every visible link, which keeps the network busy
+            await page.locator('h1').first().waitFor();
+            await page.waitForTimeout(600);
             expect(await isDark(page), `${route} @${w}`).toBe(mode === 'dark');
             expect(await overflow(page), `${route} @${w} ${mode}`).toBeLessThanOrEqual(1);
           }

@@ -27,7 +27,14 @@ export interface LogoFileInput {
  * mismatch / dimensions). Shared by tenant logos and customer logos so both get
  * identical rules. The sniffed format is authoritative.
  */
-export function validateLogoFile(file: LogoFileInput): ImageMeta {
+export interface LogoShapeRules {
+  /** shortest allowed side, in px (in addition to the global minimum) */
+  minSide?: number;
+  /** `square` = width must equal height; `squareish` = aspect ratio within 0.8-1.25 */
+  aspect?: 'square' | 'squareish';
+}
+
+export function validateLogoFile(file: LogoFileInput, shape?: LogoShapeRules): ImageMeta {
   if (!file.buffer || file.buffer.length === 0) {
     throw new AppError('LOGO_INVALID', { details: { reason: 'empty' } });
   }
@@ -63,6 +70,26 @@ export function validateLogoFile(file: LogoFileInput): ImageMeta {
     throw new AppError('LOGO_INVALID', {
       details: { reason: 'bad_dimensions', width: meta.width, height: meta.height },
     });
+  }
+  if (shape?.minSide && (meta.width < shape.minSide || meta.height < shape.minSide)) {
+    throw new AppError('LOGO_INVALID', {
+      details: {
+        reason: 'too_small',
+        minSide: shape.minSide,
+        width: meta.width,
+        height: meta.height,
+      },
+    });
+  }
+  if (shape?.aspect) {
+    const ratio = meta.width / meta.height;
+    const ok =
+      shape.aspect === 'square' ? meta.width === meta.height : ratio >= 0.8 && ratio <= 1.25;
+    if (!ok) {
+      throw new AppError('LOGO_INVALID', {
+        details: { reason: 'not_square', width: meta.width, height: meta.height },
+      });
+    }
   }
   return meta;
 }

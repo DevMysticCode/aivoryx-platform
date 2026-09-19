@@ -58,7 +58,7 @@ export default function PlatformTenantsPage() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as typeof status)}
-            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            className="h-9 rounded-md border bg-surface px-2 text-sm"
             aria-label="Status filter"
           >
             <option value="all">All statuses</option>
@@ -70,7 +70,7 @@ export default function PlatformTenantsPage() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            className="h-9 rounded-md border bg-surface px-2 text-sm"
             aria-label="Sort"
           >
             <option value="name">Sort: Name</option>

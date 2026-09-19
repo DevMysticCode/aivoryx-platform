@@ -484,6 +484,76 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/platform/branding': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The platform branding config. */
+    get: operations['getPlatformBranding'];
+    /** Edit platform branding. */
+    put: operations['updatePlatformBranding'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/branding/assets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Upload a platform logo / icon. */
+    post: operations['uploadPlatformBrandingAsset'];
+    /** Remove a platform logo / icon. */
+    delete: operations['removePlatformBrandingAsset'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/public/platform/branding': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Safe platform branding (defaults when unconfigured; no authentication). */
+    get: operations['getPublicPlatformBranding'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/public/platform/branding/asset': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Stream a platform branding asset. */
+    get: operations['getPublicPlatformBrandingAsset'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/tenant': {
     parameters: {
       query?: never;
@@ -5520,6 +5590,87 @@ export interface components {
       employees: number | null;
       enabledModules: number;
     };
+    PlatformBrandingDto: {
+      platformName: string | null;
+      tagline: string | null;
+      /** @enum {string|null} */
+      themePreset:
+        | 'aivoryx-teal'
+        | 'ocean'
+        | 'indigo'
+        | 'emerald'
+        | 'royal'
+        | 'warm'
+        | 'custom'
+        | null;
+      primaryColor: string | null;
+      secondaryColor: string | null;
+      accentColor: string | null;
+      loginHeading: string | null;
+      loginText: string | null;
+      hasLogoLight: boolean;
+      hasLogoDark: boolean;
+      hasMark: boolean;
+      hasFavicon: boolean;
+      hasLoginLogo: boolean;
+      hasAppleTouch: boolean;
+      hasPwa192: boolean;
+      hasPwa512: boolean;
+      /** Format: date-time */
+      updatedAt: string | null;
+      /** @description Cache-busting token; changes on any branding or asset change. */
+      version: string;
+    };
+    UpdatePlatformBrandingDto: {
+      /** @description Empty string clears. */
+      platformName?: string;
+      /** @description Empty string clears. */
+      tagline?: string;
+      /** @enum {string} */
+      themePreset?: 'aivoryx-teal' | 'ocean' | 'indigo' | 'emerald' | 'royal' | 'warm' | 'custom';
+      /** @example #1E40AF */
+      primaryColor?: string;
+      /** @example #231D45 */
+      secondaryColor?: string;
+      /** @example #0EA5E9 */
+      accentColor?: string;
+      /** @description Empty string clears. */
+      loginHeading?: string;
+      /** @description Empty string clears. */
+      loginText?: string;
+    };
+    PublicPlatformAssetFlagsDto: {
+      logoLight: boolean;
+      logoDark: boolean;
+      mark: boolean;
+      favicon: boolean;
+      loginLogo: boolean;
+      appleTouch: boolean;
+      pwa192: boolean;
+      pwa512: boolean;
+    };
+    PublicPlatformBrandingDto: {
+      name: string;
+      tagline: string | null;
+      /** @enum {string|null} */
+      themePreset:
+        | 'aivoryx-teal'
+        | 'ocean'
+        | 'indigo'
+        | 'emerald'
+        | 'royal'
+        | 'warm'
+        | 'custom'
+        | null;
+      primaryColor: string | null;
+      secondaryColor: string | null;
+      accentColor: string | null;
+      loginHeading: string | null;
+      loginText: string | null;
+      assets: components['schemas']['PublicPlatformAssetFlagsDto'];
+      /** @description Cache-busting token (updatedAt ms; "0" when unconfigured). */
+      version: string;
+    };
     TenantMemberCountsDto: {
       active: number;
       invited: number;
@@ -6354,6 +6505,21 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    HrAttendanceDayDto: {
+      /** Format: date */
+      date: string;
+      present: number;
+      onLeave: number;
+      absent: number;
+    };
+    HrDepartmentHeadcountDto: {
+      /** Format: uuid */
+      departmentId: string | null;
+      /** @description Department name, or "Unassigned" when the employee has none. */
+      name: string;
+      /** @description ACTIVE employees in the caller’s data scope. */
+      count: number;
+    };
     HrDashboardEmployeeRefDto: {
       /** Format: uuid */
       id: string;
@@ -6383,6 +6549,10 @@ export interface components {
       summary: string;
     };
     HrDashboardDto: {
+      /** @description Attendance per calendar day for the last 14 days (today included), from the same records and data scope as the "today" counts. Days with no records are present with zeros. */
+      attendanceTrend: components['schemas']['HrAttendanceDayDto'][];
+      /** @description ACTIVE headcount per department within the caller’s data scope, largest first. */
+      departmentDistribution: components['schemas']['HrDepartmentHeadcountDto'][];
       totalEmployees: number;
       activeEmployees: number;
       /** @description Employees created ahead of their start date. */
@@ -10336,6 +10506,219 @@ export interface operations {
         };
       };
       403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPlatformBranding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformBrandingDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updatePlatformBranding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePlatformBrandingDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformBrandingDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  uploadPlatformBrandingAsset: {
+    parameters: {
+      query: {
+        kind:
+          | 'logo_light'
+          | 'logo_dark'
+          | 'mark'
+          | 'favicon'
+          | 'login_logo'
+          | 'apple_touch'
+          | 'pwa_192'
+          | 'pwa_512';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformBrandingDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  removePlatformBrandingAsset: {
+    parameters: {
+      query: {
+        kind:
+          | 'logo_light'
+          | 'logo_dark'
+          | 'mark'
+          | 'favicon'
+          | 'login_logo'
+          | 'apple_touch'
+          | 'pwa_192'
+          | 'pwa_512';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformBrandingDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPublicPlatformBranding: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublicPlatformBrandingDto'];
+        };
+      };
+    };
+  };
+  getPublicPlatformBrandingAsset: {
+    parameters: {
+      query: {
+        kind:
+          | 'logo_light'
+          | 'logo_dark'
+          | 'mark'
+          | 'favicon'
+          | 'login_logo'
+          | 'apple_touch'
+          | 'pwa_192'
+          | 'pwa_512';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description PLATFORM_ASSET_NOT_FOUND */
+      404: {
         headers: {
           [name: string]: unknown;
         };

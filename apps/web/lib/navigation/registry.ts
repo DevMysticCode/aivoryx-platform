@@ -487,6 +487,13 @@ export const PLATFORM_NAV: NavEntry[] = [
     icon: Boxes,
     order: 20,
   },
+  {
+    key: 'platform.branding',
+    label: 'Branding',
+    href: '/platform/settings/branding',
+    icon: Palette,
+    order: 25,
+  },
   { key: 'platform.system', label: 'System health', href: '/health', icon: Activity, order: 30 },
 ];
 

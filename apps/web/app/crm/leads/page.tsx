@@ -192,7 +192,7 @@ export default function LeadsPage() {
           <select
             value={filter.status ?? ''}
             onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value || undefined }))}
-            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            className="h-9 rounded-md border bg-surface px-2 text-sm"
             aria-label="Status filter"
           >
             <option value="">Any status</option>
@@ -208,7 +208,7 @@ export default function LeadsPage() {
             onChange={(e) =>
               setFilter((f) => ({ ...f, assignedMembershipId: e.target.value || undefined }))
             }
-            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            className="h-9 rounded-md border bg-surface px-2 text-sm"
             aria-label="Assignee filter"
           >
             <option value="">Anyone</option>
