@@ -1,6 +1,7 @@
-import { Body, Controller, Headers, HttpCode, Param, Post, Req } from '@nestjs/common';
+import { Body, Controller, Headers, HttpCode, Param, Post, Req, Res } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
+import { AppError } from '@aivoryx/shared';
 import { Public } from '../security/security.decorators.js';
 import { getCorrelationId, newCorrelationId } from '../observability/correlation.js';
 import { extractBearerSecret } from './connector-token.js';
@@ -33,15 +34,26 @@ export class WebhookController {
     @Headers('authorization') authorization: string | undefined,
     @Body() body: unknown,
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<IngestAcceptedResponseDto> {
     const correlationId = getCorrelationId() ?? newCorrelationId();
-    const result = await this.ingestion.ingest({
-      sourceKeyFromUrl: sourceKey,
-      secret: extractBearerSecret(authorization),
-      rawBody: body,
-      headers: safeHeaders(req),
-      correlationId,
-    });
+    let result;
+    try {
+      result = await this.ingestion.ingest({
+        sourceKeyFromUrl: sourceKey,
+        secret: extractBearerSecret(authorization),
+        rawBody: body,
+        headers: safeHeaders(req),
+        correlationId,
+      });
+    } catch (err) {
+      // 429 carries Retry-After (seconds) so well-behaved senders back off
+      if (AppError.isAppError(err) && err.code === 'RATE_LIMITED') {
+        const retryAfter = err.details?.retryAfterSeconds;
+        if (typeof retryAfter === 'number') res.setHeader('Retry-After', String(retryAfter));
+      }
+      throw err;
+    }
     return {
       accepted: true,
       status: result.status,

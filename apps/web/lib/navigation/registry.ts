@@ -407,7 +407,7 @@ export const TENANT_NAV: NavEntry[] = [
         label: 'Integrations',
         href: '/admin/integrations',
         icon: Plug,
-        permission: 'memberships.read',
+        permission: 'crm.integrations.manage',
         order: 50,
       },
       {

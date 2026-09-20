@@ -1,5 +1,6 @@
 import { type INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import type { ServerEnv } from '@aivoryx/config';
 import { correlationRequestHandler } from '../observability/correlation.middleware.js';
@@ -18,6 +19,16 @@ export function configureApp(app: INestApplication, env: ServerEnv): void {
   app.use(correlationRequestHandler);
   // Safe request metadata (ip / user-agent / request id) for the audit log.
   app.use(requestMetaRequestHandler);
+  // Public inbound webhooks get their OWN, explicit body limit (WEBHOOK_MAX_BODY_BYTES). Mounted
+  // before the framework's default parsers, so an oversized request is rejected by the parser
+  // itself (413 PAYLOAD_TOO_LARGE, decided from Content-Length or while streaming) and never
+  // reaches the controller, the database or any queue. Every other route keeps the default limit.
+  const webhookParserOptions = { limit: env.WEBHOOK_MAX_BODY_BYTES };
+  app.use(
+    '/api/v1/integrations/webhooks',
+    bodyParser.json(webhookParserOptions),
+    bodyParser.urlencoded({ ...webhookParserOptions, extended: true }),
+  );
   app.use(helmet());
   app.use(cookieParser());
 

@@ -26,6 +26,10 @@ export const ERROR_CODES = {
     httpStatus: 405,
     message: 'That action is not supported on this resource.',
   },
+  PAYLOAD_TOO_LARGE: {
+    httpStatus: 413,
+    message: 'The request body is larger than this endpoint accepts.',
+  },
   RATE_LIMITED: {
     httpStatus: 429,
     message: 'Too many requests. Please slow down and try again shortly.',

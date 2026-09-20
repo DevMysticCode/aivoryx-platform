@@ -114,6 +114,14 @@ export const rawEvents = pgTable(
     rawHash: text('raw_hash').notNull(),
     transportMetadata: jsonb('transport_metadata').notNull().default({}),
     status: rawEventStatus('status').notNull().default('RECEIVED'),
+    /**
+     * Retention (UC-1): the raw payload may be purged once this passes. Set by the application from
+     * RAW_EVENT_RETENTION_DAYS at insert; the DB default only backstops legacy/manual inserts. The
+     * purge job deletes ONLY rows past this instant (also enforced by the purge RLS policy).
+     */
+    expiresAt: timestamp('expires_at', { withTimezone: true })
+      .notNull()
+      .default(sql`now() + interval '30 days'`),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .default(sql`now()`),
@@ -123,6 +131,8 @@ export const rawEvents = pgTable(
     unique('raw_events_tenant_source_hash_uq').on(t.tenantId, t.sourceId, t.rawHash),
     unique('raw_events_id_tenant_uq').on(t.id, t.tenantId),
     index('raw_events_tenant_source_idx').on(t.tenantId, t.sourceId, t.receivedAt),
+    // serves the retention purge (`expires_at < now()` in bounded batches)
+    index('raw_events_expires_at_idx').on(t.expiresAt),
     foreignKey({
       name: 'raw_events_source_fk',
       columns: [t.sourceId, t.tenantId],

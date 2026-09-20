@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@aivoryx/ui';
 import { Confirm } from '@/components/ui/kit';
+import { useAccess } from '@/lib/navigation/use-access';
 import {
   useCreateSource,
   useInboundEvents,
@@ -22,7 +23,32 @@ import {
   StatusBadge,
 } from '@/components/admin/ui';
 
+/**
+ * The connector center needs `crm.integrations.manage` — the same capability every API route under
+ * `admin/integrations` enforces. The check here only spares a user without it a page of 403s; the
+ * API remains the authority.
+ */
 export default function IntegrationsAdminPage() {
+  const access = useAccess();
+  if (access.isLoading) return <Skeleton rows={3} />;
+  if (!access.can('crm.integrations.manage')) {
+    return (
+      <section className="space-y-6">
+        <PageHeader
+          title="Inbound integrations"
+          description="Connector sources and inbound events."
+        />
+        <EmptyState title="You don't have access to integrations">
+          Managing inbound connectors needs the &quot;Configure inbound lead connectors&quot;
+          permission. Ask a workspace administrator to grant it.
+        </EmptyState>
+      </section>
+    );
+  }
+  return <IntegrationsAdmin />;
+}
+
+function IntegrationsAdmin() {
   const sources = useSources();
   const events = useInboundEvents();
   const createSource = useCreateSource();

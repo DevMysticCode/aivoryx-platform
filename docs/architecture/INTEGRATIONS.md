@@ -69,3 +69,21 @@ available but unused. See `PABBLY-BRIDGE.md`.
 The same connector/adapter contracts are intended to serve outbound REST
 actions and other inbound events later. Anything beyond lead ingestion is out of
 scope for V1.
+
+## Webhook hardening and retention (UC-1)
+
+Decisions and rationale: [ADR 0048](../adr/0048-inbound-webhook-hardening-and-raw-event-retention.md).
+
+| Setting                             | Default | Meaning                                                             |
+| ----------------------------------- | ------- | ------------------------------------------------------------------- |
+| `WEBHOOK_MAX_BODY_BYTES`            | 262144  | Max body of the public webhook (413 `PAYLOAD_TOO_LARGE` above it)   |
+| `WEBHOOK_RATE_LIMIT_MAX`            | 120     | Burst per authenticated source (429 `RATE_LIMITED` + `Retry-After`) |
+| `WEBHOOK_RATE_LIMIT_WINDOW_SECONDS` | 60      | Full refill time (sustained rate = MAX / WINDOW)                    |
+| `RAW_EVENT_RETENTION_DAYS`          | 30      | Age after which a raw payload may be purged                         |
+| `RAW_EVENT_PURGE_BATCH_SIZE`        | 500     | Rows per purge batch                                                |
+| `RAW_EVENT_PURGE_INTERVAL_MINUTES`  | 60      | Time between purge runs                                             |
+| `RAW_EVENT_PURGE_ENABLED`           | true    | Run the in-process purge job                                        |
+
+Raw event lifecycle: `RECEIVED` -> `PROCESSED` (done, or a duplicate logical event) | `FAILED`
+(validation/mapping failure, or an unexpected error recorded as `PROCESSING_ERROR`). A failed event
+can be replayed by an admin; a provider retry of an unexpectedly failed delivery is reprocessed.

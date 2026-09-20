@@ -693,7 +693,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
   // ---- KNOWN CURRENT GAPS -------------------------------------------------------
   // These document today's behaviour so a later phase changes it DELIBERATELY. They are not
   // contracts: UC-1 is expected to update or remove each of them, in the same commit as the fix.
-  describe('known current gaps (not contracts; expected to change in UC-1)', () => {
+  describe('known current gaps (not contracts; each is expected to change deliberately)', () => {
     it('idempotency is scoped per TENANT, not per source: a record id re-used on a second source in the same tenant is a DUPLICATE_EVENT', async () => {
       const cookie = await h.adminCookie();
       const route = WEBHOOK_ROUTES[0];
@@ -707,7 +707,9 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
       expect(second.body.leadId).toBe(first.body.leadId);
     });
 
-    it('raw_events.status is never advanced: it stays RECEIVED after successful processing', async () => {
+    // UC-1 fixed this gap deliberately: the raw event now reaches PROCESSED. The full lifecycle
+    // (FAILED, duplicates, retry) is covered in integrations-hardening.int.spec.ts.
+    it('raw_events.status advances to PROCESSED after successful processing (was RECEIVED before UC-1)', async () => {
       const cookie = await h.adminCookie();
       const { key, secret, sourceId } = await h.createSource(cookie, h.uniqueKey('gap-raw-status'));
       const res = await h.webhook(WEBHOOK_ROUTES[0], key, secret, { phone: phone() });
@@ -716,7 +718,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
         'select status from raw_events where source_id = $1',
         [sourceId],
       );
-      expect(raw!.status).toBe('RECEIVED');
+      expect(raw!.status).toBe('PROCESSED');
     });
   });
 });

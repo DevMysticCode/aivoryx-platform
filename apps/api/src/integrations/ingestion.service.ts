@@ -1,7 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { getDb, schema, withProgressiveContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
+import type { ServerEnv } from '@aivoryx/config';
+import { SERVER_ENV } from '../config/config.module.js';
 import { OutboxService } from '../admin/outbox.service.js';
 import { recordActivity } from '../crm/activities.js';
 import {
@@ -16,9 +18,25 @@ import { hashConnectorSecret } from './connector-token.js';
 import { mapProviderFields } from './mapping.js';
 import { parsePabblyPayload } from './pabbly-adapter.js';
 import { hashRawBody } from './raw-hash.js';
+import { WEBHOOK_RATE_LIMITER, type RateLimiter } from './rate-limiter.js';
 import { AuditService } from '../audit/audit.service.js';
 
 const { canonicalLeadEvents, leadSources, leads, rawEvents } = schema;
+
+/** canonical-event error code for an UNEXPECTED (non-business) processing failure */
+export const PROCESSING_ERROR_CODE = 'PROCESSING_ERROR';
+const PROCESSING_ERROR_MESSAGE =
+  'An unexpected error interrupted processing of this event. It can be replayed.';
+
+type DuplicateLookup =
+  | { kind: 'retry'; canonicalId: string }
+  | { kind: 'result'; result: IngestResult };
+
+/** ids resolved while ingesting, for the per-delivery log line only */
+interface IngestTrace {
+  tenantId?: string;
+  sourceId?: string;
+}
 
 export const LEAD_CREATED_EVENT = 'lead.created';
 export const LEAD_UPDATED_EVENT = 'lead.updated';
@@ -62,9 +80,54 @@ export class IngestionService {
   constructor(
     private readonly outbox: OutboxService,
     private readonly audit: AuditService,
+    @Inject(SERVER_ENV) private readonly env: ServerEnv,
+    @Inject(WEBHOOK_RATE_LIMITER) private readonly rateLimiter: RateLimiter,
   ) {}
 
+  /**
+   * Public entry point. Adds timing and ONE structured, secret-free log line per delivery (ids,
+   * status, error code, duration — never the payload, headers or credential).
+   */
   async ingest(input: InboundRequest): Promise<IngestResult> {
+    const startedAt = Date.now();
+    const trace: IngestTrace = {};
+    try {
+      const result = await this.run(input, trace);
+      this.logger.log(
+        {
+          module: 'integrations',
+          operation: 'webhook.ingest',
+          correlationId: input.correlationId,
+          tenantId: trace.tenantId,
+          sourceId: trace.sourceId,
+          rawEventId: result.rawEventId,
+          canonicalEventId: result.canonicalEventId,
+          status: result.status,
+          errorCode: result.errorCode,
+          durationMs: Date.now() - startedAt,
+        },
+        'webhook processed',
+      );
+      return result;
+    } catch (err) {
+      this.logger.warn(
+        {
+          module: 'integrations',
+          operation: 'webhook.ingest',
+          correlationId: input.correlationId,
+          tenantId: trace.tenantId,
+          sourceId: trace.sourceId,
+          status: 'REJECTED',
+          errorCode: AppError.isAppError(err) ? err.code : 'INTERNAL_ERROR',
+          durationMs: Date.now() - startedAt,
+        },
+        'webhook rejected',
+      );
+      throw err;
+    }
+  }
+
+  private async run(input: InboundRequest, trace: IngestTrace): Promise<IngestResult> {
     if (!input.secret) throw new AppError('CONNECTOR_INVALID');
     const secretHash = hashConnectorSecret(input.secret);
 
@@ -78,6 +141,18 @@ export class IngestionService {
       if (!source) throw new AppError('CONNECTOR_INVALID');
       if (source.key !== input.sourceKeyFromUrl) throw new AppError('CONNECTOR_INVALID');
       if (source.status === 'revoked') throw new AppError('CONNECTOR_REVOKED');
+      trace.tenantId = source.tenantId;
+      trace.sourceId = source.id;
+
+      // Per-source rate limit (UC-1), after the credential is proven and BEFORE anything is
+      // persisted: a limited request creates no raw event, canonical event, lead or outbox row.
+      const decision = this.rateLimiter.consume(`source:${source.id}`);
+      if (!decision.allowed) {
+        throw new AppError('RATE_LIMITED', {
+          message: 'This source is sending events too quickly. Retry after the indicated delay.',
+          details: { retryAfterSeconds: decision.retryAfterSeconds, limit: decision.limit },
+        });
+      }
 
       // Server-derived, never client-supplied — the payload's tenant_id (if any) is ignored.
       await setContext({ tenantId: source.tenantId });
@@ -92,6 +167,7 @@ export class IngestionService {
           rawBody: input.rawBody as Record<string, unknown>,
           rawHash,
           transportMetadata: input.headers,
+          expiresAt: new Date(Date.now() + this.env.RAW_EVENT_RETENTION_DAYS * 86_400_000),
         })
         .onConflictDoNothing({
           target: [rawEvents.tenantId, rawEvents.sourceId, rawEvents.rawHash],
@@ -99,10 +175,16 @@ export class IngestionService {
         .returning({ id: rawEvents.id });
 
       if (inserted) {
-        return { tenantId: source.tenantId, source, rawEventId: inserted.id, isNewRaw: true };
+        return {
+          tenantId: source.tenantId,
+          source,
+          rawEventId: inserted.id,
+          rawStatus: 'RECEIVED' as const,
+          isNewRaw: true as const,
+        };
       }
       const [existing] = await tx
-        .select({ id: rawEvents.id })
+        .select({ id: rawEvents.id, status: rawEvents.status })
         .from(rawEvents)
         .where(
           and(
@@ -112,31 +194,176 @@ export class IngestionService {
           ),
         )
         .limit(1);
-      return { tenantId: source.tenantId, source, rawEventId: existing!.id, isNewRaw: false };
+      return {
+        tenantId: source.tenantId,
+        source,
+        rawEventId: existing!.id,
+        rawStatus: existing!.status,
+        isNewRaw: false as const,
+      };
     });
 
     if (!resolved.isNewRaw) {
-      return withProgressiveContext(getDb(), async (tx, setContext) => {
-        await setContext({ tenantId: resolved.tenantId });
-        const [existingCanonical] = await tx
-          .select()
-          .from(canonicalLeadEvents)
-          .where(eq(canonicalLeadEvents.rawEventId, resolved.rawEventId))
-          .limit(1);
-        return {
-          status: 'DUPLICATE_RAW',
-          rawEventId: resolved.rawEventId,
-          canonicalEventId: existingCanonical?.id,
-          leadId: existingCanonical?.leadId ?? undefined,
-          dedupeOutcome: existingCanonical?.dedupeOutcome ?? undefined,
-        };
-      });
+      const duplicate = await withProgressiveContext<DuplicateLookup>(
+        getDb(),
+        async (tx, setContext) => {
+          await setContext({ tenantId: resolved.tenantId });
+          const [existingCanonical] = await tx
+            .select()
+            .from(canonicalLeadEvents)
+            .where(eq(canonicalLeadEvents.rawEventId, resolved.rawEventId))
+            .limit(1);
+          // A provider RETRY of a delivery whose processing failed unexpectedly (transient DB error,
+          // deploy mid-flight, ...) must finish the job instead of being answered "duplicate" forever.
+          // Business failures (validation/mapping) are not retried: the same body would fail again.
+          if (
+            resolved.rawStatus === 'FAILED' &&
+            existingCanonical?.status === 'FAILED' &&
+            existingCanonical.lastErrorCode === PROCESSING_ERROR_CODE
+          ) {
+            return { kind: 'retry', canonicalId: existingCanonical.id };
+          }
+          return {
+            kind: 'result',
+            result: {
+              status: 'DUPLICATE_RAW',
+              rawEventId: resolved.rawEventId,
+              canonicalEventId: existingCanonical?.id,
+              leadId: existingCanonical?.leadId ?? undefined,
+              dedupeOutcome: existingCanonical?.dedupeOutcome ?? undefined,
+            },
+          };
+        },
+      );
+      if (duplicate.kind === 'retry') {
+        return this.replay(resolved.tenantId, duplicate.canonicalId, null);
+      }
+      return duplicate.result;
     }
 
     return this.processRawEvent(resolved.tenantId, resolved.source, resolved.rawEventId);
   }
 
+  /**
+   * Transaction 2 wrapped with failure handling. Any UNEXPECTED exception rolls transaction 2 back
+   * (no half-written lead), then a separate short transaction records the failure durably so the
+   * event is never left looking successful or invisible: raw event -> FAILED, canonical event ->
+   * FAILED (`PROCESSING_ERROR`). The caller gets a generic 500 carrying the correlation id; the
+   * underlying error (which can embed SQL parameters, i.e. lead data) is never propagated or logged.
+   */
   private async processRawEvent(
+    tenantId: string,
+    source: typeof leadSources.$inferSelect,
+    rawEventId: string,
+    options: { isReplay?: boolean } = {},
+  ): Promise<IngestResult> {
+    try {
+      return await this.processRawEventTx(tenantId, source, rawEventId, options);
+    } catch (err) {
+      await this.recordProcessingFailure(tenantId, source.id, rawEventId, err);
+      throw new AppError('INTERNAL_ERROR');
+    }
+  }
+
+  private async recordProcessingFailure(
+    tenantId: string,
+    sourceId: string,
+    rawEventId: string,
+    err: unknown,
+  ): Promise<void> {
+    // Safe diagnostics only: error class and Postgres SQLSTATE, never the message, params or payload.
+    const pgCode = (err as { code?: unknown } | null)?.code;
+    this.logger.error(
+      {
+        module: 'integrations',
+        operation: 'webhook.process',
+        tenantId,
+        sourceId,
+        rawEventId,
+        status: 'FAILED',
+        errorCode: PROCESSING_ERROR_CODE,
+        errorClass: err instanceof Error ? err.name : typeof err,
+        pgCode: typeof pgCode === 'string' ? pgCode : undefined,
+      },
+      'webhook processing failed unexpectedly',
+    );
+    try {
+      await withProgressiveContext(getDb(), async (tx, setContext) => {
+        await setContext({ tenantId });
+        const [raw] = await tx
+          .select()
+          .from(rawEvents)
+          .where(eq(rawEvents.id, rawEventId))
+          .limit(1);
+        if (!raw) return;
+        const [existing] = await tx
+          .select()
+          .from(canonicalLeadEvents)
+          .where(eq(canonicalLeadEvents.rawEventId, rawEventId))
+          .limit(1);
+        if (existing?.status === 'DONE') return;
+
+        let canonicalId: string | undefined = existing?.id;
+        if (existing) {
+          // replay path: the canonical row was left PROCESSING by the attempt-count bump
+          await tx
+            .update(canonicalLeadEvents)
+            .set({
+              status: 'FAILED',
+              lastErrorCode: PROCESSING_ERROR_CODE,
+              lastErrorMessage: PROCESSING_ERROR_MESSAGE,
+              updatedAt: new Date(),
+            })
+            .where(eq(canonicalLeadEvents.id, existing.id));
+        } else {
+          // first attempt: transaction 2 rolled back before a canonical row could persist
+          const providerRecordId = parsePabblyPayload(raw.rawBody).providerRecordId;
+          const [inserted] = await tx
+            .insert(canonicalLeadEvents)
+            .values({
+              tenantId,
+              rawEventId,
+              sourceId,
+              idempotencyKey: providerRecordId ? `record:${providerRecordId}` : `raw:${rawEventId}`,
+              status: 'FAILED',
+              lastErrorCode: PROCESSING_ERROR_CODE,
+              lastErrorMessage: PROCESSING_ERROR_MESSAGE,
+            })
+            .onConflictDoNothing()
+            .returning({ id: canonicalLeadEvents.id });
+          canonicalId = inserted?.id;
+        }
+
+        await tx.update(rawEvents).set({ status: 'FAILED' }).where(eq(rawEvents.id, rawEventId));
+        await this.logStage(
+          tx,
+          tenantId,
+          raw.correlationId,
+          rawEventId,
+          canonicalId,
+          'process',
+          'PROCESSING',
+          'FAILED',
+          PROCESSING_ERROR_CODE,
+          PROCESSING_ERROR_MESSAGE,
+        );
+      });
+    } catch (recordErr) {
+      // double fault: the event stays RECEIVED and a redelivery is handled as a new attempt
+      this.logger.error(
+        {
+          module: 'integrations',
+          operation: 'webhook.process.record_failure',
+          tenantId,
+          rawEventId,
+          errorClass: recordErr instanceof Error ? recordErr.name : typeof recordErr,
+        },
+        'could not record processing failure',
+      );
+    }
+  }
+
+  private async processRawEventTx(
     tenantId: string,
     source: typeof leadSources.$inferSelect,
     rawEventId: string,
@@ -209,6 +436,8 @@ export class IngestionService {
       );
 
       if (!insertedCanonical) {
+        // duplicate logical event: this delivery was handled (recorded and matched to the original)
+        await tx.update(rawEvents).set({ status: 'PROCESSED' }).where(eq(rawEvents.id, rawEventId));
         const [existing] = await tx
           .select()
           .from(canonicalLeadEvents)
@@ -345,6 +574,8 @@ export class IngestionService {
         'DONE',
       );
 
+      await tx.update(rawEvents).set({ status: 'PROCESSED' }).where(eq(rawEvents.id, rawEventId));
+
       await this.outbox.emit(tx, {
         tenantId,
         type: dedupeOutcome === 'new' ? LEAD_CREATED_EVENT : LEAD_UPDATED_EVENT,
@@ -431,6 +662,8 @@ export class IngestionService {
     errorCode: string,
     errorMessage: string,
   ): Promise<IngestResult> {
+    // a validation/mapping failure is a terminal FAILED outcome for the raw event too (replayable)
+    await tx.update(rawEvents).set({ status: 'FAILED' }).where(eq(rawEvents.id, rawEventId));
     await tx
       .update(canonicalLeadEvents)
       .set({

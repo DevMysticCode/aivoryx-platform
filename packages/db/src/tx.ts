@@ -150,6 +150,22 @@ export function withOutboxDispatcherContext<T>(
   });
 }
 
+/**
+ * Transaction that sets `app.raw_event_purger = 'on'` and nothing else. The two additive
+ * `raw_events` policies from migration `0026` then allow a cross-tenant SELECT and DELETE of rows
+ * that are ALREADY past `expires_at` — and nothing else, on any table. Server-side only (no client
+ * request can reach `set_config`). Use it ONLY for the raw-event retention purge.
+ */
+export function withRawEventPurgeContext<T>(
+  handle: DbHandle,
+  fn: (tx: Tx) => Promise<T>,
+): Promise<T> {
+  return handle.db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.raw_event_purger', 'on', true)`);
+    return fn(tx);
+  });
+}
+
 /** Read back the current transaction's tenant context (diagnostics / tests). */
 export async function currentTenantContext(
   tx: Tx,
