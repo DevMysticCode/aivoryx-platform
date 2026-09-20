@@ -20,7 +20,7 @@ import type {
   UpdateInvoiceRequest,
 } from '@aivoryx/contracts';
 import { API_V1_PREFIX } from '@aivoryx/contracts';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 import { apiFetch } from './client';
 
 /** Finance API calls (Phase 9, ADR 0038). Ownership is server-side. */
@@ -71,10 +71,10 @@ export const cancelInvoice = (id: string, body: CancelInvoiceRequest = {}) =>
   apiFetch<InvoiceDetail>(`/finance/invoices/${id}/cancel`, json(body));
 
 export const invoicePrintUrl = (id: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/invoices/${id}/print`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/finance/invoices/${id}/print`;
 
 export const invoicePdfUrl = (id: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/invoices/${id}/pdf`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/finance/invoices/${id}/pdf`;
 
 // ---- payments -------------------------------------------------
 
@@ -98,10 +98,10 @@ export const reversePayment = (id: string, body: ReversePaymentRequest = {}) =>
   apiFetch<PaymentDetail>(`/finance/payments/${id}/reverse`, json(body));
 
 export const paymentPrintUrl = (id: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/payments/${id}/print`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/finance/payments/${id}/print`;
 
 export const paymentReceiptPdfUrl = (id: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/payments/${id}/receipt.pdf`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/finance/payments/${id}/receipt.pdf`;
 
 // ---- credit notes ------------------------------------------
 
@@ -121,7 +121,7 @@ export const cancelCreditNote = (id: string, body: CancelCreditNoteRequest = {})
   apiFetch<CreditNote>(`/finance/credit-notes/${id}/cancel`, json(body));
 
 export const creditNotePdfUrl = (id: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/finance/credit-notes/${id}/pdf`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/finance/credit-notes/${id}/pdf`;
 
 // ---- summaries ------------------------------------------
 

@@ -198,3 +198,22 @@ they use the **same `DATABASE_URL`** (one PostgreSQL user, call it `U`):
 
 Single region initially, chosen for proximity to the client (India) and R2
 locality. Multi-region is out of scope for V1.
+
+## Session cookie across web and API origins (login-loop fix)
+
+The session is an HTTP-only cookie issued by the API. When the web app and the API sit on **different
+registrable domains** (staging: `*.vercel.app` web, `*.onrender.com` API) the cookie is a
+_third-party_ cookie in the browser. Chrome desktop/Android usually allow it; iOS Safari (ITP),
+privacy-hardened and some in-app browsers drop it silently. Symptom: login returns 2xx, the next
+request has no cookie, `/auth/me` is 401, the shell redirects to `/login`.
+
+- **Fix (recommended, opt-in):** set `NEXT_PUBLIC_API_PROXY=true` (+ `API_PROXY_TARGET`) on the web
+  project. `apps/web/next.config.mjs` rewrites `/api/v1/*` to the API, the browser only talks to its own
+  origin, and the cookie becomes first-party (host-only, HttpOnly, `Secure` outside development).
+  No CORS is involved for those calls. Do **not** weaken `Secure`/`HttpOnly`, and do not move tokens to
+  localStorage.
+- **Alternative:** put web and API under one registrable domain (`app.example.com` / `api.example.com`).
+- The login page now verifies the cookie round-trips (`GET /auth/me`) before navigating and shows
+  "Sign-in succeeded, but we couldn't establish your session…" instead of bouncing to `/login`.
+- Diagnostics (no secrets): API logs `session cookie issued` (attributes only) and
+  `unauthenticated request without a session cookie` (origin, path, whether any cookie header arrived).

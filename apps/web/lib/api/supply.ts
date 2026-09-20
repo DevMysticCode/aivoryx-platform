@@ -38,7 +38,7 @@ import type {
   Warehouse,
 } from '@aivoryx/contracts';
 import { API_V1_PREFIX, type ApiErrorResponse } from '@aivoryx/contracts';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 import { apiFetch, ApiError } from './client';
 
 /** Procurement, inventory & logistics API calls (ADR 0034). Server-authorized. */
@@ -220,7 +220,7 @@ export async function fetchDispatchAttachmentBlob(
   id: string,
   attachmentId: string,
 ): Promise<{ blob: Blob; objectUrl: string }> {
-  const url = `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/logistics/dispatches/${id}/attachments/${attachmentId}/download`;
+  const url = `${apiBaseUrl()}${API_V1_PREFIX}/logistics/dispatches/${id}/attachments/${attachmentId}/download`;
   const res = await fetch(url, { credentials: 'include' });
   if (!res.ok) {
     let body: ApiErrorResponse | undefined;

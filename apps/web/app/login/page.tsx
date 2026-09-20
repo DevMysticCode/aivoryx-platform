@@ -4,8 +4,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@aivoryx/ui';
-import { login, switchTenant } from '@/lib/api/admin';
-import { ErrorNote, Field } from '@/components/admin/ui';
+import { Field } from '@/components/admin/ui';
+import { PasswordField } from '@/components/auth/password-field';
+import {
+  SIGN_IN_MESSAGES,
+  classifySignInFailure,
+  signIn,
+  type SignInError,
+} from '@/lib/auth/sign-in';
 import { AuthShell } from '@/components/auth-shell';
 import { themeCssFor } from '@/components/brand-provider';
 import { publicLoginLogoUrl } from '@/lib/api/public';
@@ -44,32 +50,25 @@ function LoginForm() {
       : platformAssetHref(ref, platform);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<unknown>(null);
+  const [error, setError] = useState<SignInError | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (busy) return; // no duplicate submissions (double tap / Enter + click)
     setBusy(true);
     setError(null);
     try {
-      const me = await login(email.trim(), password);
+      // login -> verify the session cookie round-trips -> resolve the workspace. Only then navigate.
+      const { me, hasWorkspace } = await signIn(email.trim(), password);
       // never carry another sign-in's cached identity into this session
       qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'public' });
-      let hasWorkspace = !!me.active;
-      if (!hasWorkspace) {
-        const usable = me.memberships.find(
-          (m) => m.status === 'active' && m.tenantStatus === 'active',
-        );
-        if (usable) {
-          await switchTenant(usable.id);
-          hasWorkspace = true;
-        }
-      }
       // A platform admin with no workspace lands in the platform console;
       // every tenant user continues to the workspace administration home.
       router.replace(!hasWorkspace && me.isPlatformAdmin ? '/platform' : '/admin');
     } catch (err) {
-      setError(err);
+      // stay on the page, keep the email AND password so a recoverable failure is one tap to retry
+      setError(classifySignInFailure(err));
       setBusy(false);
     }
   }
@@ -102,19 +101,33 @@ function LoginForm() {
           label="Email"
           type="email"
           autoComplete="username"
+          autoCapitalize="none"
+          inputMode="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <Field
+        <PasswordField
           label="Password"
-          type="password"
           autoComplete="current-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <ErrorNote error={error} />
+        {error ? (
+          <div
+            role="alert"
+            data-error-kind={error.kind}
+            className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm"
+          >
+            <p className="font-medium text-danger">{SIGN_IN_MESSAGES[error.kind]}</p>
+            {error.correlationId ? (
+              <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
+                Reference: {error.correlationId}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         <Button type="submit" isLoading={busy} loadingText="Signing in…" className="w-full">
           Sign in
         </Button>

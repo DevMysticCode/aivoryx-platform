@@ -19,7 +19,7 @@ import type {
   UpdateQuotationRequest,
 } from '@aivoryx/contracts';
 import { API_V1_PREFIX, type ApiErrorResponse } from '@aivoryx/contracts';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 import { apiFetch, ApiError } from './client';
 
 /** Commercial — customers, quotations & project booking (ADR 0035). Server-authorized. */
@@ -96,11 +96,11 @@ export const bookQuotation = (id: string, b: BookQuotationRequest = {}) =>
 /** URL of the server-rendered printable quotation (opened in a new tab; the
  *  session cookie is sent same-site). */
 export const quotationPrintUrl = (id: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/quotations/${id}/print`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/quotations/${id}/print`;
 
 /** URL of the branded, downloadable quotation PDF (Phase 10). */
 export const quotationPdfUrl = (id: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/quotations/${id}/pdf`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/quotations/${id}/pdf`;
 
 // ---- quotation attachments (existing object storage) ------
 
@@ -126,7 +126,7 @@ export async function fetchQuotationAttachmentBlob(
   id: string,
   attachmentId: string,
 ): Promise<{ blob: Blob; objectUrl: string }> {
-  const url = `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/quotations/${id}/attachments/${attachmentId}/download`;
+  const url = `${apiBaseUrl()}${API_V1_PREFIX}/quotations/${id}/attachments/${attachmentId}/download`;
   const res = await fetch(url, { credentials: 'include' });
   if (!res.ok) {
     let body: ApiErrorResponse | undefined;
@@ -160,13 +160,10 @@ export const removeCustomerLogo = (id: string) =>
 
 /** The authenticated logo stream as an object URL (credentials, so it works cross-site). */
 export async function fetchCustomerLogoObjectUrl(id: string): Promise<string | null> {
-  const res = await fetch(
-    `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/customers/${id}/logo`,
-    {
-      credentials: 'include',
-      cache: 'no-store',
-    },
-  );
+  const res = await fetch(`${apiBaseUrl()}${API_V1_PREFIX}/customers/${id}/logo`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
   if (!res.ok) return null;
   return URL.createObjectURL(await res.blob());
 }

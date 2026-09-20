@@ -20,7 +20,7 @@ test.describe('tenant admin smoke', () => {
     // 1. authenticate as the tenant admin
     await page.goto('/login');
     await page.getByLabel('Email').fill(EMAIL);
-    await page.getByLabel('Password').fill(PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
 
     // 2. land on /admin and see the workspace overview (tenant name + member summary)

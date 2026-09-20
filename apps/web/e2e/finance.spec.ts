@@ -32,7 +32,7 @@ test.describe('Finance golden path', () => {
     const stamp = Date.now();
     await page.goto('/login');
     await page.getByLabel('Email').fill(ADMIN_EMAIL);
-    await page.getByLabel('Password').fill(ADMIN_PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(ADMIN_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL('**/admin');
 

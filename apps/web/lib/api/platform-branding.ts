@@ -4,7 +4,7 @@ import type {
   UpdatePlatformBrandingRequest,
 } from '@aivoryx/contracts';
 import { API_V1_PREFIX } from '@aivoryx/contracts';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 import { apiFetch } from './client';
 
 /**
@@ -29,7 +29,7 @@ export const getPublicPlatformBranding = () =>
 
 /** A public, cache-busted asset URL - safe as an <img src>; the route is public by design. */
 export const platformAssetUrl = (kind: PlatformAssetKind, version: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/public/platform/branding/asset?kind=${kind}&v=${encodeURIComponent(version)}`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/public/platform/branding/asset?kind=${kind}&v=${encodeURIComponent(version)}`;
 
 export const getPlatformBranding = () =>
   apiFetch<PlatformBranding>('/platform/branding', { cache: 'no-store' });

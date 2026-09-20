@@ -19,7 +19,7 @@ const SLUG = process.env.E2E_WORKSPACE_SLUG ?? 'clans-demo';
 async function signIn(page: Page, email: string, password: string) {
   await page.goto('/login');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL((u) => !u.pathname.startsWith('/login'));
 }
