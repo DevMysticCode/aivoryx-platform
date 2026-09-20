@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import type { TestingModuleBuilder } from '@nestjs/testing';
 import type { Response } from 'supertest';
 import { ensureIntegrationEnv } from './env.js';
 
@@ -7,7 +8,10 @@ import { ensureIntegrationEnv } from './env.js';
  * database, configured exactly like production (`configureApp`). Dynamic imports
  * keep this file inert for a CI run that skips the integration suites.
  */
-export async function bootTestApp(): Promise<INestApplication> {
+export async function bootTestApp(
+  /** optional DI overrides (e.g. inject a controllable rate limiter); default: production wiring */
+  customize?: (builder: TestingModuleBuilder) => TestingModuleBuilder,
+): Promise<INestApplication> {
   ensureIntegrationEnv();
   const [{ Test }, { AppModule }, { configureApp }, { loadServerEnv, resetServerEnvCache }] =
     await Promise.all([
@@ -18,7 +22,8 @@ export async function bootTestApp(): Promise<INestApplication> {
     ]);
 
   resetServerEnvCache();
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const builder = Test.createTestingModule({ imports: [AppModule] });
+  const moduleRef = await (customize ? customize(builder) : builder).compile();
   const app = moduleRef.createNestApplication({ bufferLogs: true });
   configureApp(app, loadServerEnv());
   await app.init();

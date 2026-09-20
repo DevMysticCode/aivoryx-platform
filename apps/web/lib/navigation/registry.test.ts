@@ -59,4 +59,31 @@ describe('entryMatchesPath', () => {
     expect(entryMatchesPath(leads, '/crm/leads/abc')).toBe(true);
     expect(entryMatchesPath(leads, '/crm/leadsx')).toBe(false);
   });
+
+  describe('Integrations entry (UC-1)', () => {
+    const hasIntegrations = (perms: string[]) =>
+      view([], perms).some(
+        (e) => e.key === 'admin' && e.children?.some((c) => c.key === 'admin.integrations'),
+      );
+    const adminChildren = (perms: string[]) =>
+      view([], perms)
+        .find((e) => e.key === 'admin')
+        ?.children?.map((c) => c.key) ?? [];
+
+    it('is shown for crm.integrations.manage', () => {
+      expect(adminChildren(['crm.integrations.manage'])).toContain('admin.integrations');
+    });
+
+    it('is NOT granted by memberships.read (the previous, mismatched permission)', () => {
+      expect(adminChildren(['memberships.read'])).not.toContain('admin.integrations');
+      expect(hasIntegrations(['memberships.read', 'roles.read', 'tenants.read'])).toBe(false);
+    });
+
+    it('matches the capability the API enforces on every admin/integrations route', () => {
+      const entry = TENANT_NAV.flatMap((e) => e.children ?? []).find(
+        (c) => c.key === 'admin.integrations',
+      );
+      expect(entry?.permission).toBe('crm.integrations.manage');
+    });
+  });
 });

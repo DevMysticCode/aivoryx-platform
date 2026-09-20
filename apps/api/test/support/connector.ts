@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import type { TestingModuleBuilder } from '@nestjs/testing';
 import request from 'supertest';
 import { expect } from 'vitest';
 import { makeFixtures, rawPool, type Fixtures } from './db.js';
@@ -44,9 +45,11 @@ export interface ConnectorHarness {
   sql<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<T[]>;
 }
 
-export async function startConnectorHarness(): Promise<ConnectorHarness> {
+export async function startConnectorHarness(
+  customize?: (builder: TestingModuleBuilder) => TestingModuleBuilder,
+): Promise<ConnectorHarness> {
   const fx = await makeFixtures();
-  const app = await bootTestApp();
+  const app = await bootTestApp(customize);
   const http = request(app.getHttpServer());
 
   const login = (email: string, password: string) =>

@@ -9,6 +9,58 @@ const baseValid = {
 };
 
 describe('parseServerEnv', () => {
+  describe('webhook hardening + retention (UC-1)', () => {
+    it('applies documented safe defaults', () => {
+      const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
+      expect(env.WEBHOOK_MAX_BODY_BYTES).toBe(262_144);
+      expect(env.WEBHOOK_RATE_LIMIT_MAX).toBe(120);
+      expect(env.WEBHOOK_RATE_LIMIT_WINDOW_SECONDS).toBe(60);
+      expect(env.RAW_EVENT_RETENTION_DAYS).toBe(30);
+      expect(env.RAW_EVENT_PURGE_BATCH_SIZE).toBe(500);
+      expect(env.RAW_EVENT_PURGE_INTERVAL_MINUTES).toBe(60);
+      expect(env.RAW_EVENT_PURGE_ENABLED).toBe(true);
+    });
+
+    it('accepts overrides', () => {
+      const env = parseServerEnv({
+        ...baseValid,
+        WEBHOOK_MAX_BODY_BYTES: '2048',
+        WEBHOOK_RATE_LIMIT_MAX: '5',
+        WEBHOOK_RATE_LIMIT_WINDOW_SECONDS: '10',
+        RAW_EVENT_RETENTION_DAYS: '7',
+        RAW_EVENT_PURGE_BATCH_SIZE: '50',
+        RAW_EVENT_PURGE_INTERVAL_MINUTES: '5',
+        RAW_EVENT_PURGE_ENABLED: 'false',
+      } as NodeJS.ProcessEnv);
+      expect(env).toMatchObject({
+        WEBHOOK_MAX_BODY_BYTES: 2048,
+        WEBHOOK_RATE_LIMIT_MAX: 5,
+        WEBHOOK_RATE_LIMIT_WINDOW_SECONDS: 10,
+        RAW_EVENT_RETENTION_DAYS: 7,
+        RAW_EVENT_PURGE_BATCH_SIZE: 50,
+        RAW_EVENT_PURGE_INTERVAL_MINUTES: 5,
+        RAW_EVENT_PURGE_ENABLED: false,
+      });
+    });
+
+    it.each([
+      ['WEBHOOK_MAX_BODY_BYTES', '10'],
+      ['WEBHOOK_MAX_BODY_BYTES', '999999999'],
+      ['WEBHOOK_MAX_BODY_BYTES', 'lots'],
+      ['WEBHOOK_RATE_LIMIT_MAX', '0'],
+      ['WEBHOOK_RATE_LIMIT_WINDOW_SECONDS', '-1'],
+      ['RAW_EVENT_RETENTION_DAYS', '0'],
+      ['RAW_EVENT_PURGE_BATCH_SIZE', '0'],
+      ['RAW_EVENT_PURGE_BATCH_SIZE', '100000'],
+      ['RAW_EVENT_PURGE_INTERVAL_MINUTES', '0'],
+      ['RAW_EVENT_PURGE_ENABLED', 'maybe'],
+    ])('rejects invalid %s=%s (never silently accepted)', (key, value) => {
+      expect(() => parseServerEnv({ ...baseValid, [key]: value } as NodeJS.ProcessEnv)).toThrow(
+        new RegExp(key),
+      );
+    });
+  });
+
   it('parses a minimal valid environment with defaults applied', () => {
     const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
     expect(env.APP_ENV).toBe('development');
