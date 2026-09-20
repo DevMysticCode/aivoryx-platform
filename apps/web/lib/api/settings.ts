@@ -6,7 +6,7 @@ import type {
   UpdateCompanyProfileRequest,
 } from '@aivoryx/contracts';
 import { API_V1_PREFIX } from '@aivoryx/contracts';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 import { apiFetch } from './client';
 
 /**
@@ -63,7 +63,7 @@ export const removeLogo = (kind: LogoKind) =>
  * session cookie in production). Returns `null` when there is no logo.
  */
 export async function fetchLogoObjectUrl(kind: LogoKind = 'logo'): Promise<string | null> {
-  const url = `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/settings/company/logo?kind=${kind}`;
+  const url = `${apiBaseUrl()}${API_V1_PREFIX}/settings/company/logo?kind=${kind}`;
   const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
   if (!res.ok) return null;
   const blob = await res.blob();

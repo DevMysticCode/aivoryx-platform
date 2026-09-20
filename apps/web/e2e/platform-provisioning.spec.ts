@@ -25,7 +25,7 @@ test.describe('platform tenant provisioning', () => {
   }) => {
     await page.goto('/login');
     await page.getByLabel('Email').fill(PA_EMAIL);
-    await page.getByLabel('Password').fill(PA_PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(PA_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL((u) => !u.pathname.startsWith('/login'));
 
@@ -94,7 +94,7 @@ test.describe('platform tenant provisioning', () => {
   }) => {
     await page.goto('/login');
     await page.getByLabel('Email').fill(PA_EMAIL);
-    await page.getByLabel('Password').fill(PA_PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(PA_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL((u) => !u.pathname.startsWith('/login'));
 

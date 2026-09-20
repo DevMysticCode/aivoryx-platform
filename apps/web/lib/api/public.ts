@@ -1,5 +1,5 @@
 import { API_V1_PREFIX, type PublicLoginBranding } from '@aivoryx/contracts';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 import { apiFetch } from './client';
 
 /**
@@ -19,4 +19,4 @@ export const getPublicLoginBranding = (slug: string) =>
 
 /** The public login-logo URL — safe as an <img src> because the route is public by design. */
 export const publicLoginLogoUrl = (slug: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/public/workspaces/${encodeURIComponent(slug)}/login-logo`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/public/workspaces/${encodeURIComponent(slug)}/login-logo`;

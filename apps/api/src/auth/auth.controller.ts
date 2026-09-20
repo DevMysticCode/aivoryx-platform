@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Logger, Post, Req, Res } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiOperation,
@@ -32,6 +32,8 @@ import {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     @Inject(SERVER_ENV) private readonly env: ServerEnv,
     private readonly auth: AuthService,
@@ -61,7 +63,24 @@ export class AuthController {
       userAgent: req.get('user-agent') ?? null,
     });
 
-    res.cookie(this.env.SESSION_COOKIE_NAME, result.token, this.cookieOptions());
+    const cookieOptions = this.cookieOptions();
+    res.cookie(this.env.SESSION_COOKIE_NAME, result.token, cookieOptions);
+    // Cookie attributes only — never the value. Lets an operator confirm what the browser was told.
+    this.logger.log(
+      {
+        module: 'auth',
+        operation: 'login.cookie_issued',
+        status: 'ok',
+        userId: result.userId,
+        origin: req.get('origin') ?? null,
+        cookie: {
+          secure: cookieOptions.secure,
+          sameSite: cookieOptions.sameSite,
+          httpOnly: cookieOptions.httpOnly,
+        },
+      },
+      'session cookie issued',
+    );
 
     const active = result.activeMembershipId
       ? await this.buildActiveContext(

@@ -1,6 +1,6 @@
 import { API_V1_PREFIX, type ApiErrorResponse, type HealthReport } from '@aivoryx/contracts';
 import { CORRELATION_ID_HEADER } from '@aivoryx/shared';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 
 export class ApiError extends Error {
   constructor(
@@ -41,7 +41,7 @@ export interface ApiFetchOptions extends RequestInit {
  */
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
   const { correlationId, headers, ...init } = options;
-  const url = `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}${path}`;
+  const url = `${apiBaseUrl()}${API_V1_PREFIX}${path}`;
 
   const res = await fetch(url, {
     ...init,

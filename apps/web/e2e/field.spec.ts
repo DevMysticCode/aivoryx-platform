@@ -41,7 +41,7 @@ test.describe('Field operations golden path', () => {
     // ---- 1. admin: log in, create a lead ------------------------------
     await page.goto('/login');
     await page.getByLabel('Email').fill(ADMIN_EMAIL);
-    await page.getByLabel('Password').fill(ADMIN_PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(ADMIN_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL('**/admin');
 
@@ -123,7 +123,7 @@ test.describe('Field operations golden path', () => {
 
     await agentPage.goto('/login');
     await agentPage.getByLabel('Email').fill(AGENT_EMAIL);
-    await agentPage.getByLabel('Password').fill(AGENT_PASSWORD);
+    await agentPage.getByLabel('Password', { exact: true }).fill(AGENT_PASSWORD);
     await agentPage.getByRole('button', { name: 'Sign in' }).click();
     await agentPage.waitForURL('**/admin');
 
@@ -193,7 +193,7 @@ test.describe('Field operations golden path', () => {
   test('a field agent can create a lead from the field app', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('Email').fill(AGENT_EMAIL);
-    await page.getByLabel('Password').fill(AGENT_PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(AGENT_PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL('**/admin');
 

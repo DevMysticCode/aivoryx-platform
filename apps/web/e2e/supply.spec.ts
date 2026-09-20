@@ -35,7 +35,7 @@ test.describe('Supply chain golden path', () => {
     // ---- 1. log in --------------------------------------------------
     await page.goto('/login');
     await page.getByLabel('Email').fill(EMAIL);
-    await page.getByLabel('Password').fill(PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL('**/admin');
 

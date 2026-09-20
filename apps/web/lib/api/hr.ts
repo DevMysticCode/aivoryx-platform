@@ -32,7 +32,7 @@ import type {
   HrWorkSchedule,
 } from '@aivoryx/contracts';
 import { API_V1_PREFIX } from '@aivoryx/contracts';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 import { apiFetch } from './client';
 
 /**
@@ -136,7 +136,7 @@ export const listEmployeeDocuments = (id: string) =>
 export const uploadEmployeeDocument = (id: string, form: FormData) =>
   apiFetch<HrEmployeeDocument[]>(`/hr/employees/${id}/documents`, { method: 'POST', body: form });
 export const employeeDocumentUrl = (id: string, documentId: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/hr/employees/${id}/documents/${documentId}/download`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/hr/employees/${id}/documents/${documentId}/download`;
 export const deleteEmployeeDocument = (id: string, documentId: string) =>
   apiFetch<void>(`/hr/employees/${id}/documents/${documentId}`, { method: 'DELETE' });
 export const setEmployeeDocumentSharing = (
@@ -243,7 +243,7 @@ export const reimburseExpenseClaim = (id: string, body: Record<string, unknown>)
 export const uploadExpenseReceipt = (id: string, form: FormData) =>
   apiFetch<HrExpenseClaim>(`/hr/expenses/${id}/receipt`, { method: 'POST', body: form });
 export const expenseReceiptUrl = (id: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/hr/expenses/${id}/receipt`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/hr/expenses/${id}/receipt`;
 
 // ---- incentives --------------------------------------
 export const listIncentives = (opts: Record<string, string | number | undefined>) =>
@@ -267,9 +267,9 @@ export const finalizePayrollPeriod = (id: string) =>
 export const recordPayrollPayment = (id: string, body: Record<string, unknown>) =>
   apiFetch<HrPayrollPeriodDetail>(`/hr/payroll/periods/${id}/payments`, json(body));
 export const payslipPdfUrl = (entryId: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/hr/payroll/entries/${entryId}/payslip`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/hr/payroll/entries/${entryId}/payslip`;
 export const myPayslipPdfUrl = (entryId: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/hr/payroll/me/entries/${entryId}/payslip`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/hr/payroll/me/entries/${entryId}/payslip`;
 
 // ---- performance -----------------------------------
 export const listPerformancePeriods = () =>
@@ -308,6 +308,6 @@ export const myPayrollHistory = () =>
 export const myDocuments = () =>
   apiFetch<HrEmployeeDocument[]>('/hr/me/documents', { cache: 'no-store' });
 export const myDocumentUrl = (documentId: string) =>
-  `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/hr/me/documents/${documentId}/download`;
+  `${apiBaseUrl()}${API_V1_PREFIX}/hr/me/documents/${documentId}/download`;
 export const myPerformanceReviews = () =>
   apiFetch<HrPerformanceReview[]>('/hr/me/performance-reviews', { cache: 'no-store' });

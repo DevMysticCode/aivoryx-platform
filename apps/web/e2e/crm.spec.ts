@@ -22,7 +22,7 @@ test.describe('CRM smoke', () => {
     // 1. login
     await page.goto('/login');
     await page.getByLabel('Email').fill(EMAIL);
-    await page.getByLabel('Password').fill(PASSWORD);
+    await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.waitForURL('**/admin');
 

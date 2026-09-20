@@ -1,4 +1,10 @@
-import { type CanActivate, type ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import {
+  type CanActivate,
+  type ExecutionContext,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { AppError, moduleForPermission, type ModuleKey, type PermissionKey } from '@aivoryx/shared';
@@ -50,6 +56,8 @@ export class SecurityGuard implements CanActivate {
     @Inject(SERVER_ENV) private readonly env: ServerEnv,
   ) {}
 
+  private readonly logger = new Logger(SecurityGuard.name);
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const targets = [context.getHandler(), context.getClass()];
 
@@ -65,6 +73,23 @@ export class SecurityGuard implements CanActivate {
       this.env.SESSION_COOKIE_NAME
     ];
     if (typeof rawCookie !== 'string' || rawCookie.length === 0) {
+      // Diagnostic for the "login loop": a 401 with NO cookie means the browser never stored or
+      // never sent the session cookie (blocked third-party cookie, wrong origin, ...). Headers only,
+      // never a cookie value.
+      this.logger.warn(
+        {
+          module: 'auth',
+          operation: 'session.resolve',
+          status: 'no_session_cookie',
+          errorCode: 'AUTH_UNAUTHENTICATED',
+          method: req.method,
+          path: req.path,
+          origin: req.get('origin') ?? null,
+          hasAnyCookie: !!req.headers.cookie,
+          userAgent: req.get('user-agent') ?? null,
+        },
+        'unauthenticated request without a session cookie',
+      );
       throw new AppError('AUTH_UNAUTHENTICATED');
     }
 

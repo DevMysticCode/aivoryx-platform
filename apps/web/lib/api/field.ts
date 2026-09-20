@@ -20,7 +20,7 @@ import type {
   VisitNote,
   VisitSummary,
 } from '@aivoryx/contracts';
-import { webEnv } from '../env';
+import { apiBaseUrl } from '../env';
 import { apiFetch, ApiError } from './client';
 
 /** Field operations API calls (ADR 0033). Authorization is enforced entirely server-side. */
@@ -129,7 +129,7 @@ export async function fetchVisitAttachmentBlob(
   visitId: string,
   attachmentId: string,
 ): Promise<{ blob: Blob; objectUrl: string }> {
-  const url = `${webEnv.NEXT_PUBLIC_API_BASE_URL}${API_V1_PREFIX}/visits/${visitId}/attachments/${attachmentId}/download`;
+  const url = `${apiBaseUrl()}${API_V1_PREFIX}/visits/${visitId}/attachments/${attachmentId}/download`;
   const res = await fetch(url, { credentials: 'include' });
   if (!res.ok) {
     let body: ApiErrorResponse | undefined;
