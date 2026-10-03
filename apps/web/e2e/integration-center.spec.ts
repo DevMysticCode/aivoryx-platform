@@ -33,13 +33,17 @@ test.describe('Integration Center (UC-4)', () => {
 
     await page.goto('/admin/integrations');
     const sourceKey = `uc4-generic-e2e-${Date.now()}`;
+    const sourceName = `UC-4 Generic E2E Source ${Date.now()}`;
     await page.getByLabel('Source key').fill(sourceKey);
-    await page.getByLabel('Name').fill('UC-4 Generic E2E Source');
+    await page.getByLabel('Name').fill(sourceName);
     await page.getByRole('button', { name: 'Create source' }).click();
-    await expect(page.getByTestId('connector-handoff')).toBeVisible();
+    const handoff = page.getByTestId('connector-handoff');
+    await expect(handoff).toBeVisible();
+    const handoffSecret = (await handoff.locator('code').last().textContent())?.trim();
+    expect(handoffSecret).toBeTruthy();
 
-    // navigate into the connection's detail page via its list row
-    await page.getByRole('link', { name: /UC-4 Generic E2E Source/ }).click();
+    // navigate into the connection's detail page via its list row (name is unique per run)
+    await page.getByRole('link', { name: new RegExp(sourceName) }).click();
     await page.waitForURL(/\/admin\/integrations\/sources\/.+/);
     await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible();
 
@@ -47,8 +51,9 @@ test.describe('Integration Center (UC-4)', () => {
     await expect(page.getByText(/success rate/i)).toHaveCount(0);
     await expect(page.getByText(/health score/i)).toHaveCount(0);
 
-    // Mapping tab: add an override and save
+    // Mapping tab: add an override and save (starts empty for a freshly created source)
     await page.getByRole('tab', { name: 'Mapping' }).click();
+    await page.getByRole('button', { name: 'Add mapping' }).click();
     await page.getByPlaceholder('contact_no').fill('vendor_phone');
     await page.getByPlaceholder(/canonical:phone/).fill('canonical:phone');
     await page.getByRole('button', { name: 'Save mapping' }).click();
@@ -57,14 +62,11 @@ test.describe('Integration Center (UC-4)', () => {
     // reload and confirm the mapping persisted
     await page.reload();
     await page.getByRole('tab', { name: 'Mapping' }).click();
-    await expect(page.getByDisplayValue('vendor_phone')).toBeVisible();
+    await expect(page.locator('input[value="vendor_phone"]')).toBeVisible();
 
     // Developer tab: a snippet with a placeholder secret, never a real one
     await page.getByRole('tab', { name: 'Developer' }).click();
-    await expect(page.getByText('<YOUR_SECRET>')).toBeVisible();
-    const handoffSecret = (
-      await page.getByTestId('connector-handoff').locator('code').last().textContent()
-    )?.trim();
+    await expect(page.getByText('<YOUR_SECRET>').first()).toBeVisible();
     if (handoffSecret) {
       await expect(page.getByText(handoffSecret, { exact: false })).toHaveCount(0);
     }
@@ -77,12 +79,13 @@ test.describe('Integration Center (UC-4)', () => {
 
     await page.goto('/admin/integrations');
     const sourceKey = `uc4-meta-e2e-${Date.now()}`;
-    await page.getByLabel('Provider').selectOption({ label: /Meta/i });
+    const sourceName = `UC-4 Meta E2E Source ${Date.now()}`;
+    await page.getByLabel('Provider').selectOption({ label: 'Meta Lead Ads' });
     await page.getByLabel('Source key').fill(sourceKey);
-    await page.getByLabel('Name').fill('UC-4 Meta E2E Source');
+    await page.getByLabel('Name').fill(sourceName);
     await page.getByRole('button', { name: 'Create source' }).click();
 
-    await page.getByRole('link', { name: /UC-4 Meta E2E Source/ }).click();
+    await page.getByRole('link', { name: new RegExp(sourceName) }).click();
     await page.waitForURL(/\/admin\/integrations\/sources\/.+/);
     await page.getByRole('tab', { name: 'Configuration' }).click();
 
