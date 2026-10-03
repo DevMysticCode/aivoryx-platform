@@ -1,12 +1,16 @@
 import type {
   CreateSourceRequest,
   CreateSourceResponse,
+  EventDetailResponse,
+  EventListResponse,
+  ProviderMeta,
   SetSourceCredentialsRequest,
   Source,
+  UpdateSourceRequest,
 } from '@aivoryx/contracts';
 import { apiFetch } from './client';
 
-/** Admin surface for the Pabbly inbound connector (ADR 0032). */
+/** Admin surface for the Universal Connector Integration Center (ADR 0032, UC-3, UC-4). */
 
 const json = (body: unknown, method = 'POST'): RequestInit => ({
   method,
@@ -17,8 +21,15 @@ const json = (body: unknown, method = 'POST'): RequestInit => ({
 export const listSources = () =>
   apiFetch<Source[]>('/admin/integrations/sources', { cache: 'no-store' });
 
+export const getSource = (sourceId: string) =>
+  apiFetch<Source>(`/admin/integrations/sources/${sourceId}`, { cache: 'no-store' });
+
 export const createSource = (body: CreateSourceRequest) =>
   apiFetch<CreateSourceResponse>('/admin/integrations/sources', json(body));
+
+/** Only `name`/`fieldMapping` — the key and connector type are immutable (UC-4). */
+export const updateSource = (sourceId: string, body: UpdateSourceRequest) =>
+  apiFetch<Source>(`/admin/integrations/sources/${sourceId}`, json(body, 'PATCH'));
 
 export const rotateSourceSecret = (sourceId: string) =>
   apiFetch<CreateSourceResponse>(`/admin/integrations/sources/${sourceId}/rotate-secret`, json({}));
@@ -34,27 +45,32 @@ export const reactivateSource = (sourceId: string) =>
 export const setSourceCredentials = (sourceId: string, data: SetSourceCredentialsRequest['data']) =>
   apiFetch<Source>(`/admin/integrations/sources/${sourceId}/credentials`, json({ data }, 'PUT'));
 
-export interface InboundEventSummary {
-  id: string;
-  rawEventId: string;
-  sourceId: string;
-  status: string;
-  leadId: string | null;
-  dedupeOutcome: string | null;
-  processingAttempts: number;
-  lastErrorCode: string | null;
-  lastErrorMessage: string | null;
-  createdAt: string;
+/** Safe, server-driven provider catalog (UC-4) — never a credential value, only field names the
+ *  Integration Center should render in a credential form. */
+export const listProviders = () =>
+  apiFetch<ProviderMeta[]>('/admin/integrations/providers', { cache: 'no-store' });
+
+export interface ListInboundEventsParams {
+  sourceId?: string;
+  status?: string;
+  page?: number;
+  pageSize?: number;
 }
 
-export const listInboundEvents = () =>
-  apiFetch<InboundEventSummary[]>('/admin/integrations/events', { cache: 'no-store' });
+/** Server-side pagination only (UC-4) — never page through an unbounded result client-side. */
+export const listInboundEvents = (params: ListInboundEventsParams = {}) => {
+  const query = new URLSearchParams();
+  if (params.sourceId) query.set('sourceId', params.sourceId);
+  if (params.status) query.set('status', params.status);
+  query.set('page', String(params.page ?? 1));
+  query.set('pageSize', String(params.pageSize ?? 25));
+  return apiFetch<EventListResponse>(`/admin/integrations/events?${query.toString()}`, {
+    cache: 'no-store',
+  });
+};
 
 export const getInboundEvent = (id: string) =>
-  apiFetch<{ event: InboundEventSummary; raw: unknown; log: unknown[] }>(
-    `/admin/integrations/events/${id}`,
-    { cache: 'no-store' },
-  );
+  apiFetch<EventDetailResponse>(`/admin/integrations/events/${id}`, { cache: 'no-store' });
 
 export const replayInboundEvent = (id: string) =>
   apiFetch<{ status: string; leadId?: string }>(
