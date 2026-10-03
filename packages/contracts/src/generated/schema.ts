@@ -6259,7 +6259,7 @@ export interface components {
       /** @enum {string} */
       status: 'active' | 'revoked';
       fieldMapping: {
-        [key: string]: unknown;
+        [key: string]: string;
       };
       /** @description The webhook URL segment for a signature-style source (Meta): POST /integrations/webhooks/<publicLookupKey>. Null for a bearer-style source (Pabbly), which uses `key` + a connector secret instead. */
       publicLookupKey: string | null;

@@ -27053,7 +27053,9 @@
           },
           "fieldMapping": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "publicLookupKey": {
             "type": "string",
