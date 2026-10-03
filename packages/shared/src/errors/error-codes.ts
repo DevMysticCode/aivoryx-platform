@@ -183,6 +183,13 @@ export const ERROR_CODES = {
     httpStatus: 404,
     message: 'That inbound event was not found in this workspace.',
   },
+  // Universal Connector adapter resolution (UC-2, ADR 0049)
+  ADAPTER_NOT_FOUND: {
+    // the DATABASE's own connector_type/version is unrecognized by this server's adapter registry —
+    // never a caller mistake; a correct bearer secret and source key already got the request here.
+    httpStatus: 500,
+    message: 'Something went wrong on our side. The team has been notified.',
+  },
   EVENT_NOT_REPLAYABLE: {
     httpStatus: 409,
     message: 'That event is not in a state that can be replayed.',
