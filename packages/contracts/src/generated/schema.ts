@@ -1165,6 +1165,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/integrations/webhooks/{sourceKey}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Inbound connector event. Provider-neutral entry point for any configured source. */
+    post: operations['ingestWebhook'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/integrations/sources': {
     parameters: {
       query?: never;
@@ -1194,6 +1211,23 @@ export interface paths {
     put?: never;
     /** Issue a new secret; the old one stops working. */
     post: operations['rotateSourceSecret'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/integrations/sources/{sourceId}/credentials': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Configure (or replace) the recoverable credential for a signature-style source (e.g. Meta). Write-only — the values are never returned. */
+    put: operations['setSourceCredentials'];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -6169,12 +6203,16 @@ export interface components {
       key: string;
       name: string;
       /** @enum {string} */
-      connectorType: 'pabbly_bridge';
+      connectorType: 'pabbly_bridge' | 'meta_lead_ads';
       /** @enum {string} */
       status: 'active' | 'revoked';
       fieldMapping: {
         [key: string]: unknown;
       };
+      /** @description The webhook URL segment for a signature-style source (Meta): POST /integrations/webhooks/<publicLookupKey>. Null for a bearer-style source (Pabbly), which uses `key` + a connector secret instead. */
+      publicLookupKey: string | null;
+      /** @description Whether a recoverable credential blob is configured. */
+      hasCredentials: boolean;
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -6184,6 +6222,12 @@ export interface components {
       /** @example website-pabbly */
       key: string;
       name: string;
+      /**
+       * @description Defaults to the bearer-authenticated Pabbly connector.
+       * @default pabbly_bridge
+       * @enum {string}
+       */
+      connectorType: 'pabbly_bridge' | 'meta_lead_ads';
       /** @description Provider field -> "canonical:<field>" | "custom:<key>" | "skip" overrides, merged over the built-in defaults. */
       fieldMapping?: {
         [key: string]: string;
@@ -6196,6 +6240,12 @@ export interface components {
     CreateSourceResponseDto: {
       source: components['schemas']['SourceDto'];
       credential: components['schemas']['SourceSecretHandoffDto'];
+    };
+    SetSourceCredentialsRequestDto: {
+      /** @description Replaces the ENTIRE credential blob. Never returned by any API response. */
+      data: {
+        [key: string]: string;
+      };
     };
     CanonicalEventDto: {
       /** Format: uuid */
@@ -12629,6 +12679,27 @@ export interface operations {
       };
     };
   };
+  ingestWebhook: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sourceKey: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IngestAcceptedResponseDto'];
+        };
+      };
+    };
+  };
   listSources: {
     parameters: {
       query?: never;
@@ -12720,6 +12791,47 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['CreateSourceResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  setSourceCredentials: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sourceId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetSourceCredentialsRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SourceDto'];
         };
       };
       401: {

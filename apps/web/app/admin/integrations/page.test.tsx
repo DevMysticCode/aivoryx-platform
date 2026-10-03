@@ -22,6 +22,7 @@ vi.mock('@/lib/admin/use-integrations', () => ({
   useRevokeSource: hooks.mutation,
   useReactivateSource: hooks.mutation,
   useReplayInboundEvent: hooks.mutation,
+  useSetSourceCredentials: hooks.mutation,
 }));
 
 import IntegrationsAdminPage from './page';

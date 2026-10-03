@@ -1,8 +1,11 @@
+import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { and, desc, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
+import { AdapterRegistry } from './adapters/adapter-registry.js';
 import { generateConnectorSecret, hashConnectorSecret } from './connector-token.js';
+import { ConnectorCredentialsService } from './credentials/connector-credentials.service.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
 
 const { canonicalLeadEvents, integrationEventLog, leadSources, rawEvents } = schema;
@@ -21,6 +24,12 @@ export interface SourceView {
   connectorType: string;
   status: string;
   fieldMapping: Record<string, string>;
+  /** the globally-unique webhook URL segment for a SIGNATURE-style source (Meta) — null for a
+   *  bearer-style source (Pabbly), which uses `key` + a bearer secret instead. Safe to display:
+   *  it is not a secret, it IS the public webhook URL. */
+  publicLookupKey: string | null;
+  /** whether a recoverable credential blob is configured — never what it contains */
+  hasCredentials: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,32 +41,58 @@ export interface SourceWithSecret {
 
 @Injectable()
 export class SourcesService {
-  constructor(private readonly audit: AuditService) {}
+  constructor(
+    private readonly audit: AuditService,
+    private readonly adapters: AdapterRegistry,
+    private readonly credentials: ConnectorCredentialsService,
+  ) {}
 
-  list(scope: TenantScope): Promise<SourceView[]> {
+  async list(scope: TenantScope): Promise<SourceView[]> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const rows = await tx
         .select()
         .from(leadSources)
         .where(eq(leadSources.tenantId, scope.tenantId))
         .orderBy(desc(leadSources.createdAt));
-      return rows.map(toView);
+      return Promise.all(rows.map((row) => this.toViewWithCredentials(tx, row)));
     });
   }
 
   async get(scope: TenantScope, sourceId: string): Promise<SourceView> {
-    const row = await withTenantContext(getDb(), scope, (tx) =>
-      this.requireSource(tx, scope.tenantId, sourceId),
-    );
-    return toView(row);
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const row = await this.requireSource(tx, scope.tenantId, sourceId);
+      return this.toViewWithCredentials(tx, row);
+    });
   }
 
+  /**
+   * `connectorType` defaults to Pabbly's bearer-style `pabbly_bridge`, exactly as before UC-3. For a
+   * SIGNATURE-style provider (checked against the registry, never a hardcoded list — an unregistered
+   * `connectorType` is rejected), a globally-unique `publicLookupKey` is minted; the webhook URL for
+   * that source is `/integrations/webhooks/<publicLookupKey>`. A bearer secret is ALWAYS minted too
+   * (even for a provider that will never present it) so `secret_hash` can stay `NOT NULL` — harmless,
+   * since only a bearer-style adapter's webhook path ever looks at it.
+   */
   async create(
     scope: TenantScope,
-    input: { key: string; name: string; fieldMapping?: Record<string, string> },
+    input: {
+      key: string;
+      name: string;
+      connectorType?: string;
+      fieldMapping?: Record<string, string>;
+    },
   ): Promise<SourceWithSecret> {
+    const connectorType = input.connectorType ?? 'pabbly_bridge';
+    if (!this.adapters.has(connectorType)) {
+      throw new AppError('VALIDATION_ERROR', {
+        message: `"${connectorType}" is not a supported connector type.`,
+      });
+    }
     const secret = generateConnectorSecret();
     const secretHash = hashConnectorSecret(secret);
+    const publicLookupKey = isSignatureStyleProvider(connectorType)
+      ? randomBytes(24).toString('base64url')
+      : null;
     const source = await withTenantContext(getDb(), scope, async (tx) => {
       const [row] = await tx
         .insert(leadSources)
@@ -65,7 +100,9 @@ export class SourcesService {
           tenantId: scope.tenantId,
           key: input.key,
           name: input.name,
+          connectorType: connectorType as (typeof leadSources.$inferInsert)['connectorType'],
           secretHash,
+          publicLookupKey,
           fieldMapping: input.fieldMapping ?? {},
         })
         .returning();
@@ -75,18 +112,45 @@ export class SourcesService {
         entityType: 'lead_source',
         entityId: row!.id,
         actor: userActor(scope),
-        metadata: { key: input.key, name: input.name },
+        metadata: { key: input.key, name: input.name, connectorType },
       });
-      return row!;
+      return this.toViewWithCredentials(tx, row!);
     });
-    return { source: toView(source), secret };
+    return { source, secret };
+  }
+
+  /**
+   * Write-only: stores (encrypted) a provider-specific credential blob for a source — e.g. Meta's
+   * `{ appSecret, pageAccessToken, verifyToken }`. Never returns the plaintext; the response is just
+   * the ordinary `SourceView` (with `hasCredentials: true`). Replaces the ENTIRE blob — callers that
+   * want to change one field must resend the others too (no partial merge, so a stale cached value
+   * can never silently resurrect a revoked one).
+   */
+  async setCredentials(
+    scope: TenantScope,
+    sourceId: string,
+    data: Record<string, string>,
+  ): Promise<SourceView> {
+    return withTenantContext(getDb(), scope, async (tx) => {
+      const row = await this.requireSource(tx, scope.tenantId, sourceId);
+      await this.credentials.set(tx, { tenantId: scope.tenantId, sourceId, data });
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'integration.source.updated',
+        entityType: 'lead_source',
+        entityId: sourceId,
+        actor: userActor(scope),
+        metadata: { fields: Object.keys(data).sort() }, // field NAMES only, never values
+      });
+      return this.toViewWithCredentials(tx, row);
+    });
   }
 
   /** Issues a new secret for an existing source; the old one stops working immediately. */
   async rotateSecret(scope: TenantScope, sourceId: string): Promise<SourceWithSecret> {
     const secret = generateConnectorSecret();
     const secretHash = hashConnectorSecret(secret);
-    const source = await withTenantContext(getDb(), scope, async (tx) => {
+    return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireSource(tx, scope.tenantId, sourceId);
       const [row] = await tx
         .update(leadSources)
@@ -100,13 +164,12 @@ export class SourcesService {
         entityId: sourceId,
         actor: userActor(scope),
       });
-      return row!;
+      return { source: await this.toViewWithCredentials(tx, row!), secret };
     });
-    return { source: toView(source), secret };
   }
 
   async revoke(scope: TenantScope, sourceId: string): Promise<SourceView> {
-    const row = await withTenantContext(getDb(), scope, async (tx) => {
+    return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireSource(tx, scope.tenantId, sourceId);
       const [updated] = await tx
         .update(leadSources)
@@ -121,13 +184,12 @@ export class SourcesService {
         actor: userActor(scope),
         changes: { status: { from: 'active', to: 'revoked' } },
       });
-      return updated!;
+      return this.toViewWithCredentials(tx, updated!);
     });
-    return toView(row);
   }
 
   async reactivate(scope: TenantScope, sourceId: string): Promise<SourceView> {
-    const row = await withTenantContext(getDb(), scope, async (tx) => {
+    return withTenantContext(getDb(), scope, async (tx) => {
       await this.requireSource(tx, scope.tenantId, sourceId);
       const [updated] = await tx
         .update(leadSources)
@@ -142,9 +204,8 @@ export class SourcesService {
         actor: userActor(scope),
         changes: { status: { from: 'revoked', to: 'active' } },
       });
-      return updated!;
+      return this.toViewWithCredentials(tx, updated!);
     });
-    return toView(row);
   }
 
   async listRecentEvents(scope: TenantScope, limit = 50) {
@@ -213,17 +274,34 @@ export class SourcesService {
     if (!row) throw new AppError('SOURCE_NOT_FOUND');
     return row;
   }
+
+  private async toViewWithCredentials(
+    tx: Tx,
+    row: typeof leadSources.$inferSelect,
+  ): Promise<SourceView> {
+    const hasCredentials = await this.credentials.has(tx, row.id);
+    return {
+      id: row.id,
+      key: row.key,
+      name: row.name,
+      connectorType: row.connectorType,
+      status: row.status,
+      fieldMapping: (row.fieldMapping as Record<string, string>) ?? {},
+      publicLookupKey: row.publicLookupKey,
+      hasCredentials,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
 }
 
-function toView(row: typeof leadSources.$inferSelect): SourceView {
-  return {
-    id: row.id,
-    key: row.key,
-    name: row.name,
-    connectorType: row.connectorType,
-    status: row.status,
-    fieldMapping: (row.fieldMapping as Record<string, string>) ?? {},
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-  };
+/** Providers that authenticate a webhook via `ConnectorAdapter.verify()` rather than a presented
+ *  bearer secret, and therefore need a globally-unique `public_lookup_key` instead of (in addition
+ *  to) a secret. Kept as a short, explicit list here — NOT derived from the registry — because it is
+ *  a transport-shape fact about a provider (can it send a custom Authorization header at all?), not
+ *  an adapter-behavioural one; the registry has no reason to know it. */
+const SIGNATURE_STYLE_PROVIDERS = new Set(['meta_lead_ads']);
+
+function isSignatureStyleProvider(connectorType: string): boolean {
+  return SIGNATURE_STYLE_PROVIDERS.has(connectorType);
 }

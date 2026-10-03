@@ -67,6 +67,16 @@ export function useReactivateSource() {
   });
 }
 
+export function useSetSourceCredentials() {
+  const qc = useQueryClient();
+  return useMutationWithFeedback({
+    mutationFn: ({ sourceId, data }: { sourceId: string; data: Record<string, string> }) =>
+      api.setSourceCredentials(sourceId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.sources }),
+    successMessage: 'Connector credentials saved',
+  });
+}
+
 export function useReplayInboundEvent() {
   const qc = useQueryClient();
   return useMutationWithFeedback({
