@@ -61,6 +61,51 @@ describe('parseServerEnv', () => {
     });
   });
 
+  describe('CONNECTOR_CREDENTIAL_ENCRYPTION_KEY (UC-3)', () => {
+    it('defaults to the obvious placeholder (32 zero bytes, hex)', () => {
+      const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
+      expect(env.CONNECTOR_CREDENTIAL_ENCRYPTION_KEY).toBe('00'.repeat(32));
+    });
+
+    it('accepts a real 64-hex-char (32-byte) key', () => {
+      const key = 'ab'.repeat(32);
+      const env = parseServerEnv({
+        ...baseValid,
+        CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: key,
+      } as NodeJS.ProcessEnv);
+      expect(env.CONNECTOR_CREDENTIAL_ENCRYPTION_KEY).toBe(key);
+    });
+
+    it.each(['too-short', 'zz'.repeat(32), 'ab'.repeat(31), 'ab'.repeat(33)])(
+      'rejects a malformed key (%s)',
+      (bad) => {
+        expect(() =>
+          parseServerEnv({
+            ...baseValid,
+            CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: bad,
+          } as NodeJS.ProcessEnv),
+        ).toThrow(/CONNECTOR_CREDENTIAL_ENCRYPTION_KEY/);
+      },
+    );
+
+    it('flags the placeholder key in production, like SESSION_SECRET', () => {
+      expect(() =>
+        parseServerEnv({ ...baseValid, APP_ENV: 'production' } as NodeJS.ProcessEnv),
+      ).toThrow(/CONNECTOR_CREDENTIAL_ENCRYPTION_KEY/);
+    });
+
+    it('accepts a real key in production', () => {
+      expect(() =>
+        parseServerEnv({
+          ...baseValid,
+          APP_ENV: 'production',
+          SESSION_SECRET: 'y'.repeat(40),
+          CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: 'ab'.repeat(32),
+        } as NodeJS.ProcessEnv),
+      ).not.toThrow();
+    });
+  });
+
   it('parses a minimal valid environment with defaults applied', () => {
     const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
     expect(env.APP_ENV).toBe('development');

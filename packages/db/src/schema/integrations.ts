@@ -37,8 +37,10 @@ const entityTimestamps = {
     .$onUpdate(() => new Date()),
 };
 
-// V1 ships exactly one connector type. Extensible without a data migration.
-export const connectorType = pgEnum('connector_type', ['pabbly_bridge']);
+// UC-3: adds 'meta_lead_ads' alongside the original 'pabbly_bridge'. The AdapterRegistry (UC-2) is
+// the runtime authority on what's actually supported; this enum only bounds what the column can
+// hold at the database level — adding a value is additive and never requires touching existing rows.
+export const connectorType = pgEnum('connector_type', ['pabbly_bridge', 'meta_lead_ads']);
 export const sourceStatus = pgEnum('source_status', ['active', 'revoked']);
 export const rawEventStatus = pgEnum('raw_event_status', ['RECEIVED', 'PROCESSED', 'FAILED']);
 
@@ -75,8 +77,19 @@ export const leadSources = pgTable(
     name: text('name').notNull(),
     connectorType: connectorType('connector_type').notNull().default('pabbly_bridge'),
     status: sourceStatus('status').notNull().default('active'),
-    /** hex SHA-256 of the connector's bearer secret — the actual authenticator */
+    /** hex SHA-256 of the connector's bearer secret — the actual authenticator for BEARER-style
+     *  providers (Pabbly). Always populated (even for a provider that never presents it) so this
+     *  column can stay NOT NULL without a schema change. */
     secretHash: text('secret_hash').notNull(),
+    /**
+     * GLOBAL lookup key for SIGNATURE-style providers (ADR 0049, UC-3) — e.g. Meta, which cannot
+     * send a custom Authorization header at all; its POST is authenticated by a payload signature
+     * (`ConnectorAdapter.verify()`), not a presented secret. The webhook URL's `:sourceKey` for such
+     * a source IS this value. Null for bearer-style sources (Pabbly) — never used, never checked.
+     * Globally unique for the same reason `secret_hash` is: it must resolve to exactly one tenant
+     * from the URL alone, before any tenant context exists (`lead_sources_by_public_key` policy).
+     */
+    publicLookupKey: text('public_lookup_key'),
     /** provider-field -> "canonical:<field>" | "custom:<key>" override dictionary (ADR 0032) */
     fieldMapping: jsonb('field_mapping').notNull().default({}),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
@@ -88,7 +101,48 @@ export const leadSources = pgTable(
     // GLOBAL uniqueness: the secret hash alone must resolve to exactly one
     // tenant — this is what the by-secret RLS policy relies on (ADR 0032).
     unique('lead_sources_secret_hash_uq').on(t.secretHash),
+    // GLOBAL uniqueness for the same reason, for signature-style providers (UC-3). NULL is allowed
+    // to repeat (standard Postgres unique-constraint behaviour) — every bearer-style source has one.
+    unique('lead_sources_public_lookup_key_uq').on(t.publicLookupKey),
     index('lead_sources_tenant_idx').on(t.tenantId),
+  ],
+);
+
+// --- connector_credentials (recoverable provider secrets, UC-3) ----------
+
+/**
+ * Encrypted, recoverable credential material for a connector source that must present something
+ * back to the provider AFTER the webhook is received (Meta's Graph API access token; its app secret
+ * for signature verification; its subscription verify-token). Deliberately separate from
+ * `lead_sources.secret_hash`, which is one-way and can never be recovered — by design, for the
+ * entirely different purpose of authenticating an INCOMING bearer secret. One row per source
+ * (one-to-one); the decrypted value is a small JSON object, shaped per-provider, read only inside
+ * `ConnectorCredentialsService` and never returned by any API response (ADR 0051).
+ */
+export const connectorCredentials = pgTable(
+  'connector_credentials',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => newUuidV7()),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    sourceId: uuid('source_id').notNull(),
+    /** AES-256-GCM: base64(iv) + '.' + base64(authTag) + '.' + base64(ciphertext) of a JSON object.
+     *  Never plaintext, never logged, never returned by an API response. */
+    ciphertext: text('ciphertext').notNull(),
+    ...entityTimestamps,
+  },
+  (t) => [
+    unique('connector_credentials_source_uq').on(t.sourceId),
+    unique('connector_credentials_id_tenant_uq').on(t.id, t.tenantId),
+    index('connector_credentials_tenant_idx').on(t.tenantId),
+    foreignKey({
+      name: 'connector_credentials_source_fk',
+      columns: [t.sourceId, t.tenantId],
+      foreignColumns: [leadSources.id, leadSources.tenantId],
+    }).onDelete('cascade'),
   ],
 );
 
@@ -239,3 +293,5 @@ export type CanonicalLeadEventRow = typeof canonicalLeadEvents.$inferSelect;
 export type NewCanonicalLeadEventRow = typeof canonicalLeadEvents.$inferInsert;
 export type IntegrationEventLogRow = typeof integrationEventLog.$inferSelect;
 export type NewIntegrationEventLogRow = typeof integrationEventLog.$inferInsert;
+export type ConnectorCredentialRow = typeof connectorCredentials.$inferSelect;
+export type NewConnectorCredentialRow = typeof connectorCredentials.$inferInsert;

@@ -172,6 +172,18 @@ export const serverEnvSchema = z
       .enum(['true', 'false'])
       .default('true')
       .transform((v) => v === 'true'),
+
+    /**
+     * AES-256-GCM key (64 hex chars = 32 bytes) for recoverable connector credentials (UC-3, ADR
+     * 0051) — a Meta access token, app secret, etc. that must be read back in plaintext to call the
+     * provider's API, unlike `lead_sources.secret_hash`, which is one-way by design. The default is
+     * an obviously-placeholder value, flagged below exactly like SESSION_SECRET if left unchanged in
+     * production.
+     */
+    CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/i, 'must be 64 hex characters (32 bytes)')
+      .default('00'.repeat(32)),
   })
   .superRefine((env, ctx) => {
     if (env.APP_ENV === 'production' && env.SESSION_SECRET.includes('change-me')) {
@@ -179,6 +191,17 @@ export const serverEnvSchema = z
         code: z.ZodIssueCode.custom,
         path: ['SESSION_SECRET'],
         message: 'SESSION_SECRET is still the placeholder value in a production environment',
+      });
+    }
+    if (
+      env.APP_ENV === 'production' &&
+      env.CONNECTOR_CREDENTIAL_ENCRYPTION_KEY === '00'.repeat(32)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['CONNECTOR_CREDENTIAL_ENCRYPTION_KEY'],
+        message:
+          'CONNECTOR_CREDENTIAL_ENCRYPTION_KEY is still the placeholder value in a production environment',
       });
     }
     if (env.OBJECT_STORAGE_PROVIDER === 's3') {

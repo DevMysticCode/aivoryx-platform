@@ -29,6 +29,7 @@ const TENANT_OWNED_TABLES = [
   'raw_events',
   'canonical_lead_events',
   'integration_event_log',
+  'connector_credentials',
   'tenant_company_profiles',
   'tenant_assets',
   'tenant_onboarding',
