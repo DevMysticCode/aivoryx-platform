@@ -86,7 +86,7 @@ export class SourceDto {
   @ApiProperty({ enum: ['active', 'revoked'] })
   status!: string;
 
-  @ApiProperty({ type: Object, additionalProperties: true })
+  @ApiProperty({ type: Object, additionalProperties: { type: 'string' } })
   fieldMapping!: Record<string, string>;
 
   @ApiProperty({

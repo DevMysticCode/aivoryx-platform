@@ -1,6 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { INTEGRATION_ENABLED } from './support/env.js';
-import { startConnectorHarness, type ConnectorHarness } from './support/connector.js';
+import {
+  startConnectorHarness,
+  WEBHOOK_ROUTES,
+  type ConnectorHarness,
+} from './support/connector.js';
+
+const route = WEBHOOK_ROUTES[0];
 
 /**
  * UC-4 — Integration Center backend additions: source detail, source configuration update
@@ -169,7 +175,6 @@ describe.skipIf(!INTEGRATION_ENABLED)('Integration Center (UC-4)', () => {
         .set('Cookie', cookie)
         .send({ fieldMapping: { contact_no: 'canonical:phone' } });
 
-      const route = { path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` };
       const p = phone();
       const res = await h.webhook(route, created.key, created.secret, { contact_no: p });
       expect(res.body.status).toBe('DONE');
@@ -216,7 +221,6 @@ describe.skipIf(!INTEGRATION_ENABLED)('Integration Center (UC-4)', () => {
     it('paginates server-side and reports total/page/pageSize', async () => {
       const cookie = await h.adminCookie();
       const created = await h.createSource(cookie, h.uniqueKey('events-page'));
-      const route = { path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` };
       for (let i = 0; i < 3; i++) {
         await h.webhook(route, created.key, created.secret, { phone: phone() });
       }
@@ -247,7 +251,6 @@ describe.skipIf(!INTEGRATION_ENABLED)('Integration Center (UC-4)', () => {
       const cookie = await h.adminCookie();
       const a = await h.createSource(cookie, h.uniqueKey('events-filter-a'));
       const b = await h.createSource(cookie, h.uniqueKey('events-filter-b'));
-      const route = { path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` };
       await h.webhook(route, a.key, a.secret, { phone: phone() });
       await h.webhook(route, b.key, b.secret, { phone: phone() });
 
@@ -264,7 +267,6 @@ describe.skipIf(!INTEGRATION_ENABLED)('Integration Center (UC-4)', () => {
     it('filters by status', async () => {
       const cookie = await h.adminCookie();
       const created = await h.createSource(cookie, h.uniqueKey('events-status'));
-      const route = { path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` };
       await h.webhook(route, created.key, created.secret, { phone: phone() });
 
       const res = await h.http
@@ -289,7 +291,6 @@ describe.skipIf(!INTEGRATION_ENABLED)('Integration Center (UC-4)', () => {
     it('never returns events belonging to another tenant, even unfiltered', async () => {
       const cookie = await h.adminCookie();
       const created = await h.createSource(cookie, h.uniqueKey('events-iso'));
-      const route = { path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` };
       await h.webhook(route, created.key, created.secret, { phone: phone() });
 
       const bCookie = await h.adminBCookie();
@@ -314,7 +315,6 @@ describe.skipIf(!INTEGRATION_ENABLED)('Integration Center (UC-4)', () => {
     it('returns event, raw and log, with no credential/secret leakage', async () => {
       const cookie = await h.adminCookie();
       const created = await h.createSource(cookie, h.uniqueKey('event-detail'));
-      const route = { path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` };
       const sent = await h.webhook(route, created.key, created.secret, { phone: phone() });
       expect(sent.body.status).toBe('DONE');
 
@@ -331,7 +331,6 @@ describe.skipIf(!INTEGRATION_ENABLED)('Integration Center (UC-4)', () => {
     it('404s for another tenant’s event', async () => {
       const cookie = await h.adminCookie();
       const created = await h.createSource(cookie, h.uniqueKey('event-detail-iso'));
-      const route = { path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` };
       const sent = await h.webhook(route, created.key, created.secret, { phone: phone() });
 
       const bCookie = await h.adminBCookie();
