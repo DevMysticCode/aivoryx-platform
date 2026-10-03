@@ -7,13 +7,36 @@ const access = vi.hoisted(() => ({
     can: (p: string | undefined) => boolean;
   },
 }));
+interface EventRow {
+  id: string;
+  rawEventId: string;
+  sourceId: string;
+  status: string;
+  leadId: string | null;
+  dedupeOutcome: string | null;
+  processingAttempts: number;
+  lastErrorCode: string | null;
+  lastErrorMessage: string | null;
+  createdAt: string;
+}
+
 const hooks = vi.hoisted(() => ({
-  useSources: vi.fn(() => ({ isLoading: false, data: [], error: null })),
-  useInboundEvents: vi.fn(() => ({
+  useSources: vi.fn((): { isLoading: boolean; data: unknown[]; error: unknown } => ({
     isLoading: false,
+    data: [],
     error: null,
-    data: { items: [], total: 0, page: 1, pageSize: 25 },
   })),
+  useInboundEvents: vi.fn(
+    (): {
+      isLoading: boolean;
+      error: unknown;
+      data: { items: EventRow[]; total: number; page: number; pageSize: number };
+    } => ({
+      isLoading: false,
+      error: null,
+      data: { items: [], total: 0, page: 1, pageSize: 25 },
+    }),
+  ),
   useInboundEvent: vi.fn(() => ({ isLoading: false, error: null, data: undefined })),
   useReplayInboundEvent: vi.fn(() => ({ mutate: vi.fn(), isPending: false, error: null })),
 }));

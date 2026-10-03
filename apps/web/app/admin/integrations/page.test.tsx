@@ -8,7 +8,11 @@ const access = vi.hoisted(() => ({
   },
 }));
 const hooks = vi.hoisted(() => ({
-  useSources: vi.fn(() => ({ isLoading: false, data: [], error: null })),
+  useSources: vi.fn((): { isLoading: boolean; data: unknown[]; error: unknown } => ({
+    isLoading: false,
+    data: [],
+    error: null,
+  })),
   useProviders: vi.fn(() => ({ isLoading: false, data: [], error: null })),
   mutation: () => ({ mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false, error: null }),
 }));
