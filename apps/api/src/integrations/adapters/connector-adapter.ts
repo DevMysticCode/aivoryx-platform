@@ -13,28 +13,55 @@
  */
 
 /** The minimum of an inbound delivery an adapter needs. Never the raw Express request: no method,
- *  path, IP or `Authorization` header — the adapter has no legitimate use for any of them. The
- *  connector secret is resolved and checked entirely in the existing authentication layer, before an
- *  adapter is ever selected; `verify()` below is about provider-specific transport verification
- *  (e.g. a provider's own signature header), which is a different thing and which Pabbly does not
- *  have. */
+ *  path, IP — the adapter has no legitimate use for them. The connector bearer secret (Pabbly) is
+ *  resolved and checked entirely in the existing authentication layer, before an adapter is ever
+ *  selected, so it is never part of this envelope either.
+ *
+ *  `rawBytes` is populated ONLY for the `verify()` call site (UC-3, ADR 0050) — the exact bytes
+ *  received over HTTP, before JSON parsing, needed by a provider whose signature (e.g. Meta's
+ *  `X-Hub-Signature-256`) is computed over the raw body and would NOT survive a round-trip through
+ *  `JSON.parse`/`JSON.stringify` (key order, spacing and number formatting are not guaranteed to
+ *  match). It is `undefined` at every other call site (`parse()` from the stored, already-parsed
+ *  row) — those never re-verify a signature that has already passed once. */
 export interface InboundEnvelope {
   /** the exact raw body as received, already JSON-parsed */
   readonly rawBody: unknown;
+  /** exact bytes as received over HTTP — present only where signature verification happens */
+  readonly rawBytes?: Buffer;
   /** the small, already-safe-listed header set (`WebhookController.safeHeaders`) — never Authorization */
   readonly headers: Readonly<Record<string, string>>;
 }
 
 /**
- * Credential material an adapter's `verify()` may need to check a provider-specific signature.
- * Deliberately NOT the connector secret used by the existing bearer-auth layer (that check already
- * happened before an adapter is resolved) — this is for a provider that signs its payload with its
- * OWN key, separate from the Aivoryx connector credential. Pabbly has no such key, so its `verify()`
- * ignores this and returns success.
+ * Credential material an adapter's `verify()`/`hydrate()` may need — a provider-specific, recoverable
+ * secret (Meta's app secret, page access token, subscription verify-token), decrypted by
+ * `ConnectorCredentialsService` and handed to the adapter for exactly the duration of one request.
+ * Deliberately NOT the connector bearer secret used by the existing authentication layer for Pabbly
+ * (that is one-way hashed and never recoverable, by design, and is checked before an adapter is ever
+ * resolved). Empty for a provider with nothing stored (Pabbly) — its `verify()` ignores this entirely.
  */
 export interface ResolvedCredential {
-  /** opaque to the core engine; only an adapter that defined this shape of secret reads it */
-  readonly providerSecret?: string;
+  /** opaque to the core engine; shaped per-provider, read only by the adapter that defined it */
+  readonly data: Readonly<Record<string, string>>;
+}
+
+/**
+ * A thin, provider-neutral pointer to a lead whose field data has NOT been retrieved yet — what a
+ * webhook that only carries identifiers (Meta's `leadgen_id`) extracts at `parse()` time. `type` is
+ * provider-defined (e.g. `"leadgen_id"`) and exists so a future provider's reference is distinguishable
+ * without the ingestion engine ever branching on which provider it came from — it only checks whether
+ * `CanonicalDraft.providerReference` is present.
+ */
+export interface ProviderReference {
+  readonly type: string;
+  readonly id: string;
+  readonly metadata?: Readonly<Record<string, unknown>>;
+}
+
+/** Everything `hydrate()` needs beyond the reference itself. */
+export interface HydrationContext {
+  readonly credential: ResolvedCredential;
+  readonly correlationId: string;
 }
 
 export interface VerificationResult {
@@ -55,6 +82,14 @@ export interface CanonicalDraft {
   readonly providerFields: Record<string, ProviderFieldValue>;
   readonly providerRecordId: string | null;
   readonly providerTimestamp: string | null;
+  /**
+   * Present when this draft is a THIN REFERENCE that still needs `hydrate()` before it carries real
+   * field data (UC-3) — e.g. Meta's webhook, which contains only `leadgen_id`. `providerFields` is
+   * `{}` and `providerRecordId` already equals `providerReference.id` in that case, so existing
+   * idempotency-key derivation (`record:<providerRecordId>`) needs no change whether or not
+   * hydration has happened yet. Absent (the common case, Pabbly) means the draft is already final.
+   */
+  readonly providerReference?: ProviderReference;
 }
 
 export interface ValidationResult {
@@ -94,7 +129,64 @@ export interface ConnectorAdapter {
 
   /** Provider-specific structural checks only (e.g. "this provider always sends a record id") —
    *  NEVER generic lead validation (identity presence, custom-field coercion), which stays in
-   *  `IngestionService` until UC-3's canonical ingestion engine exists to own it generically.
-   *  Optional: an adapter with no provider-specific structural rule (Pabbly) omits it. */
+   *  `IngestionService`. Optional: an adapter with no provider-specific structural rule (Pabbly)
+   *  omits it. */
   validate?(draft: CanonicalDraft): ValidationResult;
+
+  /**
+   * Turns a `ProviderReference` into a full `CanonicalDraft`, by calling out to the provider's own
+   * API (UC-3, ADR 0049). Present only on an adapter whose `parse()` can return a bare reference
+   * (Meta); Pabbly has none, because its webhook already carries the full payload.
+   *
+   * MUST NOT open a database transaction or import anything from `@aivoryx/db` — `IngestionService`
+   * calls this strictly BETWEEN its two existing transactions (raw-event persistence, then
+   * canonical/CRM processing), never inside either one, so a slow or failing provider API never
+   * holds a pooled DB connection open.
+   *
+   * May reject — with a typed, provider-neutral reason the ingestion layer already knows how to
+   * classify (see `HydrationError`) — for an auth failure, a missing/expired lead, a rate limit, a
+   * timeout, or a malformed provider response. Never includes the credential or the raw provider
+   * response body in the rejection.
+   */
+  hydrate?(reference: ProviderReference, context: HydrationContext): Promise<CanonicalDraft>;
+}
+
+export type HydrationErrorCode =
+  | 'PROVIDER_AUTH_FAILED'
+  | 'PROVIDER_PERMISSION_DENIED'
+  | 'PROVIDER_RECORD_NOT_FOUND'
+  | 'PROVIDER_RATE_LIMITED'
+  | 'PROVIDER_TIMEOUT'
+  | 'PROVIDER_UNAVAILABLE'
+  | 'PROVIDER_RESPONSE_INVALID';
+
+/** Whether retrying the SAME reference later could plausibly succeed. A 404/permanently-rejected
+ *  lead or a bad credential should not be retried; a rate limit, timeout or outage should. The one
+ *  place this policy is decided — both `HydrationError.retryable` and the ingestion layer's
+ *  provider-redelivery check (`isRetryableHydrationErrorCode`) read it from here. */
+const RETRYABLE_HYDRATION_CODES: ReadonlySet<HydrationErrorCode> = new Set([
+  'PROVIDER_RATE_LIMITED',
+  'PROVIDER_TIMEOUT',
+  'PROVIDER_UNAVAILABLE',
+]);
+
+export function isRetryableHydrationErrorCode(code: string): boolean {
+  return RETRYABLE_HYDRATION_CODES.has(code as HydrationErrorCode);
+}
+
+/**
+ * The provider-neutral failure shape a `hydrate()` implementation throws. `IngestionService` reads
+ * only `.retryable` and `.code` — it never knows what "Graph API" or "leadgen_id" mean.
+ */
+export class HydrationError extends Error {
+  readonly retryable: boolean;
+
+  constructor(
+    readonly code: HydrationErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'HydrationError';
+    this.retryable = RETRYABLE_HYDRATION_CODES.has(code);
+  }
 }

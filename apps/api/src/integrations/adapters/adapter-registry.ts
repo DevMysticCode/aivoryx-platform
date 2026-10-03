@@ -49,6 +49,15 @@ export class AdapterRegistry {
     return adapter;
   }
 
+  /** Whether ANY version of `provider` is registered — used to validate a connector-type choice at
+   *  source-creation time, without the caller needing to know which versions exist. */
+  has(provider: string): boolean {
+    for (const adapter of this.adapters.values()) {
+      if (adapter.provider === provider) return true;
+    }
+    return false;
+  }
+
   private static key(provider: string, version: number): string {
     return `${provider}:${version}`;
   }

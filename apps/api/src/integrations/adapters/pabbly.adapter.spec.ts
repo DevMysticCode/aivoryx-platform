@@ -53,7 +53,7 @@ describe('PabblyAdapter identity', () => {
     expect(adapter.provider).toBe('pabbly_bridge');
     expect(adapter.version).toBe(1);
     expect(adapter.meta.provider).toBe('pabbly_bridge');
-    expect(adapter.verify({ rawBody: {}, headers: {} }, {})).toEqual({ verified: true });
+    expect(adapter.verify({ rawBody: {}, headers: {} }, { data: {} })).toEqual({ verified: true });
     expect(adapter.validate).toBeUndefined();
   });
 });

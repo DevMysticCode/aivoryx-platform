@@ -88,4 +88,18 @@ describe('AdapterRegistry', () => {
     expect(registry.resolve('pabbly_bridge')).toBe(pabbly);
     expect(registry.resolve('generic_webhook')).toBe(generic);
   });
+
+  describe('has (UC-3: validating a connectorType choice without knowing which version)', () => {
+    it('is true for a registered provider, regardless of version', () => {
+      const registry = new AdapterRegistry();
+      registry.register(fakeAdapter('meta_lead_ads', 1));
+      expect(registry.has('meta_lead_ads')).toBe(true);
+    });
+
+    it('is false for an unregistered provider', () => {
+      const registry = new AdapterRegistry();
+      registry.register(fakeAdapter('pabbly_bridge', 1));
+      expect(registry.has('meta_lead_ads')).toBe(false);
+    });
+  });
 });
