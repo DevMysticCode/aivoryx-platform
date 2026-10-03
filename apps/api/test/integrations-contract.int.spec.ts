@@ -107,7 +107,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
 
       it('DUPLICATE_RAW and DUPLICATE_EVENT: same key set as DONE, pointing at the original', async () => {
         const { key, secret } = await setup('shape-dup');
-        const body = { id: 'D-2', name: 'A', phone: phone() };
+        const body = { id: `D-2-${Date.now()}-${Math.random()}`, name: 'A', phone: phone() };
         const one = await h.webhook(route, key, secret, body);
         const dupRaw = await h.webhook(route, key, secret, body);
         expect(dupRaw.status).toBe(200);
@@ -150,11 +150,13 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
       it('success: raw event, canonical event, lead, timeline entry and outbox event all agree', async () => {
         const { key, secret, sourceId, cookie } = await setup('persist');
         const p = phone();
+        const recId = `REC-1-${Date.now()}-${Math.random()}`;
+        const email = `Persist.${Date.now()}.${Math.floor(Math.random() * 1e6)}@Example.test`;
         const res = await h.webhook(route, key, secret, {
-          id: 'REC-1',
+          id: recId,
           full_name: 'Persist Me',
           phone_number: p,
-          email_address: 'Persist@Example.test',
+          email_address: email,
         });
         expect(res.body.status).toBe('DONE');
 
@@ -166,7 +168,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
           status: 'DONE',
           dedupe_outcome: 'new',
           processing_attempts: 0,
-          idempotency_key: 'record:REC-1',
+          idempotency_key: `record:${recId}`,
           lead_id: res.body.leadId,
           tenant_id: h.fx.tenantA,
         });
@@ -190,7 +192,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
           status: 'NEW',
           name: 'Persist Me',
           normalized_phone: p,
-          normalized_email: 'persist@example.test',
+          normalized_email: email.toLowerCase(),
         });
 
         const detail = await h.http
@@ -248,7 +250,7 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
         expect(await count('leads', sourceId)).toBe(0);
         expect(await outboxFor(sourceId)).toHaveLength(0);
 
-        const body = { id: 'NO-1', phone: phone() };
+        const body = { id: `NO-1-${Date.now()}-${Math.random()}`, phone: phone() };
         await h.webhook(route, key, secret, body);
         expect(await outboxFor(sourceId)).toHaveLength(1);
         await h.webhook(route, key, secret, body); // DUPLICATE_RAW
@@ -308,8 +310,9 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
       it('the same provider record id with a DIFFERENT body is one logical event: one canonical event, one lead', async () => {
         const { key, secret, sourceId } = await setup('idem');
         const p = phone();
-        const a = await h.webhook(route, key, secret, { id: 'SAME', name: 'One', phone: p });
-        const b = await h.webhook(route, key, secret, { id: 'SAME', name: 'Two', phone: p });
+        const recordId = `SAME-${Date.now()}-${Math.random()}`;
+        const a = await h.webhook(route, key, secret, { id: recordId, name: 'One', phone: p });
+        const b = await h.webhook(route, key, secret, { id: recordId, name: 'Two', phone: p });
         expect(b.body.status).toBe('DUPLICATE_EVENT');
         expect(b.body.canonicalEventId).toBe(a.body.canonicalEventId);
         expect(await count('canonical_lead_events', sourceId)).toBe(1);
@@ -644,13 +647,14 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — contract (UC-0)', (
         const bCookie = await h.adminBCookie();
         const b = await h.createSource(bCookie, h.uniqueKey('iso-lead-b'));
         const p = phone();
+        const sharedId = `SHARED-${Date.now()}-${Math.random()}`;
         const ra = await h.webhook(route, a.key, a.secret, {
-          id: 'SHARED-ID',
+          id: sharedId,
           name: 'Iso',
           phone: p,
         });
         const rb = await h.webhook(route, b.key, b.secret, {
-          id: 'SHARED-ID',
+          id: sharedId,
           name: 'Iso',
           phone: p,
         });

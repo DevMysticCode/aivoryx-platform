@@ -14,9 +14,11 @@ import { bootTestApp, sessionCookie } from './app.js';
  * internals are refactored (adapter registry, canonical ingestion, consumers).
  */
 
-/** Webhook routes under contract. UC-4 adds the provider-neutral route to this list. */
+/** Webhook routes under contract. The universal route (UC-3) is proven equivalent to the Pabbly
+ *  alias by running the ENTIRE UC-0 contract matrix against both. */
 export const WEBHOOK_ROUTES = [
   { name: 'pabbly alias', path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` },
+  { name: 'universal route', path: (key: string) => `/api/v1/integrations/webhooks/${key}` },
 ] as const;
 export type WebhookRoute = (typeof WEBHOOK_ROUTES)[number];
 
@@ -34,6 +36,13 @@ export interface ConnectorHarness {
     key: string,
     fieldMapping?: Record<string, string>,
   ): Promise<{ sourceId: string; secret: string; key: string }>;
+  /** a signature-style (Meta) source: no bearer secret is used, its webhook URL segment is the
+   *  returned `publicLookupKey`. */
+  createMetaSource(
+    cookie: string,
+    key: string,
+  ): Promise<{ sourceId: string; key: string; publicLookupKey: string }>;
+  setCredentials(cookie: string, sourceId: string, data: Record<string, string>): request.Test;
   webhook(
     route: WebhookRoute,
     key: string,
@@ -85,6 +94,25 @@ export async function startConnectorHarness(
         .send({ key, name: `Source ${key}`, ...(fieldMapping ? { fieldMapping } : {}) });
       expect(res.status).toBe(200);
       return { sourceId: res.body.source.id, secret: res.body.credential.secret, key };
+    },
+    async createMetaSource(cookie, key) {
+      const res = await http
+        .post('/api/v1/admin/integrations/sources')
+        .set('Cookie', cookie)
+        .send({ key, name: `Meta ${key}`, connectorType: 'meta_lead_ads' });
+      expect(res.status).toBe(200);
+      expect(res.body.source.publicLookupKey).toBeTruthy();
+      return {
+        sourceId: res.body.source.id,
+        key,
+        publicLookupKey: res.body.source.publicLookupKey,
+      };
+    },
+    setCredentials(cookie, sourceId, data) {
+      return http
+        .put(`/api/v1/admin/integrations/sources/${sourceId}/credentials`)
+        .set('Cookie', cookie)
+        .send({ data });
     },
     webhook(route, key, secret, body, headers = {}) {
       const req = http.post(route.path(key));
