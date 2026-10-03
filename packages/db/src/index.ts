@@ -14,6 +14,7 @@ export {
   withTenantContext,
   withTenantSystemContext,
   withOutboxDispatcherContext,
+  withRawEventPurgeContext,
   withProgressiveContext,
   applyRlsContext,
   currentTenantContext,

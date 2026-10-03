@@ -1,4 +1,9 @@
-import type { CreateSourceRequest, CreateSourceResponse, Source } from '@aivoryx/contracts';
+import type {
+  CreateSourceRequest,
+  CreateSourceResponse,
+  SetSourceCredentialsRequest,
+  Source,
+} from '@aivoryx/contracts';
 import { apiFetch } from './client';
 
 /** Admin surface for the Pabbly inbound connector (ADR 0032). */
@@ -23,6 +28,11 @@ export const revokeSource = (sourceId: string) =>
 
 export const reactivateSource = (sourceId: string) =>
   apiFetch<Source>(`/admin/integrations/sources/${sourceId}/reactivate`, json({}));
+
+/** Write-only (UC-3): configures a signature-style source's (Meta) recoverable credential. The
+ *  values are never returned — only `Source.hasCredentials` reflects that something is configured. */
+export const setSourceCredentials = (sourceId: string, data: SetSourceCredentialsRequest['data']) =>
+  apiFetch<Source>(`/admin/integrations/sources/${sourceId}/credentials`, json({ data }, 'PUT'));
 
 export interface InboundEventSummary {
   id: string;

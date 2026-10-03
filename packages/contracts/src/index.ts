@@ -72,6 +72,8 @@ export type CreateSourceRequest = components['schemas']['CreateSourceRequestDto'
 export type CreateSourceResponse = components['schemas']['CreateSourceResponseDto'];
 export type Source = components['schemas']['SourceDto'];
 export type SourceSecretHandoff = components['schemas']['SourceSecretHandoffDto'];
+// UC-3 — native (signature-style) provider credentials.
+export type SetSourceCredentialsRequest = components['schemas']['SetSourceCredentialsRequestDto'];
 export type CanonicalEvent = components['schemas']['CanonicalEventDto'];
 export type IngestAcceptedResponse = components['schemas']['IngestAcceptedResponseDto'];
 

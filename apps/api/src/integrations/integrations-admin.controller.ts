@@ -1,4 +1,4 @@
-import { Controller, Body, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { Controller, Body, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
 import {
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -16,6 +16,7 @@ import {
   CanonicalEventDto,
   CreateSourceRequestDto,
   CreateSourceResponseDto,
+  SetSourceCredentialsRequestDto,
   SourceDto,
 } from './integrations.dto.js';
 
@@ -67,6 +68,23 @@ export class IntegrationsAdminController {
   async rotate(@Security() ctx: SecurityContext, @Param('sourceId') sourceId: string) {
     const { source, secret } = await this.sources.rotateSecret(scope(ctx), sourceId);
     return { source, credential: { secret } };
+  }
+
+  @Put('sources/:sourceId/credentials')
+  @HttpCode(200)
+  @RequirePermission('crm.integrations.manage')
+  @ApiOperation({
+    operationId: 'setSourceCredentials',
+    summary:
+      'Configure (or replace) the recoverable credential for a signature-style source (e.g. Meta). Write-only — the values are never returned.',
+  })
+  @ApiOkResponse({ type: SourceDto })
+  setCredentials(
+    @Security() ctx: SecurityContext,
+    @Param('sourceId') sourceId: string,
+    @Body() body: SetSourceCredentialsRequestDto,
+  ) {
+    return this.sources.setCredentials(scope(ctx), sourceId, body.data);
   }
 
   @Post('sources/:sourceId/revoke')

@@ -9,6 +9,103 @@ const baseValid = {
 };
 
 describe('parseServerEnv', () => {
+  describe('webhook hardening + retention (UC-1)', () => {
+    it('applies documented safe defaults', () => {
+      const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
+      expect(env.WEBHOOK_MAX_BODY_BYTES).toBe(262_144);
+      expect(env.WEBHOOK_RATE_LIMIT_MAX).toBe(120);
+      expect(env.WEBHOOK_RATE_LIMIT_WINDOW_SECONDS).toBe(60);
+      expect(env.RAW_EVENT_RETENTION_DAYS).toBe(30);
+      expect(env.RAW_EVENT_PURGE_BATCH_SIZE).toBe(500);
+      expect(env.RAW_EVENT_PURGE_INTERVAL_MINUTES).toBe(60);
+      expect(env.RAW_EVENT_PURGE_ENABLED).toBe(true);
+    });
+
+    it('accepts overrides', () => {
+      const env = parseServerEnv({
+        ...baseValid,
+        WEBHOOK_MAX_BODY_BYTES: '2048',
+        WEBHOOK_RATE_LIMIT_MAX: '5',
+        WEBHOOK_RATE_LIMIT_WINDOW_SECONDS: '10',
+        RAW_EVENT_RETENTION_DAYS: '7',
+        RAW_EVENT_PURGE_BATCH_SIZE: '50',
+        RAW_EVENT_PURGE_INTERVAL_MINUTES: '5',
+        RAW_EVENT_PURGE_ENABLED: 'false',
+      } as NodeJS.ProcessEnv);
+      expect(env).toMatchObject({
+        WEBHOOK_MAX_BODY_BYTES: 2048,
+        WEBHOOK_RATE_LIMIT_MAX: 5,
+        WEBHOOK_RATE_LIMIT_WINDOW_SECONDS: 10,
+        RAW_EVENT_RETENTION_DAYS: 7,
+        RAW_EVENT_PURGE_BATCH_SIZE: 50,
+        RAW_EVENT_PURGE_INTERVAL_MINUTES: 5,
+        RAW_EVENT_PURGE_ENABLED: false,
+      });
+    });
+
+    it.each([
+      ['WEBHOOK_MAX_BODY_BYTES', '10'],
+      ['WEBHOOK_MAX_BODY_BYTES', '999999999'],
+      ['WEBHOOK_MAX_BODY_BYTES', 'lots'],
+      ['WEBHOOK_RATE_LIMIT_MAX', '0'],
+      ['WEBHOOK_RATE_LIMIT_WINDOW_SECONDS', '-1'],
+      ['RAW_EVENT_RETENTION_DAYS', '0'],
+      ['RAW_EVENT_PURGE_BATCH_SIZE', '0'],
+      ['RAW_EVENT_PURGE_BATCH_SIZE', '100000'],
+      ['RAW_EVENT_PURGE_INTERVAL_MINUTES', '0'],
+      ['RAW_EVENT_PURGE_ENABLED', 'maybe'],
+    ])('rejects invalid %s=%s (never silently accepted)', (key, value) => {
+      expect(() => parseServerEnv({ ...baseValid, [key]: value } as NodeJS.ProcessEnv)).toThrow(
+        new RegExp(key),
+      );
+    });
+  });
+
+  describe('CONNECTOR_CREDENTIAL_ENCRYPTION_KEY (UC-3)', () => {
+    it('defaults to the obvious placeholder (32 zero bytes, hex)', () => {
+      const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
+      expect(env.CONNECTOR_CREDENTIAL_ENCRYPTION_KEY).toBe('00'.repeat(32));
+    });
+
+    it('accepts a real 64-hex-char (32-byte) key', () => {
+      const key = 'ab'.repeat(32);
+      const env = parseServerEnv({
+        ...baseValid,
+        CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: key,
+      } as NodeJS.ProcessEnv);
+      expect(env.CONNECTOR_CREDENTIAL_ENCRYPTION_KEY).toBe(key);
+    });
+
+    it.each(['too-short', 'zz'.repeat(32), 'ab'.repeat(31), 'ab'.repeat(33)])(
+      'rejects a malformed key (%s)',
+      (bad) => {
+        expect(() =>
+          parseServerEnv({
+            ...baseValid,
+            CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: bad,
+          } as NodeJS.ProcessEnv),
+        ).toThrow(/CONNECTOR_CREDENTIAL_ENCRYPTION_KEY/);
+      },
+    );
+
+    it('flags the placeholder key in production, like SESSION_SECRET', () => {
+      expect(() =>
+        parseServerEnv({ ...baseValid, APP_ENV: 'production' } as NodeJS.ProcessEnv),
+      ).toThrow(/CONNECTOR_CREDENTIAL_ENCRYPTION_KEY/);
+    });
+
+    it('accepts a real key in production', () => {
+      expect(() =>
+        parseServerEnv({
+          ...baseValid,
+          APP_ENV: 'production',
+          SESSION_SECRET: 'y'.repeat(40),
+          CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: 'ab'.repeat(32),
+        } as NodeJS.ProcessEnv),
+      ).not.toThrow();
+    });
+  });
+
   it('parses a minimal valid environment with defaults applied', () => {
     const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
     expect(env.APP_ENV).toBe('development');

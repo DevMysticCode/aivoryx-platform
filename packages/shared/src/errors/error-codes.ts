@@ -26,6 +26,10 @@ export const ERROR_CODES = {
     httpStatus: 405,
     message: 'That action is not supported on this resource.',
   },
+  PAYLOAD_TOO_LARGE: {
+    httpStatus: 413,
+    message: 'The request body is larger than this endpoint accepts.',
+  },
   RATE_LIMITED: {
     httpStatus: 429,
     message: 'Too many requests. Please slow down and try again shortly.',
@@ -178,6 +182,13 @@ export const ERROR_CODES = {
   EVENT_NOT_FOUND: {
     httpStatus: 404,
     message: 'That inbound event was not found in this workspace.',
+  },
+  // Universal Connector adapter resolution (UC-2, ADR 0049)
+  ADAPTER_NOT_FOUND: {
+    // the DATABASE's own connector_type/version is unrecognized by this server's adapter registry —
+    // never a caller mistake; a correct bearer secret and source key already got the request here.
+    httpStatus: 500,
+    message: 'Something went wrong on our side. The team has been notified.',
   },
   EVENT_NOT_REPLAYABLE: {
     httpStatus: 409,

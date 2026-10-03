@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsIn, IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+
+/** Kept in sync with the providers actually registered in `AdapterRegistry` (UC-2/UC-3). The
+ *  registry remains the runtime authority — this list only drives request validation/Swagger. */
+export const KNOWN_CONNECTOR_TYPES = ['pabbly_bridge', 'meta_lead_ads'] as const;
 
 export class CreateSourceRequestDto {
   @ApiProperty({ maxLength: 60, example: 'website-pabbly' })
@@ -16,6 +20,16 @@ export class CreateSourceRequestDto {
 
   @ApiProperty({
     required: false,
+    enum: KNOWN_CONNECTOR_TYPES,
+    default: 'pabbly_bridge',
+    description: 'Defaults to the bearer-authenticated Pabbly connector.',
+  })
+  @IsOptional()
+  @IsIn(KNOWN_CONNECTOR_TYPES)
+  connectorType?: string;
+
+  @ApiProperty({
+    required: false,
     type: Object,
     additionalProperties: { type: 'string' },
     description:
@@ -24,6 +38,22 @@ export class CreateSourceRequestDto {
   @IsOptional()
   @IsObject()
   fieldMapping?: Record<string, string>;
+}
+
+/**
+ * Write-only credential update for a signature-style source (UC-3) — e.g. Meta's
+ * `{ appSecret, pageAccessToken, verifyToken }`. Deliberately a free-form string map rather than
+ * named fields: the shape is provider-specific and the admin API has no reason to know it; the
+ * adapter is what reads `credential.data.<field>`.
+ */
+export class SetSourceCredentialsRequestDto {
+  @ApiProperty({
+    type: Object,
+    additionalProperties: { type: 'string' },
+    description: 'Replaces the ENTIRE credential blob. Never returned by any API response.',
+  })
+  @IsObject()
+  data!: Record<string, string>;
 }
 
 export class SourceDto {
@@ -36,7 +66,7 @@ export class SourceDto {
   @ApiProperty()
   name!: string;
 
-  @ApiProperty({ enum: ['pabbly_bridge'] })
+  @ApiProperty({ enum: KNOWN_CONNECTOR_TYPES })
   connectorType!: string;
 
   @ApiProperty({ enum: ['active', 'revoked'] })
@@ -44,6 +74,17 @@ export class SourceDto {
 
   @ApiProperty({ type: Object, additionalProperties: true })
   fieldMapping!: Record<string, string>;
+
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description:
+      'The webhook URL segment for a signature-style source (Meta): POST /integrations/webhooks/<publicLookupKey>. Null for a bearer-style source (Pabbly), which uses `key` + a connector secret instead.',
+  })
+  publicLookupKey!: string | null;
+
+  @ApiProperty({ description: 'Whether a recoverable credential blob is configured.' })
+  hasCredentials!: boolean;
 
   @ApiProperty({ format: 'date-time' })
   createdAt!: string;

@@ -5098,6 +5098,37 @@
         ]
       }
     },
+    "/integrations/webhooks/{sourceKey}": {
+      "post": {
+        "operationId": "ingestWebhook",
+        "parameters": [
+          {
+            "name": "sourceKey",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestAcceptedResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Inbound connector event. Provider-neutral entry point for any configured source.",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/admin/integrations/sources": {
       "get": {
         "operationId": "listSources",
@@ -5254,6 +5285,72 @@
           }
         ],
         "summary": "Issue a new secret; the old one stops working.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/integrations/sources/{sourceId}/credentials": {
+      "put": {
+        "operationId": "setSourceCredentials",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSourceCredentialsRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Configure (or replace) the recoverable credential for a signature-style source (e.g. Meta). Write-only — the values are never returned.",
         "tags": [
           "admin"
         ]
@@ -26648,7 +26745,8 @@
           "connectorType": {
             "type": "string",
             "enum": [
-              "pabbly_bridge"
+              "pabbly_bridge",
+              "meta_lead_ads"
             ]
           },
           "status": {
@@ -26661,6 +26759,15 @@
           "fieldMapping": {
             "type": "object",
             "additionalProperties": true
+          },
+          "publicLookupKey": {
+            "type": "string",
+            "nullable": true,
+            "description": "The webhook URL segment for a signature-style source (Meta): POST /integrations/webhooks/<publicLookupKey>. Null for a bearer-style source (Pabbly), which uses `key` + a connector secret instead."
+          },
+          "hasCredentials": {
+            "type": "boolean",
+            "description": "Whether a recoverable credential blob is configured."
           },
           "createdAt": {
             "type": "string",
@@ -26678,6 +26785,8 @@
           "connectorType",
           "status",
           "fieldMapping",
+          "publicLookupKey",
+          "hasCredentials",
           "createdAt",
           "updatedAt"
         ]
@@ -26693,6 +26802,15 @@
           "name": {
             "type": "string",
             "maxLength": 200
+          },
+          "connectorType": {
+            "type": "string",
+            "enum": [
+              "pabbly_bridge",
+              "meta_lead_ads"
+            ],
+            "default": "pabbly_bridge",
+            "description": "Defaults to the bearer-authenticated Pabbly connector."
           },
           "fieldMapping": {
             "type": "object",
@@ -26732,6 +26850,21 @@
         "required": [
           "source",
           "credential"
+        ]
+      },
+      "SetSourceCredentialsRequestDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Replaces the ENTIRE credential blob. Never returned by any API response."
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "CanonicalEventDto": {

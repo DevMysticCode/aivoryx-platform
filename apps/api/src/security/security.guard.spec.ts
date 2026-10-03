@@ -48,8 +48,15 @@ interface Stubs {
 const ALL_MODULES = new Set(['CRM', 'FIELD', 'SUPPLY', 'COMMERCIAL', 'EPC', 'FINANCE', 'HR']);
 
 function makeGuard(stubs: Stubs = {}) {
+  // The minimal Express request surface the guard reads: cookies, plus method/path/headers/get()
+  // for the diagnostic log on the missing-cookie branch.
+  const headers: Record<string, string> = { 'user-agent': 'guard-spec' };
   const req = {
     cookies: stubs.noCookie ? {} : { [COOKIE]: 'raw-token' },
+    method: 'GET',
+    path: '/api/v1/test',
+    headers,
+    get: (name: string): string | undefined => headers[name.toLowerCase()],
     securityContext: undefined as unknown,
   };
   const reflector = {

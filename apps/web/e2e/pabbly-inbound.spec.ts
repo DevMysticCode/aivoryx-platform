@@ -37,7 +37,9 @@ test.describe('Pabbly inbound connector', () => {
     await page.getByLabel('Name').fill('Pabbly E2E Source');
     await page.getByRole('button', { name: 'Create source' }).click();
 
-    const secretBlock = page.locator('code').last();
+    // Scoped to the one-time handoff panel (not just "the last <code> on the page" — the
+    // configured-sources list below it also renders a <code> block, for its webhook URL).
+    const secretBlock = page.getByTestId('connector-handoff').locator('code').last();
     await expect(secretBlock).toBeVisible();
     const secret = (await secretBlock.textContent())?.trim();
     expect(secret).toBeTruthy();

@@ -72,6 +72,9 @@ export interface RlsContext {
   invitationTokenHash?: string;
   /** for the public inbound connector webhook (`lead_sources_by_secret` policy, ADR 0032) */
   connectorSecretHash?: string;
+  /** for a SIGNATURE-style connector webhook with no bearer secret at all (`lead_sources_by_public_key`
+   *  policy, ADR 0049/UC-3) — e.g. Meta, whose platform cannot send a custom Authorization header */
+  connectorPublicLookupKey?: string;
   /** for the public pre-auth login branding lookup (`tenants_by_public_slug` policy, SELECT only) */
   workspaceSlug?: string;
 }
@@ -96,6 +99,11 @@ export async function applyRlsContext(tx: Tx, ctx: RlsContext): Promise<void> {
   }
   if (ctx.workspaceSlug !== undefined) {
     await tx.execute(sql`select set_config('app.workspace_slug', ${ctx.workspaceSlug}, true)`);
+  }
+  if (ctx.connectorPublicLookupKey !== undefined) {
+    await tx.execute(
+      sql`select set_config('app.connector_public_lookup_key', ${ctx.connectorPublicLookupKey}, true)`,
+    );
   }
 }
 
@@ -146,6 +154,22 @@ export function withOutboxDispatcherContext<T>(
 ): Promise<T> {
   return handle.db.transaction(async (tx) => {
     await tx.execute(sql`select set_config('app.outbox_dispatcher', 'on', true)`);
+    return fn(tx);
+  });
+}
+
+/**
+ * Transaction that sets `app.raw_event_purger = 'on'` and nothing else. The two additive
+ * `raw_events` policies from migration `0026` then allow a cross-tenant SELECT and DELETE of rows
+ * that are ALREADY past `expires_at` — and nothing else, on any table. Server-side only (no client
+ * request can reach `set_config`). Use it ONLY for the raw-event retention purge.
+ */
+export function withRawEventPurgeContext<T>(
+  handle: DbHandle,
+  fn: (tx: Tx) => Promise<T>,
+): Promise<T> {
+  return handle.db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.raw_event_purger', 'on', true)`);
     return fn(tx);
   });
 }

@@ -82,6 +82,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
       };
     }
 
+    // Client errors raised by Express middleware (body-parser: 413 entity.too.large, 400 parse
+    // failures, ...) are `http-errors` objects: a 4xx `status` and `expose: true`. They are the
+    // caller's mistake, not a server fault, so they keep their status instead of becoming a 500.
+    const clientError = exception as { status?: unknown; statusCode?: unknown; expose?: unknown };
+    const clientStatus =
+      typeof clientError?.status === 'number' ? clientError.status : clientError?.statusCode;
+    if (
+      typeof clientStatus === 'number' &&
+      clientStatus >= 400 &&
+      clientStatus < 500 &&
+      clientError.expose === true
+    ) {
+      return { status: clientStatus, code: this.mapHttpStatus(clientStatus), logAsError: false };
+    }
+
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       code: 'INTERNAL_ERROR',
@@ -97,6 +112,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       403: 'AUTH_FORBIDDEN',
       404: 'NOT_FOUND',
       405: 'METHOD_NOT_ALLOWED',
+      413: 'PAYLOAD_TOO_LARGE',
       429: 'RATE_LIMITED',
       503: 'SERVICE_UNAVAILABLE',
     };

@@ -19,6 +19,8 @@ export function ensureIntegrationEnv(): void {
   process.env.EMAIL_PROVIDER ??= 'fake';
   process.env.NOTIFICATIONS_ENABLED ??= 'false';
   process.env.NOTIFICATIONS_POLL_MS ??= '400';
+  // The raw-event purge job is driven explicitly by the specs that test it.
+  process.env.RAW_EVENT_PURGE_ENABLED ??= 'false';
 }
 
 export const INTEGRATION_ENABLED = process.env.RUN_DB_IT === '1';

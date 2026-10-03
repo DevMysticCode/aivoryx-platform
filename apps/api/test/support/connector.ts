@@ -1,0 +1,134 @@
+import type { INestApplication } from '@nestjs/common';
+import type { TestingModuleBuilder } from '@nestjs/testing';
+import request from 'supertest';
+import { expect } from 'vitest';
+import { makeFixtures, rawPool, type Fixtures } from './db.js';
+import { bootTestApp, sessionCookie } from './app.js';
+
+/**
+ * Shared helpers for the inbound-connector contract suites (Universal Connector UC-0).
+ *
+ * These deliberately talk to the system only through its public HTTP surface and
+ * read persisted side effects with plain SQL on the physical tables — never
+ * through application classes — so the same suites keep working while the
+ * internals are refactored (adapter registry, canonical ingestion, consumers).
+ */
+
+/** Webhook routes under contract. The universal route (UC-3) is proven equivalent to the Pabbly
+ *  alias by running the ENTIRE UC-0 contract matrix against both. */
+export const WEBHOOK_ROUTES = [
+  { name: 'pabbly alias', path: (key: string) => `/api/v1/integrations/webhooks/pabbly/${key}` },
+  { name: 'universal route', path: (key: string) => `/api/v1/integrations/webhooks/${key}` },
+] as const;
+export type WebhookRoute = (typeof WEBHOOK_ROUTES)[number];
+
+export interface ConnectorHarness {
+  app: INestApplication;
+  http: ReturnType<typeof request>;
+  fx: Fixtures;
+  close(): Promise<void>;
+  login(email: string, password: string): request.Test;
+  adminCookie(): Promise<string>;
+  adminBCookie(): Promise<string>;
+  uniqueKey(label: string): string;
+  createSource(
+    cookie: string,
+    key: string,
+    fieldMapping?: Record<string, string>,
+  ): Promise<{ sourceId: string; secret: string; key: string }>;
+  /** a signature-style (Meta) source: no bearer secret is used, its webhook URL segment is the
+   *  returned `publicLookupKey`. */
+  createMetaSource(
+    cookie: string,
+    key: string,
+  ): Promise<{ sourceId: string; key: string; publicLookupKey: string }>;
+  setCredentials(cookie: string, sourceId: string, data: Record<string, string>): request.Test;
+  webhook(
+    route: WebhookRoute,
+    key: string,
+    secret: string | null,
+    body: unknown,
+    headers?: Record<string, string>,
+  ): request.Test;
+  /** run a read-only SQL query as the superuser (bypasses RLS on purpose: checks what is PERSISTED) */
+  sql<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<T[]>;
+}
+
+export async function startConnectorHarness(
+  customize?: (builder: TestingModuleBuilder) => TestingModuleBuilder,
+): Promise<ConnectorHarness> {
+  const fx = await makeFixtures();
+  const app = await bootTestApp(customize);
+  const http = request(app.getHttpServer());
+
+  const login = (email: string, password: string) =>
+    http.post('/api/v1/auth/login').send({ email, password });
+
+  const h: ConnectorHarness = {
+    app,
+    http,
+    fx,
+    login,
+    async close() {
+      await app.close();
+      const db = await import('@aivoryx/db');
+      await db.closeDb();
+    },
+    async adminCookie() {
+      const res = await login(fx.admin.email, fx.admin.password);
+      const cookie = sessionCookie(res);
+      await http
+        .post('/api/v1/auth/switch-tenant')
+        .set('Cookie', cookie)
+        .send({ membershipId: fx.admin.membershipId });
+      return cookie;
+    },
+    async adminBCookie() {
+      return sessionCookie(await login(fx.adminB.email, fx.adminB.password));
+    },
+    uniqueKey: (label) => `${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    async createSource(cookie, key, fieldMapping) {
+      const res = await http
+        .post('/api/v1/admin/integrations/sources')
+        .set('Cookie', cookie)
+        .send({ key, name: `Source ${key}`, ...(fieldMapping ? { fieldMapping } : {}) });
+      expect(res.status).toBe(200);
+      return { sourceId: res.body.source.id, secret: res.body.credential.secret, key };
+    },
+    async createMetaSource(cookie, key) {
+      const res = await http
+        .post('/api/v1/admin/integrations/sources')
+        .set('Cookie', cookie)
+        .send({ key, name: `Meta ${key}`, connectorType: 'meta_lead_ads' });
+      expect(res.status).toBe(200);
+      expect(res.body.source.publicLookupKey).toBeTruthy();
+      return {
+        sourceId: res.body.source.id,
+        key,
+        publicLookupKey: res.body.source.publicLookupKey,
+      };
+    },
+    setCredentials(cookie, sourceId, data) {
+      return http
+        .put(`/api/v1/admin/integrations/sources/${sourceId}/credentials`)
+        .set('Cookie', cookie)
+        .send({ data });
+    },
+    webhook(route, key, secret, body, headers = {}) {
+      const req = http.post(route.path(key));
+      if (secret) req.set('Authorization', `Bearer ${secret}`);
+      for (const [k, v] of Object.entries(headers)) req.set(k, v);
+      return req.send(body as object);
+    },
+    async sql<T>(text: string, params: unknown[] = []) {
+      const pool = await rawPool();
+      try {
+        const { rows } = await pool.query(text, params);
+        return rows as T[];
+      } finally {
+        await pool.end();
+      }
+    },
+  };
+  return h;
+}

@@ -147,6 +147,43 @@ export const serverEnvSchema = z
       .string()
       .optional()
       .or(z.literal('').transform(() => undefined)),
+
+    // ---- inbound webhook hardening (UC-1) --------------------------------
+    /** Max accepted body size, in bytes, for the PUBLIC inbound webhook routes only (the rest of the
+     *  API keeps the framework default). Larger requests are rejected with 413 before any parsing
+     *  into memory beyond the limit, and nothing is stored. Default 256 KiB. */
+    WEBHOOK_MAX_BODY_BYTES: z.coerce.number().int().min(1024).max(5_242_880).default(262_144),
+    /** Token-bucket capacity per authenticated source: the burst a source may send at once. Default
+     *  120 (a bulk push of 100+ leads still fits; a runaway loop is stopped). */
+    WEBHOOK_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(100_000).default(120),
+    /** Seconds over which a full bucket refills; sustained rate = MAX / WINDOW (default 120/60s = 2
+     *  events/second per source). The limiter is in-process: with N API instances the effective
+     *  ceiling is N x this. */
+    WEBHOOK_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(1).max(3600).default(60),
+    /** Days a raw inbound payload is kept (`raw_events.expires_at`) before the purge job may delete
+     *  it. Leads are never deleted by retention. Default 30. */
+    RAW_EVENT_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(30),
+    /** Rows deleted per purge batch (each batch is its own short transaction). */
+    RAW_EVENT_PURGE_BATCH_SIZE: z.coerce.number().int().min(1).max(5000).default(500),
+    /** Minutes between purge runs. */
+    RAW_EVENT_PURGE_INTERVAL_MINUTES: z.coerce.number().int().min(1).max(10_080).default(60),
+    /** Run the in-process purge job. Off in tests / OpenAPI generation. */
+    RAW_EVENT_PURGE_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((v) => v === 'true'),
+
+    /**
+     * AES-256-GCM key (64 hex chars = 32 bytes) for recoverable connector credentials (UC-3, ADR
+     * 0051) — a Meta access token, app secret, etc. that must be read back in plaintext to call the
+     * provider's API, unlike `lead_sources.secret_hash`, which is one-way by design. The default is
+     * an obviously-placeholder value, flagged below exactly like SESSION_SECRET if left unchanged in
+     * production.
+     */
+    CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/i, 'must be 64 hex characters (32 bytes)')
+      .default('00'.repeat(32)),
   })
   .superRefine((env, ctx) => {
     if (env.APP_ENV === 'production' && env.SESSION_SECRET.includes('change-me')) {
@@ -154,6 +191,17 @@ export const serverEnvSchema = z
         code: z.ZodIssueCode.custom,
         path: ['SESSION_SECRET'],
         message: 'SESSION_SECRET is still the placeholder value in a production environment',
+      });
+    }
+    if (
+      env.APP_ENV === 'production' &&
+      env.CONNECTOR_CREDENTIAL_ENCRYPTION_KEY === '00'.repeat(32)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['CONNECTOR_CREDENTIAL_ENCRYPTION_KEY'],
+        message:
+          'CONNECTOR_CREDENTIAL_ENCRYPTION_KEY is still the placeholder value in a production environment',
       });
     }
     if (env.OBJECT_STORAGE_PROVIDER === 's3') {

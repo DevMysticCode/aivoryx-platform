@@ -107,6 +107,7 @@ export {
   rawEvents,
   canonicalLeadEvents,
   integrationEventLog,
+  connectorCredentials,
   type LeadSourceRow,
   type NewLeadSourceRow,
   type RawEventRow,
@@ -115,6 +116,8 @@ export {
   type NewCanonicalLeadEventRow,
   type IntegrationEventLogRow,
   type NewIntegrationEventLogRow,
+  type ConnectorCredentialRow,
+  type NewConnectorCredentialRow,
 } from './integrations.js';
 
 // Phase 4 — field operations (ADR 0033).
