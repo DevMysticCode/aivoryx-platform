@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { schema, type Tx } from '@aivoryx/db';
 import type { ServerEnv } from '@aivoryx/config';
 import { SERVER_ENV } from '../../config/config.module.js';
@@ -67,31 +67,51 @@ export class ConnectorCredentialsService {
       });
   }
 
-  /** `true` if a credential blob exists for this source — never what it contains. */
-  async has(tx: Tx, sourceId: string): Promise<boolean> {
+  /** `true` if a credential blob exists for this source — never what it contains. `tenantId` is
+   *  filtered explicitly here, in addition to RLS (defense-in-depth, matching `requireSource`'s
+   *  existing convention elsewhere in this module) — a caller that passes the wrong tenant for a
+   *  real `sourceId` gets `false`, indistinguishable from "no credential configured", never a row
+   *  belonging to another tenant. */
+  async has(tx: Tx, tenantId: string, sourceId: string): Promise<boolean> {
     const [row] = await tx
       .select({ id: connectorCredentials.id })
       .from(connectorCredentials)
-      .where(eq(connectorCredentials.sourceId, sourceId))
+      .where(
+        and(
+          eq(connectorCredentials.sourceId, sourceId),
+          eq(connectorCredentials.tenantId, tenantId),
+        ),
+      )
       .limit(1);
     return !!row;
   }
 
-  /** Decrypted credential data for a source, or `{}` if none is configured. Callers inside the
+  /** Decrypted credential data for a source, or `{}` if none is configured OR `tenantId` doesn't
+   *  match — the explicit filter is defense-in-depth on top of RLS, not a replacement for it; a
+   *  caller must still run inside a transaction whose `app.tenant_id` matches. Callers inside the
    *  ingestion path only — never surfaced through an admin API response. */
-  async get(tx: Tx, sourceId: string): Promise<Record<string, string>> {
+  async get(tx: Tx, tenantId: string, sourceId: string): Promise<Record<string, string>> {
     const [row] = await tx
       .select({ ciphertext: connectorCredentials.ciphertext })
       .from(connectorCredentials)
-      .where(eq(connectorCredentials.sourceId, sourceId))
+      .where(
+        and(
+          eq(connectorCredentials.sourceId, sourceId),
+          eq(connectorCredentials.tenantId, tenantId),
+        ),
+      )
       .limit(1);
     if (!row) return {};
     return JSON.parse(decryptCredentialBlob(this.key(), row.ciphertext)) as Record<string, string>;
   }
 
   /** `ResolvedCredential` shape an adapter's `verify()`/`hydrate()` receives. */
-  async getResolvedCredential(tx: Tx, sourceId: string): Promise<ResolvedCredential> {
-    return { data: await this.get(tx, sourceId) };
+  async getResolvedCredential(
+    tx: Tx,
+    tenantId: string,
+    sourceId: string,
+  ): Promise<ResolvedCredential> {
+    return { data: await this.get(tx, tenantId, sourceId) };
   }
 
   private key(): Buffer {

@@ -249,6 +249,105 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — hardening (UC-1)', 
     });
   });
 
+  // ============== 1b + 2b. universal route: same hardening, same shared behavior ==============
+  // UC-3 security review follow-up: the body-size limit and rate limiter above were only ever
+  // exercised against the Pabbly alias. Both are enforced by shared code (the body-parser mount in
+  // configure-app.ts is a path PREFIX covering every route under /integrations/webhooks; `run()`'s
+  // rate-limit check is the same call site for every route) -- this proves it, rather than relying
+  // on "the code path is shared" as an assumption. No second limiter, no duplicated middleware: this
+  // only adds coverage of the universal route using the EXACT SAME WEBHOOK_RATE_LIMITER override and
+  // WEBHOOK_MAX_BODY_BYTES config as the Pabbly-alias tests above.
+
+  describe('universal route — body size limit (same shared limit as the Pabbly alias)', () => {
+    const universalRoute = WEBHOOK_ROUTES[1]!;
+    const postViaUniversal = (key: string, secret: string | null, body: string) => {
+      const req = h.http.post(universalRoute.path(key)).set('Content-Type', 'application/json');
+      if (secret) req.set('Authorization', `Bearer ${secret}`);
+      return req.send(body);
+    };
+
+    it('rejects a body over WEBHOOK_MAX_BODY_BYTES with 413, same as the Pabbly alias', async () => {
+      const { key, secret, sourceId } = await setup('universal-body-over');
+      const res = await postViaUniversal(key, secret, bodyOfSize(BODY_LIMIT * 20));
+      expect(res.status).toBe(413);
+      expect(res.body.error.code).toBe('PAYLOAD_TOO_LARGE');
+      expect(await n('raw_events', sourceId)).toBe(0);
+      expect(await n('canonical_lead_events', sourceId)).toBe(0);
+      expect(await n('leads', sourceId)).toBe(0);
+    });
+
+    it('accepts a body at or below the limit via the universal route', async () => {
+      const { key, secret } = await setup('universal-body-ok');
+      const res = await postViaUniversal(key, secret, bodyOfSize(BODY_LIMIT));
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('DONE');
+    });
+  });
+
+  describe('universal route — rate limiting (same source-scoped limiter as the Pabbly alias)', () => {
+    const universalRoute = WEBHOOK_ROUTES[1]!;
+    const useLimiter = (capacity: number, windowSeconds = 60) => {
+      activeLimiter = new TokenBucketRateLimiter({ capacity, windowSeconds });
+    };
+    const restore = () => {
+      activeLimiter = new TokenBucketRateLimiter({ capacity: 10_000, windowSeconds: 60 });
+    };
+
+    it('enforces the limit and sends Retry-After via the universal route too', async () => {
+      useLimiter(2);
+      try {
+        const { key, secret, sourceId } = await setup('universal-rl-basic');
+        expect((await h.webhook(universalRoute, key, secret, { phone: phone() })).status).toBe(200);
+        expect((await h.webhook(universalRoute, key, secret, { phone: phone() })).status).toBe(200);
+        const res = await h.webhook(universalRoute, key, secret, { phone: phone() });
+        expect(res.status).toBe(429);
+        expect(res.body.error.code).toBe('RATE_LIMITED');
+        expect(Number(res.headers['retry-after'])).toBeGreaterThanOrEqual(1);
+        expect(await n('raw_events', sourceId)).toBe(2); // the 3rd (limited) request created nothing
+      } finally {
+        restore();
+      }
+    });
+
+    it('is source-scoped: a source hit via the universal route and the SAME source hit via the Pabbly alias share one bucket (one connector, one secret, one source — not two)', async () => {
+      useLimiter(1);
+      try {
+        const { key, secret } = await setup('universal-rl-shared-source');
+        expect((await h.webhook(universalRoute, key, secret, { phone: phone() })).status).toBe(200);
+        // same source, same secret, via the OTHER route -- the bucket key is `source:<id>`, not
+        // route-specific, so this must already be limited
+        expect((await h.webhook(route, key, secret, { phone: phone() })).status).toBe(429);
+      } finally {
+        restore();
+      }
+    });
+
+    it('does not regress the Pabbly alias: a limit on one source does not affect a different one reached via the universal route', async () => {
+      useLimiter(1);
+      try {
+        const pabblySource = await setup('universal-rl-isolation-pabbly');
+        const universalSource = await setup('universal-rl-isolation-universal');
+        expect(
+          (await h.webhook(route, pabblySource.key, pabblySource.secret, { phone: phone() }))
+            .status,
+        ).toBe(200);
+        expect(
+          (await h.webhook(route, pabblySource.key, pabblySource.secret, { phone: phone() }))
+            .status,
+        ).toBe(429);
+        expect(
+          (
+            await h.webhook(universalRoute, universalSource.key, universalSource.secret, {
+              phone: phone(),
+            })
+          ).status,
+        ).toBe(200);
+      } finally {
+        restore();
+      }
+    });
+  });
+
   // ====================== 3 + 4. raw-event lifecycle and failures ======================
 
   describe('raw event lifecycle', () => {

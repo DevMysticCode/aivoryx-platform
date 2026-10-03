@@ -171,6 +171,64 @@ describe.skipIf(!INTEGRATION_ENABLED)('Meta Lead Ads (UC-3)', () => {
   });
 
   describe('hydration failures', () => {
+    it('signature verifies fine; hydration fails because NO page access token is configured — not CONNECTOR_INVALID, no lead, no secret leaked, redelivery stays non-retryable', async () => {
+      // Realistic admin misconfiguration: the app secret (for signature verification) is set, but
+      // the page access token (needed only afterward, by hydrate()) never was.
+      const cookie = await h.adminCookie();
+      const { sourceId, publicLookupKey } = await h.createMetaSource(
+        cookie,
+        h.uniqueKey('meta-no-token'),
+      );
+      const credRes = await h.setCredentials(cookie, sourceId, {
+        appSecret: APP_SECRET,
+        verifyToken: VERIFY_TOKEN,
+        // pageAccessToken deliberately omitted
+      });
+      expect(credRes.status).toBe(200);
+      expect(credRes.body.hasCredentials).toBe(true);
+
+      const body = leadgenBody('LEAD-NO-TOKEN');
+      const res = await postMeta(publicLookupKey, body, sign(body));
+
+      // the signature itself is valid -- this must NOT be reported as a connector/auth boundary
+      // failure (CONNECTOR_INVALID is for a bad secret/signature, not a missing downstream credential)
+      expect(res.status).toBe(500);
+      expect(res.body.error.code).toBe('INTERNAL_ERROR');
+      expect(res.body.error.code).not.toBe('CONNECTOR_INVALID');
+      expect(JSON.stringify(res.body)).not.toContain(APP_SECRET);
+      expect(JSON.stringify(res.body)).not.toContain(VERIFY_TOKEN);
+      expect(retrieveLead).not.toHaveBeenCalled(); // never reached the Graph API at all
+
+      expect(await count('leads', sourceId)).toBe(0);
+      const [raw] = await h.sql<{ status: string }>(
+        'select status from raw_events where source_id = $1',
+        [sourceId],
+      );
+      expect(raw!.status).toBe('FAILED');
+      const [canon] = await h.sql<{
+        status: string;
+        last_error_code: string;
+        lead_id: string | null;
+      }>(
+        'select status, last_error_code, lead_id from canonical_lead_events where source_id = $1',
+        [sourceId],
+      );
+      // classified as a provider AUTHENTICATION/configuration failure, not a generic/internal one
+      expect(canon).toMatchObject({
+        status: 'FAILED',
+        last_error_code: 'PROVIDER_AUTH_FAILED',
+        lead_id: null,
+      });
+
+      // redelivery: PROVIDER_AUTH_FAILED is non-retryable (same family as the 404 case below) --
+      // Meta resending the identical body stays a DUPLICATE_RAW, never a fresh hydration attempt
+      retrieveLead.mockClear();
+      const redelivered = await postMeta(publicLookupKey, body, sign(body));
+      expect(redelivered.body.status).toBe('DUPLICATE_RAW');
+      expect(retrieveLead).not.toHaveBeenCalled();
+      expect(await count('leads', sourceId)).toBe(0);
+    });
+
     it('a 404 from the Graph API fails the event without creating a lead, and is not auto-retried on redelivery', async () => {
       const { publicLookupKey, sourceId } = await setupMetaSource();
       const { HydrationError } = await import('../src/integrations/adapters/connector-adapter.js');

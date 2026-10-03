@@ -279,7 +279,7 @@ export class SourcesService {
     tx: Tx,
     row: typeof leadSources.$inferSelect,
   ): Promise<SourceView> {
-    const hasCredentials = await this.credentials.has(tx, row.id);
+    const hasCredentials = await this.credentials.has(tx, row.tenantId, row.id);
     return {
       id: row.id,
       key: row.key,

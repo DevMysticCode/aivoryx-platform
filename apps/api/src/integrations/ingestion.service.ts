@@ -166,7 +166,11 @@ export class IngestionService {
       // real signature check for a provider that needs one (Meta). Happens BEFORE the raw event
       // is persisted, exactly like the bearer-secret check always has.
       const adapter = this.adapters.resolve(source.connectorType);
-      const credential = await this.credentials.getResolvedCredential(tx, source.id);
+      const credential = await this.credentials.getResolvedCredential(
+        tx,
+        source.tenantId,
+        source.id,
+      );
       const verification = adapter.verify(
         { rawBody: input.rawBody, rawBytes: input.rawBytes, headers: input.headers },
         credential,
@@ -337,7 +341,7 @@ export class IngestionService {
     }
     const credential = await withProgressiveContext(getDb(), async (tx, setContext) => {
       await setContext({ tenantId });
-      return this.credentials.getResolvedCredential(tx, source.id);
+      return this.credentials.getResolvedCredential(tx, tenantId, source.id);
     });
     // The provider API call happens here — both transactions above have already committed.
     return adapter.hydrate(initial.providerReference, {
@@ -792,7 +796,7 @@ export class IngestionService {
         .limit(1);
       if (!source || source.status === 'revoked') return false;
       await setContext({ tenantId: source.tenantId });
-      const credential = await this.credentials.get(tx, source.id);
+      const credential = await this.credentials.get(tx, source.tenantId, source.id);
       const configured = credential.verifyToken;
       if (!configured) return false;
       const a = Buffer.from(configured, 'utf8');
