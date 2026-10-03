@@ -1,11 +1,12 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { AdapterRegistry } from './adapters/adapter-registry.js';
 import { generateConnectorSecret, hashConnectorSecret } from './connector-token.js';
 import { ConnectorCredentialsService } from './credentials/connector-credentials.service.js';
+import { CANONICAL_LEAD_FIELDS } from './mapping.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
 
 const { canonicalLeadEvents, integrationEventLog, leadSources, rawEvents } = schema;
@@ -39,6 +40,19 @@ export interface SourceWithSecret {
   secret: string;
 }
 
+export interface EventListRow {
+  id: string;
+  rawEventId: string;
+  sourceId: string;
+  status: string;
+  leadId: string | null;
+  dedupeOutcome: string | null;
+  processingAttempts: number;
+  lastErrorCode: string | null;
+  lastErrorMessage: string | null;
+  createdAt: Date;
+}
+
 @Injectable()
 export class SourcesService {
   constructor(
@@ -54,7 +68,13 @@ export class SourcesService {
         .from(leadSources)
         .where(eq(leadSources.tenantId, scope.tenantId))
         .orderBy(desc(leadSources.createdAt));
-      return Promise.all(rows.map((row) => this.toViewWithCredentials(tx, row)));
+      // Batch credential-existence check (one query, not one per row — UC-4).
+      const withCredentials = await this.credentials.hasMany(
+        tx,
+        scope.tenantId,
+        rows.map((r) => r.id),
+      );
+      return rows.map((row) => this.toView(row, withCredentials.has(row.id)));
     });
   }
 
@@ -88,11 +108,13 @@ export class SourcesService {
         message: `"${connectorType}" is not a supported connector type.`,
       });
     }
+    // Whether this provider needs a public lookup key (vs. a bearer secret) is read from the
+    // adapter's own metadata (UC-4) — never a second, independently-maintained provider list.
+    const authMethod = this.adapters.resolve(connectorType).meta.authMethod;
     const secret = generateConnectorSecret();
     const secretHash = hashConnectorSecret(secret);
-    const publicLookupKey = isSignatureStyleProvider(connectorType)
-      ? randomBytes(24).toString('base64url')
-      : null;
+    const publicLookupKey =
+      authMethod === 'signature' ? randomBytes(24).toString('base64url') : null;
     const source = await withTenantContext(getDb(), scope, async (tx) => {
       const [row] = await tx
         .insert(leadSources)
@@ -143,6 +165,46 @@ export class SourcesService {
         metadata: { fields: Object.keys(data).sort() }, // field NAMES only, never values
       });
       return this.toViewWithCredentials(tx, row);
+    });
+  }
+
+  /**
+   * Updates only `name` and/or `fieldMapping` on an existing source (UC-4). `key`, `connectorType`
+   * and tenant ownership are never accepted here — there is no field for them on
+   * `UpdateSourceRequestDto`, and the global `ValidationPipe` (`forbidNonWhitelisted: true`) rejects
+   * any request body that tries to send them, so identity fields are immutable by construction, not
+   * by convention. Does not touch anything the mapping engine itself owns — `mapping.ts` stays the
+   * resolution authority; this only replaces the stored override dictionary it reads.
+   */
+  async updateSource(
+    scope: TenantScope,
+    sourceId: string,
+    input: { name?: string; fieldMapping?: Record<string, string> },
+  ): Promise<SourceView> {
+    if (input.fieldMapping) validateFieldMapping(input.fieldMapping);
+    return withTenantContext(getDb(), scope, async (tx) => {
+      await this.requireSource(tx, scope.tenantId, sourceId);
+      const patch: Partial<typeof leadSources.$inferInsert> = { updatedAt: new Date() };
+      if (input.name !== undefined) patch.name = input.name;
+      if (input.fieldMapping !== undefined) patch.fieldMapping = input.fieldMapping;
+      const [updated] = await tx
+        .update(leadSources)
+        .set(patch)
+        .where(eq(leadSources.id, sourceId))
+        .returning();
+      await this.audit.record(tx, {
+        tenantId: scope.tenantId,
+        action: 'integration.source.configuration_updated',
+        entityType: 'lead_source',
+        entityId: sourceId,
+        actor: userActor(scope),
+        metadata: {
+          fields: Object.keys(input).sort(),
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.fieldMapping !== undefined ? { fieldMapping: input.fieldMapping } : {}),
+        },
+      });
+      return this.toViewWithCredentials(tx, updated!);
     });
   }
 
@@ -208,25 +270,49 @@ export class SourcesService {
     });
   }
 
-  async listRecentEvents(scope: TenantScope, limit = 50) {
+  /**
+   * Paginated, filterable inbound-event listing (UC-4). Server-side pagination only — no caller may
+   * page through an unbounded result client-side (CLAUDE.md §8). Follows the same
+   * `{items, total, page, pageSize}` convention as the audit log API (`audit.dto.ts`), not a second
+   * pagination shape.
+   */
+  async listEvents(
+    scope: TenantScope,
+    query: { sourceId?: string; status?: string; page?: number; pageSize?: number } = {},
+  ): Promise<{ items: EventListRow[]; total: number; page: number; pageSize: number }> {
+    const page = Math.max(query.page ?? 1, 1);
+    const pageSize = Math.min(Math.max(query.pageSize ?? 25, 1), 100);
     return withTenantContext(getDb(), scope, async (tx) => {
-      return tx
-        .select({
-          id: canonicalLeadEvents.id,
-          rawEventId: canonicalLeadEvents.rawEventId,
-          sourceId: canonicalLeadEvents.sourceId,
-          status: canonicalLeadEvents.status,
-          leadId: canonicalLeadEvents.leadId,
-          dedupeOutcome: canonicalLeadEvents.dedupeOutcome,
-          processingAttempts: canonicalLeadEvents.processingAttempts,
-          lastErrorCode: canonicalLeadEvents.lastErrorCode,
-          lastErrorMessage: canonicalLeadEvents.lastErrorMessage,
-          createdAt: canonicalLeadEvents.createdAt,
-        })
-        .from(canonicalLeadEvents)
-        .where(eq(canonicalLeadEvents.tenantId, scope.tenantId))
-        .orderBy(desc(canonicalLeadEvents.createdAt))
-        .limit(limit);
+      const conditions = [eq(canonicalLeadEvents.tenantId, scope.tenantId)];
+      if (query.sourceId) conditions.push(eq(canonicalLeadEvents.sourceId, query.sourceId));
+      if (query.status) {
+        const status = query.status as (typeof canonicalLeadEvents.$inferSelect)['status'];
+        conditions.push(eq(canonicalLeadEvents.status, status));
+      }
+      const where = and(...conditions);
+
+      const [items, [totalRow]] = await Promise.all([
+        tx
+          .select({
+            id: canonicalLeadEvents.id,
+            rawEventId: canonicalLeadEvents.rawEventId,
+            sourceId: canonicalLeadEvents.sourceId,
+            status: canonicalLeadEvents.status,
+            leadId: canonicalLeadEvents.leadId,
+            dedupeOutcome: canonicalLeadEvents.dedupeOutcome,
+            processingAttempts: canonicalLeadEvents.processingAttempts,
+            lastErrorCode: canonicalLeadEvents.lastErrorCode,
+            lastErrorMessage: canonicalLeadEvents.lastErrorMessage,
+            createdAt: canonicalLeadEvents.createdAt,
+          })
+          .from(canonicalLeadEvents)
+          .where(where)
+          .orderBy(desc(canonicalLeadEvents.createdAt))
+          .limit(pageSize)
+          .offset((page - 1) * pageSize),
+        tx.select({ value: count() }).from(canonicalLeadEvents).where(where),
+      ]);
+      return { items, total: totalRow?.value ?? 0, page, pageSize };
     });
   }
 
@@ -280,6 +366,10 @@ export class SourcesService {
     row: typeof leadSources.$inferSelect,
   ): Promise<SourceView> {
     const hasCredentials = await this.credentials.has(tx, row.tenantId, row.id);
+    return this.toView(row, hasCredentials);
+  }
+
+  private toView(row: typeof leadSources.$inferSelect, hasCredentials: boolean): SourceView {
     return {
       id: row.id,
       key: row.key,
@@ -295,13 +385,23 @@ export class SourcesService {
   }
 }
 
-/** Providers that authenticate a webhook via `ConnectorAdapter.verify()` rather than a presented
- *  bearer secret, and therefore need a globally-unique `public_lookup_key` instead of (in addition
- *  to) a secret. Kept as a short, explicit list here — NOT derived from the registry — because it is
- *  a transport-shape fact about a provider (can it send a custom Authorization header at all?), not
- *  an adapter-behavioural one; the registry has no reason to know it. */
-const SIGNATURE_STYLE_PROVIDERS = new Set(['meta_lead_ads']);
+const CANONICAL_TARGET_RE = new RegExp(`^canonical:(${CANONICAL_LEAD_FIELDS.join('|')})$`);
+const CUSTOM_TARGET_RE = /^custom:.+$/;
 
-function isSignatureStyleProvider(connectorType: string): boolean {
-  return SIGNATURE_STYLE_PROVIDERS.has(connectorType);
+/** Rejects a mapping update whose target doesn't match `mapping.ts`'s own vocabulary
+ *  (`"canonical:<field>"` for a real `CanonicalLeadField`, `"custom:<key>"`, or `"skip"`) — UC-4.
+ *  `mapping.ts` itself is lenient (an unrecognised target silently falls back to "unmapped") because
+ *  that engine must never throw while processing a live webhook; the admin API can afford to be
+ *  strict instead, so a typo is caught at configuration time, not discovered later as silently
+ *  unmapped data. */
+function validateFieldMapping(mapping: Record<string, string>): void {
+  for (const [key, target] of Object.entries(mapping)) {
+    const valid =
+      target === 'skip' || CANONICAL_TARGET_RE.test(target) || CUSTOM_TARGET_RE.test(target);
+    if (!valid) {
+      throw new AppError('VALIDATION_ERROR', {
+        message: `Field mapping for "${key}" has an invalid target: "${target}". Expected "skip", "canonical:<field>" or "custom:<key>".`,
+      });
+    }
+  }
 }

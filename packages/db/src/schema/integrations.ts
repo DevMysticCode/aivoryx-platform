@@ -50,7 +50,7 @@ export const rawEventStatus = pgEnum('raw_event_status', ['RECEIVED', 'PROCESSED
  * status here rather than a separate table — see ADR 0032 for that
  * simplification and its rationale.
  */
-export const canonicalEventStatus = pgEnum('canonical_event_status', [
+export const CANONICAL_EVENT_STATUSES = [
   'RECEIVED',
   'PROCESSING',
   'VALIDATION_FAILED',
@@ -59,7 +59,9 @@ export const canonicalEventStatus = pgEnum('canonical_event_status', [
   'DONE',
   'FAILED',
   'DEAD_LETTER',
-]);
+] as const;
+
+export const canonicalEventStatus = pgEnum('canonical_event_status', CANONICAL_EVENT_STATUSES);
 
 // --- lead_sources (Source + Connector credential) -------------------------
 

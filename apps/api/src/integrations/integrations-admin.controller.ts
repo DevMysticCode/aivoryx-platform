@@ -1,4 +1,4 @@
-import { Controller, Body, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
+import { Controller, Body, Get, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import {
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -10,14 +10,19 @@ import { AppError } from '@aivoryx/shared';
 import { RequirePermission, Security } from '../security/security.decorators.js';
 import type { SecurityContext } from '../security/security-context.js';
 import { ApiErrorDto } from '../auth/auth.dto.js';
+import { AdapterRegistry } from './adapters/adapter-registry.js';
 import { IngestionService } from './ingestion.service.js';
 import { SourcesService } from './sources.service.js';
 import {
-  CanonicalEventDto,
   CreateSourceRequestDto,
   CreateSourceResponseDto,
+  EventDetailResponseDto,
+  EventListResponseDto,
+  ListEventsQueryDto,
+  ProviderMetaDto,
   SetSourceCredentialsRequestDto,
   SourceDto,
+  UpdateSourceRequestDto,
 } from './integrations.dto.js';
 
 /**
@@ -32,7 +37,31 @@ export class IntegrationsAdminController {
   constructor(
     private readonly sources: SourcesService,
     private readonly ingestion: IngestionService,
+    private readonly adapters: AdapterRegistry,
   ) {}
+
+  // ---- providers --------------------------------------------------------
+
+  @Get('providers')
+  @RequirePermission('crm.integrations.manage')
+  @ApiOperation({
+    operationId: 'listProviders',
+    summary:
+      'Safe, server-driven provider catalog — display name, auth method, and credential field ' +
+      'names (never values). The adapter registry is the source of truth.',
+  })
+  @ApiOkResponse({ type: [ProviderMetaDto] })
+  listProviders(): ProviderMetaDto[] {
+    return this.adapters.list().map((adapter) => ({
+      provider: adapter.provider,
+      version: adapter.version,
+      displayName: adapter.meta.displayName,
+      description: adapter.meta.description,
+      authMethod: adapter.meta.authMethod,
+      credentialFields: adapter.meta.credentialFields.map((f) => ({ ...f })),
+      capabilities: [...adapter.meta.capabilities],
+    }));
+  }
 
   // ---- sources --------------------------------------------------------
 
@@ -42,6 +71,14 @@ export class IntegrationsAdminController {
   @ApiOkResponse({ type: [SourceDto] })
   list(@Security() ctx: SecurityContext) {
     return this.sources.list(scope(ctx));
+  }
+
+  @Get('sources/:sourceId')
+  @RequirePermission('crm.integrations.manage')
+  @ApiOperation({ operationId: 'getSource', summary: 'One configured inbound lead source.' })
+  @ApiOkResponse({ type: SourceDto })
+  getOne(@Security() ctx: SecurityContext, @Param('sourceId') sourceId: string) {
+    return this.sources.get(scope(ctx), sourceId);
   }
 
   @Post('sources')
@@ -55,6 +92,22 @@ export class IntegrationsAdminController {
   async create(@Security() ctx: SecurityContext, @Body() body: CreateSourceRequestDto) {
     const { source, secret } = await this.sources.create(scope(ctx), body);
     return { source, credential: { secret } };
+  }
+
+  @Patch('sources/:sourceId')
+  @RequirePermission('crm.integrations.manage')
+  @ApiOperation({
+    operationId: 'updateSource',
+    summary:
+      "Update a source's name and/or field mapping. The key and connector type are immutable.",
+  })
+  @ApiOkResponse({ type: SourceDto })
+  update(
+    @Security() ctx: SecurityContext,
+    @Param('sourceId') sourceId: string,
+    @Body() body: UpdateSourceRequestDto,
+  ) {
+    return this.sources.updateSource(scope(ctx), sourceId, body);
   }
 
   @Post('sources/:sourceId/rotate-secret')
@@ -115,22 +168,30 @@ export class IntegrationsAdminController {
 
   @Get('events')
   @RequirePermission('crm.integrations.manage')
-  @ApiOperation({ operationId: 'listInboundEvents', summary: 'Recent inbound lead events.' })
-  @ApiOkResponse({ type: [CanonicalEventDto] })
-  async listEvents(@Security() ctx: SecurityContext) {
-    const rows = await this.sources.listRecentEvents(scope(ctx));
-    return rows.map((r) => ({
-      id: r.id,
-      rawEventId: r.rawEventId,
-      sourceId: r.sourceId,
-      status: r.status,
-      leadId: r.leadId,
-      dedupeOutcome: r.dedupeOutcome,
-      processingAttempts: r.processingAttempts,
-      lastErrorCode: r.lastErrorCode,
-      lastErrorMessage: r.lastErrorMessage,
-      createdAt: r.createdAt.toISOString(),
-    }));
+  @ApiOperation({
+    operationId: 'listInboundEvents',
+    summary: 'Paginated, filterable inbound lead events.',
+  })
+  @ApiOkResponse({ type: EventListResponseDto })
+  async listEvents(@Security() ctx: SecurityContext, @Query() query: ListEventsQueryDto) {
+    const { items, total, page, pageSize } = await this.sources.listEvents(scope(ctx), query);
+    return {
+      items: items.map((r) => ({
+        id: r.id,
+        rawEventId: r.rawEventId,
+        sourceId: r.sourceId,
+        status: r.status,
+        leadId: r.leadId,
+        dedupeOutcome: r.dedupeOutcome,
+        processingAttempts: r.processingAttempts,
+        lastErrorCode: r.lastErrorCode,
+        lastErrorMessage: r.lastErrorMessage,
+        createdAt: r.createdAt.toISOString(),
+      })),
+      total,
+      page,
+      pageSize,
+    };
   }
 
   @Get('events/:id')
@@ -139,6 +200,7 @@ export class IntegrationsAdminController {
     operationId: 'getInboundEvent',
     summary: 'One inbound event, its raw payload, and its stage log.',
   })
+  @ApiOkResponse({ type: EventDetailResponseDto })
   getEvent(@Security() ctx: SecurityContext, @Param('id') id: string) {
     return this.sources.getEventDetail(scope(ctx), id);
   }

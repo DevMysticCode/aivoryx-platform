@@ -677,6 +677,12 @@ describe.skipIf(!INTEGRATION_ENABLED)('inbound connector — hardening (UC-1)', 
       const cookie = await login(h.fx.limited.email, h.fx.limited.password);
       const calls = [
         h.http.get('/api/v1/admin/integrations/sources').set('Cookie', cookie),
+        h.http.get(`/api/v1/admin/integrations/sources/${randomUUID()}`).set('Cookie', cookie),
+        h.http
+          .patch(`/api/v1/admin/integrations/sources/${randomUUID()}`)
+          .set('Cookie', cookie)
+          .send({ name: 'x' }),
+        h.http.get('/api/v1/admin/integrations/providers').set('Cookie', cookie),
         h.http.get('/api/v1/admin/integrations/events').set('Cookie', cookie),
         h.http
           .post('/api/v1/admin/integrations/sources')

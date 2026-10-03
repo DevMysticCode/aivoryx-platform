@@ -7,7 +7,14 @@ function fakeAdapter(provider: string, version = 1): ConnectorAdapter {
   return {
     provider,
     version,
-    meta: { provider, displayName: provider, description: provider, capabilities: [] },
+    meta: {
+      provider,
+      displayName: provider,
+      description: provider,
+      capabilities: [],
+      authMethod: 'bearer_secret',
+      credentialFields: [],
+    },
     verify: () => ({ verified: true }),
     parse: (_envelope: InboundEnvelope) => ({
       providerFields: {},

@@ -33,6 +33,12 @@ export class MetaLeadAdsAdapter implements ConnectorAdapter {
     displayName: 'Meta Lead Ads',
     description: 'Facebook and Instagram Lead Ads, via the Meta Graph API webhook + leadgen_id.',
     capabilities: ['inbound_webhook', 'field_mapping'],
+    authMethod: 'signature',
+    credentialFields: [
+      { key: 'appSecret', label: 'App Secret', secret: true },
+      { key: 'pageAccessToken', label: 'Page Access Token', secret: true },
+      { key: 'verifyToken', label: 'Webhook Verify Token', secret: true },
+    ],
   };
 
   constructor(private readonly graphClient: MetaGraphClient = new MetaGraphClient()) {}
