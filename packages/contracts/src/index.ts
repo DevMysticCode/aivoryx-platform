@@ -76,6 +76,15 @@ export type SourceSecretHandoff = components['schemas']['SourceSecretHandoffDto'
 export type SetSourceCredentialsRequest = components['schemas']['SetSourceCredentialsRequestDto'];
 export type CanonicalEvent = components['schemas']['CanonicalEventDto'];
 export type IngestAcceptedResponse = components['schemas']['IngestAcceptedResponseDto'];
+// UC-4 — Integration Center: source detail/update, provider metadata, paginated events.
+export type UpdateSourceRequest = components['schemas']['UpdateSourceRequestDto'];
+export type EventListResponse = components['schemas']['EventListResponseDto'];
+export type EventLogEntry = components['schemas']['EventLogEntryDto'];
+export type RawEvent = components['schemas']['RawEventDto'];
+export type CanonicalEventDetail = components['schemas']['CanonicalEventDetailDto'];
+export type EventDetailResponse = components['schemas']['EventDetailResponseDto'];
+export type ProviderCredentialField = components['schemas']['ProviderCredentialFieldDto'];
+export type ProviderMeta = components['schemas']['ProviderMetaDto'];
 
 // Phase 4 — field operations: visits, GPS, survey, attachments (ADR 0033).
 export type FieldAgent = components['schemas']['FieldAgentDto'];
