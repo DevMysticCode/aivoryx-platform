@@ -1,4 +1,4 @@
-import type { ProviderFieldValue } from './pabbly-adapter.js';
+import type { ProviderFieldValue } from './adapters/connector-adapter.js';
 
 /**
  * Minimum viable mapping engine (ADR 0032). `docs/architecture/FIELD-MAPPING.md`

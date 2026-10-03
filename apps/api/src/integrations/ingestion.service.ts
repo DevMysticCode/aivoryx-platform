@@ -14,9 +14,9 @@ import {
 } from '../crm/custom-fields.service.js';
 import { findDuplicateLead } from '../crm/lead-queries.js';
 import { normalizeEmail, normalizePhone } from '../crm/lead-normalization.js';
+import { AdapterRegistry } from './adapters/adapter-registry.js';
 import { hashConnectorSecret } from './connector-token.js';
 import { mapProviderFields } from './mapping.js';
-import { parsePabblyPayload } from './pabbly-adapter.js';
 import { hashRawBody } from './raw-hash.js';
 import { WEBHOOK_RATE_LIMITER, type RateLimiter } from './rate-limiter.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -80,6 +80,7 @@ export class IngestionService {
   constructor(
     private readonly outbox: OutboxService,
     private readonly audit: AuditService,
+    private readonly adapters: AdapterRegistry,
     @Inject(SERVER_ENV) private readonly env: ServerEnv,
     @Inject(WEBHOOK_RATE_LIMITER) private readonly rateLimiter: RateLimiter,
   ) {}
@@ -260,17 +261,20 @@ export class IngestionService {
     try {
       return await this.processRawEventTx(tenantId, source, rawEventId, options);
     } catch (err) {
-      await this.recordProcessingFailure(tenantId, source.id, rawEventId, err);
+      await this.recordProcessingFailure(tenantId, source, rawEventId, err);
       throw new AppError('INTERNAL_ERROR');
     }
   }
 
+  /** `source` is the row already loaded by the caller — never re-queried merely to rediscover
+   *  `connectorType` for adapter resolution (Decision 3, UC-2). */
   private async recordProcessingFailure(
     tenantId: string,
-    sourceId: string,
+    source: typeof leadSources.$inferSelect,
     rawEventId: string,
     err: unknown,
   ): Promise<void> {
+    const sourceId = source.id;
     // Safe diagnostics only: error class and Postgres SQLSTATE, never the message, params or payload.
     const pgCode = (err as { code?: unknown } | null)?.code;
     this.logger.error(
@@ -317,7 +321,11 @@ export class IngestionService {
             .where(eq(canonicalLeadEvents.id, existing.id));
         } else {
           // first attempt: transaction 2 rolled back before a canonical row could persist
-          const providerRecordId = parsePabblyPayload(raw.rawBody).providerRecordId;
+          const draft = this.adapters.resolve(source.connectorType).parse({
+            rawBody: raw.rawBody,
+            headers: raw.transportMetadata as Record<string, string>,
+          });
+          const providerRecordId = draft.providerRecordId;
           const [inserted] = await tx
             .insert(canonicalLeadEvents)
             .values({
@@ -373,7 +381,10 @@ export class IngestionService {
       await setContext({ tenantId });
 
       const [raw] = await tx.select().from(rawEvents).where(eq(rawEvents.id, rawEventId)).limit(1);
-      const draft = parsePabblyPayload(raw!.rawBody);
+      const draft = this.adapters.resolve(source.connectorType).parse({
+        rawBody: raw!.rawBody,
+        headers: raw!.transportMetadata as Record<string, string>,
+      });
       const mapped = mapProviderFields(
         draft.providerFields,
         (source.fieldMapping as Record<string, string>) ?? {},

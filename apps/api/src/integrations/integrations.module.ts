@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import type { ServerEnv } from '@aivoryx/config';
 import { SERVER_ENV } from '../config/config.module.js';
 import { AdminModule } from '../admin/admin.module.js';
+import { AdapterRegistry } from './adapters/adapter-registry.js';
+import { PabblyAdapter } from './adapters/pabbly.adapter.js';
 import { IngestionService } from './ingestion.service.js';
 import { IntegrationsAdminController } from './integrations-admin.controller.js';
 import { WEBHOOK_RATE_LIMITER, TokenBucketRateLimiter } from './rate-limiter.js';
@@ -22,6 +24,16 @@ import { WebhookController } from './webhook.controller.js';
     SourcesService,
     IngestionService,
     RawEventRetentionService,
+    {
+      // Registration happens here, once, at module construction — the registry itself never
+      // references PabblyAdapter; this factory is what wires provider to adapter (UC-2).
+      provide: AdapterRegistry,
+      useFactory: () => {
+        const registry = new AdapterRegistry();
+        registry.register(new PabblyAdapter());
+        return registry;
+      },
+    },
     {
       // In-process token bucket behind the RateLimiter interface; swap this provider to change
       // the implementation (e.g. Redis) without touching ingestion code.

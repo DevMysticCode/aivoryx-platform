@@ -47,8 +47,12 @@ export interface VerificationResult {
  *  `providerFields` into canonical/custom fields is the EXISTING `mapProviderFields` engine, which
  *  UC-2 does not move. This is a draft, not a canonical event: no idempotency key, no tenant id, no
  *  identity validation. Those happen afterward, exactly where they happen today. */
+/** A single provider field's raw (unmapped) value — the same scalar set `mapProviderFields`
+ *  (the existing, unmoved mapping engine) has always accepted. */
+export type ProviderFieldValue = string | number | boolean | null;
+
 export interface CanonicalDraft {
-  readonly providerFields: Record<string, string | number | boolean | null>;
+  readonly providerFields: Record<string, ProviderFieldValue>;
   readonly providerRecordId: string | null;
   readonly providerTimestamp: string | null;
 }
