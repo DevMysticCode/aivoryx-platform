@@ -4,6 +4,8 @@
   "globalEnv": ["NODE_ENV", "CI"],
   "globalPassThroughEnv": [
     "DATABASE_URL",
+    "DATABASE_APP_ROLE",
+    "RUN_DB_IT",
     "REDIS_URL",
     "SESSION_SECRET",
     "APP_ENV",

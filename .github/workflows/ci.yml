@@ -11,9 +11,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Phase 1 verification does not need a live DB/Redis (unit tests are isolated,
-  # the e2e smoke tolerates the API being down). Integration tests in later
-  # phases will add service containers.
+  # Service containers below give this job a real, disposable Postgres + Redis, so the
+  # `describe.skipIf(!INTEGRATION_ENABLED)` integration suites (tenant isolation, RLS, RBAC,
+  # the Universal Connector) actually execute here instead of silently skipping.
   APP_ENV: test
   NODE_ENV: test
   DATABASE_URL: postgres://postgres:postgres@localhost:5432/aivoryx
@@ -21,11 +21,37 @@ env:
   SESSION_SECRET: ci-placeholder-session-secret-000000000000
   NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
   NEXT_PUBLIC_APP_ENV: test
+  # Opts every integration spec in; the CI database is fresh/disposable per run, so there is
+  # no local demo data to protect (unlike a developer's shared local Postgres).
+  RUN_DB_IT: '1'
 
 jobs:
   verify:
     name: install · lint · typecheck · test · build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aivoryx
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d aivoryx"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -50,12 +76,37 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # `packages/db`'s own integration specs (vitest.globalsetup.ts) manage their OWN schema —
+      # `drop schema public cascade` + re-migrate + reseed — against RUN_DB_IT's DATABASE_URL.
+      # Running that destructive reset concurrently with the API's integration suite against the
+      # SAME database races (confirmed locally: "relation ... does not exist" mid-run). A second,
+      # disposable database in the one Postgres service container gives it an isolated target
+      # with no turbo task-graph change and no slowdown to the rest, which still runs in parallel.
+      - name: Create isolated database for the db package's own integration specs
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d aivoryx \
+            -c "CREATE DATABASE aivoryx_db_pkg;"
+
+      - name: Database package integration tests (isolated schema)
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/aivoryx_db_pkg
+        run: pnpm --filter @aivoryx/db test
+
+      # Migrations must run before the API's own integration suite (and before the API itself
+      # ever boots against a real DB) — this is also the real release-step order (DEPLOYMENT.md).
+      - name: Run database migrations
+        run: pnpm --filter @aivoryx/db db:migrate
+
       - name: Unit / integration tests
-        run: pnpm test
+        run: pnpm --filter '!@aivoryx/db' test
 
       - name: Install Playwright browser
         run: pnpm --filter @aivoryx/web exec playwright install --with-deps chromium
 
+      # Smoke-only by design (CLAUDE.md §15 golden journeys are exercised manually/pre-merge
+      # today): the full golden-path suites need seeded demo tenants/users, which is a larger,
+      # separate follow-up, not folded into this change. smoke.spec.ts itself needs no demo
+      # data and no running API, so it is unconditional and always executes here.
       - name: E2E smoke tests
         run: pnpm --filter @aivoryx/web test:e2e
 
