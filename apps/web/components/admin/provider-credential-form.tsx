@@ -7,9 +7,18 @@ import { Field } from '@/components/admin/ui';
 
 /**
  * Renders a credential form purely from `ProviderMeta.credentialFields` (UC-4) — never a
- * hardcoded per-provider field list. Every field is a secret: it never shows a previously-stored
- * value (the backend never returns one either) and is submitted only if the admin typed a new
- * value, so saving does not accidentally blank out an unrelated field.
+ * hardcoded per-provider field list. Every declared field is required: the backend
+ * (`ConnectorCredentialsService.set()`) always REPLACES THE ENTIRE stored credential blob, with
+ * no partial merge, so there is no such thing as "leaving a field unchanged" here — a save with
+ * any field blank would silently erase that field's previously-stored value. `ProviderMeta`
+ * currently has no concept of an optional credential field (every provider — Meta included —
+ * declares only required ones); if a future provider's metadata ever adds one, this component's
+ * required-ness check must read that flag instead of treating every field as required.
+ *
+ * To make the destructive case impossible rather than merely documented: Save stays disabled
+ * until every field has a non-empty value, and the submit handler re-checks the same condition
+ * (a user could otherwise force a submit via Enter in some browsers even with the button
+ * disabled).
  */
 export function ProviderCredentialForm({
   fields,
@@ -22,20 +31,22 @@ export function ProviderCredentialForm({
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
 
+  const isComplete = fields.every((f) => (values[f.key] ?? '').trim().length > 0);
+
   return (
     <form
       className="space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
-        const data = Object.fromEntries(
-          Object.entries(values).filter(([, v]) => v.trim().length > 0),
-        );
+        if (!isComplete) return;
+        const data = Object.fromEntries(fields.map((f) => [f.key, values[f.key]!.trim()]));
         onSubmit(data);
       }}
     >
       <p className="text-xs text-muted-foreground">
-        Replaces the entire credential set for this connection. Values are write-only — never shown
-        again after saving, and left unchanged here unless you type a new one.
+        Saving replaces the complete credential set for this connection — every field below must be
+        filled in, even to change just one of them. Values are write-only: once saved, they are
+        never shown again, and this form never pre-fills a previously-stored value.
       </p>
       {fields.map((f) => (
         <Field
@@ -47,7 +58,7 @@ export function ProviderCredentialForm({
           onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
         />
       ))}
-      <Button type="submit" size="sm" disabled={pending}>
+      <Button type="submit" size="sm" disabled={pending || !isComplete}>
         {pending ? 'Saving…' : 'Save credentials'}
       </Button>
     </form>

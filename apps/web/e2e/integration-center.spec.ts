@@ -97,5 +97,18 @@ test.describe('Integration Center (UC-4)', () => {
     const appSecretInput = page.getByLabel('App Secret');
     await expect(appSecretInput).toHaveAttribute('type', 'password');
     await expect(appSecretInput).toHaveValue('');
+
+    // Save is disabled until every field is filled in — saving replaces the whole credential
+    // set, so a partial/empty submit must be impossible, not merely discouraged.
+    const save = page.getByRole('button', { name: 'Save credentials' });
+    await expect(save).toBeDisabled();
+    await appSecretInput.fill('e2e-app-secret');
+    await expect(save).toBeDisabled();
+    await page.getByLabel('Page Access Token').fill('e2e-page-token');
+    await expect(save).toBeDisabled();
+    await page.getByLabel('Webhook Verify Token').fill('e2e-verify-token');
+    await expect(save).toBeEnabled();
+    await save.click();
+    await expect(page.getByText('Connector credentials saved')).toBeVisible();
   });
 });
