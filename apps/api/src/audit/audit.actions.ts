@@ -76,6 +76,7 @@ export const AUDIT_ACTION_MODULE = {
   // --- integrations ---------------------------------------------
   'integration.source.created': 'integrations',
   'integration.source.updated': 'integrations',
+  'integration.source.configuration_updated': 'integrations',
   'integration.source.secret_rotated': 'integrations',
   'integration.source.revoked': 'integrations',
   'integration.source.reactivated': 'integrations',

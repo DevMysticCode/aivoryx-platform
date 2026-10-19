@@ -58,6 +58,12 @@ export class AdapterRegistry {
     return false;
   }
 
+  /** Every registered adapter (UC-4) — the authoritative provider catalog for the Integration
+   *  Center's provider-metadata endpoint. Read-only snapshot; callers must not mutate it. */
+  list(): readonly ConnectorAdapter[] {
+    return [...this.adapters.values()];
+  }
+
   private static key(provider: string, version: number): string {
     return `${provider}:${version}`;
   }

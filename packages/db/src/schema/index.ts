@@ -103,6 +103,7 @@ export {
   sourceStatus,
   rawEventStatus,
   canonicalEventStatus,
+  CANONICAL_EVENT_STATUSES,
   leadSources,
   rawEvents,
   canonicalLeadEvents,

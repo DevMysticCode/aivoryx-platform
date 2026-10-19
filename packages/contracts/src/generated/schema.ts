@@ -1182,6 +1182,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/integrations/providers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Safe, server-driven provider catalog — display name, auth method, and credential field names (never values). The adapter registry is the source of truth. */
+    get: operations['listProviders'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/integrations/sources': {
     parameters: {
       query?: never;
@@ -1198,6 +1215,24 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/admin/integrations/sources/{sourceId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One configured inbound lead source. */
+    get: operations['getSource'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a source's name and/or field mapping. The key and connector type are immutable. */
+    patch: operations['updateSource'];
     trace?: never;
   };
   '/admin/integrations/sources/{sourceId}/rotate-secret': {
@@ -1275,7 +1310,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Recent inbound lead events. */
+    /** Paginated, filterable inbound lead events. */
     get: operations['listInboundEvents'];
     put?: never;
     post?: never;
@@ -6197,6 +6232,23 @@ export interface components {
       errorCode?: string;
       errorMessage?: string;
     };
+    ProviderCredentialFieldDto: {
+      key: string;
+      label: string;
+      /** @description Write-only — never render a previously-stored value. */
+      secret: boolean;
+    };
+    ProviderMetaDto: {
+      /** @enum {string} */
+      provider: 'pabbly_bridge' | 'meta_lead_ads';
+      version: number;
+      displayName: string;
+      description: string;
+      /** @enum {string} */
+      authMethod: 'bearer_secret' | 'signature';
+      credentialFields: components['schemas']['ProviderCredentialFieldDto'][];
+      capabilities: string[];
+    };
     SourceDto: {
       /** Format: uuid */
       id: string;
@@ -6207,7 +6259,7 @@ export interface components {
       /** @enum {string} */
       status: 'active' | 'revoked';
       fieldMapping: {
-        [key: string]: unknown;
+        [key: string]: string;
       };
       /** @description The webhook URL segment for a signature-style source (Meta): POST /integrations/webhooks/<publicLookupKey>. Null for a bearer-style source (Pabbly), which uses `key` + a connector secret instead. */
       publicLookupKey: string | null;
@@ -6241,6 +6293,13 @@ export interface components {
       source: components['schemas']['SourceDto'];
       credential: components['schemas']['SourceSecretHandoffDto'];
     };
+    UpdateSourceRequestDto: {
+      name?: string;
+      /** @description Replaces the ENTIRE override dictionary. Each value must be "skip", "canonical:<field>" or "custom:<key>". */
+      fieldMapping?: {
+        [key: string]: string;
+      };
+    };
     SetSourceCredentialsRequestDto: {
       /** @description Replaces the ENTIRE credential blob. Never returned by any API response. */
       data: {
@@ -6263,6 +6322,73 @@ export interface components {
       lastErrorMessage: string | null;
       /** Format: date-time */
       createdAt: string;
+    };
+    EventListResponseDto: {
+      items: components['schemas']['CanonicalEventDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
+    CanonicalEventDetailDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      rawEventId: string;
+      /** Format: uuid */
+      sourceId: string;
+      status: string;
+      /** Format: uuid */
+      leadId: string | null;
+      dedupeOutcome: string | null;
+      processingAttempts: number;
+      lastErrorCode: string | null;
+      lastErrorMessage: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      idempotencyKey: string;
+      canonical: Record<string, never>;
+      custom: Record<string, never>;
+      unmapped: Record<string, never>;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    RawEventDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      sourceId: string;
+      correlationId: string;
+      /** Format: date-time */
+      receivedAt: string;
+      /** @description The untouched inbound payload. May contain PII — progressively disclose it. */
+      rawBody: Record<string, never>;
+      transportMetadata: Record<string, never>;
+      /** @enum {string} */
+      status: 'RECEIVED' | 'PROCESSED' | 'FAILED';
+      /** Format: date-time */
+      expiresAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    EventLogEntryDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      rawEventId: string;
+      /** Format: uuid */
+      canonicalLeadEventId: string | null;
+      stage: string;
+      fromStatus: string | null;
+      toStatus: string | null;
+      errorCode: string | null;
+      message: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    EventDetailResponseDto: {
+      event: components['schemas']['CanonicalEventDetailDto'];
+      raw: components['schemas']['RawEventDto'] | null;
+      log: components['schemas']['EventLogEntryDto'][];
     };
     FieldAgentEmployeeDto: {
       /** Format: uuid */
@@ -9873,6 +9999,7 @@ export interface operations {
           | 'crm.lead.note_created'
           | 'integration.source.created'
           | 'integration.source.updated'
+          | 'integration.source.configuration_updated'
           | 'integration.source.secret_rotated'
           | 'integration.source.revoked'
           | 'integration.source.reactivated'
@@ -12700,6 +12827,41 @@ export interface operations {
       };
     };
   };
+  listProviders: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProviderMetaDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   listSources: {
     parameters: {
       query?: never;
@@ -12754,6 +12916,84 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['CreateSourceResponseDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getSource: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sourceId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SourceDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateSource: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sourceId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSourceRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SourceDto'];
         };
       };
       401: {
@@ -12928,7 +13168,22 @@ export interface operations {
   };
   listInboundEvents: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Restrict to one connection. */
+        sourceId?: string;
+        /** @description Restrict to one canonical event status. */
+        status?:
+          | 'RECEIVED'
+          | 'PROCESSING'
+          | 'VALIDATION_FAILED'
+          | 'MAPPING_FAILED'
+          | 'NEEDS_REVIEW'
+          | 'DONE'
+          | 'FAILED'
+          | 'DEAD_LETTER';
+        page?: number;
+        pageSize?: number;
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -12940,7 +13195,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['CanonicalEventDto'][];
+          'application/json': components['schemas']['EventListResponseDto'];
         };
       };
       401: {
@@ -12976,7 +13231,9 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['EventDetailResponseDto'];
+        };
       };
       401: {
         headers: {

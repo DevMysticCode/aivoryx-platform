@@ -36,6 +36,8 @@ export class PabblyAdapter implements ConnectorAdapter {
     description:
       'Generic JSON relay (Pabbly Connect, or any tool that can POST JSON with a bearer secret).',
     capabilities: ['inbound_webhook', 'field_mapping'],
+    authMethod: 'bearer_secret',
+    credentialFields: [],
   };
 
   private static readonly RECORD_ID_KEYS = [

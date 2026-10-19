@@ -834,6 +834,7 @@
                 "crm.lead.note_created",
                 "integration.source.created",
                 "integration.source.updated",
+                "integration.source.configuration_updated",
                 "integration.source.secret_rotated",
                 "integration.source.revoked",
                 "integration.source.reactivated",
@@ -5129,6 +5130,56 @@
         ]
       }
     },
+    "/admin/integrations/providers": {
+      "get": {
+        "operationId": "listProviders",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderMetaDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Safe, server-driven provider catalog — display name, auth method, and credential field names (never values). The adapter registry is the source of truth.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/admin/integrations/sources": {
       "get": {
         "operationId": "listSources",
@@ -5229,6 +5280,126 @@
           }
         ],
         "summary": "Configure a new Pabbly connector source. Returns a one-time secret.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/integrations/sources/{sourceId}": {
+      "get": {
+        "operationId": "getSource",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "One configured inbound lead source.",
+        "tags": [
+          "admin"
+        ]
+      },
+      "patch": {
+        "operationId": "updateSource",
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSourceRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update a source's name and/or field mapping. The key and connector type are immutable.",
         "tags": [
           "admin"
         ]
@@ -5471,17 +5642,65 @@
     "/admin/integrations/events": {
       "get": {
         "operationId": "listInboundEvents",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "sourceId",
+            "required": false,
+            "in": "query",
+            "description": "Restrict to one connection.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Restrict to one canonical event status.",
+            "schema": {
+              "enum": [
+                "RECEIVED",
+                "PROCESSING",
+                "VALIDATION_FAILED",
+                "MAPPING_FAILED",
+                "NEEDS_REVIEW",
+                "DONE",
+                "FAILED",
+                "DEAD_LETTER"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CanonicalEventDto"
-                  }
+                  "$ref": "#/components/schemas/EventListResponseDto"
                 }
               }
             }
@@ -5512,7 +5731,7 @@
             "cookie": []
           }
         ],
-        "summary": "Recent inbound lead events.",
+        "summary": "Paginated, filterable inbound lead events.",
         "tags": [
           "admin"
         ]
@@ -5533,7 +5752,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDetailResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "",
@@ -26729,6 +26955,75 @@
           "rawEventId"
         ]
       },
+      "ProviderCredentialFieldDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "boolean",
+            "description": "Write-only — never render a previously-stored value."
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "secret"
+        ]
+      },
+      "ProviderMetaDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "pabbly_bridge",
+              "meta_lead_ads"
+            ]
+          },
+          "version": {
+            "type": "number"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "authMethod": {
+            "type": "string",
+            "enum": [
+              "bearer_secret",
+              "signature"
+            ]
+          },
+          "credentialFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderCredentialFieldDto"
+            }
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "provider",
+          "version",
+          "displayName",
+          "description",
+          "authMethod",
+          "credentialFields",
+          "capabilities"
+        ]
+      },
       "SourceDto": {
         "type": "object",
         "properties": {
@@ -26758,7 +27053,9 @@
           },
           "fieldMapping": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "publicLookupKey": {
             "type": "string",
@@ -26852,6 +27149,22 @@
           "credential"
         ]
       },
+      "UpdateSourceRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "fieldMapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Replaces the ENTIRE override dictionary. Each value must be \"skip\", \"canonical:<field>\" or \"custom:<key>\"."
+          }
+        }
+      },
       "SetSourceCredentialsRequestDto": {
         "type": "object",
         "properties": {
@@ -26921,6 +27234,243 @@
           "lastErrorCode",
           "lastErrorMessage",
           "createdAt"
+        ]
+      },
+      "EventListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CanonicalEventDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "CanonicalEventDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rawEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "leadId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "dedupeOutcome": {
+            "type": "string",
+            "nullable": true
+          },
+          "processingAttempts": {
+            "type": "number"
+          },
+          "lastErrorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastErrorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idempotencyKey": {
+            "type": "string"
+          },
+          "canonical": {
+            "type": "object"
+          },
+          "custom": {
+            "type": "object"
+          },
+          "unmapped": {
+            "type": "object"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "rawEventId",
+          "sourceId",
+          "status",
+          "leadId",
+          "dedupeOutcome",
+          "processingAttempts",
+          "lastErrorCode",
+          "lastErrorMessage",
+          "createdAt",
+          "idempotencyKey",
+          "canonical",
+          "custom",
+          "unmapped",
+          "updatedAt"
+        ]
+      },
+      "RawEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rawBody": {
+            "type": "object",
+            "description": "The untouched inbound payload. May contain PII — progressively disclose it."
+          },
+          "transportMetadata": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RECEIVED",
+              "PROCESSED",
+              "FAILED"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "sourceId",
+          "correlationId",
+          "receivedAt",
+          "rawBody",
+          "transportMetadata",
+          "status",
+          "expiresAt",
+          "createdAt"
+        ]
+      },
+      "EventLogEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rawEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "canonicalLeadEventId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "fromStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "toStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "rawEventId",
+          "canonicalLeadEventId",
+          "stage",
+          "fromStatus",
+          "toStatus",
+          "errorCode",
+          "message",
+          "createdAt"
+        ]
+      },
+      "EventDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/CanonicalEventDetailDto"
+          },
+          "raw": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RawEventDto"
+              }
+            ]
+          },
+          "log": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventLogEntryDto"
+            }
+          }
+        },
+        "required": [
+          "event",
+          "raw",
+          "log"
         ]
       },
       "FieldAgentEmployeeDto": {

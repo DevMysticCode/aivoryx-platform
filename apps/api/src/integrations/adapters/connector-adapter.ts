@@ -100,11 +100,34 @@ export interface ValidationResult {
 /** Catalog-ready, but UC-2 builds no catalog — this is just a field on the adapter object. */
 export type ProviderCapability = 'inbound_webhook' | 'field_mapping';
 
+/** How a source of this provider authenticates an inbound webhook delivery — a transport-shape
+ *  fact (UC-4), not a secret. `'bearer_secret'`: the connector presents `Authorization: Bearer
+ *  <secret>` (Pabbly); the source is looked up by its hashed secret. `'signature'`: the provider
+ *  cannot send a custom header at all, so the source is looked up by a public lookup key and
+ *  authenticated instead by `verify()` against a provider-specific signature (Meta). The Integration
+ *  Center uses this to decide which webhook URL / auth instructions to show — it must never branch
+ *  on a provider name to make that decision. */
+export type ProviderAuthMethod = 'bearer_secret' | 'signature';
+
+/** One recoverable credential field a provider's adapter needs (UC-4) — e.g. Meta's app secret or
+ *  page access token. Declared by the adapter itself so the Integration Center can render a
+ *  credential form without any provider-specific branching. `secret: true` means the Integration
+ *  Center must treat the field as write-only (never echo a previously-stored value, use a
+ *  password-style input). Purely descriptive — it carries no credential VALUES, ever. */
+export interface ProviderCredentialField {
+  readonly key: string;
+  readonly label: string;
+  readonly secret: boolean;
+}
+
 export interface ProviderMeta {
   readonly provider: string;
   readonly displayName: string;
   readonly description: string;
   readonly capabilities: readonly ProviderCapability[];
+  readonly authMethod: ProviderAuthMethod;
+  /** Empty for a provider with no recoverable credential (Pabbly). */
+  readonly credentialFields: readonly ProviderCredentialField[];
 }
 
 /**

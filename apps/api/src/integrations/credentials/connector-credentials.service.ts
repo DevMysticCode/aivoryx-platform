@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { schema, type Tx } from '@aivoryx/db';
 import type { ServerEnv } from '@aivoryx/config';
 import { SERVER_ENV } from '../../config/config.module.js';
@@ -103,6 +103,23 @@ export class ConnectorCredentialsService {
       .limit(1);
     if (!row) return {};
     return JSON.parse(decryptCredentialBlob(this.key(), row.ciphertext)) as Record<string, string>;
+  }
+
+  /** Batch existence check (UC-4) — avoids the N+1 of calling `has()` once per source when
+   *  rendering a source list. Returns the subset of `sourceIds` that have a credential blob
+   *  configured, tenant-filtered explicitly exactly like `has()`. */
+  async hasMany(tx: Tx, tenantId: string, sourceIds: readonly string[]): Promise<Set<string>> {
+    if (sourceIds.length === 0) return new Set();
+    const rows = await tx
+      .select({ sourceId: connectorCredentials.sourceId })
+      .from(connectorCredentials)
+      .where(
+        and(
+          inArray(connectorCredentials.sourceId, sourceIds as string[]),
+          eq(connectorCredentials.tenantId, tenantId),
+        ),
+      );
+    return new Set(rows.map((r) => r.sourceId));
   }
 
   /** `ResolvedCredential` shape an adapter's `verify()`/`hydrate()` receives. */
