@@ -21,6 +21,7 @@ env:
   SESSION_SECRET: ci-placeholder-session-secret-000000000000
   NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
   NEXT_PUBLIC_APP_ENV: test
+  CORS_ALLOWED_ORIGINS: http://localhost:3000
   # Opts every integration spec in; the CI database is fresh/disposable per run, so there is
   # no local demo data to protect (unlike a developer's shared local Postgres).
   RUN_DB_IT: '1'
@@ -103,10 +104,30 @@ jobs:
       - name: Install Playwright browser
         run: pnpm --filter @aivoryx/web exec playwright install --with-deps chromium
 
+      # smoke.spec.ts's login-redirect test needs a REAL API behind it: an unauthenticated
+      # request must resolve to an actual 401 for the client-side redirect to fire. Without the
+      # API running, the fetch hangs on a connection error instead of a clean 401, the redirect
+      # never fires, and the test times out — this was happening silently on every CI run before
+      # (confirmed by reproducing it locally with no API, then fixing it by starting one). Starts
+      # after migrations, since the API's connection pool SET ROLEs into a role migrations create.
+      - name: Start the API for the E2E suite
+        run: |
+          node apps/api/dist/main.js > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4000/api/v1/health/live > /dev/null; then
+              echo "API is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not become healthy in time"
+          cat api.log
+          exit 1
+
       # Smoke-only by design (CLAUDE.md §15 golden journeys are exercised manually/pre-merge
       # today): the full golden-path suites need seeded demo tenants/users, which is a larger,
-      # separate follow-up, not folded into this change. smoke.spec.ts itself needs no demo
-      # data and no running API, so it is unconditional and always executes here.
+      # separate follow-up, not folded into this change. smoke.spec.ts needs a running API (see
+      # above) but no seeded demo data, so it is unconditional and always executes here.
       - name: E2E smoke tests
         run: pnpm --filter @aivoryx/web test:e2e
 
