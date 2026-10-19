@@ -1,219 +1,298 @@
 # Deployment Architecture
 
-Status: Approved architecture. Infrastructure not provisioned yet; the
-"Database roles & connection model" section below is implemented (ADR 0027).
+Status: Selected architecture for staging/production. **Not yet provisioned** —
+no Vercel/Render/Supabase/Upstash resources exist for this project as of this
+writing; see "Staging provisioning status" below. The "Database roles &
+connection model" section is implemented and covered by tests regardless of
+host (ADR 0027).
 
-Covers decisions 14, 15 and 16.
+Covers decisions 14, 15 and 16, superseding their original Railway + Cloudflare
+R2 framing — see "History" at the end of this document.
 
 ## Topology
 
 | Component                   | Host                                 | Exposure                                                                              |
 | --------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
-| Next.js web app (SSR + PWA) | **Vercel**                           | Public HTTPS (app domain)                                                             |
-| NestJS API (`/api/v1`)      | **Railway** service                  | Public HTTPS (api domain), behind rate limiting                                       |
-| BullMQ worker(s)            | **Railway** service (no public port) | Private only                                                                          |
-| PostgreSQL                  | **Railway** managed                  | **Private networking only**                                                           |
-| Redis                       | **Railway** managed                  | **Private networking only**                                                           |
-| Object storage              | **Cloudflare R2** (S3-compatible)    | Private bucket; downloads via authenticated API route (no presigned URLs — see below) |
+| Next.js web app (SSR + PWA) | **Vercel**                           | Public HTTPS — `staging.aivoryx.com`                                                  |
+| NestJS API (`/api/v1`)      | **Render** web service               | Public HTTPS — `staging-api.aivoryx.com`                                              |
+| PostgreSQL                  | **Supabase**                         | Public endpoint, TLS; reachable only with the project's credentials                   |
+| Redis (BullMQ + cache)      | **Upstash**                          | Public endpoint, TLS (`rediss://`)                                                    |
+| Object storage              | **Supabase Storage** (S3-compatible) | Private bucket; downloads via authenticated API route (no presigned URLs — see below) |
+| DNS                         | **BigRock**                          | `staging.aivoryx.com` → Vercel, `staging-api.aivoryx.com` → Render                    |
 
-## Networking rules (decision 16)
+Render and Vercel both offer private networking add-ons, but Supabase and
+Upstash are reached over their public TLS endpoints either way (neither
+product peers with Render/Vercel's private network in the free/starter
+tiers this project uses) — so, unlike the original Railway plan, **Postgres
+and Redis are not on a private network here**. They are protected by TLS in
+transit and per-project credentials, not network isolation. This is a real
+difference from decision 16's original "no public endpoint" framing —
+documented here deliberately rather than silently dropped.
 
-- API, worker, PostgreSQL and Redis communicate over **Railway private
-  networking**. Postgres and Redis have **no public endpoint** unless a specific,
-  time-boxed, documented need arises (e.g. a one-off migration from a laptop),
-  after which it is closed again.
-- The only publicly reachable Aivoryx services are the Vercel web app and the
-  Railway API.
-- Vercel -> Railway API is public HTTPS (Vercel has no private link to Railway);
-  it is protected by CORS allow-list, cookie `SameSite`, CSRF tokens, and rate
-  limiting.
-- Inbound integration webhooks terminate on the Railway API (or a dedicated
-  ingestion route on it), never directly on a datastore.
-- R2 access uses a scoped API token (Object Read & Write on one bucket) stored
-  as Railway service variables. Uploads and downloads both go through the
-  Railway API, not directly from the browser to R2 — the same authenticated
-  route pattern the local filesystem adapter always used. **Presigned URLs are
-  not implemented**: they would reduce API load for large downloads but were
-  judged out of scope for the adapter itself (a download-security change, not
-  a storage-provider swap) — tracked as deferred future work, not a gap
-  introduced silently.
+## Build / start / health — verified against the actual repo scripts
 
-## Object storage — provider selection & Cloudflare R2 setup (deployment hardening)
+| Service      | Root directory | Build command                                     | Start command                                                                                              | Port                                                                                                                                                                                                                                                                            | Health check                                                                                                                                                                                                                                                                                                                                 |
+| ------------ | -------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API (Render) | `apps/api`     | `nest build` (`pnpm --filter @aivoryx/api build`) | `node dist/main.js` (`pnpm --filter @aivoryx/api start`)                                                   | **Reads `API_PORT` from the environment, defaults to 4000 — it does NOT read Render's own `PORT` variable.** Set `API_PORT` in Render's env vars to the port configured in Render's service settings (Render does not auto-inject a var this app reads under a different name). | `GET /api/v1/health/live` — liveness only, no DB/Redis dependency check, so a transient Supabase/Upstash blip never causes a restart loop. `GET /api/v1/health` (no `/live`) is the deeper DB+Redis readiness check (returns 503 if either is unreachable) — use it for manual/external verification, not as Render's own health-check path. |
+| Web (Vercel) | `apps/web`     | `next build` (`pnpm --filter @aivoryx/web build`) | `next start` (Vercel manages this itself as a managed Next.js deployment — no custom start command needed) | Vercel-managed                                                                                                                                                                                                                                                                  | Vercel's own deploy health check (build success); the app has no separate `/health` route on the web side.                                                                                                                                                                                                                                   |
 
-Implemented (previously this document described only the target architecture;
-this section describes what actually ships). `ObjectStorageService`
-(`apps/api/src/storage/`) is the single interface every attachment consumer
-depends on — tenant logos, CRM/field visit photos, quotation attachments, EPC
-execution attachments, HR employee documents, HR expense receipts. No caller
-knows or cares which adapter is active.
+Monorepo note: both commands above must run from the repo root with
+`pnpm install` first so workspace packages (`@aivoryx/contracts`,
+`@aivoryx/shared`, `@aivoryx/ui`, `@aivoryx/config`, `@aivoryx/db`) are built
+and linked — set each provider's "Root Directory" to the repo root, not
+`apps/api`/`apps/web`, and use the `pnpm --filter` commands above as the
+actual build/start commands (both providers support a monorepo root +
+filtered build command).
 
-**Provider selection** — one environment variable, one authoritative wiring
-point (`storage.module.ts`'s `selectObjectStorageProvider`):
+## Database migration order (release-step requirement, unchanged by the host)
 
-| `OBJECT_STORAGE_PROVIDER` | Adapter                                         | Use                                                                                                                                                                                 |
-| ------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `local` (default)         | `LocalFilesystemObjectStorageService`           | Local development only — writes under `OBJECT_STORAGE_LOCAL_DIR`. **Never use on Railway**: container disks are ephemeral (wiped on every redeploy) and not shared across replicas. |
-| `s3`                      | `S3ObjectStorageService` (`@aws-sdk/client-s3`) | Staging and production. Works with any S3-compatible endpoint — Cloudflare R2 is the first target, not a special case.                                                              |
+**`pnpm --filter @aivoryx/db db:migrate` must run to completion before the API
+receives any traffic.** This is not new to Supabase — it was already true for
+Railway and remains true regardless of host, because migration `0003` creates
+the `aivoryx_app` role the API's connection pool `SET ROLE`s into on every
+physical connection (ADR 0027; see "Database roles & connection model" below).
+If the API starts before migrations run, every query fails closed (the role
+does not exist yet) rather than silently bypassing RLS.
 
-Required configuration when `OBJECT_STORAGE_PROVIDER=s3` (the API refuses to
-boot if any are missing — see `packages/config/src/server-env.ts`):
+Recommended sequencing on Render: run migrations as a **pre-deploy command**
+(Render's "Pre-Deploy Command" field on the web service, run before the new
+instance starts receiving traffic) rather than from a developer's laptop, so
+it is part of the same deploy and uses the same `DATABASE_URL`.
+
+## Object storage — Supabase Storage via the existing S3-compatible adapter
+
+No new storage abstraction. `ObjectStorageService` (`apps/api/src/storage/`)
+already supports any S3-compatible endpoint via `@aws-sdk/client-s3` when
+`OBJECT_STORAGE_PROVIDER=s3` — Supabase Storage exposes an S3-compatible API,
+so this is a configuration change only, not a code change.
 
 ```
 OBJECT_STORAGE_PROVIDER=s3
-OBJECT_STORAGE_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
-OBJECT_STORAGE_REGION=auto
-OBJECT_STORAGE_BUCKET=<bucket name>
-OBJECT_STORAGE_ACCESS_KEY_ID=<R2 API token access key id>
-OBJECT_STORAGE_SECRET_ACCESS_KEY=<R2 API token secret>
+OBJECT_STORAGE_ENDPOINT=https://<PROJECT_REF>.supabase.co/storage/v1/s3
+OBJECT_STORAGE_REGION=<the region shown on the Supabase Storage S3 settings page>
+OBJECT_STORAGE_BUCKET=<bucket name, e.g. aivoryx-staging>
+OBJECT_STORAGE_ACCESS_KEY_ID=<Supabase Storage S3 access key id>
+OBJECT_STORAGE_SECRET_ACCESS_KEY=<Supabase Storage S3 secret key>
 ```
 
-Never put real values in this file or any other committed doc — the block
-above is a shape, not a template to fill in with production credentials.
+The exact endpoint/region values above are the _shape_ Supabase's own S3
+settings page will show once a project exists — not fabricated resource IDs;
+no Supabase project exists yet for this repository, so there is nothing real
+to fill in. Never put real values in this file or any other committed doc.
 
-**Security properties preserved by the adapter, not re-decided per deployment:**
+**Security properties preserved by the adapter, unchanged by the host swap:**
+the bucket stays private, the adapter never returns a public object URL,
+credentials are server-only and never logged, downloads still go through
+authenticated application routes (object keys are opaque tenant-namespaced
+UUIDs, never accepted from the browser), and presigned URLs remain explicitly
+**not implemented** (deferred, not a gap introduced by this change).
 
-- The bucket stays **private**. The adapter never generates or returns a
-  public object URL; it never marks an object public on write.
-- Credentials (`OBJECT_STORAGE_ACCESS_KEY_ID` / `_SECRET_ACCESS_KEY`) are
-  server-only — never sent to the browser, never logged (the adapter logs
-  only `{ operation, provider, bytes, durationMs, correlationId }` on success
-  and `{ operation, provider, err: { name, message } }` on failure).
-- Downloads still go through the existing authenticated application routes
-  (e.g. `GET /hr/employees/:id/documents/:documentId/download`) — the object
-  key is never exposed to or accepted from the browser. Presigned URLs would
-  reduce API load for large files but are explicitly **not** implemented here
-  — see "Deferred" in the corresponding feature's final report.
-- Object keys remain tenant/entity-namespaced opaque UUIDs
-  (`buildEntityAttachmentKey`) — unchanged by the adapter swap. Authorization
-  is still resolved from the database (which membership can see which
-  entity), never from key secrecy.
+### Supabase Storage setup (operator steps — not automatable from code)
 
-### Cloudflare R2 setup (operator steps — not automatable from code)
-
-1. Cloudflare dashboard → R2 → **Create bucket**. Name it per environment
-   (e.g. `aivoryx-staging`, `aivoryx-production`) — never share one bucket
-   across environments.
-2. Leave the bucket **private** (R2's default) — do not enable the public
-   development URL or connect a custom domain to it.
-3. R2 → **Manage API tokens** → create a token scoped to **Object Read &
-   Write** on that one bucket only (not account-wide "Admin Read & Write").
-   Cloudflare shows the Access Key ID and Secret Access Key exactly once —
-   store them in Railway's variable panel immediately, never in a file.
-4. `OBJECT_STORAGE_ENDPOINT` is `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
-   — the account ID is shown on the same R2 dashboard page, not inside the
-   bucket itself.
-5. `OBJECT_STORAGE_REGION=auto` — R2's own convention; the adapter passes it
-   straight through and does not interpret it.
-6. Set all five `OBJECT_STORAGE_*` variables (plus `OBJECT_STORAGE_PROVIDER=s3`)
-   as Railway service variables on the API service. Redeploy.
-7. Verify with a real upload through the running application (e.g. set a
-   tenant logo) — then confirm in the R2 dashboard that the object appears
-   under `tenants/<tenantId>/...` and that downloading it still requires
-   going through the API, not R2's dashboard preview link.
+1. Supabase dashboard → Storage → **New bucket**. Name it per environment
+   (e.g. `aivoryx-staging`) — never share one bucket across environments.
+   Leave it **private** (do not enable public access).
+2. Supabase dashboard → Storage → **S3 connection** (or Project Settings →
+   Storage) → note the S3-compatible endpoint and region shown there.
+3. Create an access key scoped to that project (Supabase issues S3-style
+   access key id / secret for Storage) — store it directly in Render's
+   environment variable panel, never in a file.
+4. Set all five `OBJECT_STORAGE_*` variables above (plus
+   `OBJECT_STORAGE_PROVIDER=s3`) as Render environment variables on the API
+   service. Redeploy.
+5. Verify with a real upload through the running application (e.g. set a
+   tenant logo), then confirm in the Supabase Storage dashboard that the
+   object appears under the expected tenant-namespaced key, and that
+   downloading it still requires going through the API.
 
 ## PDF / document generation (Phase 10, ADR 0039)
 
-- PDF rendering (`DocumentPdfService`) uses **pdfmake** — pure JavaScript with
-  built-in AFM fonts. It needs **no headless browser, no system libraries
-  (`libnss3` / `libgbm` / fontconfig etc.), no font files, and no separate
-  service**. It runs on the standard Railway Node API container as-is.
-- PDFs are generated per request and streamed; they are **not** persisted to
-  disk or object storage, so no bucket, lifecycle rule or cleanup job is
-  required.
-- **No new environment variables** are introduced by Phase 10. Tenant logos
-  reuse the existing object-storage config (`OBJECT_STORAGE_*` / R2).
+Unaffected by the hosting change. `DocumentPdfService` uses **pdfmake** — pure
+JavaScript, no headless browser or system libraries, runs on Render's standard
+Node container as-is. PDFs are generated per request and streamed, never
+persisted — no bucket or cleanup job required. No new environment variables.
 
 ## Environments
 
-`development` (local) -> `staging` (Vercel preview + Railway staging project)
--> `production` (Vercel production + Railway production project).
+`development` (local) → `staging` (Vercel preview + Render staging service,
+`staging.aivoryx.com` / `staging-api.aivoryx.com`) → `production` (separate
+Vercel production deployment + Render production service, separate Supabase
+project, separate Upstash database). No shared credentials across
+environments — a new Supabase/Upstash project per environment, not a shared
+one with different schemas/prefixes.
 
-- Separate Railway projects per environment; separate databases, Redis,
-  R2 buckets, and secrets. No shared credentials across environments.
-- Vercel preview deployments point at the **staging** API, never production.
+## Database roles & connection model (ADR 0027) — host-independent, verified against the actual code
 
-## Database roles & connection model (ADR 0027)
+There are **two logical database connections**, using the **same
+`DATABASE_URL`** (one PostgreSQL user, call it `U`) by default:
 
-There are **two logical database connections**, and in the default deployment
-they use the **same `DATABASE_URL`** (one PostgreSQL user, call it `U`):
+| connection       | role in effect                                             | used by                                                                                                                                                                                                                                                                       |
+| ---------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| migrator / owner | `U` (owns the schema; may create roles)                    | `db:migrate`, `db:seed` — `createDb()` with **no** `appRole`, so no `SET ROLE`                                                                                                                                                                                                |
+| API runtime      | `aivoryx_app` (`NOSUPERUSER`, `NOBYPASSRLS`, owns nothing) | the API — `getDb()` = `createDb({ appRole: DATABASE_APP_ROLE })`; **the pool issues `SET ROLE "aivoryx_app"` on every physical connection before any query, and that `SET ROLE` must persist for the life of that physical connection** (`packages/db/src/client.ts`/`tx.ts`) |
 
-| connection       | role in effect                                             | used by                                                                                                                                                  |
-| ---------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| migrator / owner | `U` (owns the schema; may create roles)                    | `db:migrate`, `db:seed` — `createDb()` with **no** `appRole`, so no `SET ROLE`                                                                           |
-| API runtime      | `aivoryx_app` (`NOSUPERUSER`, `NOBYPASSRLS`, owns nothing) | the API — `getDb()` = `createDb({ appRole: DATABASE_APP_ROLE })`; the pool issues `SET ROLE "aivoryx_app"` on every physical connection before any query |
+- Migration **`0003`** runs as `U` and creates the `aivoryx_app` role
+  (`NOSUPERUSER NOBYPASSRLS`), grants `U` membership into it, and sets the DML
+  grants / default privileges. Idempotent.
+- **`db:migrate` must run before the API starts**, on any host (see "Database
+  migration order" above).
+- The runtime API DB user must never be a superuser / `BYPASSRLS` role — RLS
+  is the last line of tenant isolation and a bypass role defeats it,
+  regardless of which provider hosts Postgres.
 
-- Migration **`0003`** runs as `U` and executes
-  `CREATE ROLE "aivoryx_app" … NOSUPERUSER NOBYPASSRLS`,
-  `GRANT "aivoryx_app" TO current_user` (so `U` may `SET ROLE` into it), the DML
-  grants, and `ALTER DEFAULT PRIVILEGES` for future tables. It is idempotent.
-- **Ordering: `db:migrate` must run before the API starts.** The API pool
-  `SET ROLE`s to `aivoryx_app`, which `0003` creates. This is already the
-  release-step order (migrations before the new API version takes traffic).
-- `U` may be a PostgreSQL superuser locally (docker). On Railway the provided
-  `DATABASE_URL` user can `CREATE ROLE` / `GRANT`, so `0003` applies without any
-  extra setup, and the **shared-`DATABASE_URL` model needs no special Railway
-  variable arrangement** — set `DATABASE_URL` (+ `DATABASE_APP_ROLE` defaults to
-  `aivoryx_app`) and run migrations first.
-- **If a separate least-privilege DB user is provisioned for the API service**
-  (a different `DATABASE_URL` than the migrator's), that user is not
-  `current_user` when `0003` runs, so it is not granted membership in
-  `aivoryx_app`. In that case, once, as an operator: `GRANT "aivoryx_app" TO
-<api_db_user>;` — and the API user must **not** be a superuser or hold
-  `BYPASSRLS`. `DATABASE_APP_ROLE` stays `aivoryx_app`.
-- The runtime API DB user must never be a superuser / `BYPASSRLS` role. RLS
-  (ADR 0027) is the last line of tenant isolation and a bypass role defeats it.
+### Supabase connection mode — release-blocking verification
+
+**Use Supabase's direct connection string (port `5432`), not the pooled
+(PgBouncer, port `6543`, transaction-mode) one, for `DATABASE_URL`.**
+
+Why, specifically: `SET ROLE "aivoryx_app"` is issued once per physical
+connection and is read by `pg`'s connection pool (`packages/db/src/client.ts`)
+to stay in effect for every query that connection runs afterward — the code
+depends on session-level state surviving across multiple queries on the same
+physical connection. Supabase's transaction-mode pooler (PgBouncer) can hand
+different client requests to different physical backend connections
+_between_ transactions, which does not guarantee a `SET ROLE` issued on one
+borrowed connection is still in effect the next time that same client
+"connection" is used — PgBouncer's own documentation describes session state
+(including `SET ROLE`) as unsafe to rely on in transaction-pooling mode. The
+direct connection string gives this app's own connection pool (not
+PgBouncer's) authority over physical-connection lifetime, which is what the
+existing code already assumes.
+
+This has **not** been tested against a live Supabase instance (none is
+provisioned) — it is a conclusion from reading the pooler's documented
+behavior against this codebase's actual connection-role code, not a live
+verification. Treat it as a strong recommendation to follow, and re-confirm
+with a real connection-role regression test (see below) the first time a real
+Supabase project exists, before trusting it with real tenant data.
+
+A focused regression test (`packages/db/src/client.test.ts`, added in this
+phase) proves the `SET ROLE` actually persists across connection reuse in
+this codebase's own pool wrapper — it does not and cannot prove PgBouncer's
+pooling behavior itself, since that requires a live transaction-mode pooler
+to observe against.
 
 ## Configuration & secrets
 
-- All config via environment variables, validated at boot with a Zod schema;
-  the process refuses to start on a missing/invalid var.
-- Secrets in Railway/Vercel environment settings (a dedicated secret manager may
-  be adopted later). Never in the repo; `.env.example` lists keys with dummy
-  values only.
-- `NEXT_PUBLIC_*` is limited to non-sensitive values (API base URL, build info).
+All config via environment variables, validated at boot with a Zod schema
+(`packages/config/src/server-env.ts` / `web-env.ts`); the process refuses to
+start on a missing/invalid var. Secrets live in Render's and Vercel's own
+environment-variable panels — never in the repo. `.env.example` lists keys
+with dummy/placeholder values only. `NEXT_PUBLIC_*` is limited to
+non-sensitive values and is inlined into the browser bundle at build time —
+treat anything with that prefix as public the moment it's set.
 
 ## Data lifecycle
 
-- Automated daily PostgreSQL backups (Railway) + retention policy; a **restore
-  test** is a pre-pilot gate.
-- R2 bucket versioning + lifecycle rules for raw-event bodies and attachments.
-- Redis is treated as ephemeral/cache + queue; nothing is the sole system of
-  record in Redis. BullMQ requires Redis persistence (AOF) enabled so queued
-  jobs survive a restart.
+- Supabase's own automated backup/retention policy applies (tier-dependent) —
+  a **restore test** against a real Supabase backup remains a pre-pilot gate,
+  unchanged in principle from the original Railway plan, just against a
+  different provider's backup tooling.
+- Redis (Upstash) is treated as ephemeral/cache + queue; nothing is the sole
+  system of record in Redis. BullMQ requires Redis persistence for queued
+  jobs to survive a restart — confirm Upstash's persistence/durability
+  settings for the chosen plan before relying on queued jobs surviving a
+  Redis-side restart.
 
-## CI/CD (target shape)
+## CI/CD
 
-- GitHub -> CI (typecheck, lint, unit/integration via Vitest, Playwright on
-  golden journeys, migration validation, secret scan).
-- On merge to `main` (the single release branch — ADR 0025): Vercel deploys web;
-  Railway deploys API + worker; Drizzle migrations run as a release step with the
-  migration role before the new API version takes traffic. `staging` and
-  `production` are separate deployment environments off the same `main`, not
-  separate branches.
-- Rollback: Vercel instant rollback for web; Railway redeploy previous image for
-  API/worker; migrations are forward-only and written to be
-  backward-compatible for one release.
+- GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`:
+  format check, build, lint, typecheck, then the unit **and** integration
+  test suites against real `postgres:16-alpine` + `redis:7-alpine` service
+  containers (see `fix/ci-integration-and-redis` — at time of writing this is
+  a pushed, unmerged branch; merge it before relying on CI as a release gate),
+  then a Playwright smoke check. Secret scanning (gitleaks) runs as a
+  separate job.
+- **Deployment itself is not automated yet.** Render and Vercel can each be
+  configured to auto-deploy on push to `main` once the services exist — that
+  wiring is an external dashboard step (see "Staging provisioning status"),
+  not a GitHub Actions job, and intentionally does not run migrations
+  automatically on every push; migrations are a deliberate pre-deploy step
+  (see above), not CI-triggered.
+- Rollback: Vercel's instant rollback for web; Render's "redeploy a previous
+  deploy" for the API. Migrations are forward-only and additive — there is no
+  automatic migration rollback, by design (ADR-aligned across every module in
+  this codebase; confirmed no destructive migration exists anywhere in the
+  current migration history).
 
 ## Regions
 
-Single region initially, chosen for proximity to the client (India) and R2
-locality. Multi-region is out of scope for V1.
+Single region initially. Choose the Render/Supabase/Upstash region closest to
+the client (India) when provisioning — not yet selected, since nothing is
+provisioned. Multi-region is out of scope for v1.
 
-## Session cookie across web and API origins (login-loop fix)
+## Same-origin API proxy — required for this exact domain pair
 
-The session is an HTTP-only cookie issued by the API. When the web app and the API sit on **different
-registrable domains** (staging: `*.vercel.app` web, `*.onrender.com` API) the cookie is a
-_third-party_ cookie in the browser. Chrome desktop/Android usually allow it; iOS Safari (ITP),
-privacy-hardened and some in-app browsers drop it silently. Symptom: login returns 2xx, the next
-request has no cookie, `/auth/me` is 401, the shell redirects to `/login`.
+The session is an HTTP-only cookie issued by the API, with **no explicit
+`Domain` attribute set anywhere in this codebase** (confirmed by inspecting
+the session-cookie code) — it is a host-only cookie, scoped to the exact
+hostname that issued it. `staging.aivoryx.com` and `staging-api.aivoryx.com`
+share the same _registrable_ domain (`aivoryx.com`), but because the cookie
+is host-only, it is **not** automatically shared between those two exact
+hostnames — the browser still treats a request from the web origin to the API
+origin as cross-site for cookie purposes. The practical effect is identical to
+the original `*.vercel.app` vs `*.onrender.com` scenario this section
+originally described: iOS Safari (ITP), privacy-hardened and some in-app
+browsers will drop the cookie silently, producing a login that returns 2xx
+followed by an immediate 401 on the next request.
 
-- **Fix (recommended, opt-in):** set `NEXT_PUBLIC_API_PROXY=true` (+ `API_PROXY_TARGET`) on the web
-  project. `apps/web/next.config.mjs` rewrites `/api/v1/*` to the API, the browser only talks to its own
-  origin, and the cookie becomes first-party (host-only, HttpOnly, `Secure` outside development).
-  No CORS is involved for those calls. Do **not** weaken `Secure`/`HttpOnly`, and do not move tokens to
-  localStorage.
-- **Alternative:** put web and API under one registrable domain (`app.example.com` / `api.example.com`).
-- The login page now verifies the cookie round-trips (`GET /auth/me`) before navigating and shows
-  "Sign-in succeeded, but we couldn't establish your session…" instead of bouncing to `/login`.
-- Diagnostics (no secrets): API logs `session cookie issued` (attributes only) and
-  `unauthenticated request without a session cookie` (origin, path, whether any cookie header arrived).
+- **Required fix (already implemented, not yet configured for this domain
+  pair):** set on the Vercel project, as **build-time** environment variables
+  (both are read inside `apps/web/next.config.mjs`'s `rewrites()`, which Next
+  evaluates during `next build`):
+  ```
+  NEXT_PUBLIC_API_PROXY=true
+  API_PROXY_TARGET=https://staging-api.aivoryx.com
+  ```
+  The browser then calls `/api/v1/*` on `staging.aivoryx.com` itself; Next
+  rewrites it server-side to the Render API, and the cookie becomes first-party
+  to `staging.aivoryx.com`. No CORS is involved for those calls. Do **not**
+  weaken `Secure`/`HttpOnly`, and do not move the session to localStorage.
+- **Alternative not chosen here:** set an explicit `Domain=aivoryx.com` on the
+  session cookie so it's shared across both subdomains without a proxy. Not
+  recommended without a deliberate decision — it would widen the cookie's
+  scope to every current and future `*.aivoryx.com` subdomain, which is a
+  bigger blast radius than the proxy for the same problem.
+- The login page already verifies the cookie round-trips (`GET /auth/me`)
+  before navigating and shows an explicit error instead of silently bouncing
+  to `/login` if it doesn't.
+- `CORS_ALLOWED_ORIGINS` (server env) still needs `https://staging.aivoryx.com`
+  listed, even with the proxy in place, for any request path that doesn't go
+  through the rewrite (e.g. a direct API call during development against the
+  staging API).
+
+## Redis — Upstash connection requirements
+
+**Use Upstash's Redis (TCP) connection string, not its REST API URL.**
+BullMQ (`apps/api/src/queue/`, `apps/api/src/redis/redis.module.ts`) uses
+`ioredis`, which speaks the native Redis protocol over a TCP socket —
+Upstash's separate REST-over-HTTPS product is a different API surface
+entirely and is not a drop-in substitute; using it would require rewriting
+the queue/cache layer, which is explicitly out of scope here.
+
+`REDIS_URL` must therefore be Upstash's `rediss://default:<password>@<host>:<port>`
+string (note the double "s" — TLS). `ioredis` detects TLS automatically from
+the `rediss://` scheme with zero code change (confirmed by reading
+`redis.module.ts` — it passes the URL straight to `new Redis(url, {...})`
+with no separate TLS flag to set). The existing Zod schema
+(`REDIS_URL: z.string().url().startsWith('redis')`) already accepts both
+`redis://` and `rediss://`.
+
+## Staging provisioning status (verified, not assumed)
+
+As of this writing: **no Vercel, Render, Supabase, or Upstash resources exist
+for this project**, and no DNS records exist at BigRock for either staging
+hostname. Nothing below has been created, and this document does not claim
+otherwise. See the release report for the exact step-by-step checklist and
+which steps require a human with provider credentials.
+
+## History
+
+This document originally specified Railway (API, worker, Postgres, Redis) +
+Cloudflare R2. That plan was approved but never provisioned. The team has
+since selected Vercel + Render + Supabase + Upstash + Supabase Storage as the
+actual staging/production target (unchanged: no microservices, no new
+compute paradigm — this is a hosting-provider choice, not an architecture
+change to the application itself). Railway/R2 are not currently planned to be
+used; if that changes again, update this document rather than letting a
+second description drift out of sync with reality.
