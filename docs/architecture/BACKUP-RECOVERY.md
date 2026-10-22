@@ -9,16 +9,23 @@ behavior is marked verified / documented-not-verified accordingly. This
 document never claims a backup is restorable merely because a provider offers
 backups.
 
-**Open discrepancy, flagged rather than silently resolved:** `DEPLOYMENT.md`'s
-own "Staging provisioning status" section states that, as of its last update,
-no Vercel/Render/Supabase/Upstash resources exist for this project yet. If
-staging has since actually been provisioned and verified (as later project
-context suggests), `DEPLOYMENT.md` itself is the document that needs updating
-by whoever has real dashboard access — this document defers to it rather than
-asserting a provisioning state neither can verify from the repository alone.
-Treat every "not yet provisioned" statement inherited from `DEPLOYMENT.md` in
-this document as **needing a human check against the real dashboards** before
-this document is relied on for an actual incident.
+**Resolved, partially:** `DEPLOYMENT.md`'s own "Staging provisioning status"
+section still states no Vercel/Render/Supabase/Upstash resources exist for
+this project — that line is now stale. A live, read-only, unauthenticated
+HTTPS check against the previously-reported staging URLs
+(`https://aivoryx-platform-web.vercel.app/`,
+`https://aivoryx-staging-api.onrender.com/api/v1/health`) on the date this
+section was last verified (see `BACKUP-RESTORE-TEST-PLAN.md` §1 for the exact
+evidence and timestamp) confirms the Vercel frontend, Render API, Supabase
+Postgres and Upstash Redis are all **currently reachable and reporting
+healthy**. This is evidence that the application layer is live — it is
+**not** dashboard evidence, and it says nothing about backup configuration,
+retention, or access control on any of those projects. `DEPLOYMENT.md`'s
+"Staging provisioning status" section should still be updated by whoever has
+real dashboard access; this document and `BACKUP-RESTORE-TEST-PLAN.md` treat
+the application layer as confirmed live but every backup/retention/access
+claim below as **unverified until someone with dashboard access checks it**
+(see the provider evidence table in `BACKUP-RESTORE-TEST-PLAN.md`).
 
 ## 1. What actually needs to survive a disaster
 
@@ -77,12 +84,15 @@ retention actually meets the RPO/retention decided above.
   does cause currently-queued notification deliveries to need to be
   re-triggered from Postgres (manual, described in §6).
 
-None of the above has been confirmed against the actual provisioned project
-(none was provisioned as of the last verified `DEPLOYMENT.md` audit) — this
-is a reading of each provider's documented tier behavior, not a live
-observation. **Re-verify every bullet in this section directly in the
-Supabase/Upstash dashboard the first time a real project exists, before
-relying on it.**
+A live, unauthenticated health check confirms the Supabase/Upstash projects
+are reachable and reporting healthy as of the timestamp in
+`BACKUP-RESTORE-TEST-PLAN.md` §1 — but none of the backup/retention/plan-tier
+claims in this section have been confirmed against either project's actual
+dashboard; this remains a reading of each provider's generally-documented
+tier behavior, not a verified observation of the specific project in use.
+**Re-verify every bullet in this section directly in the Supabase/Upstash
+dashboard** — see `BACKUP-RESTORE-TEST-PLAN.md` for the exact checklist and
+who needs to perform it.
 
 ## 4. Why Redis loss never loses business data (verified from code)
 

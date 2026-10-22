@@ -151,6 +151,7 @@ Cross-cutting:
 - `DEPLOYMENT.md` — Vercel + Railway topology and private networking
 - `OBSERVABILITY.md` — correlation ids, log fields, error codes
 - `BACKUP-RECOVERY.md` — backup/recovery strategy, RPO/RTO decisions, restore runbook (Supabase/Upstash)
+- `BACKUP-RESTORE-TEST-PLAN.md` — provider evidence audit and an isolated, unexecuted restore-test plan
 - `INCIDENT-RUNBOOKS.md` — release sequencing, rollback, failure diagnosis, session/tenant-isolation incidents, credential rotation, escalation
 - `QUALITY-GATES.md` — PR and pre-pilot gates
 
