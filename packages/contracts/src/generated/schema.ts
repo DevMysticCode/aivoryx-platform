@@ -320,7 +320,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** All workspaces. */
+    /** Workspaces — paginated, searchable by name/slug, filterable by status. */
     get: operations['listPlatformTenants'];
     put?: never;
     /** Provision a new workspace: modules, TENANT_ADMIN role, subscription, and an admin invitation. */
@@ -5566,6 +5566,12 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    PlatformTenantListResponseDto: {
+      items: components['schemas']['PlatformTenantSummaryDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
     PlatformTenantModuleDto: {
       /** @example HR */
       key: string;
@@ -10307,7 +10313,14 @@ export interface operations {
   };
   listPlatformTenants: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Substring match on name or slug. */
+        q?: string;
+        status?: 'provisioning' | 'active' | 'suspended' | 'archived';
+        sort?: 'name' | 'members' | 'modules' | 'created';
+        page?: number;
+        pageSize?: number;
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -10319,7 +10332,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['PlatformTenantSummaryDto'][];
+          'application/json': components['schemas']['PlatformTenantListResponseDto'];
         };
       };
       401: {

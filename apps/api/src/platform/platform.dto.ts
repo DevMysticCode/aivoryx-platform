@@ -1,15 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
   IsEmail,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 import { TENANT_STATUSES, type ErrorResponseBody } from '@aivoryx/shared';
+
+export const PLATFORM_TENANT_SORT_KEYS = ['name', 'members', 'modules', 'created'] as const;
+export type PlatformTenantSortKey = (typeof PLATFORM_TENANT_SORT_KEYS)[number];
 
 /** Mirrors the platform error envelope (ADR 0014) for OpenAPI. */
 export class ApiErrorDto {
@@ -43,6 +50,45 @@ export class PlatformTenantSummaryDto {
   @ApiProperty() memberCount!: number;
   @ApiProperty() enabledModuleCount!: number;
   @ApiProperty({ format: 'date-time' }) createdAt!: string;
+}
+
+export class ListPlatformTenantsQueryDto {
+  @ApiProperty({ required: false, description: 'Substring match on name or slug.' })
+  @IsOptional()
+  @IsString()
+  q?: string;
+
+  @ApiProperty({ required: false, enum: TENANT_STATUSES })
+  @IsOptional()
+  @IsIn(TENANT_STATUSES)
+  status?: string;
+
+  @ApiProperty({ required: false, enum: PLATFORM_TENANT_SORT_KEYS, default: 'name' })
+  @IsOptional()
+  @IsIn(PLATFORM_TENANT_SORT_KEYS)
+  sort?: PlatformTenantSortKey;
+
+  @ApiProperty({ required: false, default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiProperty({ required: false, default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
+}
+
+export class PlatformTenantListResponseDto {
+  @ApiProperty({ type: [PlatformTenantSummaryDto] }) items!: PlatformTenantSummaryDto[];
+  @ApiProperty() total!: number;
+  @ApiProperty() page!: number;
+  @ApiProperty() pageSize!: number;
 }
 
 export class PlatformTenantModuleDto {

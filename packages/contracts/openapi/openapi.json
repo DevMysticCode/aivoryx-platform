@@ -1214,17 +1214,71 @@
     "/platform/tenants": {
       "get": {
         "operationId": "listPlatformTenants",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Substring match on name or slug.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "provisioning",
+                "active",
+                "suspended",
+                "archived"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "name",
+              "enum": [
+                "name",
+                "members",
+                "modules",
+                "created"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PlatformTenantSummaryDto"
-                  }
+                  "$ref": "#/components/schemas/PlatformTenantListResponseDto"
                 }
               }
             }
@@ -1255,7 +1309,7 @@
             "cookie": []
           }
         ],
-        "summary": "All workspaces.",
+        "summary": "Workspaces — paginated, searchable by name/slug, filterable by status.",
         "tags": [
           "platform"
         ]
@@ -24687,6 +24741,32 @@
           "memberCount",
           "enabledModuleCount",
           "createdAt"
+        ]
+      },
+      "PlatformTenantListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformTenantSummaryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
         ]
       },
       "PlatformTenantModuleDto": {

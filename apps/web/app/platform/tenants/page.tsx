@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
-import { ChevronRight, Plus, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
 import { PageHeader, StatusBadge } from '@/components/admin/ui';
 import { ErrorBlock, LoadingBlock } from '@/components/ui/kit';
 import { usePlatformTenants } from '@/lib/platform/use-platform';
@@ -10,25 +10,45 @@ import { usePlatformTenants } from '@/lib/platform/use-platform';
 type SortKey = 'name' | 'members' | 'modules' | 'created';
 type StatusFilter = 'all' | 'provisioning' | 'active' | 'suspended' | 'archived';
 
+const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 300;
+
 export default function PlatformTenantsPage() {
-  const tenants = usePlatformTenants();
+  const [qInput, setQInput] = useState('');
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [sort, setSort] = useState<SortKey>('name');
+  const [page, setPage] = useState(1);
 
-  const rows = useMemo(() => {
-    let list = tenants.data ?? [];
-    const query = q.trim().toLowerCase();
-    if (query)
-      list = list.filter((t) => t.name.toLowerCase().includes(query) || t.slug.includes(query));
-    if (status !== 'all') list = list.filter((t) => t.status === status);
-    return [...list].sort((a, b) => {
-      if (sort === 'members') return b.memberCount - a.memberCount;
-      if (sort === 'modules') return b.enabledModuleCount - a.enabledModuleCount;
-      if (sort === 'created') return b.createdAt.localeCompare(a.createdAt);
-      return a.name.localeCompare(b.name);
-    });
-  }, [tenants.data, q, status, sort]);
+  // debounce the search box so every keystroke doesn't fire a request
+  useEffect(() => {
+    const id = setTimeout(() => setQ(qInput.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [qInput]);
+
+  // search/filter changes always restart at page 1
+  useEffect(() => {
+    setPage(1);
+  }, [q, status, sort]);
+
+  const tenants = usePlatformTenants({
+    q: q || undefined,
+    status: status === 'all' ? undefined : status,
+    sort,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+
+  const rows = tenants.data?.items ?? [];
+  const total = tenants.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const rangeLabel = useMemo(() => {
+    if (total === 0) return null;
+    const from = (page - 1) * PAGE_SIZE + 1;
+    const to = Math.min(page * PAGE_SIZE, total);
+    return `${from}–${to} of ${total}`;
+  }, [page, total]);
 
   return (
     <div className="space-y-4">
@@ -48,8 +68,8 @@ export default function PlatformTenantsPage() {
         <label className="relative w-full sm:min-w-0 sm:max-w-xs sm:flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            value={qInput}
+            onChange={(e) => setQInput(e.target.value)}
             placeholder="Search companies…"
             className="h-9 w-full rounded-md border bg-transparent pl-8 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
@@ -157,6 +177,32 @@ export default function PlatformTenantsPage() {
               </li>
             ))}
           </ul>
+
+          {/* pagination */}
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <span className="text-muted-foreground">{rangeLabel}</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="inline-flex h-8 items-center gap-1 rounded-md border px-2 disabled:opacity-40"
+              >
+                <ChevronLeft className="size-4" aria-hidden /> Previous
+              </button>
+              <span className="text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="inline-flex h-8 items-center gap-1 rounded-md border px-2 disabled:opacity-40"
+              >
+                Next <ChevronRight className="size-4" aria-hidden />
+              </button>
+            </div>
+          </div>
         </>
       )}
     </div>

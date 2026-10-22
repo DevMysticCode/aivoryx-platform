@@ -335,6 +335,7 @@ export type FieldAgentEmployee = components['schemas']['FieldAgentEmployeeDto'];
 export type PlatformModuleCatalogue = components['schemas']['PlatformModuleCatalogueDto'];
 export type PlatformOverview = components['schemas']['PlatformOverviewDto'];
 export type PlatformTenantSummary = components['schemas']['PlatformTenantSummaryDto'];
+export type PlatformTenantListResponse = components['schemas']['PlatformTenantListResponseDto'];
 export type PlatformTenantModule = components['schemas']['PlatformTenantModuleDto'];
 export type PlatformTenantDetail = components['schemas']['PlatformTenantDetailDto'];
 export type SetTenantModuleRequest = components['schemas']['SetTenantModuleRequestDto'];
