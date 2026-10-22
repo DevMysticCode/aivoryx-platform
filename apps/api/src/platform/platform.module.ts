@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { StorageModule } from '../storage/storage.module.js';
 import { AdminModule } from '../admin/admin.module.js';
+import { SettingsModule } from '../settings/settings.module.js';
 import {
   PlatformBrandingController,
   PublicPlatformBrandingController,
@@ -18,7 +19,7 @@ import { TenantProvisioningService } from './tenant-provisioning.service.js';
  * every route keeps this surface off-limits to tenant users.
  */
 @Module({
-  imports: [AdminModule, StorageModule],
+  imports: [AdminModule, StorageModule, SettingsModule],
   controllers: [PlatformController, PlatformBrandingController, PublicPlatformBrandingController],
   providers: [PlatformBrandingService, PlatformService, TenantProvisioningService],
 })

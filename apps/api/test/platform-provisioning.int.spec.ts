@@ -127,6 +127,85 @@ describe.skipIf(!INTEGRATION_ENABLED)('platform tenant provisioning & lifecycle'
     );
   });
 
+  it('readiness checklist: derives each step from real data, never a separate workflow state', async () => {
+    const cookie = await platformCookie();
+    const name = `Readiness Co ${Date.now()}`;
+    const adminEmail = `admin-${Date.now()}@readiness.test`;
+
+    const created = await http.post('/api/v1/platform/tenants').set('Cookie', cookie).send({
+      name,
+      solutionKey: 'FIELD_SERVICE',
+      adminEmail,
+      adminName: 'Readiness Admin',
+    });
+    expect(created.status).toBe(200);
+    const tenantId = created.body.tenant.id;
+    const token = created.body.invitation.token;
+
+    // immediately after creation: created + admin assigned + modules are already true
+    // (the solution enables modules synchronously); profile + access are not yet
+    const fresh = await http
+      .get(`/api/v1/platform/tenants/${tenantId}/readiness`)
+      .set('Cookie', cookie);
+    expect(fresh.status).toBe(200);
+    const freshByKey = (k: string) =>
+      fresh.body.steps.find((s: { key: string }) => s.key === k)?.done;
+    expect(freshByKey('tenant_created')).toBe(true);
+    expect(freshByKey('admin_assigned')).toBe(true);
+    expect(freshByKey('modules_configured')).toBe(true);
+    expect(freshByKey('company_profile')).toBe(false);
+    expect(freshByKey('access_verified')).toBe(false);
+    expect(fresh.body.complete).toBe(false);
+
+    // the invited admin accepts (membership becomes active) but has not yet filled in
+    // the company profile
+    await http
+      .post('/api/v1/auth/accept-invitation')
+      .send({ token, password: 'Very-Strong-Passw0rd!' });
+    const afterAccept = await http
+      .get(`/api/v1/platform/tenants/${tenantId}/readiness`)
+      .set('Cookie', cookie);
+    expect(
+      afterAccept.body.steps.find((s: { key: string }) => s.key === 'access_verified').done,
+    ).toBe(true);
+    expect(
+      afterAccept.body.steps.find((s: { key: string }) => s.key === 'company_profile').done,
+    ).toBe(false);
+    expect(afterAccept.body.complete).toBe(false);
+
+    // the new tenant admin fills in the company profile — now every step is done
+    const adminLogin = await login(adminEmail, 'Very-Strong-Passw0rd!');
+    const adminCookie = sessionCookie(adminLogin);
+    const putProfile = await http.put('/api/v1/settings/company').set('Cookie', adminCookie).send({
+      displayName: name,
+      addressLine: '1 Example Street',
+      email: adminEmail,
+    });
+    expect(putProfile.status).toBe(200);
+
+    const complete = await http
+      .get(`/api/v1/platform/tenants/${tenantId}/readiness`)
+      .set('Cookie', cookie);
+    expect(complete.body.steps.every((s: { done: boolean }) => s.done)).toBe(true);
+    expect(complete.body.complete).toBe(true);
+  });
+
+  it('readiness checklist requires platform admin and a real tenant', async () => {
+    const adminCookie = await tenantAdminCookie();
+    const denied = await http
+      .get(`/api/v1/platform/tenants/${fx.tenantA}/readiness`)
+      .set('Cookie', adminCookie);
+    expect(denied.status).toBe(403);
+    expect(denied.body.error.code).toBe('PLATFORM_ADMIN_REQUIRED');
+
+    const cookie = await platformCookie();
+    const missing = await http
+      .get('/api/v1/platform/tenants/00000000-0000-0000-0000-000000000000/readiness')
+      .set('Cookie', cookie);
+    expect(missing.status).toBe(404);
+    expect(missing.body.error.code).toBe('PLATFORM_TENANT_NOT_FOUND');
+  });
+
   it('rejects an unknown solution, an unknown plan, and a dependency-inconsistent module override', async () => {
     const cookie = await platformCookie();
 

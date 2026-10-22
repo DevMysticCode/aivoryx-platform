@@ -19,6 +19,7 @@ import {
   PlatformModuleCatalogueDto,
   PlatformOverviewDto,
   PlatformTenantDetailDto,
+  PlatformTenantReadinessDto,
   PlatformTenantSummaryDto,
   SetTenantLifecycleRequestDto,
   SetTenantModuleRequestDto,
@@ -266,6 +267,22 @@ export class PlatformController {
       note: body.note ?? null,
     });
     return this.platform.getTenant(ctx.user.id, tenantId);
+  }
+
+  @Get('tenants/:tenantId/readiness')
+  @PlatformAdmin()
+  @ApiOperation({
+    operationId: 'getPlatformTenantReadiness',
+    summary:
+      'Onboarding/release-readiness checklist for one workspace — derived from existing data, ' +
+      'no separate workflow state.',
+  })
+  @ApiOkResponse({ type: PlatformTenantReadinessDto })
+  readiness(
+    @Security() ctx: SecurityContext,
+    @Param('tenantId') tenantId: string,
+  ): Promise<PlatformTenantReadinessDto> {
+    return this.platform.readiness(ctx.user.id, tenantId);
   }
 
   @Get('tenants/:tenantId/usage')

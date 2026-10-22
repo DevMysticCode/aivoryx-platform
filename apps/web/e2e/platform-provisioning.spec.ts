@@ -72,6 +72,16 @@ test.describe('platform tenant provisioning', () => {
     await expect(page.getByText('active', { exact: true })).toBeVisible();
     await expect(page.getByText('AIVORYX_FIELD_SERVICE')).toBeVisible();
 
+    // 8b. onboarding checklist: created + admin assigned + modules are already true;
+    // company profile + access verified are not, since the invite was never accepted here
+    const onboarding = page.locator('section', { hasText: 'Onboarding' });
+    const doneItem = (label: string) => onboarding.locator('li', { hasText: label });
+    await expect(doneItem('Tenant created').locator('svg')).toBeVisible();
+    await expect(doneItem('Initial tenant administrator assigned').locator('svg')).toBeVisible();
+    await expect(doneItem('Modules configured').locator('svg')).toBeVisible();
+    await expect(doneItem('Company profile completed').locator('svg')).toHaveCount(0);
+    await expect(doneItem('Initial access verified').locator('svg')).toHaveCount(0);
+
     // 9. suspend -> verify suspended
     await page.getByRole('button', { name: 'Suspend' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Suspend' }).click();

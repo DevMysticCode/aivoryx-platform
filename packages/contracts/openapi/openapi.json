@@ -1800,6 +1800,62 @@
         ]
       }
     },
+    "/platform/tenants/{tenantId}/readiness": {
+      "get": {
+        "operationId": "getPlatformTenantReadiness",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformTenantReadinessDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Onboarding/release-readiness checklist for one workspace — derived from existing data, no separate workflow state.",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
     "/platform/tenants/{tenantId}/usage": {
       "get": {
         "operationId": "getPlatformTenantUsage",
@@ -24957,6 +25013,51 @@
             "maxLength": 500
           }
         }
+      },
+      "PlatformTenantReadinessStepDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "tenant_created",
+              "company_profile",
+              "modules_configured",
+              "admin_assigned",
+              "access_verified"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "done"
+        ]
+      },
+      "PlatformTenantReadinessDto": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformTenantReadinessStepDto"
+            }
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "True once every step is done."
+          }
+        },
+        "required": [
+          "steps",
+          "complete"
+        ]
       },
       "TenantUsageDto": {
         "type": "object",
