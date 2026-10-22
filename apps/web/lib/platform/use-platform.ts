@@ -8,6 +8,8 @@ export const platformKeys = {
   overview: ['platform', 'overview'] as const,
   modules: ['platform', 'modules'] as const,
   tenants: ['platform', 'tenants'] as const,
+  tenantsList: (params: api.ListPlatformTenantsParams) =>
+    ['platform', 'tenants', 'list', params] as const,
   tenant: (id: string) => ['platform', 'tenant', id] as const,
   solutions: ['platform', 'solutions'] as const,
   plans: ['platform', 'plans'] as const,
@@ -23,8 +25,12 @@ export function usePlatformModules() {
   return useQuery({ queryKey: platformKeys.modules, queryFn: api.listPlatformModules });
 }
 
-export function usePlatformTenants() {
-  return useQuery({ queryKey: platformKeys.tenants, queryFn: api.listPlatformTenants });
+export function usePlatformTenants(params: api.ListPlatformTenantsParams = {}) {
+  return useQuery({
+    queryKey: platformKeys.tenantsList(params),
+    queryFn: () => api.listPlatformTenants(params),
+    placeholderData: (previous) => previous,
+  });
 }
 
 export function usePlatformTenant(tenantId: string) {

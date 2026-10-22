@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import {
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -6,7 +6,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { MODULE_DEFINITIONS, PLAN_DEFINITIONS, SOLUTION_DEFINITIONS } from '@aivoryx/shared';
+import {
+  MODULE_DEFINITIONS,
+  PLAN_DEFINITIONS,
+  SOLUTION_DEFINITIONS,
+  type TenantStatus,
+} from '@aivoryx/shared';
 import { PlatformAdmin, Security } from '../security/security.decorators.js';
 import type { SecurityContext } from '../security/security-context.js';
 import { PlatformService } from './platform.service.js';
@@ -15,12 +20,13 @@ import {
   ApiErrorDto,
   CreateTenantRequestDto,
   CreateTenantResponseDto,
+  ListPlatformTenantsQueryDto,
   PlanDto,
   PlatformModuleCatalogueDto,
   PlatformOverviewDto,
   PlatformTenantDetailDto,
+  PlatformTenantListResponseDto,
   PlatformTenantReadinessDto,
-  PlatformTenantSummaryDto,
   SetTenantLifecycleRequestDto,
   SetTenantModuleRequestDto,
   SolutionDto,
@@ -51,10 +57,10 @@ export class PlatformController {
   })
   @ApiOkResponse({ type: PlatformOverviewDto })
   async overview(@Security() ctx: SecurityContext): Promise<PlatformOverviewDto> {
-    const tenants = await this.platform.listTenants(ctx.user.id);
+    const counts = await this.platform.countTenantsByStatus(ctx.user.id);
     return {
-      tenantCount: tenants.length,
-      activeTenantCount: tenants.filter((t) => t.status === 'active').length,
+      tenantCount: counts.total,
+      activeTenantCount: counts.active,
       moduleCount: MODULE_DEFINITIONS.length,
       modules: MODULE_DEFINITIONS.map((m) => ({
         key: m.key,
@@ -90,10 +96,22 @@ export class PlatformController {
 
   @Get('tenants')
   @PlatformAdmin()
-  @ApiOperation({ operationId: 'listPlatformTenants', summary: 'All workspaces.' })
-  @ApiOkResponse({ type: [PlatformTenantSummaryDto] })
-  listTenants(@Security() ctx: SecurityContext): Promise<PlatformTenantSummaryDto[]> {
-    return this.platform.listTenants(ctx.user.id);
+  @ApiOperation({
+    operationId: 'listPlatformTenants',
+    summary: 'Workspaces — paginated, searchable by name/slug, filterable by status.',
+  })
+  @ApiOkResponse({ type: PlatformTenantListResponseDto })
+  listTenants(
+    @Security() ctx: SecurityContext,
+    @Query() query: ListPlatformTenantsQueryDto,
+  ): Promise<PlatformTenantListResponseDto> {
+    return this.platform.listTenants(ctx.user.id, {
+      q: query.q,
+      status: query.status as TenantStatus | undefined,
+      sort: query.sort,
+      page: query.page,
+      pageSize: query.pageSize,
+    });
   }
 
   @Get('tenants/:tenantId')

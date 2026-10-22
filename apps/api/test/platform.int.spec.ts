@@ -133,9 +133,12 @@ describe.skipIf(!INTEGRATION_ENABLED)('platform administration & entitlements', 
   describe('workspace listing & detail', () => {
     it('lists every workspace and one workspace with its 7-module catalogue', async () => {
       const cookie = await platformCookie();
-      const list = await http.get('/api/v1/platform/tenants').set('Cookie', cookie);
+      // pageSize=100 (the max): this shared integration DB accumulates tenants named
+      // "Tenant A" across repeated local runs, so the fixture row isn't guaranteed to
+      // be on page 1 at the default page size.
+      const list = await http.get('/api/v1/platform/tenants?pageSize=100').set('Cookie', cookie);
       expect(list.status).toBe(200);
-      const a = list.body.find((t: { id: string }) => t.id === fx.tenantA);
+      const a = list.body.items.find((t: { id: string }) => t.id === fx.tenantA);
       expect(a).toBeTruthy();
       expect(a.enabledModuleCount).toBe(7);
       expect(a.memberCount).toBeGreaterThanOrEqual(5);

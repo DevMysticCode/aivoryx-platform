@@ -127,4 +127,59 @@ test.describe('platform tenant provisioning', () => {
     }
     await expect(page.getByRole('button', { name: 'Provision company' })).toBeDisabled();
   });
+
+  test('tenant list: server-side search narrows results, clearing it restores the list, and pagination controls are present', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill(PA_EMAIL);
+    await page.getByLabel('Password', { exact: true }).fill(PA_PASSWORD);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.waitForURL((u) => !u.pathname.startsWith('/login'));
+
+    // a unique-per-run prefix so this test's assertions never depend on how
+    // much other demo/seed data already exists in the environment
+    const prefix = `Pager E2E Co ${Date.now()}`;
+    for (const suffix of ['Alpha', 'Bravo']) {
+      await page.goto('/platform/tenants/new');
+      await page.getByPlaceholder('Acme Field Services').fill(`${prefix} ${suffix}`);
+      await page
+        .getByPlaceholder('admin@acme-field.test')
+        .fill(`pager-e2e-${Date.now()}-${suffix.toLowerCase()}@test.test`);
+      await page.getByRole('button', { name: /Next: choose solution/ }).click();
+      await page
+        .getByRole('button', { name: /Business/ })
+        .first()
+        .click();
+      await page.getByRole('button', { name: /Next: review modules/ }).click();
+      await page.getByRole('button', { name: 'Provision company' }).click();
+      await expect(page.getByText('is live')).toBeVisible({ timeout: 10_000 });
+    }
+
+    await page.goto('/platform/tenants');
+
+    // structural pagination controls exist regardless of how many tenants
+    // this environment already has — asserted without pinning exact counts
+    await expect(page.getByRole('button', { name: /Previous/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Next/ })).toBeVisible();
+    await expect(page.getByText(/^Page \d+ of \d+$/)).toBeVisible();
+
+    // searching narrows the list to exactly the two tenants just created —
+    // proving the search runs server-side, not against a client-cached page
+    await page.getByPlaceholder('Search companies…').fill(prefix);
+    await expect(page.getByText(`${prefix} Alpha`)).toBeVisible();
+    await expect(page.getByText(`${prefix} Bravo`)).toBeVisible();
+    await expect(page.getByRole('row')).toHaveCount(3); // header + 2 matches
+
+    // a status filter that excludes every match: the search is still applied,
+    // the result is the explicit empty state, not an error
+    await page.getByLabel('Status filter').selectOption('suspended');
+    await expect(page.getByText('No companies match your filters.')).toBeVisible();
+
+    // clearing the filter and search restores a real (non-empty) list again
+    await page.getByLabel('Status filter').selectOption('all');
+    await page.getByPlaceholder('Search companies…').fill('');
+    await expect(page.getByText('No companies match your filters.')).not.toBeVisible();
+    await expect(page.getByRole('row').nth(1)).toBeVisible();
+  });
 });

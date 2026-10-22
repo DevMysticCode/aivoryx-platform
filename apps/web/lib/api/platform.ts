@@ -5,8 +5,8 @@ import type {
   PlatformModuleCatalogue,
   PlatformOverview,
   PlatformTenantDetail,
+  PlatformTenantListResponse,
   PlatformTenantReadiness,
-  PlatformTenantSummary,
   Solution,
   TenantUsage,
 } from '@aivoryx/contracts';
@@ -24,8 +24,26 @@ export const getPlatformOverview = () =>
 export const listPlatformModules = () =>
   apiFetch<PlatformModuleCatalogue[]>('/platform/modules', { cache: 'no-store' });
 
-export const listPlatformTenants = () =>
-  apiFetch<PlatformTenantSummary[]>('/platform/tenants', { cache: 'no-store' });
+export interface ListPlatformTenantsParams {
+  q?: string;
+  status?: string;
+  sort?: 'name' | 'members' | 'modules' | 'created';
+  page?: number;
+  pageSize?: number;
+}
+
+export const listPlatformTenants = (params: ListPlatformTenantsParams = {}) => {
+  const search = new URLSearchParams();
+  if (params.q) search.set('q', params.q);
+  if (params.status) search.set('status', params.status);
+  if (params.sort) search.set('sort', params.sort);
+  if (params.page) search.set('page', String(params.page));
+  if (params.pageSize) search.set('pageSize', String(params.pageSize));
+  const qs = search.toString();
+  return apiFetch<PlatformTenantListResponse>(`/platform/tenants${qs ? `?${qs}` : ''}`, {
+    cache: 'no-store',
+  });
+};
 
 export const getPlatformTenant = (tenantId: string) =>
   apiFetch<PlatformTenantDetail>(`/platform/tenants/${tenantId}`, { cache: 'no-store' });

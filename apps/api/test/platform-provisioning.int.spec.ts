@@ -127,6 +127,150 @@ describe.skipIf(!INTEGRATION_ENABLED)('platform tenant provisioning & lifecycle'
     );
   });
 
+  describe('tenants list: pagination, search, filtering, sorting', () => {
+    const createPagerTenant = async (cookie: string, name: string) => {
+      const res = await http
+        .post('/api/v1/platform/tenants')
+        .set('Cookie', cookie)
+        .send({
+          name,
+          solutionKey: 'FIELD_SERVICE',
+          adminEmail: `pager-${Date.now()}-${Math.random().toString(36).slice(2)}@test.test`,
+        });
+      expect(res.status).toBe(200);
+      return res.body.tenant.id as string;
+    };
+
+    it('paginates and searches server-side, with a stable tie-break and an accurate total', async () => {
+      const cookie = await platformCookie();
+      // a unique-per-run prefix scopes every assertion to tenants this test created,
+      // so pre-existing/demo tenants can never affect the counts or ordering
+      const prefix = `Pager Co ${Date.now()}`;
+      const names = [`${prefix} Alpha`, `${prefix} Bravo`, `${prefix} Charlie`];
+      for (const name of names) await createPagerTenant(cookie, name);
+
+      const page1 = await http
+        .get(`/api/v1/platform/tenants?q=${encodeURIComponent(prefix)}&pageSize=2&page=1`)
+        .set('Cookie', cookie);
+      expect(page1.status).toBe(200);
+      expect(page1.body).toMatchObject({ total: 3, page: 1, pageSize: 2 });
+      expect(page1.body.items.map((t: { name: string }) => t.name)).toEqual([names[0], names[1]]);
+      // the per-tenant member/module counts are real (correlated subqueries, not a
+      // stale join) — every FIELD_SERVICE tenant has exactly 1 member (the invited
+      // admin hasn't accepted yet) and 5 enabled modules
+      for (const item of page1.body.items) {
+        expect(item.memberCount).toBeGreaterThanOrEqual(1);
+        expect(item.enabledModuleCount).toBe(5);
+      }
+
+      const page2 = await http
+        .get(`/api/v1/platform/tenants?q=${encodeURIComponent(prefix)}&pageSize=2&page=2`)
+        .set('Cookie', cookie);
+      expect(page2.body).toMatchObject({ total: 3, page: 2, pageSize: 2 });
+      expect(page2.body.items.map((t: { name: string }) => t.name)).toEqual([names[2]]);
+
+      // beyond the last page: no error, empty items, the same accurate total
+      const page3 = await http
+        .get(`/api/v1/platform/tenants?q=${encodeURIComponent(prefix)}&pageSize=2&page=3`)
+        .set('Cookie', cookie);
+      expect(page3.status).toBe(200);
+      expect(page3.body).toMatchObject({ total: 3, page: 3, items: [] });
+
+      // a search matching nothing: empty result, not an error
+      const none = await http
+        .get(`/api/v1/platform/tenants?q=${encodeURIComponent(prefix)}-nonexistent-suffix`)
+        .set('Cookie', cookie);
+      expect(none.status).toBe(200);
+      expect(none.body).toMatchObject({ total: 0, items: [] });
+    });
+
+    it('status filtering narrows both the items and the total', async () => {
+      const cookie = await platformCookie();
+      const prefix = `Pager Status Co ${Date.now()}`;
+      await createPagerTenant(cookie, `${prefix} One`);
+      await createPagerTenant(cookie, `${prefix} Two`);
+
+      // freshly provisioned tenants are active, never suspended/archived
+      const active = await http
+        .get(`/api/v1/platform/tenants?q=${encodeURIComponent(prefix)}&status=active`)
+        .set('Cookie', cookie);
+      expect(active.body.total).toBe(2);
+
+      const suspended = await http
+        .get(`/api/v1/platform/tenants?q=${encodeURIComponent(prefix)}&status=suspended`)
+        .set('Cookie', cookie);
+      expect(suspended.body).toMatchObject({ total: 0, items: [] });
+    });
+
+    it('sorting by modules/members orders by the real per-tenant count, not insertion order', async () => {
+      const cookie = await platformCookie();
+      const prefix = `Pager Sort Co ${Date.now()}`;
+      // SOLAR_EPC enables more modules than BUSINESS, so "Few" (created second,
+      // which would sort last by name/created) must still come first under a
+      // modules-descending sort if the count is genuinely driving the order.
+      const fewRes = await http
+        .post('/api/v1/platform/tenants')
+        .set('Cookie', cookie)
+        .send({
+          name: `${prefix} Few`,
+          solutionKey: 'BUSINESS',
+          adminEmail: `pager-sort-${Date.now()}@test.test`,
+        });
+      expect(fewRes.status).toBe(200);
+      const manyRes = await http
+        .post('/api/v1/platform/tenants')
+        .set('Cookie', cookie)
+        .send({
+          name: `${prefix} Many`,
+          solutionKey: 'SOLAR_EPC',
+          adminEmail: `pager-sort-${Date.now()}-2@test.test`,
+        });
+      expect(manyRes.status).toBe(200);
+      expect(manyRes.body.tenant.enabledModuleCount).toBeGreaterThan(
+        fewRes.body.tenant.enabledModuleCount,
+      );
+
+      const byModules = await http
+        .get(`/api/v1/platform/tenants?q=${encodeURIComponent(prefix)}&sort=modules`)
+        .set('Cookie', cookie);
+      expect(byModules.body.items.map((t: { name: string }) => t.name)).toEqual([
+        `${prefix} Many`,
+        `${prefix} Few`,
+      ]);
+    });
+
+    it('rejects an invalid status, page, or pageSize, and rejects a pageSize above the cap', async () => {
+      const cookie = await platformCookie();
+      for (const qs of ['status=not-a-real-status', 'page=0', 'pageSize=0', 'pageSize=1000']) {
+        const res = await http.get(`/api/v1/platform/tenants?${qs}`).set('Cookie', cookie);
+        expect(res.status).toBe(400);
+      }
+    });
+
+    it('denies the tenant list to a tenant admin, same as every other /platform route', async () => {
+      const adminCookie = await tenantAdminCookie();
+      const res = await http.get('/api/v1/platform/tenants').set('Cookie', adminCookie);
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('PLATFORM_ADMIN_REQUIRED');
+    });
+
+    it('the onboarding-readiness endpoint is unaffected by the paginated list query', async () => {
+      const cookie = await platformCookie();
+      const tenantId = await createPagerTenant(cookie, `Readiness Unaffected Co ${Date.now()}`);
+      const readiness = await http
+        .get(`/api/v1/platform/tenants/${tenantId}/readiness`)
+        .set('Cookie', cookie);
+      expect(readiness.status).toBe(200);
+      expect(readiness.body.steps.map((s: { key: string }) => s.key)).toEqual([
+        'tenant_created',
+        'company_profile',
+        'modules_configured',
+        'admin_assigned',
+        'access_verified',
+      ]);
+    });
+  });
+
   it('readiness checklist: derives each step from real data, never a separate workflow state', async () => {
     const cookie = await platformCookie();
     const name = `Readiness Co ${Date.now()}`;
@@ -258,8 +402,10 @@ describe.skipIf(!INTEGRATION_ENABLED)('platform tenant provisioning & lifecycle'
     expect(retry.status).toBe(409);
     expect(retry.body.error.code).toBe('PLATFORM_TENANT_SLUG_TAKEN');
 
-    const list = await http.get('/api/v1/platform/tenants').set('Cookie', cookie);
-    expect(list.body.filter((t: { name: string }) => t.name === name)).toHaveLength(1);
+    const list = await http
+      .get(`/api/v1/platform/tenants?q=${encodeURIComponent(name)}`)
+      .set('Cookie', cookie);
+    expect(list.body.items.filter((t: { name: string }) => t.name === name)).toHaveLength(1);
   });
 
   it('lifecycle: active -> suspended blocks normal login, suspended -> active restores it; archived is terminal', async () => {

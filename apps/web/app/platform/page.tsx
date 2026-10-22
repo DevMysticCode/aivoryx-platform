@@ -8,7 +8,7 @@ import { usePlatformOverview, usePlatformTenants } from '@/lib/platform/use-plat
 
 export default function PlatformOverviewPage() {
   const overview = usePlatformOverview();
-  const tenants = usePlatformTenants();
+  const tenants = usePlatformTenants({ pageSize: 6 });
 
   return (
     <div className="space-y-6">
@@ -70,9 +70,9 @@ export default function PlatformOverviewPage() {
               <div className="p-4">
                 <LoadingBlock lines={3} />
               </div>
-            ) : tenants.data && tenants.data.length > 0 ? (
+            ) : tenants.data && tenants.data.items.length > 0 ? (
               <ul className="divide-y">
-                {tenants.data.slice(0, 6).map((t) => (
+                {tenants.data.items.map((t) => (
                   <li key={t.id}>
                     <Link
                       href={`/platform/tenants/${t.id}`}

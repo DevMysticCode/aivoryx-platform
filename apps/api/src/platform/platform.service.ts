@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, withUserContext } from '@aivoryx/db';
 import {
   AppError,
@@ -40,6 +40,21 @@ export interface PlatformTenantSummary {
   memberCount: number;
   enabledModuleCount: number;
   createdAt: string;
+}
+
+export interface ListPlatformTenantsFilter {
+  q?: string;
+  status?: TenantStatus;
+  sort?: 'name' | 'members' | 'modules' | 'created';
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PlatformTenantListResult {
+  items: PlatformTenantSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface PlatformTenantDetail extends PlatformTenantSummary {
@@ -97,51 +112,104 @@ export class PlatformService {
     private readonly companyProfiles: CompanyProfileService,
   ) {}
 
-  async listTenants(platformUserId: string): Promise<PlatformTenantSummary[]> {
+  /**
+   * Server-side paginated/searchable/filterable tenant list (Platform Tenant Management
+   * Scalability milestone). Member/module counts come from two one-row-per-tenant CTEs
+   * left-joined into the main query, not a correlated subquery per row and not the old
+   * separate batched `inArray` pass — sorting by `members`/`modules` needs the counts
+   * available to `ORDER BY` before `LIMIT`/`OFFSET`, which only a join (not a JS sort) can
+   * do once the result is paginated. Still exactly two extra queries total (as CTEs), same
+   * as the old batched approach, regardless of page size.
+   */
+  async listTenants(
+    platformUserId: string,
+    filter: ListPlatformTenantsFilter = {},
+  ): Promise<PlatformTenantListResult> {
     return withUserContext(getDb(), platformUserId, async (tx) => {
-      const tenantRows = await tx
-        .select({
-          id: tenants.id,
-          slug: tenants.slug,
-          name: tenants.name,
-          status: tenants.status,
-          createdAt: tenants.createdAt,
-        })
+      const conditions: SQL[] = [];
+      if (filter.status) conditions.push(eq(tenants.status, filter.status));
+      if (filter.q && filter.q.trim().length > 0) {
+        const like = `%${filter.q.trim()}%`;
+        conditions.push(or(ilike(tenants.name, like), ilike(tenants.slug, like))!);
+      }
+      const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [countRow] = await tx
+        .select({ count: sql<number>`count(*)::int` })
         .from(tenants)
-        .orderBy(tenants.name);
-      if (tenantRows.length === 0) return [];
-      const ids = tenantRows.map((t) => t.id);
+        .where(where);
+      const total = countRow?.count ?? 0;
 
-      const memberCounts = await tx
-        .select({
-          tenantId: userTenantMemberships.tenantId,
-          n: sql<number>`count(*)::int`,
-        })
-        .from(userTenantMemberships)
-        .where(inArray(userTenantMemberships.tenantId, ids))
-        .groupBy(userTenantMemberships.tenantId);
-      const moduleCounts = await tx
-        .select({
-          tenantId: tenantModuleEntitlements.tenantId,
-          n: sql<number>`count(*)::int`,
-        })
-        .from(tenantModuleEntitlements)
-        .where(
-          sql`${inArray(tenantModuleEntitlements.tenantId, ids)} and ${eq(tenantModuleEntitlements.state, 'ENABLED')}`,
-        )
-        .groupBy(tenantModuleEntitlements.tenantId);
-      const memberBy = new Map(memberCounts.map((m) => [m.tenantId, m.n]));
-      const moduleBy = new Map(moduleCounts.map((m) => [m.tenantId, m.n]));
+      const page = Math.max(1, filter.page ?? 1);
+      const pageSize = Math.min(Math.max(1, filter.pageSize ?? 20), 100);
 
-      return tenantRows.map((t) => ({
-        id: t.id,
-        slug: t.slug,
-        name: t.name,
-        status: t.status,
-        memberCount: memberBy.get(t.id) ?? 0,
-        enabledModuleCount: moduleBy.get(t.id) ?? 0,
-        createdAt: t.createdAt.toISOString(),
-      }));
+      const memberCounts = tx.$with('platform_tenant_member_counts').as(
+        tx
+          .select({ tenantId: userTenantMemberships.tenantId, n: sql`count(*)::int`.as('n') })
+          .from(userTenantMemberships)
+          .groupBy(userTenantMemberships.tenantId),
+      );
+      const moduleCounts = tx.$with('platform_tenant_module_counts').as(
+        tx
+          .select({ tenantId: tenantModuleEntitlements.tenantId, n: sql`count(*)::int`.as('n') })
+          .from(tenantModuleEntitlements)
+          .where(eq(tenantModuleEntitlements.state, 'ENABLED'))
+          .groupBy(tenantModuleEntitlements.tenantId),
+      );
+      const memberCount = sql<number>`coalesce(${memberCounts}.${memberCounts.n}, 0)`;
+      const enabledModuleCount = sql<number>`coalesce(${moduleCounts}.${moduleCounts.n}, 0)`;
+
+      // Deterministic tie-break (`id`) on every sort so rows never shift between pages.
+      const orderBy =
+        filter.sort === 'members'
+          ? [desc(memberCount), asc(tenants.name), asc(tenants.id)]
+          : filter.sort === 'modules'
+            ? [desc(enabledModuleCount), asc(tenants.name), asc(tenants.id)]
+            : filter.sort === 'created'
+              ? [desc(tenants.createdAt), asc(tenants.id)]
+              : [asc(tenants.name), asc(tenants.id)];
+
+      const rows =
+        total === 0
+          ? []
+          : await tx
+              .with(memberCounts, moduleCounts)
+              .select({
+                id: tenants.id,
+                slug: tenants.slug,
+                name: tenants.name,
+                status: tenants.status,
+                createdAt: tenants.createdAt,
+                memberCount,
+                enabledModuleCount,
+              })
+              .from(tenants)
+              .leftJoin(memberCounts, eq(memberCounts.tenantId, tenants.id))
+              .leftJoin(moduleCounts, eq(moduleCounts.tenantId, tenants.id))
+              .where(where)
+              .orderBy(...orderBy)
+              .limit(pageSize)
+              .offset((page - 1) * pageSize);
+
+      return {
+        items: rows.map((t) => ({ ...t, createdAt: t.createdAt.toISOString() })),
+        total,
+        page,
+        pageSize,
+      };
+    });
+  }
+
+  /** Total + active tenant counts only, for {@link overview} — no row fetch. */
+  async countTenantsByStatus(platformUserId: string): Promise<{ total: number; active: number }> {
+    return withUserContext(getDb(), platformUserId, async (tx) => {
+      const [row] = await tx
+        .select({
+          total: sql<number>`count(*)::int`,
+          active: sql<number>`count(*) filter (where ${tenants.status} = 'active')::int`,
+        })
+        .from(tenants);
+      return { total: row?.total ?? 0, active: row?.active ?? 0 };
     });
   }
 
