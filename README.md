@@ -49,8 +49,7 @@ docs/         architecture, ADRs, diagrams, developer guides
 corepack enable
 pnpm install
 
-cp .env.example .env          # then edit — generate SESSION_SECRET:
-#   node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+cp .env.example .env          # then edit as needed
 
 docker compose up -d          # PostgreSQL + Redis on 127.0.0.1
 pnpm --filter @aivoryx/db db:generate   # create the first migration from schema
@@ -84,7 +83,7 @@ Open:
 
 See `.env.example` for the full list and which are server-only.
 **Server-only (never sent to the browser):** `DATABASE_URL`, `REDIS_URL`,
-`SESSION_SECRET`, `OBJECT_STORAGE_*`, `CORS_ALLOWED_ORIGINS`.
+`CONNECTOR_CREDENTIAL_ENCRYPTION_KEY`, `OBJECT_STORAGE_*`, `CORS_ALLOWED_ORIGINS`.
 **Browser-safe:** only `NEXT_PUBLIC_*`.
 
 ## Deployment (target — not wired yet)

@@ -29,7 +29,7 @@ import { withTenantContext } from './tx.js';
 const RUN = process.env.RUN_DB_IT === '1' && !!process.env.DATABASE_URL;
 
 describe.skipIf(!RUN)('createDb({ appRole }) — role persists across connection reuse', () => {
-  // `createDb()` eagerly validates the server env (DATABASE_URL/REDIS_URL/SESSION_SECRET), so it
+  // `createDb()` eagerly validates the server env (DATABASE_URL/REDIS_URL), so it
   // must not run at describe-body collection time — `skipIf` only skips running the tests, not
   // executing the rest of the describe callback, and those vars are intentionally unset when
   // RUN_DB_IT isn't set.

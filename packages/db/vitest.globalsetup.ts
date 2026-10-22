@@ -12,7 +12,6 @@ export default async function setup(): Promise<void> {
   // env; fill the parts migrations do not use.
   process.env.DATABASE_URL ??= 'postgres://postgres:postgres@localhost:55432/aivoryx';
   process.env.REDIS_URL ??= 'redis://localhost:56379';
-  process.env.SESSION_SECRET ??= 'db-integration-test-session-secret-000000000000';
   process.env.DATABASE_APP_ROLE ??= 'aivoryx_app';
 
   const admin = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });

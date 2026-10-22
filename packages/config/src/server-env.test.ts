@@ -5,7 +5,6 @@ import { parseWebEnv } from './web-env.js';
 const baseValid = {
   DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/aivoryx',
   REDIS_URL: 'redis://localhost:6379',
-  SESSION_SECRET: 'x'.repeat(40),
 };
 
 describe('parseServerEnv', () => {
@@ -88,7 +87,7 @@ describe('parseServerEnv', () => {
       },
     );
 
-    it('flags the placeholder key in production, like SESSION_SECRET', () => {
+    it('flags the placeholder key in production', () => {
       expect(() =>
         parseServerEnv({ ...baseValid, APP_ENV: 'production' } as NodeJS.ProcessEnv),
       ).toThrow(/CONNECTOR_CREDENTIAL_ENCRYPTION_KEY/);
@@ -99,7 +98,6 @@ describe('parseServerEnv', () => {
         parseServerEnv({
           ...baseValid,
           APP_ENV: 'production',
-          SESSION_SECRET: 'y'.repeat(40),
           CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: 'ab'.repeat(32),
         } as NodeJS.ProcessEnv),
       ).not.toThrow();
@@ -114,6 +112,19 @@ describe('parseServerEnv', () => {
     expect(env.DATABASE_POOL_MAX).toBe(10);
   });
 
+  it('never requires SESSION_SECRET — removed as a genuinely unused variable (no runtime consumer)', () => {
+    const env = parseServerEnv(baseValid as NodeJS.ProcessEnv);
+    expect(env).not.toHaveProperty('SESSION_SECRET');
+  });
+
+  it('ignores a leftover SESSION_SECRET value in the environment rather than rejecting it', () => {
+    // backward-compatible: an existing deployment that still sets this var
+    // (e.g. Render/Vercel env panel not yet cleaned up) must not fail to boot
+    expect(() =>
+      parseServerEnv({ ...baseValid, SESSION_SECRET: 'leftover-value' } as NodeJS.ProcessEnv),
+    ).not.toThrow();
+  });
+
   it('splits CORS origins on comma', () => {
     const env = parseServerEnv({
       ...baseValid,
@@ -126,23 +137,6 @@ describe('parseServerEnv', () => {
     expect(() => parseServerEnv({ REDIS_URL: baseValid.REDIS_URL } as NodeJS.ProcessEnv)).toThrow(
       /DATABASE_URL/,
     );
-  });
-
-  it('rejects a short SESSION_SECRET', () => {
-    expect(() =>
-      parseServerEnv({ ...baseValid, SESSION_SECRET: 'too-short' } as NodeJS.ProcessEnv),
-    ).toThrow(/SESSION_SECRET/);
-  });
-
-  it('rejects the placeholder secret in production', () => {
-    expect(() =>
-      parseServerEnv({
-        ...baseValid,
-        APP_ENV: 'production',
-        NODE_ENV: 'production',
-        SESSION_SECRET: 'change-me-generate-a-long-random-value-000',
-      } as NodeJS.ProcessEnv),
-    ).toThrow(/SESSION_SECRET/);
   });
 
   it('defaults OBJECT_STORAGE_PROVIDER to local, with no S3 config required', () => {

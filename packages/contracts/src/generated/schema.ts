@@ -501,6 +501,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/platform/audit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Platform-level (no-tenant) audit events — e.g. Aivoryx white-label branding changes. Separate from /admin/audit, which is tenant-scoped and audit.read-gated; this route is platform-admin-only and a tenant user can never reach it. */
+    get: operations['listPlatformAuditLogs'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/platform/branding': {
     parameters: {
       query?: never;
@@ -5698,6 +5715,26 @@ export interface components {
       employees: number | null;
       enabledModules: number;
     };
+    PlatformAuditLogDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      actorUserId: string | null;
+      action: string;
+      entityType: string;
+      /** Format: uuid */
+      entityId: string | null;
+      correlationId: string | null;
+      /** Format: date-time */
+      occurredAt: string;
+      metadata: Record<string, never>;
+    };
+    PlatformAuditLogListResponseDto: {
+      items: components['schemas']['PlatformAuditLogDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
+    };
     PlatformBrandingDto: {
       platformName: string | null;
       tagline: string | null;
@@ -10755,6 +10792,44 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['TenantUsageDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listPlatformAuditLogs: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformAuditLogListResponseDto'];
         };
       };
       401: {

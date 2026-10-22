@@ -314,3 +314,98 @@ describe.skipIf(!INTEGRATION_ENABLED)('security boundary — HTTP integration', 
     });
   });
 });
+
+/**
+ * Login brute-force throttling. A separate app instance with the real login
+ * rate limiter replaced (DI override, not an env hack) by a deliberately tiny
+ * bucket, so this test proves the mechanism itself — independent of the
+ * generous shared default (`support/env.ts`) every other spec relies on to
+ * avoid tripping over its own repeated-login helpers.
+ */
+describe.skipIf(!INTEGRATION_ENABLED)('login brute-force throttling', () => {
+  let app: INestApplication;
+  let http: ReturnType<typeof request>;
+  let fx: Fixtures;
+
+  beforeAll(async () => {
+    fx = await makeFixtures();
+    const { AUTH_LOGIN_RATE_LIMITER } = await import('../src/auth/auth.service.js');
+    const { TokenBucketRateLimiter } = await import('../src/integrations/rate-limiter.js');
+    app = await bootTestApp((builder) =>
+      builder
+        .overrideProvider(AUTH_LOGIN_RATE_LIMITER)
+        .useValue(new TokenBucketRateLimiter({ capacity: 3, windowSeconds: 60 })),
+    );
+    http = request(app.getHttpServer());
+  });
+
+  afterAll(async () => {
+    await app?.close();
+    const db = await import('@aivoryx/db');
+    await db.closeDb();
+  });
+
+  const login = (email: string, password: string) =>
+    http.post('/api/v1/auth/login').send({ email, password });
+
+  // Each test below uses its own distinct, never-reused email so one test's bucket
+  // (capacity 3, shared process-wide for the life of this `app`) can never leak into
+  // the next — a bucket emptied by an earlier test would silently make a later test's
+  // assertions pass for the wrong reason instead of exercising what they claim to.
+  const freshEmail = (tag: string) =>
+    `throttle-${tag}-${Date.now()}-${Math.random().toString(36).slice(2)}@test.test`;
+
+  it('allows up to the limit, then answers 429 RATE_LIMITED with a retry delay — for both wrong and right passwords', async () => {
+    for (let i = 0; i < 3; i++) {
+      const res = await login(fx.admin.email, 'definitely-the-wrong-password');
+      expect(res.status).toBe(401);
+      expect(res.body.error.code).toBe('AUTH_INVALID_CREDENTIALS');
+    }
+    // the bucket is now empty — even the CORRECT password is throttled, because the limiter
+    // runs before credential verification (it protects the account, not just wrong guesses)
+    const throttled = await login(fx.admin.email, fx.admin.password);
+    expect(throttled.status).toBe(429);
+    expect(throttled.body.error.code).toBe('RATE_LIMITED');
+    expect(throttled.body.error.details?.retryAfterSeconds).toBeGreaterThanOrEqual(1);
+  });
+
+  it('is keyed per email — throttling one (nonexistent) account never blocks another', async () => {
+    const target = freshEmail('keyed');
+    for (let i = 0; i < 3; i++) {
+      await login(target, 'wrong-password');
+    }
+    expect((await login(target, 'still-wrong')).status).toBe(429);
+    // a real, different account's bucket is untouched
+    const other = await login(fx.limited.email, fx.limited.password);
+    expect(other.status).toBe(201);
+  });
+
+  it('throttles a nonexistent email identically — the limiter runs before any DB lookup', async () => {
+    const target = freshEmail('unknown');
+    for (let i = 0; i < 3; i++) {
+      const res = await login(target, 'whatever');
+      expect(res.status).toBe(401);
+      expect(res.body.error.code).toBe('AUTH_INVALID_CREDENTIALS');
+    }
+    const throttled = await login(target, 'whatever');
+    expect(throttled.status).toBe(429);
+    expect(throttled.body.error.code).toBe('RATE_LIMITED');
+  });
+
+  it('rejects a malformed email at validation, before it ever reaches the limiter', async () => {
+    // not a real email at all — @IsEmail() on LoginRequestDto rejects it with 400
+    // before the controller/service (and therefore the limiter) ever runs
+    for (let i = 0; i < 5; i++) {
+      const res = await login('not-an-email-at-all', 'whatever');
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    }
+    // proof the limiter was never touched: a real, *valid* address that happens to
+    // share a prefix gets the normal 3-attempt allowance, not an already-exhausted one
+    const real = freshEmail('unaffected');
+    for (let i = 0; i < 3; i++) {
+      expect((await login(real, 'wrong-password')).status).toBe(401);
+    }
+    expect((await login(real, 'wrong-password')).status).toBe(429);
+  });
+});

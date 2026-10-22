@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { getDb, schema, withAppTransaction } from '@aivoryx/db';
+import { getDb, schema, withAppTransaction, withUserContext } from '@aivoryx/db';
 import { AppError, deriveTheme, isThemePresetKey, resolveThemeColors } from '@aivoryx/shared';
 import { OBJECT_STORAGE, type ObjectStorageService } from '../storage/object-storage.service.js';
-import { getCorrelationId } from '../observability/correlation.js';
+import { PlatformAuditService } from '../audit/platform-audit.service.js';
 import {
   validateLogoFile,
   type LogoFileInput,
@@ -37,15 +37,18 @@ const SHAPE_RULES: Partial<Record<PlatformAssetKind, LogoShapeRules>> = {
  * tables and the `platform/branding/…` object-key namespace; it never touches
  * `tenant_assets`.
  *
- * Audit: the audit log is tenant-scoped (`tenant_id` NOT NULL) and a global
- * setting has no tenant, so platform branding changes are recorded as a
- * structured, correlation-tagged log line plus `updated_by_user_id` on the row.
+ * Audit: the tenant-owned `audit_logs` table requires a real `tenant_id` and
+ * a global setting has no tenant, so platform branding changes are recorded
+ * in the separate, platform-scoped `platform_audit_logs` table instead
+ * (`PlatformAuditService` — Production Operations & Customer Launch
+ * Readiness milestone), plus `updated_by_user_id` on the row itself.
  */
 @Injectable()
 export class PlatformBrandingService {
-  private readonly logger = new Logger('PlatformBranding');
-
-  constructor(@Inject(OBJECT_STORAGE) private readonly storage: ObjectStorageService) {}
+  constructor(
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorageService,
+    private readonly platformAudit: PlatformAuditService,
+  ) {}
 
   private async load() {
     return withAppTransaction(getDb(), async (tx) => {
@@ -118,7 +121,12 @@ export class PlatformBrandingService {
     patch: UpdatePlatformBrandingDto,
   ): Promise<PlatformBrandingDto> {
     const changed: string[] = [];
-    await withAppTransaction(getDb(), async (tx) => {
+    // `withUserContext` (not `withAppTransaction`): binds `app.user_id` so the
+    // audit insert below — same transaction as the mutation, so they commit or
+    // roll back together (AUDIT.md's atomicity invariant, extended to the
+    // platform-scoped log) — satisfies the RLS INSERT policy on
+    // `platform_audit_logs`.
+    await withUserContext(getDb(), actorUserId, async (tx) => {
       const [before] = await tx.select().from(platformBranding).limit(1);
       const set: Partial<typeof platformBranding.$inferInsert> = {
         updatedByUserId: actorUserId,
@@ -172,8 +180,13 @@ export class PlatformBrandingService {
           target: platformBranding.singleton,
           set: { ...set, updatedAt: new Date() },
         });
+      await this.platformAudit.record(tx, {
+        actorUserId,
+        action: 'platform.branding.updated',
+        entityType: 'platform_branding',
+        metadata: { fields: changed },
+      });
     });
-    this.auditLog('platform.branding.updated', actorUserId, { fields: changed });
     return this.getAdmin();
   }
 
@@ -186,7 +199,7 @@ export class PlatformBrandingService {
     const ext = meta.format === 'image/png' ? 'png' : meta.format === 'image/jpeg' ? 'jpg' : 'webp';
     const key = `platform/branding/${kind}/${randomUUID()}.${ext}`;
 
-    const previousKey = await withAppTransaction(getDb(), async (tx) => {
+    const previousKey = await withUserContext(getDb(), actorUserId, async (tx) => {
       const [existing] = await tx
         .select({ objectKey: platformAssets.objectKey })
         .from(platformAssets)
@@ -208,24 +221,29 @@ export class PlatformBrandingService {
           target: platformAssets.kind,
           set: { ...values, updatedAt: new Date() },
         });
+      await this.platformAudit.record(tx, {
+        actorUserId,
+        action: 'platform.branding.asset_updated',
+        entityType: 'platform_asset',
+        metadata: {
+          kind,
+          operation: existing?.objectKey ? 'replaced' : 'added',
+          contentType: meta.format,
+          width: meta.width,
+          height: meta.height,
+        },
+      });
       return existing?.objectKey ?? null;
     });
     // best-effort cleanup of the previous object (the DB row is authoritative)
     if (previousKey && previousKey !== key) {
       await this.storage.deleteObject(previousKey).catch(() => undefined);
     }
-    this.auditLog('platform.branding.asset_updated', actorUserId, {
-      kind,
-      operation: previousKey ? 'replaced' : 'added',
-      contentType: meta.format,
-      width: meta.width,
-      height: meta.height,
-    });
     return this.getAdmin();
   }
 
   async removeAsset(actorUserId: string, kind: PlatformAssetKind): Promise<PlatformBrandingDto> {
-    const key = await withAppTransaction(getDb(), async (tx) => {
+    const key = await withUserContext(getDb(), actorUserId, async (tx) => {
       const [row] = await tx
         .select({ objectKey: platformAssets.objectKey })
         .from(platformAssets)
@@ -233,10 +251,17 @@ export class PlatformBrandingService {
         .limit(1);
       if (!row) throw new AppError('PLATFORM_ASSET_NOT_FOUND', { details: { kind } });
       await tx.delete(platformAssets).where(eq(platformAssets.kind, kind));
+      await this.platformAudit.record(tx, {
+        actorUserId,
+        action: 'platform.branding.asset_updated',
+        entityType: 'platform_asset',
+        metadata: { kind, operation: 'removed' },
+      });
       return row.objectKey;
     });
+    // best-effort cleanup of the physical object (the DB row is authoritative,
+    // and is already gone — same tradeoff as the replace path above)
     await this.storage.deleteObject(key).catch(() => undefined);
-    this.auditLog('platform.branding.asset_updated', actorUserId, { kind, operation: 'removed' });
     return this.getAdmin();
   }
 
@@ -255,17 +280,5 @@ export class PlatformBrandingService {
     const type = (obj?.contentType || row.contentType).toLowerCase();
     if (!obj || !/^image\/(png|jpeg|webp)$/.test(type)) return null;
     return { body: obj.body, contentType: type };
-  }
-
-  private auditLog(action: string, actorUserId: string, metadata: Record<string, unknown>) {
-    this.logger.log(
-      JSON.stringify({
-        module: 'platform',
-        action,
-        actorUserId,
-        correlationId: getCorrelationId() ?? null,
-        ...metadata,
-      }),
-    );
   }
 }

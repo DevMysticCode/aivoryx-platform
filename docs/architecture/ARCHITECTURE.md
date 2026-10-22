@@ -150,6 +150,9 @@ Cross-cutting:
 - `MODULE-ENTITLEMENTS.md` — the code module catalogue, `tenant_module_entitlements`, dependency rules, `EntitlementService`, `seed:platform-demo` (ADR 0042)
 - `DEPLOYMENT.md` — Vercel + Railway topology and private networking
 - `OBSERVABILITY.md` — correlation ids, log fields, error codes
+- `BACKUP-RECOVERY.md` — backup/recovery strategy, RPO/RTO decisions, restore runbook (Supabase/Upstash)
+- `BACKUP-RESTORE-TEST-PLAN.md` — provider evidence audit and an isolated, unexecuted restore-test plan
+- `INCIDENT-RUNBOOKS.md` — release sequencing, rollback, failure diagnosis, session/tenant-isolation incidents, credential rotation, escalation
 - `QUALITY-GATES.md` — PR and pre-pilot gates
 
 Lead ingestion / integrations:

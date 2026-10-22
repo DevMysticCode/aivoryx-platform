@@ -3,8 +3,9 @@ import { appEnvSchema, formatEnvError, logLevelSchema } from './shared.js';
 
 /**
  * SERVER-ONLY environment. Never import this from browser code — it describes
- * secrets (DATABASE_URL, REDIS_URL, SESSION_SECRET, object-storage keys).
- * The web bundle may only read `web-env.ts` (NEXT_PUBLIC_* values).
+ * secrets (DATABASE_URL, REDIS_URL, CONNECTOR_CREDENTIAL_ENCRYPTION_KEY,
+ * object-storage keys). The web bundle may only read `web-env.ts`
+ * (NEXT_PUBLIC_* values).
  */
 export const serverEnvSchema = z
   .object({
@@ -41,9 +42,6 @@ export const serverEnvSchema = z
 
     REDIS_URL: z.string().url().startsWith('redis'),
 
-    SESSION_SECRET: z
-      .string()
-      .min(32, 'SESSION_SECRET must be at least 32 characters of random data'),
     SESSION_COOKIE_NAME: z.string().min(1).default('aivoryx_session'),
     /** Absolute session lifetime — enforced server-side against `sessions.expires_at`. */
     SESSION_ABSOLUTE_TTL_HOURS: z.coerce
@@ -68,6 +66,17 @@ export const serverEnvSchema = z
       .optional()
       .transform((v) => (v === undefined ? undefined : v === 'true')),
     SESSION_COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+
+    /**
+     * Login brute-force throttling (Production Operations & Customer Launch
+     * Readiness milestone). Same in-process token-bucket mechanism already
+     * used for inbound webhooks (`WEBHOOK_RATE_LIMIT_*`), keyed by the
+     * attempted email — not IP, for the same reason webhook limiting isn't
+     * IP-keyed: there is no trusted-proxy configuration, so behind
+     * Render/Vercel every caller shares one proxy IP.
+     */
+    LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(10),
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(1).max(3600).default(60),
 
     // Argon2id parameters (ADR 0010 / 0028). OWASP-aligned defaults; a change
     // triggers transparent rehash-on-login.
@@ -177,8 +186,7 @@ export const serverEnvSchema = z
      * AES-256-GCM key (64 hex chars = 32 bytes) for recoverable connector credentials (UC-3, ADR
      * 0051) — a Meta access token, app secret, etc. that must be read back in plaintext to call the
      * provider's API, unlike `lead_sources.secret_hash`, which is one-way by design. The default is
-     * an obviously-placeholder value, flagged below exactly like SESSION_SECRET if left unchanged in
-     * production.
+     * an obviously-placeholder value, flagged below if left unchanged in production.
      */
     CONNECTOR_CREDENTIAL_ENCRYPTION_KEY: z
       .string()
@@ -186,13 +194,6 @@ export const serverEnvSchema = z
       .default('00'.repeat(32)),
   })
   .superRefine((env, ctx) => {
-    if (env.APP_ENV === 'production' && env.SESSION_SECRET.includes('change-me')) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['SESSION_SECRET'],
-        message: 'SESSION_SECRET is still the placeholder value in a production environment',
-      });
-    }
     if (
       env.APP_ENV === 'production' &&
       env.CONNECTOR_CREDENTIAL_ENCRYPTION_KEY === '00'.repeat(32)

@@ -6,10 +6,14 @@ import type { ServerEnv } from '@aivoryx/config';
 import { SERVER_ENV } from '../config/config.module.js';
 import type { SecurityMembership } from '../security/security-context.js';
 import { AuditService } from '../audit/audit.service.js';
+import type { RateLimiter } from '../integrations/rate-limiter.js';
 import { PasswordService } from './password.service.js';
 import { SessionService } from './session.service.js';
 
 const { tenants, userTenantMemberships, users } = schema;
+
+/** DI token for the login brute-force rate limiter (keyed by attempted email). */
+export const AUTH_LOGIN_RATE_LIMITER = Symbol('AUTH_LOGIN_RATE_LIMITER');
 
 // A well-formed Argon2id hash of a random value. `login` verifies against this
 // when the email is unknown so the response time does not reveal account
@@ -44,6 +48,7 @@ export class AuthService {
     private readonly passwords: PasswordService,
     private readonly sessions: SessionService,
     private readonly audit: AuditService,
+    @Inject(AUTH_LOGIN_RATE_LIMITER) private readonly loginRateLimiter: RateLimiter,
   ) {}
 
   /**
@@ -89,6 +94,31 @@ export class AuthService {
     userAgent?: string | null;
   }): Promise<LoginResult> {
     const emailNormalized = input.email.trim().toLowerCase();
+
+    // Brute-force throttling (per attempted email, not IP — no trusted-proxy config means
+    // every caller shares one proxy IP behind Render/Vercel, confirmed in audit.ts's own
+    // request-context note; an IP-keyed layer today would either throttle every tenant
+    // together or be trivially spoofed via X-Forwarded-For, so it is deliberately not
+    // added until trust-proxy is configured). Before any DB/password-hash work, so a
+    // flood against one email also can't drive up DB load or Argon2id CPU cost.
+    //
+    // Known, accepted tradeoff: because the key is the attacker-supplied email, anyone
+    // who knows a victim's address can keep that victim's bucket empty indefinitely (one
+    // request every windowSeconds/capacity seconds refills it to exactly empty forever),
+    // denying that one account service without touching any other. This is the standard
+    // tradeoff of account-keyed throttling (the alternative — no throttling at all — is
+    // worse: unlimited credential-stuffing against every account). Bounded in severity:
+    // it never locks the account beyond the rolling window, affects only the targeted
+    // email, and is immaterial here because the throttle is for anti-automation, not the
+    // account's sole defense (Argon2id + a 256-bit session token are what should resist a
+    // one-off attacker who already knows an address).
+    const decision = this.loginRateLimiter.consume(`login:${emailNormalized}`);
+    if (!decision.allowed) {
+      throw new AppError('RATE_LIMITED', {
+        message: 'Too many login attempts for this account. Retry after the indicated delay.',
+        details: { retryAfterSeconds: decision.retryAfterSeconds, limit: decision.limit },
+      });
+    }
 
     const user = await withAppTransaction(getDb(), async (tx) => {
       const [candidate] = await tx

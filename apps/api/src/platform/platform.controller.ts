@@ -16,12 +16,15 @@ import { PlatformAdmin, Security } from '../security/security.decorators.js';
 import type { SecurityContext } from '../security/security-context.js';
 import { PlatformService } from './platform.service.js';
 import { TenantProvisioningService } from './tenant-provisioning.service.js';
+import { PlatformAuditService } from '../audit/platform-audit.service.js';
 import {
   ApiErrorDto,
   CreateTenantRequestDto,
   CreateTenantResponseDto,
+  ListPlatformAuditLogsQueryDto,
   ListPlatformTenantsQueryDto,
   PlanDto,
+  PlatformAuditLogListResponseDto,
   PlatformModuleCatalogueDto,
   PlatformOverviewDto,
   PlatformTenantDetailDto,
@@ -47,6 +50,7 @@ export class PlatformController {
   constructor(
     private readonly platform: PlatformService,
     private readonly provisioning: TenantProvisioningService,
+    private readonly platformAudit: PlatformAuditService,
   ) {}
 
   @Get('overview')
@@ -315,5 +319,22 @@ export class PlatformController {
     @Param('tenantId') tenantId: string,
   ): Promise<TenantUsageDto> {
     return this.platform.usage(ctx.user.id, tenantId);
+  }
+
+  @Get('audit')
+  @PlatformAdmin()
+  @ApiOperation({
+    operationId: 'listPlatformAuditLogs',
+    summary:
+      'Platform-level (no-tenant) audit events — e.g. Aivoryx white-label branding changes. ' +
+      'Separate from /admin/audit, which is tenant-scoped and audit.read-gated; this route is ' +
+      'platform-admin-only and a tenant user can never reach it.',
+  })
+  @ApiOkResponse({ type: PlatformAuditLogListResponseDto })
+  listAuditLogs(
+    @Security() ctx: SecurityContext,
+    @Query() query: ListPlatformAuditLogsQueryDto,
+  ): Promise<PlatformAuditLogListResponseDto> {
+    return this.platformAudit.list(ctx.user.id, { page: query.page, pageSize: query.pageSize });
   }
 }
