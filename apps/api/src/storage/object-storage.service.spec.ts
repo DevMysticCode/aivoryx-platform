@@ -42,7 +42,6 @@ describe('LocalFilesystemObjectStorageService', () => {
     const env = parseServerEnv({
       DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/aivoryx',
       REDIS_URL: 'redis://localhost:6379',
-      SESSION_SECRET: 'x'.repeat(40),
       OBJECT_STORAGE_LOCAL_DIR: dir,
     } as NodeJS.ProcessEnv);
     const { LocalFilesystemObjectStorageService } = await import('./object-storage.service.js');

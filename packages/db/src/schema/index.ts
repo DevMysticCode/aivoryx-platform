@@ -353,6 +353,9 @@ export {
   auditLogs,
   type AuditLogRow,
   type NewAuditLogRow,
+  platformAuditLogs,
+  type PlatformAuditLogRow,
+  type NewPlatformAuditLogRow,
 } from './audit.js';
 
 // Phase 12 — HR & Workforce Management (ADR 0041).

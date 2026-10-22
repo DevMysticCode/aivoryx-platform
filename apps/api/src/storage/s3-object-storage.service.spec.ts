@@ -28,7 +28,6 @@ function s3Env() {
   return parseServerEnv({
     DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/aivoryx',
     REDIS_URL: 'redis://localhost:6379',
-    SESSION_SECRET: 'x'.repeat(40),
     OBJECT_STORAGE_PROVIDER: 's3',
     OBJECT_STORAGE_ENDPOINT: 'https://abc123.r2.cloudflarestorage.com',
     OBJECT_STORAGE_BUCKET: 'aivoryx-test',

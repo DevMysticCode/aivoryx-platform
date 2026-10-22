@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
+import type { ServerEnv } from '@aivoryx/config';
+import { TokenBucketRateLimiter } from '../integrations/rate-limiter.js';
+import { SERVER_ENV } from '../config/config.module.js';
 import { SettingsModule } from '../settings/settings.module.js';
 import { AuthController } from './auth.controller.js';
-import { AuthService } from './auth.service.js';
+import { AuthService, AUTH_LOGIN_RATE_LIMITER } from './auth.service.js';
 import { PasswordService } from './password.service.js';
 import { RbacService } from './rbac.service.js';
 import { SessionService } from './session.service.js';
@@ -15,7 +18,23 @@ import { SessionService } from './session.service.js';
 @Module({
   imports: [SettingsModule],
   controllers: [AuthController],
-  providers: [PasswordService, SessionService, RbacService, AuthService],
+  providers: [
+    PasswordService,
+    SessionService,
+    RbacService,
+    AuthService,
+    {
+      // In-process token bucket behind the same `RateLimiter` interface the webhook
+      // ingestion path already uses — reused, not reimplemented.
+      provide: AUTH_LOGIN_RATE_LIMITER,
+      inject: [SERVER_ENV],
+      useFactory: (env: ServerEnv) =>
+        new TokenBucketRateLimiter({
+          capacity: env.LOGIN_RATE_LIMIT_MAX,
+          windowSeconds: env.LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+        }),
+    },
+  ],
   exports: [PasswordService, SessionService, RbacService, AuthService],
 })
 export class AuthModule {}

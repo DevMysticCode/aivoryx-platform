@@ -91,6 +91,41 @@ export class PlatformTenantListResponseDto {
   @ApiProperty() pageSize!: number;
 }
 
+export class ListPlatformAuditLogsQueryDto {
+  @ApiProperty({ required: false, default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiProperty({ required: false, default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
+}
+
+export class PlatformAuditLogDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty({ nullable: true, type: String, format: 'uuid' }) actorUserId!: string | null;
+  @ApiProperty() action!: string;
+  @ApiProperty() entityType!: string;
+  @ApiProperty({ nullable: true, type: String, format: 'uuid' }) entityId!: string | null;
+  @ApiProperty({ nullable: true, type: String }) correlationId!: string | null;
+  @ApiProperty({ format: 'date-time' }) occurredAt!: string;
+  @ApiProperty({ type: Object }) metadata!: Record<string, unknown>;
+}
+
+export class PlatformAuditLogListResponseDto {
+  @ApiProperty({ type: [PlatformAuditLogDto] }) items!: PlatformAuditLogDto[];
+  @ApiProperty() total!: number;
+  @ApiProperty() page!: number;
+  @ApiProperty() pageSize!: number;
+}
+
 export class PlatformTenantModuleDto {
   @ApiProperty({ example: 'HR' }) key!: string;
   @ApiProperty() displayName!: string;

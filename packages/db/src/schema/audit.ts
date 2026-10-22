@@ -11,7 +11,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { newUuidV7 } from '../id.js';
-import { tenants, userTenantMemberships } from './identity.js';
+import { tenants, userTenantMemberships, users } from './identity.js';
 
 /**
  * Global Audit Log (Phase 11, ADR 0040).
@@ -116,3 +116,49 @@ export const auditLogs = pgTable(
 
 export type AuditLogRow = typeof auditLogs.$inferSelect;
 export type NewAuditLogRow = typeof auditLogs.$inferInsert;
+
+/**
+ * Platform-scoped audit log (Production Operations & Customer Launch
+ * Readiness milestone). `audit_logs` above is deliberately tenant-owned
+ * (`tenant_id NOT NULL`, cascades with the tenant) — a platform-level action
+ * (e.g. Aivoryx's own white-label branding) has no tenant to attribute to,
+ * and retrofitting a nullable `tenant_id` onto the tenant-audit table would
+ * weaken the exact invariant that makes tenant isolation easy to reason
+ * about there. This is a separate, additive, equally append-only table
+ * instead — same immutability convention (see the migration's hand-written
+ * grant/RLS block), same redaction discipline (`sanitizeMetadata`), gated to
+ * platform admins only, both to write and to read.
+ */
+export const platformAuditLogs = pgTable(
+  'platform_audit_logs',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => newUuidV7()),
+    /**
+     * The platform admin who performed the action — nullable only so the row
+     * survives ("a former platform admin did this") if that user is later
+     * deleted; every insert always supplies a real authenticated user id.
+     */
+    actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+    /** stable action key from the central catalogue, e.g. `platform.branding.updated` */
+    action: text('action').notNull(),
+    entityType: text('entity_type').notNull(),
+    entityId: uuid('entity_id'),
+    correlationId: text('correlation_id'),
+    occurredAt: timestamp('occurred_at', { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+    /** safe, intentional key/value context — never secrets, never whole rows */
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+  },
+  (t) => [
+    check('platform_audit_logs_action_format', sql`"action" ~ '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$'`),
+    index('platform_audit_logs_time_idx').on(t.occurredAt.desc()),
+    index('platform_audit_logs_action_time_idx').on(t.action, t.occurredAt.desc()),
+    index('platform_audit_logs_entity_time_idx').on(t.entityType, t.entityId, t.occurredAt.desc()),
+  ],
+);
+
+export type PlatformAuditLogRow = typeof platformAuditLogs.$inferSelect;
+export type NewPlatformAuditLogRow = typeof platformAuditLogs.$inferInsert;

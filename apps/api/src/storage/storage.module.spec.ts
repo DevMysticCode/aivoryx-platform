@@ -7,7 +7,6 @@ import { selectObjectStorageProvider } from './storage.module.js';
 const base = {
   DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/aivoryx',
   REDIS_URL: 'redis://localhost:6379',
-  SESSION_SECRET: 'x'.repeat(40),
 };
 
 describe('selectObjectStorageProvider', () => {

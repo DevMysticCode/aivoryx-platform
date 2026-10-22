@@ -263,8 +263,10 @@ this order:
 
 - The test environment's `.env` (or Render/local env) is populated **only**
   with the throwaway project's own connection strings and a throwaway
-  `CONNECTOR_CREDENTIAL_ENCRYPTION_KEY`/`SESSION_SECRET` — never copied from
-  staging's or production's real values. (Using a _different_ encryption key
+  `CONNECTOR_CREDENTIAL_ENCRYPTION_KEY` — never copied from staging's or
+  production's real values. (`SESSION_SECRET` was removed this milestone —
+  `INCIDENT-RUNBOOKS.md` §6/§8 — and no longer needs configuring here.)
+  (Using a _different_ encryption key
   than the source database's real key means, per §3's finding, that restored
   connector-credential rows will show as present but undecryptable — an
   acceptable, expected limitation for a mechanism test; if credential

@@ -31,8 +31,7 @@ When it is needed, point it at a Cloudflare R2 dev bucket or a local MinIO.
 ```bash
 corepack enable
 pnpm install
-cp .env.example .env          # edit; generate SESSION_SECRET with:
-#   node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+cp .env.example .env          # edit as needed
 docker compose up -d
 pnpm --filter @aivoryx/db db:generate
 pnpm --filter @aivoryx/db db:migrate   # must run before the API — migration 0003 creates the aivoryx_app role

@@ -159,30 +159,41 @@ report rather than guessed at here.
   for this either; it is a direct, reviewed database statement run by someone
   with that access, as an explicit, logged incident action — not a routine
   one.
-- **`SESSION_SECRET` does NOT sign or validate session tokens** — verified by
-  reading `apps/api/src/auth/session-token.ts`: a session token is a 256-bit
-  opaque random value, and the database stores only its SHA-256 hash
-  (`sessions.token_hash`); there is no HMAC or signature involving
-  `SESSION_SECRET` anywhere in the token lifecycle, and the API source has
-  **no code path that reads `SESSION_SECRET` at all** outside the env-schema
-  validation itself (`packages/config/src/server-env.ts` requires it,
-  ≥32 chars, with a production placeholder check — but nothing currently
-  consumes the value). **Rotating it today invalidates nothing.** Document
-  this as a discrepancy worth resolving (either wire it into something, e.g.
-  a future CSRF token or a cookie-signing layer, or remove the requirement if
-  it is genuinely unused) rather than relying on it as an incident-response
-  lever — it is not one.
-- **The actual way to invalidate every session platform-wide** (suspected
-  mass session-store compromise) is a direct, reviewed database statement:
-  `delete from sessions;` — this deletes every row in the one table that is
-  the actual source of truth for session validity (token-hash lookup). There
-  is **no admin API route that does this** as of this writing; it must be run
-  directly against the database by someone with that access, as an explicit,
-  logged incident action, not routinely.
+- **`SESSION_SECRET` has been removed** (this milestone) — it was required by
+  the environment schema but never actually consumed anywhere in the session-
+  token lifecycle (`apps/api/src/auth/session-token.ts`: a session token is a
+  256-bit opaque random value, and the database stores only its SHA-256 hash,
+  `sessions.token_hash`; there was no HMAC or signature involving
+  `SESSION_SECRET` anywhere). A fresh deployment no longer needs to set it; an
+  existing deployment that still has it set in Render/Vercel's env panel is
+  unaffected (the schema simply ignores an unrecognized variable) and can
+  remove it at leisure. It was never a usable incident-response lever —
+  rotating it never invalidated anything, before or after this change.
 - A login that returns a successful (`2xx`) response immediately followed by
   an unauthenticated `401` on the very next request is the documented
   cross-origin-cookie symptom in `DEPLOYMENT.md` §"Same-origin API proxy" —
   check the proxy/CORS configuration before assuming an auth-logic bug.
+- **Credential-stuffing / brute-force containment (added this milestone):**
+  `/auth/login` is throttled per attempted email (`LOGIN_RATE_LIMIT_MAX`/
+  `LOGIN_RATE_LIMIT_WINDOW_SECONDS`, default 10 attempts / 60s — the same
+  in-process token-bucket mechanism already used for inbound webhooks). A
+  spike of `429 RATE_LIMITED` responses on `/auth/login` for one email is the
+  expected, working signal of an attack against that account, not a bug —
+  the account itself is never locked beyond the rolling window, so no manual
+  unlock step exists or is needed. If an attack is spread across many
+  different emails (so per-email throttling doesn't concentrate it), that is
+  a volumetric pattern this in-process limiter cannot see across replicas or
+  stop on its own — treat it as a signal to escalate to whatever sits in
+  front of the API (Render/Cloudflare) rather than something to "fix" here.
+  **The inverse is also a known, accepted tradeoff, not a bug to chase:**
+  because the limiter's key is the attacker-supplied email, anyone who knows
+  one victim's address can keep that single account perpetually throttled
+  (one well-timed request every `windowSeconds/capacity` seconds holds the
+  bucket at empty indefinitely) — a narrow, single-account denial-of-service
+  that never touches any other account and self-heals the moment the
+  attacker stops. If a _specific_ user reports they can never log in, check
+  whether their own bucket is being kept empty by someone else before
+  assuming an application bug.
 
 ## 7. Tenant-isolation or authorization incidents
 
@@ -218,7 +229,7 @@ event, not a normal bug ticket.
 
 | Secret                                               | Where it's set                                | Rotation effect                                                                                                                                      | Rotation procedure                                                                                                                                                                                                                                                                                                                       |
 | ---------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SESSION_SECRET`                                     | Render env var                                | **None** — verified unused by the actual session-token code (§6); rotating it changes nothing about who is logged in                                 | Not a real containment action. To actually end every session, see §6's `delete from sessions;` procedure instead.                                                                                                                                                                                                                        |
+| `SESSION_SECRET` (removed this milestone)            | n/a                                           | **None, ever** — verified unused by the actual session-token code before removal (§6)                                                                | Not a real containment action — this variable no longer exists. To actually end every session, see §6's `update sessions set revoked_at = now() ...` procedure instead.                                                                                                                                                                  |
 | `CONNECTOR_CREDENTIAL_ENCRYPTION_KEY`                | Render env var                                | **Breaks decryption of every already-stored connector credential** — there is no re-encryption/re-keying tool in this codebase as of this writing    | **Do not rotate this casually.** If genuinely compromised: rotating it requires every tenant to re-enter their connector credentials (Meta/Google/IndiaMART/etc. tokens) after the rotation, because the old encrypted values become permanently unreadable. Plan this as a coordinated, communicated event, not a quiet env-var change. |
 | `DATABASE_URL` (password component)                  | Supabase project settings + Render env var    | Any live connection using the old password is dropped by Postgres; the app reconnects automatically (connection pool) once the new value is deployed | Rotate in Supabase first, then update Render's env var and redeploy (or restart) the API. Expect a brief connection-pool reconnect window.                                                                                                                                                                                               |
 | `REDIS_URL` (password component)                     | Upstash project settings + Render env var     | Similar to above; no business-data risk either way (§4 of `BACKUP-RECOVERY.md`)                                                                      | Rotate in Upstash first, then update Render's env var and redeploy/restart.                                                                                                                                                                                                                                                              |
