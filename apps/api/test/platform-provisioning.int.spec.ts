@@ -459,4 +459,87 @@ describe.skipIf(!INTEGRATION_ENABLED)('platform tenant provisioning & lifecycle'
     expect(reactivateArchived.status).toBe(409);
     expect(reactivateArchived.body.error.code).toBe('PLATFORM_TENANT_LIFECYCLE_INVALID');
   });
+
+  it('platform-admin tenant creation and every lifecycle transition are recorded in the audit log, with no invitation token or password in the metadata', async () => {
+    const platformAdminCookie = await platformCookie();
+    const name = `Audited Co ${Date.now()}`;
+    const adminEmail = `audited-${Date.now()}@test.test`;
+    const created = await http
+      .post('/api/v1/platform/tenants')
+      .set('Cookie', platformAdminCookie)
+      .send({
+        name,
+        solutionKey: 'BUSINESS',
+        adminEmail,
+      });
+    expect(created.status).toBe(200);
+    const tenantId = created.body.tenant.id;
+    const token = created.body.invitation.token;
+
+    await http
+      .post('/api/v1/auth/accept-invitation')
+      .send({ token, password: 'Very-Strong-Passw0rd!' });
+
+    // the invited admin's own login resolves straight to this tenant (their only
+    // membership) and TENANT_ADMIN carries audit.read — log in now, while the
+    // tenant is still active, since a suspended/archived tenant blocks every
+    // subsequent authenticated request for its members (not just login)
+    const tenantAdminLogin = await login(adminEmail, 'Very-Strong-Passw0rd!');
+    expect(tenantAdminLogin.status).toBe(201);
+    const tenantAdminCookieValue = sessionCookie(tenantAdminLogin);
+
+    await http
+      .post(`/api/v1/platform/tenants/${tenantId}/suspend`)
+      .set('Cookie', platformAdminCookie)
+      .send({ note: 'routine check' });
+    await http
+      .post(`/api/v1/platform/tenants/${tenantId}/activate`)
+      .set('Cookie', platformAdminCookie)
+      .send({});
+
+    const list = await http
+      .get(`/api/v1/admin/audit?entityType=tenant&entityId=${tenantId}&pageSize=10`)
+      .set('Cookie', tenantAdminCookieValue);
+    expect(list.status).toBe(200);
+    const actions = list.body.items.map((row: { action: string }) => row.action).sort();
+    expect(actions).toEqual(
+      [
+        'platform.tenant.activated', // once from createTenant's own activation
+        'platform.tenant.activated', // once from the explicit re-activate above
+        'platform.tenant.created',
+        'platform.tenant.suspended',
+      ].sort(),
+    );
+
+    // every row is attributed to the SYSTEM platform-admin actor, carries no
+    // invitation token or password anywhere in its metadata, and is tenant-scoped
+    const serialized = JSON.stringify(list.body.items);
+    expect(serialized).not.toContain(token);
+    expect(serialized).not.toContain('Very-Strong-Passw0rd!');
+    for (const row of list.body.items as { actorType: string; entityId: string }[]) {
+      expect(row.actorType).toBe('SYSTEM');
+      expect(row.entityId).toBe(tenantId);
+    }
+
+    // the detail route confirms the full metadata (not just the list projection)
+    // for the creation event is equally free of secrets
+    const createdRow = list.body.items.find(
+      (r: { action: string }) => r.action === 'platform.tenant.created',
+    );
+    const detail = await http
+      .get(`/api/v1/admin/audit/${createdRow.id}`)
+      .set('Cookie', tenantAdminCookieValue);
+    expect(detail.status).toBe(200);
+    expect(JSON.stringify(detail.body)).not.toContain(token);
+    expect(detail.body.metadata).toMatchObject({ solutionKey: 'BUSINESS' });
+
+    // archive last (terminal — would otherwise lock the tenant admin's own
+    // session out of every further request, including this test's own checks)
+    const archive = await http
+      .post(`/api/v1/platform/tenants/${tenantId}/archive`)
+      .set('Cookie', platformAdminCookie)
+      .send({});
+    expect(archive.status).toBe(200);
+    expect(archive.body.status).toBe('archived');
+  });
 });
