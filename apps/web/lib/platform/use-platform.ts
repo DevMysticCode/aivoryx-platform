@@ -12,6 +12,7 @@ export const platformKeys = {
   solutions: ['platform', 'solutions'] as const,
   plans: ['platform', 'plans'] as const,
   usage: (id: string) => ['platform', 'tenant', id, 'usage'] as const,
+  readiness: (id: string) => ['platform', 'tenant', id, 'readiness'] as const,
 };
 
 export function usePlatformOverview() {
@@ -99,6 +100,14 @@ export function useTenantUsage(tenantId: string) {
   return useQuery({
     queryKey: platformKeys.usage(tenantId),
     queryFn: () => api.getTenantUsage(tenantId),
+    enabled: !!tenantId,
+  });
+}
+
+export function useTenantReadiness(tenantId: string) {
+  return useQuery({
+    queryKey: platformKeys.readiness(tenantId),
+    queryFn: () => api.getTenantReadiness(tenantId),
     enabled: !!tenantId,
   });
 }

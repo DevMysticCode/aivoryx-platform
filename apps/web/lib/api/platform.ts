@@ -5,6 +5,7 @@ import type {
   PlatformModuleCatalogue,
   PlatformOverview,
   PlatformTenantDetail,
+  PlatformTenantReadiness,
   PlatformTenantSummary,
   Solution,
   TenantUsage,
@@ -75,3 +76,8 @@ export const archiveTenant = (tenantId: string, note?: string) =>
 
 export const getTenantUsage = (tenantId: string) =>
   apiFetch<TenantUsage>(`/platform/tenants/${tenantId}/usage`, { cache: 'no-store' });
+
+export const getTenantReadiness = (tenantId: string) =>
+  apiFetch<PlatformTenantReadiness>(`/platform/tenants/${tenantId}/readiness`, {
+    cache: 'no-store',
+  });

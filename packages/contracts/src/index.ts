@@ -357,6 +357,8 @@ export type ProvisioningInvitation = components['schemas']['ProvisioningInvitati
 export type SetTenantLifecycleRequest = components['schemas']['SetTenantLifecycleRequestDto'];
 export type TenantUsage = components['schemas']['TenantUsageDto'];
 export type TenantSubscription = components['schemas']['TenantSubscriptionDto'];
+export type PlatformTenantReadinessStep = components['schemas']['PlatformTenantReadinessStepDto'];
+export type PlatformTenantReadiness = components['schemas']['PlatformTenantReadinessDto'];
 
 /** All versioned API routes are served under this prefix (ADR 0005). */
 export const API_V1_PREFIX = '/api/v1';

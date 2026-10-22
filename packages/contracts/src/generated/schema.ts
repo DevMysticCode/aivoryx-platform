@@ -467,6 +467,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/platform/tenants/{tenantId}/readiness': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Onboarding/release-readiness checklist for one workspace — derived from existing data, no separate workflow state. */
+    get: operations['getPlatformTenantReadiness'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/platform/tenants/{tenantId}/usage': {
     parameters: {
       query?: never;
@@ -5651,6 +5668,22 @@ export interface components {
     SetTenantLifecycleRequestDto: {
       note?: string;
     };
+    PlatformTenantReadinessStepDto: {
+      /** @enum {string} */
+      key:
+        | 'tenant_created'
+        | 'company_profile'
+        | 'modules_configured'
+        | 'admin_assigned'
+        | 'access_verified';
+      title: string;
+      done: boolean;
+    };
+    PlatformTenantReadinessDto: {
+      steps: components['schemas']['PlatformTenantReadinessStepDto'][];
+      /** @description True once every step is done. */
+      complete: boolean;
+    };
     TenantUsageDto: {
       members: number;
       leads: number | null;
@@ -10635,6 +10668,43 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['PlatformTenantDetailDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getPlatformTenantReadiness: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlatformTenantReadinessDto'];
         };
       };
       401: {

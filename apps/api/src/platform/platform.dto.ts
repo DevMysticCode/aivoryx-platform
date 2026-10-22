@@ -195,3 +195,30 @@ export class TenantUsageDto {
   @ApiProperty({ nullable: true, type: Number }) employees!: number | null;
   @ApiProperty() enabledModules!: number;
 }
+
+export class PlatformTenantReadinessStepDto {
+  @ApiProperty({
+    enum: [
+      'tenant_created',
+      'company_profile',
+      'modules_configured',
+      'admin_assigned',
+      'access_verified',
+    ],
+  })
+  key!: string;
+
+  @ApiProperty()
+  title!: string;
+
+  @ApiProperty()
+  done!: boolean;
+}
+
+export class PlatformTenantReadinessDto {
+  @ApiProperty({ type: [PlatformTenantReadinessStepDto] })
+  steps!: PlatformTenantReadinessStepDto[];
+
+  @ApiProperty({ description: 'True once every step is done.' })
+  complete!: boolean;
+}

@@ -15,6 +15,7 @@ import {
   usePlatformTenant,
   useSetTenantModule,
   useSuspendTenant,
+  useTenantReadiness,
   useTenantUsage,
 } from '@/lib/platform/use-platform';
 import type { PlatformTenantModule } from '@aivoryx/contracts';
@@ -34,6 +35,7 @@ export default function PlatformTenantDetailPage({
   const { tenantId } = use(params);
   const tenant = usePlatformTenant(tenantId);
   const usage = useTenantUsage(tenantId);
+  const readiness = useTenantReadiness(tenantId);
   const setModule = useSetTenantModule(tenantId);
   const activate = useActivateTenant(tenantId);
   const suspend = useSuspendTenant(tenantId);
@@ -196,6 +198,34 @@ export default function PlatformTenantDetailPage({
               ) : null}
             </section>
           </div>
+
+          <section className="rounded-lg border p-4">
+            <h2 className="text-sm font-semibold">Onboarding</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Derived from this workspace&apos;s own data — there is nothing to mark done by hand.
+            </p>
+            {readiness.isLoading ? (
+              <p className="mt-2 text-sm text-muted-foreground">Loading…</p>
+            ) : readiness.data ? (
+              <ul className="mt-3 space-y-2">
+                {readiness.data.steps.map((s) => (
+                  <li key={s.key} className="flex items-center gap-2 text-sm">
+                    <span
+                      className={cn(
+                        'flex size-5 shrink-0 items-center justify-center rounded-full',
+                        s.done ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      {s.done ? <Check className="size-3.5" aria-hidden /> : null}
+                    </span>
+                    <span className={s.done ? 'text-foreground' : 'text-muted-foreground'}>
+                      {s.title}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
 
           <section className="rounded-lg border">
             <div className="border-b px-4 py-3">

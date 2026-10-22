@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, withUserContext } from '@aivoryx/db';
 import {
   AppError,
@@ -9,12 +9,14 @@ import {
   type TenantStatus,
 } from '@aivoryx/shared';
 import { EntitlementService } from '../entitlements/entitlement.service.js';
+import { CompanyProfileService } from '../settings/company-profile.service.js';
 
 const {
   tenants,
   userTenantMemberships,
   tenantModuleEntitlements,
   tenantSubscriptions,
+  tenantInvitations,
   leads,
   projects,
   invoices,
@@ -72,9 +74,28 @@ export interface PlatformTenantDetail extends PlatformTenantSummary {
  * This service depends only on `@aivoryx/db`, `@aivoryx/shared` and the platform
  * `EntitlementService` — never a business module.
  */
+export interface PlatformTenantReadinessStep {
+  key:
+    | 'tenant_created'
+    | 'company_profile'
+    | 'modules_configured'
+    | 'admin_assigned'
+    | 'access_verified';
+  title: string;
+  done: boolean;
+}
+
+export interface PlatformTenantReadiness {
+  steps: PlatformTenantReadinessStep[];
+  complete: boolean;
+}
+
 @Injectable()
 export class PlatformService {
-  constructor(private readonly entitlements: EntitlementService) {}
+  constructor(
+    private readonly entitlements: EntitlementService,
+    private readonly companyProfiles: CompanyProfileService,
+  ) {}
 
   async listTenants(platformUserId: string): Promise<PlatformTenantSummary[]> {
     return withUserContext(getDb(), platformUserId, async (tx) => {
@@ -246,6 +267,71 @@ export class PlatformService {
         employees: enabled.has('HR') ? (employeeCount?.n ?? 0) : null,
         enabledModules: detail.enabledModuleCount,
       };
+    });
+  }
+
+  /**
+   * Platform-admin-facing onboarding/release-readiness checklist for one workspace (Client
+   * Onboarding & Release Readiness milestone). Entirely DERIVED from data that already exists —
+   * no new table, no workflow engine, same convention `OnboardingService.get()` already uses for
+   * the tenant-side checklist. This is the platform admin's own view of the same underlying
+   * facts: has the invited admin accepted, is the company profile filled in, etc. — information
+   * the tenant list/detail views don't currently surface at all.
+   */
+  async readiness(platformUserId: string, tenantId: string): Promise<PlatformTenantReadiness> {
+    // ensure the tenant exists / is visible to this platform admin, and get its module state
+    const detail = await this.getTenant(platformUserId, tenantId);
+
+    return withTenantContext(getDb(), { tenantId, userId: platformUserId }, async (tx) => {
+      // Same definition of "company profile completed" as the tenant's own onboarding
+      // checklist (`OnboardingService`) — display name, an address, and an email or phone.
+      const profile = await this.companyProfiles.loadProfile(tx, tenantId);
+      const profileDone = !!(
+        profile?.displayName?.trim() &&
+        profile.addressLine?.trim() &&
+        (profile.email?.trim() || profile.phone?.trim())
+      );
+
+      // The only way a membership is created today is via invitation (see InvitationService) —
+      // the very first one, created in the same request as tenant creation, is the admin invite.
+      const [invitationRow] = await tx
+        .select({ status: tenantInvitations.status })
+        .from(tenantInvitations)
+        .where(eq(tenantInvitations.tenantId, tenantId))
+        .orderBy(tenantInvitations.createdAt)
+        .limit(1);
+
+      const [activeMemberRow] = await tx
+        .select({ n: sql<number>`count(*)::int` })
+        .from(userTenantMemberships)
+        .where(
+          and(
+            eq(userTenantMemberships.tenantId, tenantId),
+            eq(userTenantMemberships.status, 'active'),
+          ),
+        );
+
+      const steps: PlatformTenantReadinessStep[] = [
+        { key: 'tenant_created', title: 'Tenant created', done: true },
+        { key: 'company_profile', title: 'Company profile completed', done: profileDone },
+        {
+          key: 'modules_configured',
+          title: 'Modules configured',
+          done: detail.enabledModuleCount > 0,
+        },
+        {
+          key: 'admin_assigned',
+          title: 'Initial tenant administrator assigned',
+          done: !!invitationRow,
+        },
+        {
+          key: 'access_verified',
+          title: 'Initial access verified',
+          done: (activeMemberRow?.n ?? 0) > 0,
+        },
+      ];
+
+      return { steps, complete: steps.every((s) => s.done) };
     });
   }
 
