@@ -286,7 +286,12 @@ export class VisitsService {
 
   async assign(scope: TenantScope, visitId: string, membershipId: string): Promise<VisitView> {
     await withTenantContext(getDb(), scope, async (tx) => {
-      const current = await this.requireVisit(tx, scope.tenantId, visitId);
+      // Locked: a concurrent check-in moves status SCHEDULED/ASSIGNED →
+      // IN_PROGRESS without touching assignedMembershipId, so an unlocked read
+      // here could compute `nextStatus` from a status that is about to be
+      // superseded, and the later unconditional UPDATE would then overwrite
+      // that newer status back to ASSIGNED — reverting an in-progress visit.
+      const current = await this.requireVisit(tx, scope.tenantId, visitId, true);
       if (!canReassignOrReschedule(current.status)) {
         throw new AppError('VISIT_INVALID_TRANSITION', {
           details: { from: current.status, action: 'assign' },
@@ -300,7 +305,13 @@ export class VisitsService {
       await tx
         .update(visits)
         .set({ assignedMembershipId: membershipId, status: nextStatus, updatedAt: new Date() })
-        .where(and(eq(visits.id, visitId), eq(visits.tenantId, scope.tenantId)));
+        .where(
+          and(
+            eq(visits.id, visitId),
+            eq(visits.tenantId, scope.tenantId),
+            eq(visits.status, current.status),
+          ),
+        );
 
       await recordVisitActivity(tx, {
         tenantId: scope.tenantId,
@@ -435,10 +446,25 @@ export class VisitsService {
             eq(visits.tenantId, scope.tenantId),
             eq(visits.status, 'ASSIGNED'),
             isNull(visits.checkInAt),
+            // Re-checked here, not just on the pre-read `current` above: a
+            // concurrent reassignment could commit between that read and this
+            // write, and status alone doesn't change on reassignment — without
+            // this, the just-displaced agent's in-flight check-in would still
+            // match and silently succeed on a visit no longer theirs.
+            eq(visits.assignedMembershipId, scope.actorMembershipId),
           ),
         )
         .returning({ id: visits.id });
-      if (!row) return; // lost the race to a concurrent duplicate request — idempotent no-op
+      if (!row) {
+        // Lost the race — but to what? A concurrent duplicate from the same
+        // agent is a harmless idempotent no-op; a concurrent reassignment away
+        // from this agent must surface as a real authorization failure.
+        const fresh = await this.requireVisit(tx, scope.tenantId, visitId);
+        if (fresh.assignedMembershipId !== scope.actorMembershipId) {
+          throw new AppError('VISIT_NOT_ASSIGNED_TO_YOU');
+        }
+        return;
+      }
 
       await recordVisitActivity(tx, {
         tenantId: scope.tenantId,
@@ -509,10 +535,19 @@ export class VisitsService {
             eq(visits.tenantId, scope.tenantId),
             eq(visits.status, 'IN_PROGRESS'),
             isNull(visits.checkOutAt),
+            // see the matching comment in checkIn — a concurrent reassignment
+            // mid-visit must not let the displaced agent still check out.
+            eq(visits.assignedMembershipId, scope.actorMembershipId),
           ),
         )
         .returning({ id: visits.id });
-      if (!row) return; // lost the race — idempotent no-op
+      if (!row) {
+        const fresh = await this.requireVisit(tx, scope.tenantId, visitId);
+        if (fresh.assignedMembershipId !== scope.actorMembershipId) {
+          throw new AppError('VISIT_NOT_ASSIGNED_TO_YOU');
+        }
+        return; // lost the race to a concurrent duplicate request — idempotent no-op
+      }
 
       await recordVisitActivity(tx, {
         tenantId: scope.tenantId,
@@ -749,10 +784,19 @@ export class VisitsService {
     }
   }
 
+  /**
+   * `forUpdate: true` locks the row for the rest of this transaction — used
+   * only by mutations whose later write doesn't itself re-check every column
+   * it decided on from this read (e.g. `assign` computing `nextStatus` from
+   * `current.status`). A plain read (every GET, and the check-in/check-out
+   * mutations whose final `UPDATE ... WHERE` already re-verifies the columns
+   * it cares about) must stay unlocked.
+   */
   private async requireVisit(
     tx: Tx,
     tenantId: string,
     visitId: string,
+    forUpdate = false,
   ): Promise<{
     status: VisitStatus;
     leadId: string;
@@ -764,7 +808,7 @@ export class VisitsService {
     siteLat: number | null;
     siteLng: number | null;
   }> {
-    const [row] = await tx
+    const query = tx
       .select({
         status: visits.status,
         leadId: visits.leadId,
@@ -777,8 +821,8 @@ export class VisitsService {
         siteLng: visits.siteLng,
       })
       .from(visits)
-      .where(and(eq(visits.id, visitId), eq(visits.tenantId, tenantId)))
-      .limit(1);
+      .where(and(eq(visits.id, visitId), eq(visits.tenantId, tenantId)));
+    const [row] = forUpdate ? await query.for('update').limit(1) : await query.limit(1);
     if (!row) throw new AppError('VISIT_NOT_FOUND');
     return {
       ...row,

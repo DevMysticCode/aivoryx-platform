@@ -167,8 +167,12 @@ test.describe('platform tenant provisioning', () => {
     // searching narrows the list to exactly the two tenants just created —
     // proving the search runs server-side, not against a client-cached page
     await page.getByPlaceholder('Search companies…').fill(prefix);
-    await expect(page.getByText(`${prefix} Alpha`)).toBeVisible();
-    await expect(page.getByText(`${prefix} Bravo`)).toBeVisible();
+    // scoped to the desktop table: the page also renders a mobile card list with
+    // the identical tenant name in the DOM (shown/hidden by viewport via CSS, not
+    // by removal), so an unscoped text query is ambiguous at any viewport width
+    const table = page.locator('table');
+    await expect(table.getByText(`${prefix} Alpha`)).toBeVisible();
+    await expect(table.getByText(`${prefix} Bravo`)).toBeVisible();
     await expect(page.getByRole('row')).toHaveCount(3); // header + 2 matches
 
     // a status filter that excludes every match: the search is still applied,

@@ -65,11 +65,14 @@ test.describe('HR Core (Phase 17)', () => {
     await page.getByLabel('Joining date').fill('2030-02-01');
     await page.getByLabel('Employment start').selectOption('ONBOARDING');
 
-    // reporting manager: server-searched combobox, not a page-limited <select>
+    // reporting manager: server-searched combobox, not a page-limited <select>. A visible
+    // "Vikram Singh" option does not by itself prove the debounced search has narrowed to it —
+    // the unfiltered default list can also contain it — so click the option directly rather
+    // than press Enter (which selects whatever index is highlighted, and can momentarily still
+    // be the default list's first entry while the debounced query is still in flight).
     const manager = page.getByRole('combobox', { name: 'Reporting manager' });
     await manager.fill('Vikram');
-    await expect(page.getByRole('option', { name: /Vikram Singh/ })).toBeVisible();
-    await manager.press('Enter');
+    await page.getByRole('option', { name: /Vikram Singh/ }).click();
     await expect(page.getByTestId('manager-selected')).toHaveText('Vikram Singh');
 
     await page.getByRole('button', { name: 'Create employee' }).click();

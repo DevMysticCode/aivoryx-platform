@@ -65,6 +65,28 @@ export interface CreateTenantResult {
   invitation: { membershipId: string; invitationId: string; token: string; expiresAt: string };
 }
 
+export interface ResumeProvisioningInput {
+  platformUserId: string;
+  tenantId: string;
+  /** required only if `provisionTenantAdmin` never ran for this tenant yet */
+  moduleKeys: string[];
+  /** required only if no subscription was created for this tenant yet */
+  planKey?: string;
+  adminEmail: string;
+  adminName?: string;
+}
+
+export interface ResumeProvisioningResult {
+  tenant: PlatformTenantDetail;
+  /** null when the admin had already accepted a prior invitation — nothing left to issue */
+  invitation: {
+    membershipId: string;
+    invitationId: string;
+    token: string;
+    expiresAt: string;
+  } | null;
+}
+
 /**
  * Platform-admin tenant provisioning (Phase 14 §15-19) — the only place a
  * tenant is created outside a seed script. Deliberately depends on nothing
@@ -82,6 +104,9 @@ export interface CreateTenantResult {
  * `docs/architecture/PRODUCT-UX.md` Phase 14 for the documented limitation
  * and the idempotency mechanism (deterministic slug + its unique constraint)
  * that makes a retried identical request fail closed rather than duplicate.
+ * A partial failure AFTER the tenant row itself commits (so `createTenant`
+ * can no longer be retried — it would fail on the slug) is recovered via
+ * `resumeProvisioning`, not by making this one transaction.
  */
 @Injectable()
 export class TenantProvisioningService {
@@ -204,6 +229,117 @@ export class TenantProvisioningService {
         expiresAt: invitation.expiresAt,
       },
     };
+  }
+
+  /**
+   * Finish a tenant that got stuck mid-`createTenant` (Phase 14 §15 reliability
+   * gap, Tenant Onboarding & Entitlement Completion milestone): the tenant row
+   * itself can only ever be inserted once (deterministic-slug idempotency,
+   * see `createTenant`'s own comment), so a failure in any step AFTER that
+   * insert — module/role provisioning, the subscription, the admin invitation,
+   * or the final activation — left the tenant stuck in `provisioning` with no
+   * way to retry via `createTenant` again (it would just fail closed on the
+   * slug). Every individual step reused here (`provisionTenantAdmin`, the
+   * subscription insert, `InvitationService.create`, `setLifecycle`) is
+   * already idempotent on its own; this method simply re-drives them in order
+   * for one specific tenant instead of repeating the tenant-row insert, so
+   * calling it twice in a row — or calling it after some steps already
+   * succeeded — never duplicates a role, a subscription, or an invitation.
+   */
+  async resumeProvisioning(input: ResumeProvisioningInput): Promise<ResumeProvisioningResult> {
+    const tenant = await this.platform.getTenant(input.platformUserId, input.tenantId);
+    if (tenant.status !== 'provisioning') {
+      throw new AppError('PLATFORM_TENANT_NOT_STUCK', {
+        details: { tenantId: input.tenantId, status: tenant.status },
+      });
+    }
+
+    const moduleKeys = input.moduleKeys as ModuleKey[];
+    if (moduleKeys.length === 0 || !moduleKeys.every(isModuleKey)) {
+      throw new AppError('PLATFORM_TENANT_INVALID_MODULES', { details: { moduleKeys } });
+    }
+    const moduleCheck = validateModuleSet(moduleKeys);
+    if (!moduleCheck.ok) {
+      throw new AppError('PLATFORM_TENANT_INVALID_MODULES', {
+        details: { unmet: moduleCheck.unmet },
+      });
+    }
+
+    const resolvedPlanKey = (input.planKey ?? tenant.subscription?.planKey) as PlanKey | undefined;
+    if (!resolvedPlanKey) {
+      throw new AppError('VALIDATION_ERROR', { details: { field: 'planKey' } });
+    }
+    if (!isPlanKey(resolvedPlanKey)) {
+      throw new AppError('PLATFORM_UNKNOWN_PLAN', { details: { plan: resolvedPlanKey } });
+    }
+    getPlan(resolvedPlanKey); // throws if somehow inconsistent
+
+    await provisionTenantAdmin(getDb(), {
+      tenantId: input.tenantId,
+      actingUserId: input.platformUserId,
+      moduleKeys,
+    });
+
+    if (!tenant.subscription) {
+      await withTenantContext(
+        getDb(),
+        { tenantId: input.tenantId, userId: input.platformUserId },
+        async (tx: Tx) => {
+          const inserted = await tx
+            .insert(tenantSubscriptions)
+            .values({ tenantId: input.tenantId, planKey: resolvedPlanKey, status: 'active' })
+            .onConflictDoNothing()
+            .returning({ id: tenantSubscriptions.id });
+          if (inserted.length > 0) {
+            await this.audit.record(tx, {
+              tenantId: input.tenantId,
+              action: 'platform.tenant.created',
+              entityType: 'tenant',
+              entityId: input.tenantId,
+              actor: { type: 'SYSTEM', source: 'platform-admin' },
+              metadata: {
+                platformUserId: input.platformUserId,
+                planKey: resolvedPlanKey,
+                moduleKeys,
+                resumed: true,
+              },
+            });
+          }
+        },
+      );
+    }
+
+    let invitation: ResumeProvisioningResult['invitation'] = null;
+    try {
+      const created = await this.invitations.create({
+        tenantId: input.tenantId,
+        actingUserId: input.platformUserId,
+        actor: { type: 'SYSTEM', source: 'platform-admin' },
+        email: input.adminEmail,
+        name: input.adminName,
+        roleKeys: [PLATFORM_ROLE_KEYS.tenantAdmin],
+      });
+      invitation = {
+        membershipId: created.membershipId,
+        invitationId: created.invitationId,
+        token: created.token,
+        expiresAt: created.expiresAt,
+      };
+    } catch (err) {
+      // The intended admin already accepted a prior invitation (possible if a
+      // retry races an in-flight acceptance) — nothing left to issue, and
+      // re-throwing would block the one remaining step (activation).
+      if (!(err instanceof AppError && err.code === 'MEMBER_ALREADY_EXISTS')) throw err;
+    }
+
+    await this.setLifecycle({
+      platformUserId: input.platformUserId,
+      tenantId: input.tenantId,
+      to: 'active',
+    });
+
+    const result = await this.platform.getTenant(input.platformUserId, input.tenantId);
+    return { tenant: result, invitation };
   }
 
   /** Move a tenant to a new lifecycle status (Phase 14 §14, §34, §35). */

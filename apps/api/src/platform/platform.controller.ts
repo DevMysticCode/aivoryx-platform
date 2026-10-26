@@ -30,6 +30,8 @@ import {
   PlatformTenantDetailDto,
   PlatformTenantListResponseDto,
   PlatformTenantReadinessDto,
+  ResumeProvisioningRequestDto,
+  ResumeProvisioningResponseDto,
   SetTenantLifecycleRequestDto,
   SetTenantModuleRequestDto,
   SolutionDto,
@@ -221,6 +223,31 @@ export class PlatformController {
       timezone: body.timezone,
       currency: body.currency,
       solutionKey: body.solutionKey,
+      moduleKeys: body.moduleKeys,
+      planKey: body.planKey,
+      adminEmail: body.adminEmail,
+      adminName: body.adminName,
+    });
+  }
+
+  @Post('tenants/:tenantId/resume-provisioning')
+  @HttpCode(200)
+  @PlatformAdmin()
+  @ApiOperation({
+    operationId: 'resumePlatformTenantProvisioning',
+    summary:
+      'Finish a workspace stuck in `provisioning` after a partial createTenant failure. ' +
+      'Safe to call repeatedly — every step re-driven here is idempotent.',
+  })
+  @ApiOkResponse({ type: ResumeProvisioningResponseDto })
+  resumeProvisioning(
+    @Security() ctx: SecurityContext,
+    @Param('tenantId') tenantId: string,
+    @Body() body: ResumeProvisioningRequestDto,
+  ): Promise<ResumeProvisioningResponseDto> {
+    return this.provisioning.resumeProvisioning({
+      platformUserId: ctx.user.id,
+      tenantId,
       moduleKeys: body.moduleKeys,
       planKey: body.planKey,
       adminEmail: body.adminEmail,

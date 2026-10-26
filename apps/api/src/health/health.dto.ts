@@ -27,6 +27,30 @@ export class HealthChecksDto {
   redis!: DependencyHealthDto;
 }
 
+export class QueueJobCountsDto {
+  @ApiProperty() waiting!: number;
+  @ApiProperty() active!: number;
+  @ApiProperty() failed!: number;
+  @ApiProperty() delayed!: number;
+}
+
+export class QueueHealthDto {
+  @ApiProperty({
+    enum: ['ok', 'error', 'disabled'],
+    description: "'disabled' is a normal, intentional state — never a failure.",
+  })
+  status!: 'ok' | 'error' | 'disabled';
+
+  @ApiProperty({ example: 12 })
+  latencyMs!: number;
+
+  @ApiProperty({ nullable: true, type: QueueJobCountsDto })
+  counts!: QueueJobCountsDto | null;
+
+  @ApiProperty({ required: false, nullable: true, type: String })
+  detail?: string | null;
+}
+
 export class HealthReportDto {
   @ApiProperty({ enum: ['ok', 'error'] })
   status!: 'ok' | 'error';
@@ -36,4 +60,12 @@ export class HealthReportDto {
 
   @ApiProperty({ type: HealthChecksDto })
   checks!: HealthChecksDto;
+
+  @ApiProperty({
+    type: QueueHealthDto,
+    description:
+      'Informational only — never part of `status`. A backlog here never means the ' +
+      'API cannot serve traffic.',
+  })
+  queue!: QueueHealthDto;
 }

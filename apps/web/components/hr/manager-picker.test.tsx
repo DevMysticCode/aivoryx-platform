@@ -82,6 +82,31 @@ describe('ManagerPicker', () => {
     expect(screen.getByText('No matches')).toBeTruthy();
   });
 
+  it('resets the highlighted option when the debounced search results arrive, so Enter never commits a stale index into the new list', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <ManagerPicker label="Reporting manager" value={null} onChange={onChange} />,
+    );
+    const box = screen.getByRole('combobox');
+    fireEvent.focus(box);
+    // highlight the 3rd item of the INITIAL (pre-search) list
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    expect(screen.getAllByRole('option')[2]!.getAttribute('aria-selected')).toBe('true');
+
+    // the debounced search now resolves with a DIFFERENT, shorter result set — arriving on its
+    // own render, with no keystroke in between to trigger the keystroke-driven reset
+    useEmployees.mockReturnValue({
+      data: { items: [{ id: 'e2', displayName: 'Vikram Singh', employeeNumber: 'EMP-000002' }] },
+      isLoading: false,
+      error: null,
+    });
+    rerender(<ManagerPicker label="Reporting manager" value={null} onChange={onChange} />);
+
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith({ id: 'e2', name: 'Vikram Singh' });
+  });
+
   it('shows the chosen manager with a clear button that resets the value', () => {
     const onChange = vi.fn();
     render(

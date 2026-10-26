@@ -9,6 +9,7 @@ export {
   users,
   userTenantMemberships,
   sessions,
+  passwordResetTokens,
   type TenantRow,
   type NewTenantRow,
   type UserRow,
@@ -17,6 +18,8 @@ export {
   type NewUserTenantMembershipRow,
   type SessionRow,
   type NewSessionRow,
+  type PasswordResetTokenRow,
+  type NewPasswordResetTokenRow,
 } from './identity.js';
 
 export {

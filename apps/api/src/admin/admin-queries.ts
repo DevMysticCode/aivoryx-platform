@@ -36,9 +36,37 @@ export async function findRoleByKey(
 }
 
 /**
+ * Serialize every "last usable TENANT_ADMIN" check-then-act for one tenant
+ * (suspend, remove, and TENANT_ADMIN role removal all call this first).
+ *
+ * The count this guards (`countUsableTenantAdmins`) joins across
+ * `user_tenant_memberships` AND `membership_roles`, but the three operations
+ * it protects mutate different tables (a status column vs. a role-assignment
+ * row) — a plain row lock on one candidate table doesn't serialize two
+ * transactions whose final writes land in different places. Two concurrent
+ * requests (e.g. suspend one admin while stripping the role from the other)
+ * could each read "2 active admins" from a pre-commit snapshot and both
+ * proceed — a real, reproduced TOCTOU race that stranded a tenant with zero
+ * active admins. A transaction-scoped Postgres advisory lock, keyed by
+ * tenant, fully serializes the check for this invariant specifically,
+ * regardless of which table the eventual mutation touches, and is
+ * automatically released at COMMIT/ROLLBACK — no separate unlock call needed.
+ * A fixed namespace key keeps this lock's keyspace separate from any other
+ * advisory lock use elsewhere in the codebase.
+ */
+const LAST_ADMIN_GUARD_LOCK_NAMESPACE = 1_830_401_227; // hashtext('aivoryx.last_admin_guard')
+
+export async function lockLastAdminGuard(tx: Tx, tenantId: string): Promise<void> {
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(${LAST_ADMIN_GUARD_LOCK_NAMESPACE}, hashtext(${tenantId}))`,
+  );
+}
+
+/**
  * How many memberships in this tenant are BOTH `active` AND hold the
  * `TENANT_ADMIN` role — optionally excluding one membership (the one about to
- * change). Used to protect the last usable administrator.
+ * change). Used to protect the last usable administrator. Callers must hold
+ * `lockLastAdminGuard(tx, tenantId)` first for this count to be race-safe.
  */
 export async function countUsableTenantAdmins(
   tx: Tx,

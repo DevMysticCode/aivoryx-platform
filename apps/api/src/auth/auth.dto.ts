@@ -23,6 +23,27 @@ export class SwitchTenantRequestDto {
   membershipId!: string;
 }
 
+export class RequestPasswordResetDto {
+  @ApiProperty({ format: 'email', example: 'admin@acme.test' })
+  @IsEmail()
+  @MaxLength(320)
+  email!: string;
+}
+
+export class ConfirmPasswordResetDto {
+  @ApiProperty({ description: 'The one-time token from the reset email link.' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(512)
+  token!: string;
+
+  @ApiProperty({ minLength: 8, maxLength: 200 })
+  @IsString()
+  @MinLength(8)
+  @MaxLength(200)
+  newPassword!: string;
+}
+
 // ---- shared response shapes --------------------------------------------
 
 export class MembershipSummaryDto {
@@ -173,6 +194,21 @@ export class LoginResponseDto extends MeResponseDto {
 export class SwitchTenantResponseDto extends MeResponseDto {}
 
 export class LogoutResponseDto {
+  @ApiProperty({ example: true })
+  ok!: true;
+}
+
+export class RequestPasswordResetResponseDto {
+  @ApiProperty({
+    example: true,
+    description:
+      'Always true, whether or not the email belongs to an account — the response never ' +
+      'discloses account existence. If an account exists, a reset email was sent.',
+  })
+  ok!: true;
+}
+
+export class ConfirmPasswordResetResponseDto {
   @ApiProperty({ example: true })
   ok!: true;
 }

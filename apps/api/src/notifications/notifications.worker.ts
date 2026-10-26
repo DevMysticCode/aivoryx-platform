@@ -81,6 +81,19 @@ export class NotificationsWorker implements OnApplicationBootstrap, OnApplicatio
     this.worker.on('failed', (job, err) => {
       this.logger.warn(`job ${job?.name} ${job?.id} failed: ${err.message}`);
     });
+    // Previously invisible: a stalled job (processor didn't renew its lock in time —
+    // usually a hung job or a worker that died mid-job) was silently requeued by BullMQ
+    // with no log line at all. Visible now so a recurring stall (vs. one-off) is
+    // diagnosable instead of looking identical to a normal retry.
+    this.worker.on('stalled', (jobId) => {
+      this.logger.warn(`job ${jobId} stalled and was requeued`);
+    });
+    // The worker's Redis connection itself erroring (not a job failing) — previously
+    // unobserved; this is the signal that distinguishes "Redis/queue infrastructure is
+    // unhealthy" from "a job's own logic failed" (`INCIDENT-RUNBOOKS.md` §5).
+    this.worker.on('error', (err) => {
+      this.logger.error(`notifications worker connection error: ${err.message}`);
+    });
 
     // The outbox drain is an in-process Postgres poll (no Redis traffic while
     // idle). Delete any BullMQ repeatable `drain` schedules earlier deployments

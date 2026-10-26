@@ -67,3 +67,13 @@ VALIDATING → DEDUPING → LEAD_UPSERT → EMITTED → DONE, with `*_FAILED` /
 
 Admin/support can inspect and replay safe failed events; every replay links to
 the original correlation id and is audit-logged.
+
+## Health, queue visibility, and alerting
+
+`GET /api/v1/health/live` (liveness, no dependency checks) and
+`GET /api/v1/health` (readiness: database + Redis, plus a non-gating
+`queue` job-count diagnostic) are implemented in `apps/api/src/health/`.
+No external error-monitoring/alerting provider is wired into this codebase.
+See `docs/architecture/INCIDENT-RUNBOOKS.md` §11 for what each endpoint does
+and does not check, severity triage, how to avoid over-alerting on expected
+4xx responses, and the exact remaining provider/credential setup.

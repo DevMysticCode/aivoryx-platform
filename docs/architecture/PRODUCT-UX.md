@@ -404,3 +404,14 @@ Phase 13A Profiles UI); a single ACID transaction across the whole
 provisioning sequence (each reused primitive keeps its own transaction —
 idempotency is instead guaranteed by the deterministic tenant slug); support
 impersonation tooling (documented as future work, not built).
+
+**Tenant Onboarding & Module Entitlement Completion milestone**: the
+non-ACID provisioning sequence above is still true, but a partial failure
+after the tenant row commits (the only non-retriable step) is no longer a
+dead end — `TenantProvisioningService.resumeProvisioning` re-drives every
+remaining idempotent step (`provisionTenantAdmin`, the subscription insert,
+`InvitationService.create`, `setLifecycle`) for one tenant, exposed as
+`POST /platform/tenants/:id/resume-provisioning` and a "Finish provisioning"
+panel on the tenant detail page (shown only while `status === 'provisioning'`).
+It never re-sends a duplicate invitation to an admin who already accepted one
+from an earlier attempt.

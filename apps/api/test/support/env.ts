@@ -17,6 +17,10 @@ export function ensureIntegrationEnv(): void {
   // mechanism itself is proven with a deliberately tiny bucket via DI override
   // in auth.int.spec.ts, not by lowering this shared default.
   process.env.LOGIN_RATE_LIMIT_MAX ??= '1000';
+  // Same reasoning as LOGIN_RATE_LIMIT_MAX above, for the password-reset-request
+  // throttle — several specs request a reset for the same fixture email more
+  // than once per file (e.g. the restore-password dance in password-reset.int.spec.ts).
+  process.env.PASSWORD_RESET_RATE_LIMIT_MAX ??= '1000';
   // Notifications (Phase 8): never send real email in tests. The integration
   // suite drives the dispatcher + delivery services directly for determinism,
   // so the background worker/queue stays off here (the Playwright E2E exercises

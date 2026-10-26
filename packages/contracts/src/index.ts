@@ -14,6 +14,10 @@ export type MeResponse = components['schemas']['MeResponseDto'];
 export type SwitchTenantRequest = components['schemas']['SwitchTenantRequestDto'];
 export type SwitchTenantResponse = components['schemas']['SwitchTenantResponseDto'];
 export type LogoutResponse = components['schemas']['LogoutResponseDto'];
+export type RequestPasswordResetRequest = components['schemas']['RequestPasswordResetDto'];
+export type RequestPasswordResetResponse = components['schemas']['RequestPasswordResetResponseDto'];
+export type ConfirmPasswordResetRequest = components['schemas']['ConfirmPasswordResetDto'];
+export type ConfirmPasswordResetResponse = components['schemas']['ConfirmPasswordResetResponseDto'];
 export type MembershipSummary = components['schemas']['MembershipSummaryDto'];
 export type ActiveContext = components['schemas']['ActiveContextDto'];
 export type InactiveMembership = components['schemas']['InactiveMembershipDto'];
@@ -360,6 +364,8 @@ export type TenantUsage = components['schemas']['TenantUsageDto'];
 export type TenantSubscription = components['schemas']['TenantSubscriptionDto'];
 export type PlatformTenantReadinessStep = components['schemas']['PlatformTenantReadinessStepDto'];
 export type PlatformTenantReadiness = components['schemas']['PlatformTenantReadinessDto'];
+export type ResumeProvisioningRequest = components['schemas']['ResumeProvisioningRequestDto'];
+export type ResumeProvisioningResponse = components['schemas']['ResumeProvisioningResponseDto'];
 
 /** All versioned API routes are served under this prefix (ADR 0005). */
 export const API_V1_PREFIX = '/api/v1';

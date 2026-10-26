@@ -2,7 +2,13 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { INTEGRATION_ENABLED } from './support/env.js';
-import { grantPlatformAdmin, makeFixtures, type Fixtures } from './support/db.js';
+import {
+  addActiveMemberWithEmail,
+  createStuckProvisioningTenant,
+  grantPlatformAdmin,
+  makeFixtures,
+  type Fixtures,
+} from './support/db.js';
 import { bootTestApp, sessionCookie } from './support/app.js';
 
 /**
@@ -458,6 +464,119 @@ describe.skipIf(!INTEGRATION_ENABLED)('platform tenant provisioning & lifecycle'
       .send({});
     expect(reactivateArchived.status).toBe(409);
     expect(reactivateArchived.body.error.code).toBe('PLATFORM_TENANT_LIFECYCLE_INVALID');
+  });
+
+  describe('resuming a tenant stuck mid-provisioning', () => {
+    it('finishes modules, subscription, and the admin invitation for a tenant with none of them yet, idempotently', async () => {
+      const cookie = await platformCookie();
+      const tenantId = await createStuckProvisioningTenant(`Stuck Co ${Date.now()}`);
+      const adminEmail = `stuck-admin-${Date.now()}@test.test`;
+
+      const stuckReadiness = await http
+        .get(`/api/v1/platform/tenants/${tenantId}/readiness`)
+        .set('Cookie', cookie);
+      expect(
+        stuckReadiness.body.steps.find((s: { key: string }) => s.key === 'modules_configured'),
+      ).toMatchObject({ done: false });
+      expect(
+        stuckReadiness.body.steps.find((s: { key: string }) => s.key === 'admin_assigned'),
+      ).toMatchObject({ done: false });
+
+      const resumed = await http
+        .post(`/api/v1/platform/tenants/${tenantId}/resume-provisioning`)
+        .set('Cookie', cookie)
+        .send({ moduleKeys: ['CRM'], planKey: 'AIVORYX_FIELD_SERVICE', adminEmail });
+      expect(resumed.status).toBe(200);
+      expect(resumed.body.tenant.status).toBe('active');
+      expect(resumed.body.tenant.subscription).toMatchObject({ planKey: 'AIVORYX_FIELD_SERVICE' });
+      expect(
+        resumed.body.tenant.modules.filter((m: { state: string }) => m.state === 'ENABLED'),
+      ).toHaveLength(1);
+      const token = resumed.body.invitation.token;
+      expect(typeof token).toBe('string');
+
+      // the resumed tenant is now active, same as a normal createTenant — a
+      // second resume call is correctly refused (nothing left to resume), not
+      // silently allowed to re-run
+      const resumedAgain = await http
+        .post(`/api/v1/platform/tenants/${tenantId}/resume-provisioning`)
+        .set('Cookie', cookie)
+        .send({ moduleKeys: ['CRM'], planKey: 'AIVORYX_FIELD_SERVICE', adminEmail });
+      expect(resumedAgain.status).toBe(409);
+      expect(resumedAgain.body.error.code).toBe('PLATFORM_TENANT_NOT_STUCK');
+
+      const detail = await http.get(`/api/v1/platform/tenants/${tenantId}`).set('Cookie', cookie);
+      expect(detail.body.status).toBe('active');
+
+      const accept = await http
+        .post('/api/v1/auth/accept-invitation')
+        .send({ token, password: 'Very-Strong-Passw0rd!' });
+      expect(accept.status).toBe(200);
+    });
+
+    it('resuming a tenant whose admin already has an active membership (an earlier resume attempt got that far before failing again) returns a null invitation instead of erroring', async () => {
+      const cookie = await platformCookie();
+      const tenantId = await createStuckProvisioningTenant(`Stuck Accepted Co ${Date.now()}`);
+      const adminEmail = `stuck-accepted-${Date.now()}@test.test`;
+      // simulate: an earlier resumeProvisioning call already got as far as the
+      // admin accepting an invitation, then failed before `setLifecycle` ran —
+      // tenant is still 'provisioning' with an active member for this email
+      await addActiveMemberWithEmail(tenantId, adminEmail);
+
+      const resumedAfterAccept = await http
+        .post(`/api/v1/platform/tenants/${tenantId}/resume-provisioning`)
+        .set('Cookie', cookie)
+        .send({ moduleKeys: ['CRM'], planKey: 'AIVORYX_FIELD_SERVICE', adminEmail });
+      expect(resumedAfterAccept.status).toBe(200);
+      expect(resumedAfterAccept.body.invitation).toBeNull();
+      expect(resumedAfterAccept.body.tenant.status).toBe('active');
+    });
+
+    it('rejects resuming a tenant that already finished provisioning', async () => {
+      const cookie = await platformCookie();
+      const created = await http
+        .post('/api/v1/platform/tenants')
+        .set('Cookie', cookie)
+        .send({
+          name: `Already Active Co ${Date.now()}`,
+          solutionKey: 'BUSINESS',
+          adminEmail: `already-active-${Date.now()}@test.test`,
+        });
+      expect(created.status).toBe(200);
+      const tenantId = created.body.tenant.id;
+
+      const resume = await http
+        .post(`/api/v1/platform/tenants/${tenantId}/resume-provisioning`)
+        .set('Cookie', cookie)
+        .send({ moduleKeys: ['CRM'], adminEmail: `other-${Date.now()}@test.test` });
+      expect(resume.status).toBe(409);
+      expect(resume.body.error.code).toBe('PLATFORM_TENANT_NOT_STUCK');
+    });
+
+    it('requires platform admin and rejects an invalid module set', async () => {
+      const cookie = await platformCookie();
+      const tenantId = await createStuckProvisioningTenant(`Stuck Guard Co ${Date.now()}`);
+
+      const adminCookie = await tenantAdminCookie();
+      const denied = await http
+        .post(`/api/v1/platform/tenants/${tenantId}/resume-provisioning`)
+        .set('Cookie', adminCookie)
+        .send({ moduleKeys: ['CRM'], adminEmail: 'x@test.test' });
+      expect(denied.status).toBe(403);
+      expect(denied.body.error.code).toBe('PLATFORM_ADMIN_REQUIRED');
+
+      // COMMERCIAL depends on CRM + SUPPLY — omitting SUPPLY must be rejected
+      const badModules = await http
+        .post(`/api/v1/platform/tenants/${tenantId}/resume-provisioning`)
+        .set('Cookie', cookie)
+        .send({
+          moduleKeys: ['COMMERCIAL'],
+          planKey: 'AIVORYX_BUSINESS',
+          adminEmail: 'x@test.test',
+        });
+      expect(badModules.status).toBe(422);
+      expect(badModules.body.error.code).toBe('PLATFORM_TENANT_INVALID_MODULES');
+    });
   });
 
   it('platform-admin tenant creation and every lifecycle transition are recorded in the audit log, with no invitation token or password in the metadata', async () => {

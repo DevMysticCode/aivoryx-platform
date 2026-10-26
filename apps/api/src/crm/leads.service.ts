@@ -182,7 +182,7 @@ export class LeadsService {
   /** Assign or reassign. Bumps NEW -> ASSIGNED; leaves a later status untouched. */
   async assign(scope: TenantScope, leadId: string, membershipId: string): Promise<LeadView> {
     await withTenantContext(getDb(), scope, async (tx) => {
-      const current = await this.requireLead(tx, scope.tenantId, leadId);
+      const current = await this.requireLead(tx, scope.tenantId, leadId, true);
       const target = await membershipExistsInTenant(tx, scope.tenantId, membershipId);
       if (!target) throw new AppError('LEAD_ASSIGNEE_INVALID');
 
@@ -192,7 +192,7 @@ export class LeadsService {
       await tx
         .update(leads)
         .set({ assignedMembershipId: membershipId, status: nextStatus, updatedAt: new Date() })
-        .where(eq(leads.id, leadId));
+        .where(and(eq(leads.id, leadId), eq(leads.status, current.status)));
 
       await recordActivity(tx, {
         tenantId: scope.tenantId,
@@ -229,7 +229,7 @@ export class LeadsService {
     toStatus: LeadStatus,
   ): Promise<LeadView> {
     await withTenantContext(getDb(), scope, async (tx) => {
-      const current = await this.requireLead(tx, scope.tenantId, leadId);
+      const current = await this.requireLead(tx, scope.tenantId, leadId, true);
       if (!isValidLeadTransition(current.status, toStatus)) {
         throw new AppError('LEAD_INVALID_TRANSITION', {
           details: { from: current.status, to: toStatus },
@@ -238,7 +238,7 @@ export class LeadsService {
       await tx
         .update(leads)
         .set({ status: toStatus, updatedAt: new Date() })
-        .where(eq(leads.id, leadId));
+        .where(and(eq(leads.id, leadId), eq(leads.status, current.status)));
       await recordActivity(tx, {
         tenantId: scope.tenantId,
         leadId,
@@ -265,7 +265,7 @@ export class LeadsService {
     note?: string,
   ): Promise<LeadView> {
     await withTenantContext(getDb(), scope, async (tx) => {
-      const current = await this.requireLead(tx, scope.tenantId, leadId);
+      const current = await this.requireLead(tx, scope.tenantId, leadId, true);
       if (!isValidLeadTransition(current.status, outcome)) {
         throw new AppError('LEAD_INVALID_TRANSITION', {
           details: { from: current.status, to: outcome },
@@ -274,7 +274,7 @@ export class LeadsService {
       await tx
         .update(leads)
         .set({ status: outcome, qualificationNote: note ?? null, updatedAt: new Date() })
-        .where(eq(leads.id, leadId));
+        .where(and(eq(leads.id, leadId), eq(leads.status, current.status)));
       await recordActivity(tx, {
         tenantId: scope.tenantId,
         leadId,
@@ -325,10 +325,22 @@ export class LeadsService {
 
   // ---- helpers --------------------------------------------------------
 
+  /**
+   * `forUpdate: true` locks the row for the rest of this transaction — used
+   * by `assign`, `transitionStatus`, and `qualify`, each of which decides a
+   * new `status` from this read and then writes unconditionally (no `WHERE
+   * status = ...`). Without the lock, two of these racing (e.g. a reassign
+   * concurrent with a qualify) could each read the same pre-race status and
+   * the later write silently reverts the other's — the exact regression
+   * "reassigning keeps the later status" is meant to prevent. A plain read
+   * (`update`'s contact-field edit, `logCallAttempt`'s existence check) stays
+   * unlocked.
+   */
   private async requireLead(
     tx: Tx,
     tenantId: string,
     leadId: string,
+    forUpdate = false,
   ): Promise<{
     status: LeadStatus;
     assignedMembershipId: string | null;
@@ -341,7 +353,7 @@ export class LeadsService {
     postalCode: string | null;
     country: string | null;
   }> {
-    const [row] = await tx
+    const query = tx
       .select({
         status: leads.status,
         assignedMembershipId: leads.assignedMembershipId,
@@ -355,8 +367,8 @@ export class LeadsService {
         country: leads.country,
       })
       .from(leads)
-      .where(and(eq(leads.id, leadId), eq(leads.tenantId, tenantId)))
-      .limit(1);
+      .where(and(eq(leads.id, leadId), eq(leads.tenantId, tenantId)));
+    const [row] = forUpdate ? await query.for('update').limit(1) : await query.limit(1);
     if (!row) throw new AppError('LEAD_NOT_FOUND');
     return row;
   }

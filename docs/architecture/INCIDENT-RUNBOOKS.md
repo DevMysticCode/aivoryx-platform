@@ -116,13 +116,20 @@ Recommended sequencing (Render):
 
 ## 5. Diagnosing database, Redis, storage and queue failures
 
-| Symptom                                                     | First check                                                                                                                                                      | Likely cause                                                                                                                                                                                                                      |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/health` returns 503, `database.status = error` | `database.detail` field in the response (safe error text, no credentials)                                                                                        | Supabase connectivity, wrong `DATABASE_URL`, exhausted connection pool, or — if seen only right after a deploy — migrations not yet run (§2)                                                                                      |
-| `GET /api/v1/health` returns 503, `redis.status = error`    | `redis.detail`                                                                                                                                                   | Upstash connectivity or wrong `REDIS_URL` scheme (`DEPLOYMENT.md` requires `rediss://`, the TCP protocol, never Upstash's separate REST API URL)                                                                                  |
-| Uploads/downloads failing, health check otherwise green     | API logs for `[S3ObjectStorage]` entries (structured, includes `operation`, `provider`, `correlationId`, and the real error — never a credential)                | Object storage health is **not** part of the readiness check by design (it is not needed to serve most traffic) — check logs directly, not `/health`                                                                              |
-| Notifications not being delivered                           | `select count(*), status from notification_deliveries group by status;` and the API logs for `NotificationsWorker` warnings (`job ... failed: ...`)              | Outbox drain stalled, email provider misconfigured (`EMAIL_PROVIDER`), or Redis unavailable — see §4 of `BACKUP-RECOVERY.md`: a Redis outage alone does not lose the underlying rows, it only delays delivery until the next poll |
-| General 5xx spike                                           | `AllExceptionsFilter`'s log line (`Unhandled: <code>`) — every unhandled exception is logged with the real cause server-side and a stable `code` in the response | Varies — the error code narrows it; `INTERNAL_ERROR` with no further code means an unclassified exception, read the logged `err` for the real stack                                                                               |
+| Symptom                                                     | First check                                                                                                                                                                                                                                                                                                                                   | Likely cause                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/health` returns 503, `database.status = error` | `database.detail` field in the response (safe error text, no credentials)                                                                                                                                                                                                                                                                     | Supabase connectivity, wrong `DATABASE_URL`, exhausted connection pool, or — if seen only right after a deploy — migrations not yet run (§2)                                                                                                                                                                                            |
+| `GET /api/v1/health` returns 503, `redis.status = error`    | `redis.detail`                                                                                                                                                                                                                                                                                                                                | Upstash connectivity or wrong `REDIS_URL` scheme (`DEPLOYMENT.md` requires `rediss://`, the TCP protocol, never Upstash's separate REST API URL)                                                                                                                                                                                        |
+| Uploads/downloads failing, health check otherwise green     | API logs for `[S3ObjectStorage]` entries (structured, includes `operation`, `provider`, `correlationId`, and the real error — never a credential)                                                                                                                                                                                             | Object storage health is **not** part of the readiness check by design (it is not needed to serve most traffic) — check logs directly, not `/health`                                                                                                                                                                                    |
+| Notifications not being delivered                           | `GET /api/v1/health`'s `queue` field (job counts — `waiting`/`active`/`failed`/`delayed`, Production Monitoring milestone) alongside `select count(*), status from notification_deliveries group by status;` and the API logs for `NotificationsWorker` warnings (`job ... failed/stalled: ...`, or `connection error` for the worker itself) | Outbox drain stalled, email provider misconfigured (`EMAIL_PROVIDER`), Redis unavailable, or a genuinely stalled job (processor hung — visible now via the `stalled` log line, previously silent) — see §4 of `BACKUP-RECOVERY.md`: a Redis outage alone does not lose the underlying rows, it only delays delivery until the next poll |
+| General 5xx spike                                           | `AllExceptionsFilter`'s log line (`Unhandled: <code>`) — every unhandled exception is logged with the real cause server-side and a stable `code` in the response                                                                                                                                                                              | Varies — the error code narrows it; `INTERNAL_ERROR` with no further code means an unclassified exception, read the logged `err` for the real stack                                                                                                                                                                                     |
+
+**`queue` in the `/health` response is informational only and never affects
+the overall `status` or the HTTP code** — a growing `failed`/`waiting` count
+is a real signal to investigate, but it is not, by itself, "the API is
+unready." Don't page on `queue.status` alone; page on a sustained, rising
+`failed` count or a `queue.status: "error"` (the count fetch itself failed,
+which is a Redis-health signal, not a backlog signal).
 
 **No external error-monitoring/alerting provider (e.g. Sentry, Datadog) is
 wired into this codebase as of this writing.** Diagnosis today means reading
@@ -136,18 +143,33 @@ report rather than guessed at here.
 
 ## 6. Session and authentication incidents
 
+- **A user who reports their own account may be compromised, or who simply
+  forgot their password**, now has a genuine self-service path:
+  `POST /auth/password-reset/request` (email) → `POST /auth/password-reset/confirm`
+  (one-time token + new password). Completing it revokes every existing
+  session for that account automatically — this is itself a legitimate,
+  user-initiated first containment step for a single suspected-compromised
+  account, not just a convenience feature. The request endpoint is throttled
+  per email (`PASSWORD_RESET_RATE_LIMIT_MAX`/`_WINDOW_SECONDS`, default 5 per
+  5 minutes) for the same reason login is (§8 below) — expect `429
+RATE_LIMITED` on a flood against one address, same non-bug framing as the
+  login-throttle note above.
 - Sessions are **soft-revoked**, not deleted: `sessions.revoked_at` is set and
   `SessionService.resolve()` rejects any session with a non-null
   `revoked_at` (`AUTH_SESSION_REVOKED`) — this is the existing, tested
   pattern (`session.service.ts`), and incident response should reuse it
   rather than inventing a `DELETE`, which would lose the row's history.
-- `SessionService.revokeAllForUser(userId)` already exists and is exactly
-  "revoke every live session for one user" — but it is currently only called
-  internally (password reset / account lock in `auth.service.ts`), **not
-  exposed through any admin-facing API route**. For a single compromised
-  _user_ discovered during an incident, this is the correct underlying
-  operation; today it requires either a direct, reviewed SQL statement using
-  the same shape the real method already uses —
+- `SessionService.revokeAllForUser(userId)` is exactly "revoke every live
+  session for one user." It now has a real caller: `PasswordResetService.confirmReset()`
+  calls it the moment a self-service password reset completes (Production
+  Operations & Customer Launch Readiness milestone — this closed a genuine
+  account-recovery gap: there was previously no self-service way back in for
+  a user, including a tenant's only admin, who forgot their password). It is
+  **still not exposed as an admin-initiated action against a _different_
+  user** — an admin suspecting one specific _other_ account is compromised
+  cannot trigger this from the UI/API today. For that case, it requires
+  either a direct, reviewed SQL statement using the same shape the real
+  method already uses —
   `update sessions set revoked_at = now() where user_id = '<id>' and revoked_at is null;`
   — or a follow-up to add an admin route that calls the existing method.
   **Prefer adding that route over improvising raw SQL under incident
@@ -280,3 +302,147 @@ as the minimum bar, not a complete process:
    not an engineering one — but engineering should always be able to state,
    factually: what was affected, for how long, and (for a tenant-isolation
    incident specifically) exactly whose data was involved, per §7.
+
+## 11. Monitoring, alerting, and alert verification
+
+Production Monitoring and Alerting Readiness milestone. Links to, rather than
+repeats, §4/§5 above and `docs/architecture/CUSTOMER-LAUNCH-READINESS.md`.
+
+### What each health endpoint checks, and deliberately does not
+
+- `GET /api/v1/health/live` — the process is up and responding. Nothing else.
+  No DB, no Redis, no queue. This is intentional (§4) — if this depended on
+  every dependency, a transient Supabase/Upstash blip would restart a
+  perfectly healthy API process.
+- `GET /api/v1/health` — database connectivity + a real query (`uuidv7()`,
+  not just a ping) and Redis `PING`. **Deliberately excluded**, and why:
+  - **Object storage** — not needed to serve most traffic; checked via logs
+    (§5), not a dependency check, so an S3/Supabase-Storage blip never makes
+    the whole API "unready."
+  - **The notification queue's job counts** — present in the response
+    (`queue`) as of this milestone, but explicitly **not** part of `status`
+    (see the note after §5's table) — a backlog is a real signal, not an
+    unreadiness signal.
+  - **Any external provider's own status** (email SMTP, future monitoring
+    vendor) — this platform has no health check for those at all; their
+    failure surfaces only as a logged error at the point of use.
+
+### Severity triage — immediate vs. routine
+
+**Investigate immediately:**
+
+- `GET /health` returns `503` (database or Redis actually down).
+- A tenant-isolation suspicion of any kind (§7) — always immediate, never
+  routine, regardless of how it was reported.
+- `queue.status: "error"` (the count fetch itself failed — a Redis-health
+  symptom, not a backlog).
+- A sustained, rising `queue.counts.failed` (not a single blip — BullMQ
+  retries with backoff, so a handful of transient failures during a known
+  provider outage is expected, not an incident on its own).
+
+**Investigate routinely (next business day is fine, log and move on):**
+
+- An individual `401 AUTH_INVALID_CREDENTIALS`, `429 RATE_LIMITED`, or `400
+VALIDATION_ERROR` — these are the system working correctly, not failures.
+  **Do not alert on these at all** — see "Avoid over-alerting" below.
+- A single `stalled` job log line with no recurrence — BullMQ's own retry
+  already requeued it; only a _pattern_ of stalls for the same job type is
+  worth a ticket.
+- A single email bounce (`EmailSendError`, permanent) for one recipient —
+  that recipient's address is likely wrong, not a provider outage.
+
+### Avoid over-alerting on expected behavior
+
+None of the following should ever page anyone, by design:
+
+- A failed login (`AUTH_INVALID_CREDENTIALS`) or a `429 RATE_LIMITED` on
+  `/auth/login` or `/auth/password-reset/request` — both are evidence the
+  throttle is working (§6/§8), not evidence of an outage.
+- A `400 VALIDATION_ERROR` or `403 AUTH_FORBIDDEN` — client-side mistakes or
+  correctly-enforced authorization, not application faults. `AllExceptionsFilter`
+  already logs these at `warn`, not `error` (confirmed in code — the filter's
+  `logAsError` is `true` only for `httpStatus >= 500`), specifically so a
+  log-level-based alert rule does not fire on them.
+- `queue.status: "disabled"` — this means `NOTIFICATIONS_ENABLED=false`, an
+  intentional configuration, not a fault.
+
+**If a future monitoring provider is configured to alert on error _rate_ or
+on `error`-level log lines, this separation (warn vs. error, already built
+into the exception filter) is what makes that alert meaningful instead of
+noisy** — confirm whatever provider is chosen reads Pino's `level` field
+rather than alerting on every non-2xx response.
+
+### Correlating an alert with structured logs
+
+Every request/response and every log line this platform emits carries the
+same `correlationId` (format `AIV-<ULID>`, `OBSERVABILITY.md`). Whatever
+monitoring provider is eventually chosen: configure it to capture this field
+(from the response header or the log line's `correlationId` property) so an
+alert links directly to the exact request, not just a timestamp — then
+`grep` or query the log aggregator for that id to get the full picture
+(method, path, status, code, and the real `err` for a 5xx).
+
+### Investigating repeated job failures and queue backlog
+
+1. `GET /api/v1/health` → `queue.counts` for the current snapshot
+   (`waiting`/`active`/`failed`/`delayed`).
+2. API logs for `job ... failed: ...` (which job, how many times) and
+   `job ... stalled and was requeued` (a hung processor, not a logic error —
+   if this recurs for the same job type, suspect something blocking the
+   event loop or a downstream call with no timeout).
+3. `select id, status, attempts, last_error from notification_deliveries where status = 'failed' order by updated_at desc limit 20;`
+   for the business-level detail BullMQ itself doesn't have (BullMQ only
+   knows "the job threw"; this table has the actual delivery outcome).
+4. If `queue.status` itself is `"error"`: that's a Redis connectivity
+   problem, not a notifications problem — go to §5's Redis row instead.
+
+### How to validate that alerts are actually delivered (once a provider exists)
+
+This platform has no monitoring provider configured today, so this is a
+**procedure to follow once one is chosen**, not a claim that it has been
+tested:
+
+1. Deliberately trigger one real, low-stakes `5xx` (e.g. a route that throws
+   in a non-production environment) and confirm it appears in the provider's
+   dashboard within whatever latency the provider documents — note the
+   actual observed latency the first time, don't assume the documented one.
+2. Confirm the alert that fires (if alerting is configured, not just
+   logging) actually reaches the intended channel (email/Slack/PagerDuty) —
+   trigger it outside business hours once, deliberately, to confirm the
+   on-call rotation (if one exists) actually gets paged, not just that a
+   dashboard entry appeared.
+3. Confirm the `correlationId` from step 1 is visible in the provider's
+   captured event, per the correlation section above.
+4. Record the date this was last verified — an alerting pipeline that was
+   correct six months ago and has not been re-checked since a dependency
+   upgrade is not a verified pipeline today.
+
+**No step above has been performed in this repository as of this writing —
+there is no provider to test against.** Do not mark this verified until it
+actually has been.
+
+### Who must own alert response
+
+Not resolved by this document — an organizational decision, same as
+`CUSTOMER-LAUNCH-READINESS.md` §8 already states. Before production launch,
+a named person or rotation must exist who:
+
+- Receives the alert (requires the provider setup above).
+- Has (or can quickly get) the access this document's other sections assume
+  — database read access for §5's queries, the ability to read Render's logs,
+  and the authority to act on §6–§9's containment steps.
+
+### Remaining external setup — blocked on provider/credentials/decision
+
+- **Provider selection** — none chosen. Minimum capability needed: (a)
+  ingesting application errors with correlation ids, (b) uptime/liveness
+  checks against the public `/health/live` and `/health` URLs once staging
+  exists at a stable URL, (c) alert delivery to a real channel, (d) ideally,
+  a way to alert on a sustained queue-backlog pattern (poll `/health`'s
+  `queue.counts`, or a provider-side scheduled check) — this platform's own
+  `/health` response already carries everything a external uptime/synthetic
+  check would need; no code change is required on this platform's side to
+  support _any_ provider that can poll an HTTP endpoint and parse JSON.
+- **Budget and account creation** — explicitly not done by this change, per
+  instruction; a human decision.
+- **On-call rotation / named owner** — see above.

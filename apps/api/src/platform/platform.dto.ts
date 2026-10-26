@@ -260,6 +260,43 @@ export class CreateTenantResponseDto {
   @ApiProperty({ type: ProvisioningInvitationDto }) invitation!: ProvisioningInvitationDto;
 }
 
+export class ResumeProvisioningRequestDto {
+  @ApiProperty({
+    type: [String],
+    description: 'Required only if modules were never provisioned for this tenant.',
+  })
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsString({ each: true })
+  moduleKeys!: string[];
+
+  @ApiProperty({ required: false, description: 'Required only if no subscription exists yet.' })
+  @IsOptional()
+  @IsString()
+  planKey?: string;
+
+  @ApiProperty({ format: 'email', example: 'admin@acme-field.test' })
+  @IsEmail()
+  @MaxLength(320)
+  adminEmail!: string;
+
+  @ApiProperty({ required: false, maxLength: 200 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  adminName?: string;
+}
+
+export class ResumeProvisioningResponseDto {
+  @ApiProperty({ type: PlatformTenantDetailDto }) tenant!: PlatformTenantDetailDto;
+  @ApiProperty({
+    type: ProvisioningInvitationDto,
+    nullable: true,
+    description: 'null when the admin had already accepted a prior invitation.',
+  })
+  invitation!: ProvisioningInvitationDto | null;
+}
+
 export class SetTenantLifecycleRequestDto {
   @ApiProperty({ required: false, maxLength: 500 })
   @IsOptional()

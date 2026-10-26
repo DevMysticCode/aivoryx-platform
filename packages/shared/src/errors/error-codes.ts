@@ -61,6 +61,11 @@ export const ERROR_CODES = {
     httpStatus: 403,
     message: 'You do not have permission to perform this action.',
   },
+  PASSWORD_RESET_INVALID: {
+    // unknown token, expired, or already used — one code, no distinction (no token probing)
+    httpStatus: 400,
+    message: 'This password reset link is not valid or has expired.',
+  },
   AUTH_NO_ACTIVE_TENANT: {
     httpStatus: 403,
     message: 'Select a workspace to continue.',
@@ -806,6 +811,10 @@ export const ERROR_CODES = {
   PLATFORM_TENANT_LIFECYCLE_INVALID: {
     httpStatus: 409,
     message: 'That workspace cannot move to the requested status from its current one.',
+  },
+  PLATFORM_TENANT_NOT_STUCK: {
+    httpStatus: 409,
+    message: 'That workspace already finished provisioning; resume is only for a stuck workspace.',
   },
   ACCESS_PROFILE_NOT_FOUND: {
     httpStatus: 404,

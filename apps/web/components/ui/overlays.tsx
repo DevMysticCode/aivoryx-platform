@@ -1,6 +1,7 @@
 'use client';
 
 import { type ReactNode, useCallback, useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@aivoryx/ui';
 
 /** Trap focus inside `ref` while `active`, restoring focus on teardown. */
@@ -63,7 +64,18 @@ export interface DialogProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-/** An accessible modal dialog: backdrop, Esc, focus trap, labelled by its title. */
+/**
+ * An accessible modal dialog: backdrop, Esc, focus trap, labelled by its
+ * title. Rendered via a portal into `document.body` — a caller may sit
+ * anywhere in the tree, including inside a table row (`<tr>`/`<tbody>`,
+ * e.g. a per-row "Remove?" confirm), where a fixed-position overlay
+ * rendered in place would be invalid HTML (a `<div>` cannot be a child of
+ * `<tbody>`) and risk the browser's parser relocating it unpredictably.
+ * `typeof document !== 'undefined'` guards the server render — `open`
+ * starts `false` in every caller, so the server and the pre-hydration
+ * client both render nothing here regardless, and this guard only matters
+ * for the rare case of an already-open dialog on first client render.
+ */
 export function Dialog({
   open,
   onClose,
@@ -78,8 +90,8 @@ export function Dialog({
   const descId = useId();
   useDismiss(open, onClose);
   useFocusTrap(open, ref);
-  if (!open) return null;
-  return (
+  if (!open || typeof document === 'undefined') return null;
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/40 p-4 pt-[10vh] backdrop-blur-[1px]"
       onMouseDown={(e) => {
@@ -117,7 +129,8 @@ export function Dialog({
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

@@ -106,11 +106,20 @@ export class RawEventRetentionService implements OnModuleInit, OnApplicationShut
 
   private async purgeBatch(batchSize: number): Promise<number> {
     return withRawEventPurgeContext(getDb(), async (tx) => {
+      // Only a `PROCESSED` row is safe to purge: that status means the ingestion decision (new
+      // lead / duplicate / enrichment) was already durably made, so the raw payload is no longer
+      // the only record of it. A `RECEIVED` or `FAILED` row has NOT reached that decision yet —
+      // purging it would permanently discard an accepted-but-unresolved lead with no way back,
+      // regardless of how long it has been expired. (`VALIDATION_FAILED`/`MAPPING_FAILED` business
+      // rejections also leave the raw event at `FAILED`; excluding them from auto-purge too is the
+      // conservative direction — never under-retain — and is a retention-duration tradeoff, not a
+      // correctness concern, so it is intentionally left for a product decision rather than finer
+      // filtering here.)
       const result = await tx.execute(sql`
         delete from raw_events
         where id in (
           select id from raw_events
-          where expires_at < now()
+          where expires_at < now() and status = 'PROCESSED'
           order by expires_at
           limit ${batchSize}
         )

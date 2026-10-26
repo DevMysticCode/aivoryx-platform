@@ -38,6 +38,179 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/notifications': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List my notifications. */
+    get: operations['listNotifications'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/notifications/unread-count': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My unread notification count. */
+    get: operations['notificationUnreadCount'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/notifications/{id}/read': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark one notification read. */
+    post: operations['markNotificationRead'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/notifications/read-all': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark all my notifications read. */
+    post: operations['markAllNotificationsRead'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/notifications/preferences': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My notification preferences. */
+    get: operations['getNotificationPreferences'];
+    /** Update my notification preferences. */
+    put: operations['updateNotificationPreferences'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/notifications/rules': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Effective notification rules. */
+    get: operations['listNotificationRules'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/notifications/rules/{key}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Enable/disable a rule or narrow its channels. */
+    patch: operations['updateNotificationRule'];
+    trace?: never;
+  };
+  '/admin/notifications/templates': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Effective templates. */
+    get: operations['listNotificationTemplates'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/notifications/templates/{key}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** One effective template. */
+    get: operations['getNotificationTemplate'];
+    /** Override a template. */
+    put: operations['updateNotificationTemplate'];
+    post?: never;
+    /** Reset a template to the system default. */
+    delete: operations['resetNotificationTemplate'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/notifications/deliveries': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Recent notification deliveries and failures. */
+    get: operations['listNotificationDeliveries'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/auth/login': {
     parameters: {
       query?: never;
@@ -66,6 +239,40 @@ export interface paths {
     put?: never;
     /** Revoke the current session. */
     post: operations['logout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/password-reset/request': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Request a password reset email. Always returns ok — never discloses account existence. */
+    post: operations['requestPasswordReset'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/password-reset/confirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Complete a password reset with the one-time token from the email. Revokes every existing session for the account. */
+    post: operations['confirmPasswordReset'];
     delete?: never;
     options?: never;
     head?: never;
@@ -410,6 +617,23 @@ export interface paths {
     get: operations['listPlatformPlans'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/platform/tenants/{tenantId}/resume-provisioning': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Finish a workspace stuck in `provisioning` after a partial createTenant failure. Safe to call repeatedly — every step re-driven here is idempotent. */
+    post: operations['resumePlatformTenantProvisioning'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4570,179 +4794,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/notifications': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** List my notifications. */
-    get: operations['listNotifications'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/notifications/unread-count': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My unread notification count. */
-    get: operations['notificationUnreadCount'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/notifications/{id}/read': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Mark one notification read. */
-    post: operations['markNotificationRead'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/notifications/read-all': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Mark all my notifications read. */
-    post: operations['markAllNotificationsRead'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/notifications/preferences': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** My notification preferences. */
-    get: operations['getNotificationPreferences'];
-    /** Update my notification preferences. */
-    put: operations['updateNotificationPreferences'];
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/notifications/rules': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Effective notification rules. */
-    get: operations['listNotificationRules'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/notifications/rules/{key}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Enable/disable a rule or narrow its channels. */
-    patch: operations['updateNotificationRule'];
-    trace?: never;
-  };
-  '/admin/notifications/templates': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Effective templates. */
-    get: operations['listNotificationTemplates'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/notifications/templates/{key}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** One effective template. */
-    get: operations['getNotificationTemplate'];
-    /** Override a template. */
-    put: operations['updateNotificationTemplate'];
-    post?: never;
-    /** Reset a template to the system default. */
-    delete: operations['resetNotificationTemplate'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/admin/notifications/deliveries': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** Recent notification deliveries and failures. */
-    get: operations['listNotificationDeliveries'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/finance/invoices': {
     parameters: {
       query?: never;
@@ -5142,12 +5193,154 @@ export interface components {
       database: components['schemas']['DependencyHealthDto'];
       redis: components['schemas']['DependencyHealthDto'];
     };
+    QueueJobCountsDto: {
+      waiting: number;
+      active: number;
+      failed: number;
+      delayed: number;
+    };
+    QueueHealthDto: {
+      /**
+       * @description 'disabled' is a normal, intentional state — never a failure.
+       * @enum {string}
+       */
+      status: 'ok' | 'error' | 'disabled';
+      /** @example 12 */
+      latencyMs: number;
+      counts: components['schemas']['QueueJobCountsDto'] | null;
+      detail?: string | null;
+    };
     HealthReportDto: {
       /** @enum {string} */
       status: 'ok' | 'error';
       /** @example AIV-01J9Z8ABCDEF0123456789 */
       correlationId: string;
       checks: components['schemas']['HealthChecksDto'];
+      /** @description Informational only — never part of `status`. A backlog here never means the API cannot serve traffic. */
+      queue: components['schemas']['QueueHealthDto'];
+    };
+    ApiErrorDetailDto: {
+      code: string;
+      message: string;
+      /** @example AIV-01J9Z8ABCDEF0123456789 */
+      correlationId: string;
+      details?: {
+        [key: string]: unknown;
+      };
+    };
+    ApiErrorDto: {
+      error: components['schemas']['ApiErrorDetailDto'];
+    };
+    NotificationDto: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      type: 'info' | 'success' | 'warning' | 'action_required';
+      title: string;
+      body: string;
+      deepLink: string | null;
+      sourceEventType: string | null;
+      read: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      readAt: string | null;
+    };
+    NotificationListDto: {
+      items: components['schemas']['NotificationDto'][];
+      total: number;
+      unread: number;
+      page: number;
+      pageSize: number;
+    };
+    UnreadCountDto: {
+      unread: number;
+    };
+    MarkAllReadResultDto: {
+      updated: number;
+    };
+    NotificationPreferencesDto: {
+      inAppEnabled: boolean;
+      emailEnabled: boolean;
+    };
+    UpdateNotificationPreferencesDto: {
+      inAppEnabled: boolean;
+      emailEnabled: boolean;
+    };
+    NotificationRuleDto: {
+      key: string;
+      eventType: string;
+      templateKey: string;
+      channels: ('in_app' | 'email' | 'whatsapp' | 'sms')[];
+      /** @description All channels the default supports. */
+      availableChannels: ('in_app' | 'email' | 'whatsapp' | 'sms')[];
+      /** @enum {string} */
+      recipientStrategy: 'USER' | 'ACTOR' | 'ASSIGNED_USER' | 'ROLE' | 'CUSTOMER';
+      /** @enum {string} */
+      notificationType: 'info' | 'success' | 'warning' | 'action_required';
+      suppressible: boolean;
+      isActive: boolean;
+      overridden: boolean;
+      description: string;
+    };
+    UpdateNotificationRuleDto: {
+      isActive?: boolean;
+      channels?: ('in_app' | 'email' | 'whatsapp' | 'sms')[];
+    };
+    NotificationTemplateChannelDto: {
+      /** @enum {string} */
+      channel: 'in_app' | 'email' | 'whatsapp' | 'sms';
+      title: string;
+      body: string;
+      emailSubject: string | null;
+      emailBody: string | null;
+      overridden: boolean;
+    };
+    NotificationTemplateDto: {
+      key: string;
+      variables: string[];
+      channels: components['schemas']['NotificationTemplateChannelDto'][];
+      overridden: boolean;
+    };
+    UpdateNotificationTemplateDto: {
+      title: string;
+      body: string;
+      emailSubject: string;
+      emailBody: string;
+    };
+    NotificationDeliveryDto: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      notificationId: string;
+      title: string;
+      /** @enum {string} */
+      type: 'info' | 'success' | 'warning' | 'action_required';
+      sourceEventType: string | null;
+      ruleKey: string | null;
+      /** @enum {string} */
+      channel: 'in_app' | 'email' | 'whatsapp' | 'sms';
+      recipientRef: string;
+      provider: string | null;
+      /** @enum {string} */
+      status: 'pending' | 'processing' | 'sent' | 'failed' | 'cancelled';
+      attempts: number;
+      maxAttempts: number;
+      failureCode: string | null;
+      failureMessage: string | null;
+      providerMessageId: string | null;
+      /** Format: date-time */
+      lastAttemptAt: string | null;
+      /** Format: date-time */
+      sentAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    NotificationDeliveryListDto: {
+      items: components['schemas']['NotificationDeliveryDto'][];
+      total: number;
+      page: number;
+      pageSize: number;
     };
     LoginRequestDto: {
       /**
@@ -5238,19 +5431,30 @@ export interface components {
       /** @description True when the single-membership user was auto-selected into a tenant. */
       tenantAutoSelected: boolean;
     };
-    ApiErrorDetailDto: {
-      code: string;
-      message: string;
-      /** @example AIV-01J9Z8ABCDEF0123456789 */
-      correlationId: string;
-      details?: {
-        [key: string]: unknown;
-      };
-    };
-    ApiErrorDto: {
-      error: components['schemas']['ApiErrorDetailDto'];
-    };
     LogoutResponseDto: {
+      /** @example true */
+      ok: boolean;
+    };
+    RequestPasswordResetDto: {
+      /**
+       * Format: email
+       * @example admin@acme.test
+       */
+      email: string;
+    };
+    RequestPasswordResetResponseDto: {
+      /**
+       * @description Always true, whether or not the email belongs to an account — the response never discloses account existence. If an account exists, a reset email was sent.
+       * @example true
+       */
+      ok: boolean;
+    };
+    ConfirmPasswordResetDto: {
+      /** @description The one-time token from the reset email link. */
+      token: string;
+      newPassword: string;
+    };
+    ConfirmPasswordResetResponseDto: {
       /** @example true */
       ok: boolean;
     };
@@ -5687,6 +5891,23 @@ export interface components {
     CreateTenantResponseDto: {
       tenant: components['schemas']['PlatformTenantDetailDto'];
       invitation: components['schemas']['ProvisioningInvitationDto'];
+    };
+    ResumeProvisioningRequestDto: {
+      /** @description Required only if modules were never provisioned for this tenant. */
+      moduleKeys: string[];
+      /** @description Required only if no subscription exists yet. */
+      planKey?: string;
+      /**
+       * Format: email
+       * @example admin@acme-field.test
+       */
+      adminEmail: string;
+      adminName?: string;
+    };
+    ResumeProvisioningResponseDto: {
+      tenant: components['schemas']['PlatformTenantDetailDto'];
+      /** @description null when the admin had already accepted a prior invitation. */
+      invitation: components['schemas']['ProvisioningInvitationDto'] | null;
     };
     SetTenantLifecycleRequestDto: {
       note?: string;
@@ -9025,117 +9246,6 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
-    NotificationDto: {
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      type: 'info' | 'success' | 'warning' | 'action_required';
-      title: string;
-      body: string;
-      deepLink: string | null;
-      sourceEventType: string | null;
-      read: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      readAt: string | null;
-    };
-    NotificationListDto: {
-      items: components['schemas']['NotificationDto'][];
-      total: number;
-      unread: number;
-      page: number;
-      pageSize: number;
-    };
-    UnreadCountDto: {
-      unread: number;
-    };
-    MarkAllReadResultDto: {
-      updated: number;
-    };
-    NotificationPreferencesDto: {
-      inAppEnabled: boolean;
-      emailEnabled: boolean;
-    };
-    UpdateNotificationPreferencesDto: {
-      inAppEnabled: boolean;
-      emailEnabled: boolean;
-    };
-    NotificationRuleDto: {
-      key: string;
-      eventType: string;
-      templateKey: string;
-      channels: ('in_app' | 'email' | 'whatsapp' | 'sms')[];
-      /** @description All channels the default supports. */
-      availableChannels: ('in_app' | 'email' | 'whatsapp' | 'sms')[];
-      /** @enum {string} */
-      recipientStrategy: 'USER' | 'ACTOR' | 'ASSIGNED_USER' | 'ROLE' | 'CUSTOMER';
-      /** @enum {string} */
-      notificationType: 'info' | 'success' | 'warning' | 'action_required';
-      suppressible: boolean;
-      isActive: boolean;
-      overridden: boolean;
-      description: string;
-    };
-    UpdateNotificationRuleDto: {
-      isActive?: boolean;
-      channels?: ('in_app' | 'email' | 'whatsapp' | 'sms')[];
-    };
-    NotificationTemplateChannelDto: {
-      /** @enum {string} */
-      channel: 'in_app' | 'email' | 'whatsapp' | 'sms';
-      title: string;
-      body: string;
-      emailSubject: string | null;
-      emailBody: string | null;
-      overridden: boolean;
-    };
-    NotificationTemplateDto: {
-      key: string;
-      variables: string[];
-      channels: components['schemas']['NotificationTemplateChannelDto'][];
-      overridden: boolean;
-    };
-    UpdateNotificationTemplateDto: {
-      title: string;
-      body: string;
-      emailSubject: string;
-      emailBody: string;
-    };
-    NotificationDeliveryDto: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      notificationId: string;
-      title: string;
-      /** @enum {string} */
-      type: 'info' | 'success' | 'warning' | 'action_required';
-      sourceEventType: string | null;
-      ruleKey: string | null;
-      /** @enum {string} */
-      channel: 'in_app' | 'email' | 'whatsapp' | 'sms';
-      recipientRef: string;
-      provider: string | null;
-      /** @enum {string} */
-      status: 'pending' | 'processing' | 'sent' | 'failed' | 'cancelled';
-      attempts: number;
-      maxAttempts: number;
-      failureCode: string | null;
-      failureMessage: string | null;
-      providerMessageId: string | null;
-      /** Format: date-time */
-      lastAttemptAt: string | null;
-      /** Format: date-time */
-      sentAt: string | null;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    NotificationDeliveryListDto: {
-      items: components['schemas']['NotificationDeliveryDto'][];
-      total: number;
-      page: number;
-      pageSize: number;
-    };
     InvoiceDto: {
       /** Format: uuid */
       id: string;
@@ -9512,6 +9622,443 @@ export interface operations {
       };
     };
   };
+  listNotifications: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        unreadOnly?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  notificationUnreadCount: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnreadCountDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  markNotificationRead: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnreadCountDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  markAllNotificationsRead: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MarkAllReadResultDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getNotificationPreferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationPreferencesDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateNotificationPreferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateNotificationPreferencesDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationPreferencesDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listNotificationRules: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationRuleDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateNotificationRule: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        key: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateNotificationRuleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationRuleDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listNotificationTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationTemplateDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  getNotificationTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        key: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationTemplateDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  updateNotificationTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        key: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateNotificationTemplateDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationTemplateDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  resetNotificationTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        key: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationTemplateDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  listNotificationDeliveries: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: 'pending' | 'processing' | 'sent' | 'failed' | 'cancelled';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationDeliveryListDto'];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
   login: {
     parameters: {
       query?: never;
@@ -9567,6 +10114,52 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  requestPasswordReset: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RequestPasswordResetDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RequestPasswordResetResponseDto'];
+        };
+      };
+    };
+  };
+  confirmPasswordReset: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConfirmPasswordResetDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConfirmPasswordResetResponseDto'];
         };
       };
     };
@@ -10595,6 +11188,47 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['PlanDto'][];
+        };
+      };
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorDto'];
+        };
+      };
+    };
+  };
+  resumePlatformTenantProvisioning: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        tenantId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResumeProvisioningRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ResumeProvisioningResponseDto'];
         };
       };
       401: {
@@ -22673,443 +23307,6 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  listNotifications: {
-    parameters: {
-      query?: {
-        page?: number;
-        pageSize?: number;
-        unreadOnly?: boolean;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationListDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  notificationUnreadCount: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['UnreadCountDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  markNotificationRead: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['UnreadCountDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  markAllNotificationsRead: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['MarkAllReadResultDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  getNotificationPreferences: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationPreferencesDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  updateNotificationPreferences: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateNotificationPreferencesDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationPreferencesDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  listNotificationRules: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationRuleDto'][];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  updateNotificationRule: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        key: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateNotificationRuleDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationRuleDto'][];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  listNotificationTemplates: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationTemplateDto'][];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  getNotificationTemplate: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        key: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationTemplateDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  updateNotificationTemplate: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        key: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateNotificationTemplateDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationTemplateDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  resetNotificationTemplate: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        key: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationTemplateDto'];
-        };
-      };
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorDto'];
-        };
-      };
-    };
-  };
-  listNotificationDeliveries: {
-    parameters: {
-      query?: {
-        page?: number;
-        pageSize?: number;
-        status?: 'pending' | 'processing' | 'sent' | 'failed' | 'cancelled';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['NotificationDeliveryListDto'];
-        };
       };
       401: {
         headers: {

@@ -8,6 +8,7 @@ import {
   getMembershipRoleKeys,
   loadMemberView,
   loadMemberViews,
+  lockLastAdminGuard,
   type MemberView,
 } from './admin-queries.js';
 import { InvitationService } from './invitation.service.js';
@@ -238,6 +239,11 @@ export class MembersService {
 
   /** Throw `TENANT_LAST_ADMIN` if `membershipId` is an admin and no other active admin remains. */
   private async assertNotLastAdmin(tx: Tx, tenantId: string, membershipId: string): Promise<void> {
+    // Serializes this whole check against every other concurrent last-admin
+    // check for this tenant (suspend/remove/role-removal alike) — see
+    // `lockLastAdminGuard`'s doc comment for why a row lock alone isn't
+    // enough here.
+    await lockLastAdminGuard(tx, tenantId);
     const roleKeys = await getMembershipRoleKeys(tx, membershipId);
     if (!roleKeys.includes(PLATFORM_ROLE_KEYS.tenantAdmin)) return;
     const remaining = await countUsableTenantAdmins(tx, tenantId, membershipId);

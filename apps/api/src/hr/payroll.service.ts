@@ -137,6 +137,25 @@ export class PayrollService {
           and(eq(payrollEntries.tenantId, scope.tenantId), eq(payrollEntries.payrollPeriodId, id)),
         );
 
+      // Release this period's own prior reservations before re-claiming —
+      // makes reprocessing the same still-DRAFT period idempotent instead of
+      // seeing its own earlier reservations as "already taken by someone
+      // else" and silently excluding them. Scoped to `payrollPeriodId = id`
+      // only, so it can never touch another period's reservations.
+      await tx
+        .update(incentives)
+        .set({ payrollPeriodId: null, updatedAt: new Date() })
+        .where(and(eq(incentives.tenantId, scope.tenantId), eq(incentives.payrollPeriodId, id)));
+      await tx
+        .update(expenseReimbursements)
+        .set({ payrollPeriodId: null, updatedAt: new Date() })
+        .where(
+          and(
+            eq(expenseReimbursements.tenantId, scope.tenantId),
+            eq(expenseReimbursements.payrollPeriodId, id),
+          ),
+        );
+
       const emps = await tx
         .select({ id: employees.id, number: employees.employeeNumber, name: employees.displayName })
         .from(employees)
@@ -179,10 +198,16 @@ export class PayrollService {
             ),
           );
 
-        // approved incentives not yet tied to a period, dated in window
+        // Approved incentives not yet claimed by any period, atomically
+        // claimed for THIS period by the same statement that selects them:
+        // the `payroll_period_id is null` condition is re-checked by the
+        // UPDATE itself, not just an earlier read, so two periods' `process()`
+        // calls racing on the same incentive can never both claim it — the
+        // second one's UPDATE simply matches nothing for that row once the
+        // first commits (or, if concurrent, blocks and then sees it gone).
         const incRows = await tx
-          .select()
-          .from(incentives)
+          .update(incentives)
+          .set({ payrollPeriodId: id, updatedAt: new Date() })
           .where(
             and(
               eq(incentives.tenantId, scope.tenantId),
@@ -190,29 +215,46 @@ export class PayrollService {
               eq(incentives.status, 'APPROVED'),
               sql`${incentives.payrollPeriodId} is null`,
             ),
-          );
-
-        // reimbursed expense claims in window, not yet on a payroll
-        const expRows = await tx
-          .select({ id: expenseClaims.id, amount: expenseReimbursements.reimbursedAmount })
-          .from(expenseClaims)
-          .innerJoin(
-            expenseReimbursements,
-            and(
-              eq(expenseReimbursements.expenseClaimId, expenseClaims.id),
-              eq(expenseReimbursements.tenantId, scope.tenantId),
-            ),
           )
-          .where(
-            and(
-              eq(expenseClaims.tenantId, scope.tenantId),
-              eq(expenseClaims.employeeId, emp.id),
-              eq(expenseClaims.status, 'REIMBURSED'),
-              eq(expenseReimbursements.status, 'PAID'),
-              gte(expenseReimbursements.paymentDate, period.periodStart),
-              lte(expenseReimbursements.paymentDate, period.periodEnd),
-            ),
-          );
+          .returning();
+
+        // Reimbursed expense claims in window, atomically claimed the same
+        // way. The claim-id lookup is a plain read (claim status doesn't
+        // change here); the actual claim happens on the `expenseReimbursements`
+        // UPDATE, whose `payroll_period_id is null` condition is the atomic
+        // ownership check.
+        const claimIds = (
+          await tx
+            .select({ id: expenseClaims.id })
+            .from(expenseClaims)
+            .where(
+              and(
+                eq(expenseClaims.tenantId, scope.tenantId),
+                eq(expenseClaims.employeeId, emp.id),
+                eq(expenseClaims.status, 'REIMBURSED'),
+              ),
+            )
+        ).map((r) => r.id);
+        const expRows =
+          claimIds.length === 0
+            ? []
+            : await tx
+                .update(expenseReimbursements)
+                .set({ payrollPeriodId: id, updatedAt: new Date() })
+                .where(
+                  and(
+                    eq(expenseReimbursements.tenantId, scope.tenantId),
+                    inArray(expenseReimbursements.expenseClaimId, claimIds),
+                    eq(expenseReimbursements.status, 'PAID'),
+                    sql`${expenseReimbursements.payrollPeriodId} is null`,
+                    gte(expenseReimbursements.paymentDate, period.periodStart),
+                    lte(expenseReimbursements.paymentDate, period.periodEnd),
+                  ),
+                )
+                .returning({
+                  id: expenseReimbursements.id,
+                  amount: expenseReimbursements.reimbursedAmount,
+                });
 
         const components: (PayComponent & { name: string; source: string })[] = [
           ...cpComps.map((c) => ({
@@ -365,19 +407,20 @@ export class PayrollService {
           .where(eq(payrollEntries.id, e.id));
       }
 
-      // tie the consumed incentives to this period so they are not re-used
+      // Consume exactly the incentives this period already reserved at
+      // `process()` time — never a fresh re-selection by employee/date, so
+      // this can't accidentally consume an item reserved by a different
+      // period. Expense reimbursements need no equivalent update: their
+      // `payroll_period_id` was already set to this period at `process()`
+      // time and nothing releases it except this same period reprocessing.
       await tx
         .update(incentives)
-        .set({ payrollPeriodId: id, status: 'PAID', updatedAt: new Date() })
+        .set({ status: 'PAID', updatedAt: new Date() })
         .where(
           and(
             eq(incentives.tenantId, scope.tenantId),
+            eq(incentives.payrollPeriodId, id),
             eq(incentives.status, 'APPROVED'),
-            sql`${incentives.payrollPeriodId} is null`,
-            inArray(
-              incentives.employeeId,
-              entries.map((e) => e.employeeId),
-            ),
           ),
         );
 

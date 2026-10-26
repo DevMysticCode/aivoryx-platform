@@ -7,6 +7,8 @@ import type {
   PlatformTenantDetail,
   PlatformTenantListResponse,
   PlatformTenantReadiness,
+  ResumeProvisioningRequest,
+  ResumeProvisioningResponse,
   Solution,
   TenantUsage,
 } from '@aivoryx/contracts';
@@ -98,4 +100,11 @@ export const getTenantUsage = (tenantId: string) =>
 export const getTenantReadiness = (tenantId: string) =>
   apiFetch<PlatformTenantReadiness>(`/platform/tenants/${tenantId}/readiness`, {
     cache: 'no-store',
+  });
+
+export const resumeTenantProvisioning = (tenantId: string, body: ResumeProvisioningRequest) =>
+  apiFetch<ResumeProvisioningResponse>(`/platform/tenants/${tenantId}/resume-provisioning`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });

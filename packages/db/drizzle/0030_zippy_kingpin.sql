@@ -1,0 +1,2 @@
+ALTER TABLE "hr_expense_reimbursements" ADD COLUMN "payroll_period_id" uuid;--> statement-breakpoint
+CREATE INDEX "hr_expense_reimbursements_payroll_period_idx" ON "hr_expense_reimbursements" USING btree ("tenant_id","payroll_period_id");

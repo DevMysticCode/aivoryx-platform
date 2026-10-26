@@ -46,6 +46,14 @@ export function ManagerPicker({
   const search = useEmployees({ q: q || undefined, status: 'ACTIVE', pageSize: MAX_RESULTS });
   const options = (search.data?.items ?? []).filter((e) => e.id !== excludeId);
 
+  // `active` is reset to 0 on every keystroke (below), but a debounced search's results arrive
+  // on their OWN later render, with no keystroke to trigger that reset — without this, Enter can
+  // commit whatever `active` pointed to under the PREVIOUS (pre-debounce) options list, which is
+  // a different person once the real results land at a different order/length.
+  useEffect(() => {
+    setActive(0);
+  }, [search.data]);
+
   const choose = (o: { id: string; displayName: string }) => {
     onChange({ id: o.id, name: o.displayName });
     setText('');
