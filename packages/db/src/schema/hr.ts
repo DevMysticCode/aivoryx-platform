@@ -921,6 +921,13 @@ export const expenseReimbursements = pgTable(
     status: reimbursementStatus('status').notNull().default('PENDING'),
     failureReason: text('failure_reason'),
     processedByMembershipId: uuid('processed_by_membership_id'),
+    /** Reservation/consumption marker (ADR 0041 follow-up) — mirrors
+     *  `hr_incentives.payroll_period_id` exactly: NULL = available, set by
+     *  `process()` when a draft claims this reimbursement, left in place
+     *  through `finalize()`. No FK to `hr_payroll_periods`, matching the
+     *  incentive column's own precedent (payroll periods are never deleted;
+     *  the application is the only writer of this column). */
+    payrollPeriodId: uuid('payroll_period_id'),
     ...ts,
   },
   (t) => [
@@ -932,6 +939,7 @@ export const expenseReimbursements = pgTable(
       columns: [t.expenseClaimId, t.tenantId],
       foreignColumns: [expenseClaims.id, expenseClaims.tenantId],
     }).onDelete('cascade'),
+    index('hr_expense_reimbursements_payroll_period_idx').on(t.tenantId, t.payrollPeriodId),
   ],
 );
 

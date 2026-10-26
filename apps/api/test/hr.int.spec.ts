@@ -522,6 +522,570 @@ describe.skipIf(!INTEGRATION_ENABLED)('HR & Workforce', () => {
     expect((pdf.body as Buffer).subarray(0, 4).toString()).toBe('%PDF');
   });
 
+  // ---- payroll item reservation: incentives & expense reimbursements ----
+  //
+  // Approved fix (CUSTOMER-LAUNCH-READINESS.md §1d/§1e/§1f, Option 2):
+  // overlapping payroll periods remain allowed, but each incentive/expense
+  // reimbursement is now atomically reserved by whichever period's
+  // `process()` claims it first (`payroll_period_id` on both tables), and
+  // `finalize()` only ever consumes what its own period actually reserved.
+  // The two tests below were the original bug reproductions; they're kept
+  // and updated to assert the fixed behavior instead of the defect.
+
+  it('an approved incentive claimed by one period is excluded from a second overlapping period', async () => {
+    const cookie = await adminCookie();
+    const emp = await makeEmployee(cookie);
+    await http.post(`/api/v1/hr/employees/${emp.id}/compensation`).set('Cookie', cookie).send({
+      effectiveDate: '2026-01-01',
+      baseSalary: '30000.00',
+      payFrequency: 'MONTHLY',
+    });
+    const incentive = await http.post('/api/v1/hr/incentives').set('Cookie', cookie).send({
+      employeeId: emp.id,
+      amount: '5000.00',
+      type: 'performance',
+    });
+    expect(incentive.status).toBe(200);
+    await http.post(`/api/v1/hr/incentives/${incentive.body.id}/approve`).set('Cookie', cookie);
+
+    // two periods with overlapping date windows — overlap itself remains
+    // allowed; only double *consumption* is now prevented
+    const periodA = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Overlap A ${uniq()}`,
+        periodStart: '2026-08-01',
+        periodEnd: '2026-08-31',
+      });
+    const periodB = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Overlap B ${uniq()}`,
+        periodStart: '2026-08-15',
+        periodEnd: '2026-09-15',
+      });
+    expect(periodA.status).toBe(200);
+    expect(periodB.status).toBe(200);
+
+    // A processes first and claims the incentive ...
+    const procA = await http
+      .post(`/api/v1/hr/payroll/periods/${periodA.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+    expect(procA.status).toBe(200);
+    const entryA = procA.body.entries.find((e: { employeeId: string }) => e.employeeId === emp.id);
+    expect(entryA.incentivesTotal).toBe('5000.00');
+
+    // ... so B's later process() must not see it as available
+    const procB = await http
+      .post(`/api/v1/hr/payroll/periods/${periodB.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+    expect(procB.status).toBe(200);
+    const entryB = procB.body.entries.find((e: { employeeId: string }) => e.employeeId === emp.id);
+    expect(entryB.incentivesTotal).toBe('0.00');
+
+    await http
+      .post(`/api/v1/hr/payroll/periods/${periodA.body.id}/finalize`)
+      .set('Cookie', cookie)
+      .send({});
+    const finalizeB = await http
+      .post(`/api/v1/hr/payroll/periods/${periodB.body.id}/finalize`)
+      .set('Cookie', cookie)
+      .send({});
+    expect(finalizeB.status).toBe(200);
+
+    // the incentive is reserved AND consumed by period A only
+    const incAfter = await pool.query(
+      `select payroll_period_id, status from hr_incentives where id=$1`,
+      [incentive.body.id],
+    );
+    expect(incAfter.rows[0].payroll_period_id).toBe(periodA.body.id);
+    expect(incAfter.rows[0].status).toBe('PAID');
+
+    // B's finalized (immutable) snapshot correctly shows no incentive
+    const periodBAfter = await http
+      .get(`/api/v1/hr/payroll/periods/${periodB.body.id}`)
+      .set('Cookie', cookie);
+    const entryBFinal = periodBAfter.body.entries.find(
+      (e: { employeeId: string }) => e.employeeId === emp.id,
+    );
+    expect(entryBFinal.incentivesTotal).toBe('0.00');
+  });
+
+  it('a reimbursed expense claim claimed by one period is excluded from a second overlapping period', async () => {
+    const cookie = await adminCookie();
+    const emp = await makeEmployee(cookie);
+    await http.post(`/api/v1/hr/employees/${emp.id}/compensation`).set('Cookie', cookie).send({
+      effectiveDate: '2026-01-01',
+      baseSalary: '30000.00',
+      payFrequency: 'MONTHLY',
+    });
+    const cat = await http
+      .post('/api/v1/hr/expenses/categories')
+      .set('Cookie', cookie)
+      .send({ name: `Travel ${uniq()}`, code: `TR${uniq()}` });
+    expect(cat.status).toBe(200);
+    const claim = await http.post('/api/v1/hr/expenses').set('Cookie', cookie).send({
+      employeeId: emp.id,
+      categoryId: cat.body.id,
+      expenseDate: '2026-09-01',
+      amount: '1200.00',
+    });
+    await http.post(`/api/v1/hr/expenses/${claim.body.id}/submit`).set('Cookie', cookie).send({});
+    await http
+      .post(`/api/v1/hr/expenses/${claim.body.id}/approve`)
+      .set('Cookie', cookie)
+      .send({ approvedAmount: '1200.00' });
+    await http.post(`/api/v1/hr/expenses/${claim.body.id}/reimburse`).set('Cookie', cookie).send({
+      reimbursedAmount: '1200.00',
+      paymentDate: '2026-09-05',
+      paymentMethod: 'BANK_TRANSFER',
+    });
+
+    const periodA = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Expense Overlap A ${uniq()}`,
+        periodStart: '2026-09-01',
+        periodEnd: '2026-09-30',
+      });
+    const periodB = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Expense Overlap B ${uniq()}`,
+        periodStart: '2026-09-01',
+        periodEnd: '2026-09-15',
+      });
+
+    // process + finalize A fully before even creating/processing B — proves
+    // the fix needs no concurrency: a plain sequential process→finalize→
+    // process no longer lets B see an already-reserved reimbursement
+    const procA = await http
+      .post(`/api/v1/hr/payroll/periods/${periodA.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+    expect(procA.status).toBe(200);
+    const entryA = procA.body.entries.find((e: { employeeId: string }) => e.employeeId === emp.id);
+    expect(entryA.reimbursementsTotal).toBe('1200.00');
+    await http
+      .post(`/api/v1/hr/payroll/periods/${periodA.body.id}/finalize`)
+      .set('Cookie', cookie)
+      .send({});
+
+    const procB = await http
+      .post(`/api/v1/hr/payroll/periods/${periodB.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+    expect(procB.status).toBe(200);
+    const entryB = procB.body.entries.find((e: { employeeId: string }) => e.employeeId === emp.id);
+    // period A already reserved and finalized this reimbursement — B's
+    // process() must exclude it despite the overlapping date window
+    expect(entryB.reimbursementsTotal).toBe('0.00');
+
+    const reimbAfter = await pool.query(
+      `select r.payroll_period_id from hr_expense_reimbursements r
+         join hr_expense_claims c on c.id = r.expense_claim_id
+        where c.id = $1`,
+      [claim.body.id],
+    );
+    expect(reimbAfter.rows[0].payroll_period_id).toBe(periodA.body.id);
+  });
+
+  it('two different periods racing to process() the same incentive concurrently: exactly one claims it', async () => {
+    const cookie = await adminCookie();
+    const emp = await makeEmployee(cookie);
+    await http.post(`/api/v1/hr/employees/${emp.id}/compensation`).set('Cookie', cookie).send({
+      effectiveDate: '2026-01-01',
+      baseSalary: '20000.00',
+      payFrequency: 'MONTHLY',
+    });
+    const incentive = await http.post('/api/v1/hr/incentives').set('Cookie', cookie).send({
+      employeeId: emp.id,
+      amount: '3000.00',
+      type: 'performance',
+    });
+    await http.post(`/api/v1/hr/incentives/${incentive.body.id}/approve`).set('Cookie', cookie);
+
+    const periodA = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Race A ${uniq()}`,
+        periodStart: '2026-10-01',
+        periodEnd: '2026-10-31',
+      });
+    const periodB = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Race B ${uniq()}`,
+        periodStart: '2026-10-01',
+        periodEnd: '2026-11-30',
+      });
+
+    const [procA, procB] = await Promise.all([
+      http
+        .post(`/api/v1/hr/payroll/periods/${periodA.body.id}/process`)
+        .set('Cookie', cookie)
+        .send({}),
+      http
+        .post(`/api/v1/hr/payroll/periods/${periodB.body.id}/process`)
+        .set('Cookie', cookie)
+        .send({}),
+    ]);
+    expect(procA.status).toBe(200);
+    expect(procB.status).toBe(200);
+    const totalA = procA.body.entries.find(
+      (e: { employeeId: string }) => e.employeeId === emp.id,
+    ).incentivesTotal;
+    const totalB = procB.body.entries.find(
+      (e: { employeeId: string }) => e.employeeId === emp.id,
+    ).incentivesTotal;
+    // exactly one of the two drafts claims the incentive, never both, never neither
+    expect([totalA, totalB].sort()).toEqual(['0.00', '3000.00']);
+
+    const owner = await pool.query(`select payroll_period_id from hr_incentives where id=$1`, [
+      incentive.body.id,
+    ]);
+    expect([periodA.body.id, periodB.body.id]).toContain(owner.rows[0].payroll_period_id);
+  });
+
+  it('a period already PROCESSING rejects a second process() call and keeps its first reservation intact', async () => {
+    // `process()`'s own state-transition guard (unchanged by this fix) only
+    // allows DRAFT -> PROCESSING; a period that already processed once has no
+    // existing path back to DRAFT, so a literal "reprocess" never reaches
+    // this fix's release-and-reclaim code today. What this test establishes
+    // instead, for the reservation invariant specifically: the second call
+    // is rejected *before* touching any reservation, so the first call's
+    // claim is never released or duplicated by the rejected second attempt.
+    const cookie = await adminCookie();
+    const emp = await makeEmployee(cookie);
+    await http.post(`/api/v1/hr/employees/${emp.id}/compensation`).set('Cookie', cookie).send({
+      effectiveDate: '2026-01-01',
+      baseSalary: '20000.00',
+      payFrequency: 'MONTHLY',
+    });
+    const incentive = await http.post('/api/v1/hr/incentives').set('Cookie', cookie).send({
+      employeeId: emp.id,
+      amount: '1000.00',
+      type: 'performance',
+    });
+    await http.post(`/api/v1/hr/incentives/${incentive.body.id}/approve`).set('Cookie', cookie);
+    const period = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Reprocess ${uniq()}`,
+        periodStart: '2026-11-01',
+        periodEnd: '2026-11-30',
+      });
+
+    const first = await http
+      .post(`/api/v1/hr/payroll/periods/${period.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+    expect(first.status).toBe(200);
+    const entry1 = first.body.entries.find((e: { employeeId: string }) => e.employeeId === emp.id);
+    expect(entry1.incentivesTotal).toBe('1000.00');
+
+    const second = await http
+      .post(`/api/v1/hr/payroll/periods/${period.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+    expect(second.status).toBe(422);
+    expect(second.body.error.code).toBe('HR_INVALID_STATE');
+
+    const owner = await pool.query(`select payroll_period_id from hr_incentives where id=$1`, [
+      incentive.body.id,
+    ]);
+    expect(owner.rows[0].payroll_period_id).toBe(period.body.id);
+  });
+
+  it('a transaction that fails after reserving an incentive rolls the reservation back too', async () => {
+    const cookie = await adminCookie();
+    const emp = await makeEmployee(cookie);
+    const incentive = await http.post('/api/v1/hr/incentives').set('Cookie', cookie).send({
+      employeeId: emp.id,
+      amount: '500.00',
+      type: 'performance',
+    });
+    await http.post(`/api/v1/hr/incentives/${incentive.body.id}/approve`).set('Cookie', cookie);
+    const period = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Rollback ${uniq()}`,
+        periodStart: '2026-12-01',
+        periodEnd: '2026-12-31',
+      });
+
+    // Exercises the exact statement sequence `process()` runs inside its one
+    // transaction (reserve the incentive, then write a payroll entry), but
+    // forces the entry write to violate a real FK constraint, to prove the
+    // reservation is not left dangling when a later statement in the same
+    // transaction fails — the actual guarantee `withTenantContext`'s single
+    // transaction provides, exercised with a real, uncontrived constraint
+    // violation rather than a mock.
+    const c = await pool.connect();
+    try {
+      await c.query('set role aivoryx_app');
+      await c.query('begin');
+      await c.query("select set_config('app.user_id', $1, true)", [fx.admin.userId]);
+      await c.query("select set_config('app.tenant_id', $1, true)", [fx.tenantA]);
+      const claimed = await c.query(
+        `update hr_incentives set payroll_period_id = $1
+           where id = $2 and status = 'APPROVED' and payroll_period_id is null
+           returning id`,
+        [period.body.id, incentive.body.id],
+      );
+      expect(claimed.rowCount).toBe(1);
+      await expect(
+        c.query(
+          `insert into hr_payroll_entries
+             (id, tenant_id, payroll_period_id, employee_id, employee_number, employee_name, currency)
+           values (gen_random_uuid(), $1, $2, gen_random_uuid(), 'X', 'Nonexistent', 'INR')`,
+          [fx.tenantA, period.body.id],
+        ),
+      ).rejects.toBeTruthy(); // violates hr_payroll_entries_employee_fk — no such employee
+      await c.query('rollback');
+    } finally {
+      await c.query('reset role').catch(() => undefined);
+      c.release();
+    }
+
+    const after = await pool.query(`select payroll_period_id from hr_incentives where id=$1`, [
+      incentive.body.id,
+    ]);
+    expect(after.rows[0].payroll_period_id).toBeNull();
+  });
+
+  it('finalizing one period consumes only the items that period itself reserved', async () => {
+    // `process()` claims every still-available eligible item for every
+    // active employee in one call — it is not scoped to a subset of
+    // employees — so to observe two periods owning two *different*
+    // incentives, incY must not exist yet when periodX processes. This is
+    // the realistic shape of the invariant: periodX reserves what's
+    // available at the time it runs; a later incentive, approved afterward,
+    // is only ever available to whichever period processes next.
+    const cookie = await adminCookie();
+    const empX = await makeEmployee(cookie);
+    const empY = await makeEmployee(cookie);
+    await http.post(`/api/v1/hr/employees/${empX.id}/compensation`).set('Cookie', cookie).send({
+      effectiveDate: '2026-01-01',
+      baseSalary: '15000.00',
+      payFrequency: 'MONTHLY',
+    });
+    await http.post(`/api/v1/hr/employees/${empY.id}/compensation`).set('Cookie', cookie).send({
+      effectiveDate: '2026-01-01',
+      baseSalary: '15000.00',
+      payFrequency: 'MONTHLY',
+    });
+    const incX = await http.post('/api/v1/hr/incentives').set('Cookie', cookie).send({
+      employeeId: empX.id,
+      amount: '700.00',
+      type: 'performance',
+    });
+    await http.post(`/api/v1/hr/incentives/${incX.body.id}/approve`).set('Cookie', cookie);
+
+    const periodX = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Own Reservations X ${uniq()}`,
+        periodStart: '2027-01-01',
+        periodEnd: '2027-01-31',
+      });
+    await http
+      .post(`/api/v1/hr/payroll/periods/${periodX.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+
+    // incY is approved only now — too late for periodX, which already ran
+    const incY = await http.post('/api/v1/hr/incentives').set('Cookie', cookie).send({
+      employeeId: empY.id,
+      amount: '900.00',
+      type: 'performance',
+    });
+    await http.post(`/api/v1/hr/incentives/${incY.body.id}/approve`).set('Cookie', cookie);
+    const periodY = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Own Reservations Y ${uniq()}`,
+        periodStart: '2027-01-01',
+        periodEnd: '2027-01-31',
+      });
+    await http
+      .post(`/api/v1/hr/payroll/periods/${periodY.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+
+    const afterProcess = await pool.query(
+      `select id, payroll_period_id from hr_incentives where id = any($1)`,
+      [[incX.body.id, incY.body.id]],
+    );
+    const owners = new Map(
+      afterProcess.rows.map((r: { id: string; payroll_period_id: string }) => [
+        r.id,
+        r.payroll_period_id,
+      ]),
+    );
+    expect(owners.get(incX.body.id)).toBe(periodX.body.id);
+    expect(owners.get(incY.body.id)).toBe(periodY.body.id);
+
+    await http
+      .post(`/api/v1/hr/payroll/periods/${periodX.body.id}/finalize`)
+      .set('Cookie', cookie)
+      .send({});
+
+    // incY, reserved by periodY, must be untouched by periodX's finalize
+    const incYAfter = await pool.query(
+      `select payroll_period_id, status from hr_incentives where id=$1`,
+      [incY.body.id],
+    );
+    expect(incYAfter.rows[0].payroll_period_id).toBe(periodY.body.id);
+    expect(incYAfter.rows[0].status).toBe('APPROVED'); // not yet PAID — periodY hasn't finalized
+
+    // incX, periodX's own reservation, was correctly consumed
+    const incXAfter = await pool.query(
+      `select payroll_period_id, status from hr_incentives where id=$1`,
+      [incX.body.id],
+    );
+    expect(incXAfter.rows[0].payroll_period_id).toBe(periodX.body.id);
+    expect(incXAfter.rows[0].status).toBe('PAID');
+  });
+
+  it('is tenant-isolated: processing tenant A cannot reserve or release tenant B incentives', async () => {
+    const cookieA = await adminCookie();
+    const cookieB = await adminBCookie();
+    const empB = await makeEmployee(cookieB);
+    await http.post(`/api/v1/hr/employees/${empB.id}/compensation`).set('Cookie', cookieB).send({
+      effectiveDate: '2026-01-01',
+      baseSalary: '10000.00',
+      payFrequency: 'MONTHLY',
+    });
+    const incB = await http.post('/api/v1/hr/incentives').set('Cookie', cookieB).send({
+      employeeId: empB.id,
+      amount: '400.00',
+      type: 'performance',
+    });
+    await http.post(`/api/v1/hr/incentives/${incB.body.id}/approve`).set('Cookie', cookieB);
+
+    const periodA = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookieA)
+      .send({
+        name: `Isolation A ${uniq()}`,
+        periodStart: '2026-01-01',
+        periodEnd: '2026-01-31',
+      });
+    const procA = await http
+      .post(`/api/v1/hr/payroll/periods/${periodA.body.id}/process`)
+      .set('Cookie', cookieA)
+      .send({});
+    expect(procA.status).toBe(200);
+
+    // tenant B's incentive must still be untouched and still available to B
+    const incBAfter = await pool.query(`select payroll_period_id from hr_incentives where id=$1`, [
+      incB.body.id,
+    ]);
+    expect(incBAfter.rows[0].payroll_period_id).toBeNull();
+
+    const periodB = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookieB)
+      .send({
+        name: `Isolation B ${uniq()}`,
+        periodStart: '2026-01-01',
+        periodEnd: '2026-01-31',
+      });
+    const procB = await http
+      .post(`/api/v1/hr/payroll/periods/${periodB.body.id}/process`)
+      .set('Cookie', cookieB)
+      .send({});
+    const entryB = procB.body.entries.find((e: { employeeId: string }) => e.employeeId === empB.id);
+    expect(entryB.incentivesTotal).toBe('400.00');
+  });
+
+  it('a pre-migration reimbursement row (payroll_period_id already NULL) behaves exactly like a new one', async () => {
+    const cookie = await adminCookie();
+    const emp = await makeEmployee(cookie);
+    await http.post(`/api/v1/hr/employees/${emp.id}/compensation`).set('Cookie', cookie).send({
+      effectiveDate: '2026-01-01',
+      baseSalary: '18000.00',
+      payFrequency: 'MONTHLY',
+    });
+    const cat = await http
+      .post('/api/v1/hr/expenses/categories')
+      .set('Cookie', cookie)
+      .send({ name: `Legacy ${uniq()}`, code: `LG${uniq()}` });
+    const claim = await http.post('/api/v1/hr/expenses').set('Cookie', cookie).send({
+      employeeId: emp.id,
+      categoryId: cat.body.id,
+      expenseDate: '2026-02-01',
+      amount: '300.00',
+    });
+    await http.post(`/api/v1/hr/expenses/${claim.body.id}/submit`).set('Cookie', cookie).send({});
+    await http
+      .post(`/api/v1/hr/expenses/${claim.body.id}/approve`)
+      .set('Cookie', cookie)
+      .send({ approvedAmount: '300.00' });
+    await http.post(`/api/v1/hr/expenses/${claim.body.id}/reimburse`).set('Cookie', cookie).send({
+      reimbursedAmount: '300.00',
+      paymentDate: '2026-02-05',
+      paymentMethod: 'BANK_TRANSFER',
+    });
+    // simulate data that predates this migration: the column already defaults
+    // to NULL for every pre-existing row, so there is nothing to backfill —
+    // assert that explicitly rather than assuming it
+    const before = await pool.query(
+      `select r.payroll_period_id from hr_expense_reimbursements r
+         join hr_expense_claims c on c.id = r.expense_claim_id where c.id=$1`,
+      [claim.body.id],
+    );
+    expect(before.rows[0].payroll_period_id).toBeNull();
+
+    const period = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Legacy Period ${uniq()}`,
+        periodStart: '2026-02-01',
+        periodEnd: '2026-02-28',
+      });
+    const proc = await http
+      .post(`/api/v1/hr/payroll/periods/${period.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+    const entry = proc.body.entries.find((e: { employeeId: string }) => e.employeeId === emp.id);
+    expect(entry.reimbursementsTotal).toBe('300.00');
+    await http
+      .post(`/api/v1/hr/payroll/periods/${period.body.id}/finalize`)
+      .set('Cookie', cookie)
+      .send({});
+
+    // a second overlapping period's later process() must not pick it up again
+    const period2 = await http
+      .post('/api/v1/hr/payroll/periods')
+      .set('Cookie', cookie)
+      .send({
+        name: `Legacy Period 2 ${uniq()}`,
+        periodStart: '2026-02-01',
+        periodEnd: '2026-02-28',
+      });
+    const proc2 = await http
+      .post(`/api/v1/hr/payroll/periods/${period2.body.id}/process`)
+      .set('Cookie', cookie)
+      .send({});
+    const entry2 = proc2.body.entries.find((e: { employeeId: string }) => e.employeeId === emp.id);
+    expect(entry2.reimbursementsTotal).toBe('0.00');
+  });
+
   // ---- performance ---------------------------------------
 
   it('runs a performance review DRAFT -> SUBMITTED with a notification event', async () => {

@@ -394,6 +394,51 @@ export async function createTenantWithModules(input: {
   }
 }
 
+/**
+ * Insert a bare `tenants` row in `provisioning` status with nothing else —
+ * no modules, no subscription, no invitation — simulating `createTenant`
+ * having failed immediately after its own first (and only non-retriable)
+ * step, for `resumeProvisioning` tests.
+ */
+export async function createStuckProvisioningTenant(name: string): Promise<string> {
+  return withSuperuser(async (c) => {
+    const tenantId = uuid();
+    await c.query(`insert into tenants (id, slug, name, status) values ($1,$2,$3,'provisioning')`, [
+      tenantId,
+      `t-${tenantId.slice(0, 8)}`,
+      name,
+    ]);
+    return tenantId;
+  });
+}
+
+/**
+ * Add an already-active member with a known email to a tenant stuck in
+ * `provisioning` — simulating `InvitationService.create` + accept having
+ * already succeeded in an earlier, partially-failed `resumeProvisioning`
+ * attempt (or the original `createTenant`), before whatever step after it
+ * failed left the tenant status itself stuck.
+ */
+export async function addActiveMemberWithEmail(
+  tenantId: string,
+  email: string,
+): Promise<UserFixture> {
+  return withSuperuser(async (c) => {
+    const userId = uuid();
+    const { plain, hash } = await pw();
+    await c.query(
+      'insert into users (id, email, password_hash, password_updated_at) values ($1,$2,$3, now())',
+      [userId, email, hash],
+    );
+    const membershipId = uuid();
+    await c.query(
+      `insert into user_tenant_memberships (id, user_id, tenant_id, status) values ($1,$2,$3,'active')`,
+      [membershipId, userId, tenantId],
+    );
+    return { userId, email, password: plain, membershipId };
+  });
+}
+
 /** Add one more active member (user + membership, no roles) to an existing tenant. */
 export async function addTenantMember(tenantId: string): Promise<UserFixture> {
   return withSuperuser(async (c) => {

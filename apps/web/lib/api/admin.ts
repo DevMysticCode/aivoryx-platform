@@ -1,9 +1,11 @@
 import type {
   AdminRole,
+  ConfirmPasswordResetResponse,
   InviteMemberRequest,
   InviteMemberResponse,
   Member,
   MeResponse,
+  RequestPasswordResetResponse,
   Tenant,
   UpdateMemberRequest,
   UpdateTenantRequest,
@@ -33,6 +35,15 @@ export const switchTenant = (membershipId: string) =>
   apiFetch<MeResponse>('/auth/switch-tenant', json({ membershipId }));
 
 export const logout = () => apiFetch<{ ok: true }>('/auth/logout', { method: 'POST' });
+
+export const requestPasswordReset = (email: string) =>
+  apiFetch<RequestPasswordResetResponse>('/auth/password-reset/request', json({ email }));
+
+export const confirmPasswordReset = (token: string, newPassword: string) =>
+  apiFetch<ConfirmPasswordResetResponse>(
+    '/auth/password-reset/confirm',
+    json({ token, newPassword }),
+  );
 
 // ---- tenant ---------------------------------------------------------
 

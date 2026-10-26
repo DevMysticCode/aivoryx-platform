@@ -78,6 +78,10 @@ export const serverEnvSchema = z
     LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(10),
     LOGIN_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(1).max(3600).default(60),
 
+    /** Same mechanism, for POST /auth/password-reset/request (account-recovery abuse). */
+    PASSWORD_RESET_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(5),
+    PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(1).max(3600).default(300),
+
     // Argon2id parameters (ADR 0010 / 0028). OWASP-aligned defaults; a change
     // triggers transparent rehash-on-login.
     ARGON2_MEMORY_KIB: z.coerce.number().int().min(8192).max(1_048_576).default(19_456),

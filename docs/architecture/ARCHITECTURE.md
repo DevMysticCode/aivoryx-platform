@@ -153,6 +153,7 @@ Cross-cutting:
 - `BACKUP-RECOVERY.md` — backup/recovery strategy, RPO/RTO decisions, restore runbook (Supabase/Upstash)
 - `BACKUP-RESTORE-TEST-PLAN.md` — provider evidence audit and an isolated, unexecuted restore-test plan
 - `INCIDENT-RUNBOOKS.md` — release sequencing, rollback, failure diagnosis, session/tenant-isolation incidents, credential rotation, escalation
+- `CUSTOMER-LAUNCH-READINESS.md` — the go-live checklist: PASS/FAIL/BLOCKED/NOT VERIFIED per area, referencing the source docs above
 - `QUALITY-GATES.md` — PR and pre-pilot gates
 
 Lead ingestion / integrations:

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { use, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { ArrowLeft, Check, Lock } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import { nextTenantStatuses, type TenantStatus } from '@aivoryx/shared';
@@ -13,6 +13,7 @@ import {
   useActivateTenant,
   useArchiveTenant,
   usePlatformTenant,
+  useResumeProvisioning,
   useSetTenantModule,
   useSuspendTenant,
   useTenantReadiness,
@@ -40,15 +41,54 @@ export default function PlatformTenantDetailPage({
   const activate = useActivateTenant(tenantId);
   const suspend = useSuspendTenant(tenantId);
   const archive = useArchiveTenant(tenantId);
+  const resume = useResumeProvisioning(tenantId);
   const toast = useToast();
   const [confirm, setConfirm] = useState<{
     module: PlatformTenantModule;
     next: 'ENABLED' | 'DISABLED';
   } | null>(null);
   const [lifecycleConfirm, setLifecycleConfirm] = useState<TenantStatus | null>(null);
+  const [resumeForm, setResumeForm] = useState({
+    adminEmail: '',
+    adminName: '',
+    planKey: '',
+    moduleKeys: [] as string[],
+  });
 
   const modules = (tenant.data?.modules ?? []).slice().sort((a, b) => a.order - b.order);
   const enabledKeys = new Set(modules.filter((m) => m.state === 'ENABLED').map((m) => m.key));
+
+  // Seed the resume form's module selection from whatever already got
+  // provisioned, once, the first time this stuck tenant's data loads.
+  const enabledKeysSignature = [...enabledKeys].sort().join(',');
+  useEffect(() => {
+    if (tenant.data?.status === 'provisioning' && enabledKeys.size > 0) {
+      setResumeForm((f) => (f.moduleKeys.length > 0 ? f : { ...f, moduleKeys: [...enabledKeys] }));
+    }
+  }, [tenant.data?.status, enabledKeysSignature]);
+
+  const toggleResumeModule = (key: string) => {
+    setResumeForm((f) => ({
+      ...f,
+      moduleKeys: f.moduleKeys.includes(key)
+        ? f.moduleKeys.filter((m) => m !== key)
+        : [...f.moduleKeys, key],
+    }));
+  };
+
+  const handleResume = async () => {
+    try {
+      await resume.mutateAsync({
+        adminEmail: resumeForm.adminEmail.trim(),
+        adminName: resumeForm.adminName.trim() || undefined,
+        planKey: resumeForm.planKey.trim() || undefined,
+        moduleKeys: resumeForm.moduleKeys,
+      });
+      toast.success(`${tenant.data?.name} provisioning finished — now active.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not finish provisioning.');
+    }
+  };
 
   const apply = async (module: PlatformTenantModule, next: 'ENABLED' | 'DISABLED') => {
     try {
@@ -226,6 +266,96 @@ export default function PlatformTenantDetailPage({
               </ul>
             ) : null}
           </section>
+
+          {tenant.data.status === 'provisioning' ? (
+            <section className="rounded-lg border border-warning/40 bg-warning-soft/30 p-4">
+              <h2 className="text-sm font-semibold">Finish provisioning</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                This workspace did not finish setting up in one pass — a step after its company
+                record was created (modules, subscription, or the admin invitation) did not
+                complete. Nothing here was lost: pick up where it left off. This is safe to submit
+                more than once.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1 text-sm">
+                  <span className="font-medium">
+                    Admin email <span className="text-danger">*</span>
+                  </span>
+                  <input
+                    type="email"
+                    value={resumeForm.adminEmail}
+                    onChange={(e) => setResumeForm((f) => ({ ...f, adminEmail: e.target.value }))}
+                    placeholder="admin@acme-field.test"
+                    className="h-9 w-full rounded-md border bg-transparent px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+                <label className="space-y-1 text-sm">
+                  <span className="font-medium">Admin name</span>
+                  <input
+                    value={resumeForm.adminName}
+                    onChange={(e) => setResumeForm((f) => ({ ...f, adminName: e.target.value }))}
+                    className="h-9 w-full rounded-md border bg-transparent px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+                {!tenant.data.subscription ? (
+                  <label className="space-y-1 text-sm">
+                    <span className="font-medium">
+                      Plan key <span className="text-danger">*</span>
+                    </span>
+                    <input
+                      value={resumeForm.planKey}
+                      onChange={(e) => setResumeForm((f) => ({ ...f, planKey: e.target.value }))}
+                      placeholder="AIVORYX_SOLAR"
+                      className="h-9 w-full rounded-md border bg-transparent px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </label>
+                ) : null}
+              </div>
+              <fieldset className="mt-3">
+                <legend className="text-sm font-medium">Modules</legend>
+                <div className="mt-1 flex flex-wrap gap-3">
+                  {modules.map((m) => (
+                    <label key={m.key} className="inline-flex items-center gap-1.5 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={resumeForm.moduleKeys.includes(m.key)}
+                        onChange={() => toggleResumeModule(m.key)}
+                        className="size-4 rounded border"
+                      />
+                      {m.displayName}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              {resume.isError ? <ErrorBlock error={resume.error} onRetry={undefined} /> : null}
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  disabled={
+                    resume.isPending ||
+                    !resumeForm.adminEmail.trim() ||
+                    resumeForm.moduleKeys.length === 0 ||
+                    (!tenant.data.subscription && !resumeForm.planKey.trim())
+                  }
+                  onClick={handleResume}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                >
+                  Finish provisioning
+                </button>
+              </div>
+              {resume.data?.invitation ? (
+                <div className="mt-3 rounded-md border bg-secondary/30 p-3 text-left text-xs">
+                  <p className="font-medium">No email provider is configured yet.</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Relay this one-time invitation link to {resumeForm.adminEmail} out of band:
+                  </p>
+                  <code className="mt-2 block break-all rounded bg-background p-2">
+                    /accept-invitation?token={resume.data.invitation.token}
+                  </code>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className="rounded-lg border">
             <div className="border-b px-4 py-3">

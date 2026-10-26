@@ -134,6 +134,37 @@ describe.skipIf(!INTEGRATION_ENABLED)('CRM core', () => {
       expect(reassigned.body.assignee.membershipId).toBe(fx.secondAdmin.membershipId);
     });
 
+    it('a concurrent assign cannot revert a status change that happened at the same time', async () => {
+      const cookie = await adminCookie();
+
+      // `assign` computes its "bump to ASSIGNED" status transition from a
+      // pre-read snapshot of the lead, with no lock and no re-check at write
+      // time. If a concurrent qualify/status-change commits in between, assign's
+      // unconditional UPDATE can overwrite that newer status back toward
+      // ASSIGNED — the exact regression "reassigning keeps the later status"
+      // (tested sequentially above) promises can't happen.
+      for (let i = 0; i < 5; i++) {
+        const lead = await createLead(cookie);
+
+        const [assigned, qualified] = await Promise.all([
+          http
+            .post(`/api/v1/crm/leads/${lead.id}/assign`)
+            .set('Cookie', cookie)
+            .send({ membershipId: fx.plainMember.membershipId }),
+          http
+            .post(`/api/v1/crm/leads/${lead.id}/qualify`)
+            .set('Cookie', cookie)
+            .send({ outcome: 'QUALIFIED' }),
+        ]);
+        expect(assigned.status).toBe(200);
+        expect(qualified.status).toBe(200);
+
+        const after = await http.get(`/api/v1/crm/leads/${lead.id}`).set('Cookie', cookie);
+        expect(after.body.status).toBe('QUALIFIED');
+        expect(after.body.assignee.membershipId).toBe(fx.plainMember.membershipId);
+      }
+    });
+
     it('cannot assign to a membership outside the tenant', async () => {
       const cookie = await adminCookie();
       const lead = await createLead(cookie);

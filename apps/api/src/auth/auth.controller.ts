@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Logger, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Logger, Post, Req, Res } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiOperation,
@@ -12,6 +12,7 @@ import { SERVER_ENV } from '../config/config.module.js';
 import { AuthOnly, Public, Security } from '../security/security.decorators.js';
 import type { SecurityContext } from '../security/security-context.js';
 import { AuthService, type MembershipView } from './auth.service.js';
+import { PasswordResetService } from './password-reset.service.js';
 import { RbacService } from './rbac.service.js';
 import { CompanyProfileService } from '../settings/company-profile.service.js';
 import { EntitlementService } from '../entitlements/entitlement.service.js';
@@ -20,11 +21,15 @@ import { moduleForPermission } from '@aivoryx/shared';
 import {
   ActiveContextDto,
   ApiErrorDto,
+  ConfirmPasswordResetDto,
+  ConfirmPasswordResetResponseDto,
   LoginRequestDto,
   LoginResponseDto,
   LogoutResponseDto,
   MeResponseDto,
   MembershipSummaryDto,
+  RequestPasswordResetDto,
+  RequestPasswordResetResponseDto,
   SwitchTenantRequestDto,
   SwitchTenantResponseDto,
 } from './auth.dto.js';
@@ -41,6 +46,7 @@ export class AuthController {
     private readonly companyProfiles: CompanyProfileService,
     private readonly entitlements: EntitlementService,
     private readonly platformAdmins: PlatformAdminService,
+    private readonly passwordReset: PasswordResetService,
   ) {}
 
   @Post('login')
@@ -116,6 +122,39 @@ export class AuthController {
         : null,
     );
     res.clearCookie(this.env.SESSION_COOKIE_NAME, this.clearCookieOptions());
+    return { ok: true };
+  }
+
+  @Post('password-reset/request')
+  @Public()
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'requestPasswordReset',
+    summary:
+      'Request a password reset email. Always returns ok — never discloses account existence.',
+  })
+  @ApiOkResponse({ type: RequestPasswordResetResponseDto })
+  async requestPasswordReset(
+    @Body() body: RequestPasswordResetDto,
+  ): Promise<RequestPasswordResetResponseDto> {
+    await this.passwordReset.requestReset(body.email);
+    return { ok: true };
+  }
+
+  @Post('password-reset/confirm')
+  @Public()
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'confirmPasswordReset',
+    summary:
+      'Complete a password reset with the one-time token from the email. Revokes every ' +
+      'existing session for the account.',
+  })
+  @ApiOkResponse({ type: ConfirmPasswordResetResponseDto })
+  async confirmPasswordReset(
+    @Body() body: ConfirmPasswordResetDto,
+  ): Promise<ConfirmPasswordResetResponseDto> {
+    await this.passwordReset.confirmReset(body.token, body.newPassword);
     return { ok: true };
   }
 

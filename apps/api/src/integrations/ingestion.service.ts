@@ -35,8 +35,26 @@ export const PROCESSING_ERROR_CODE = 'PROCESSING_ERROR';
 const PROCESSING_ERROR_MESSAGE =
   'An unexpected error interrupted processing of this event. It can be replayed.';
 
+/**
+ * How long a `RECEIVED` raw event with no canonical row, or a `PROCESSING` canonical event, may
+ * sit without any update before it is treated as abandoned rather than genuinely in flight.
+ *
+ * There is no BullMQ-backed retry loop for ingestion (unlike notification delivery) — processing
+ * happens synchronously within the inbound HTTP request. `processRawEventTx` is one transaction
+ * that commits a terminal status directly, so a row still in one of these non-terminal states
+ * this long cannot belong to any attempt that is still actually running; it can only be one whose
+ * owning request died before it could record an outcome (a process crash/OOM/deploy, or — for the
+ * no-canonical-row case — `recordProcessingFailure` itself failing, the "double fault" its own
+ * comment anticipates). A genuine concurrent-delivery race resolves within milliseconds, far under
+ * this threshold, so it is never mistaken for an abandoned attempt (see the "concurrent identical
+ * deliveries" contract test). ADR 0032's own model calls the equivalent outcome "exhausted retries
+ * -> DEAD_LETTER"; this constant is the synchronous-pipeline's substitute for that BullMQ timeout.
+ */
+const STUCK_PROCESSING_THRESHOLD_MS = 5 * 60_000;
+
 type DuplicateLookup =
   | { kind: 'retry'; canonicalId: string }
+  | { kind: 'fresh' }
   | { kind: 'result'; result: IngestResult };
 
 /** ids resolved while ingesting, for the per-delivery log line only */
@@ -204,7 +222,7 @@ export class IngestionService {
         };
       }
       const [existing] = await tx
-        .select({ id: rawEvents.id, status: rawEvents.status })
+        .select({ id: rawEvents.id, status: rawEvents.status, createdAt: rawEvents.createdAt })
         .from(rawEvents)
         .where(
           and(
@@ -219,6 +237,7 @@ export class IngestionService {
         source,
         rawEventId: existing!.id,
         rawStatus: existing!.status,
+        rawCreatedAt: existing!.createdAt,
         isNewRaw: false as const,
       };
     });
@@ -245,6 +264,28 @@ export class IngestionService {
           ) {
             return { kind: 'retry', canonicalId: existingCanonical.id };
           }
+          // No canonical row exists at all: the first attempt never even reached transaction 2 (a
+          // crash right after transaction 1 committed) OR it reached `processRawEventTx`, failed,
+          // and `recordProcessingFailure` ITSELF then also failed to record that outcome (the
+          // "double fault" its own comment anticipates — see git history). Either way the raw event
+          // is stuck at RECEIVED forever with nothing to retry it. Only reclaim it once a genuine
+          // concurrent delivery (which resolves in milliseconds) can be ruled out by age.
+          if (
+            !existingCanonical &&
+            resolved.rawStatus === 'RECEIVED' &&
+            Date.now() - resolved.rawCreatedAt.getTime() > STUCK_PROCESSING_THRESHOLD_MS
+          ) {
+            return { kind: 'fresh' };
+          }
+          // A canonical row exists but is stuck mid-processing: the attempt that owned it (either
+          // the original attempt or an earlier replay) died before reaching a terminal status.
+          // Reclaim it the same way `replay()` does for a direct admin-triggered reclaim.
+          if (
+            existingCanonical?.status === 'PROCESSING' &&
+            Date.now() - existingCanonical.updatedAt.getTime() > STUCK_PROCESSING_THRESHOLD_MS
+          ) {
+            return { kind: 'retry', canonicalId: existingCanonical.id };
+          }
           return {
             kind: 'result',
             result: {
@@ -259,6 +300,9 @@ export class IngestionService {
       );
       if (duplicate.kind === 'retry') {
         return this.replay(resolved.tenantId, duplicate.canonicalId, null);
+      }
+      if (duplicate.kind === 'fresh') {
+        return this.processRawEvent(resolved.tenantId, resolved.source, resolved.rawEventId);
       }
       return duplicate.result;
     }
@@ -743,7 +787,21 @@ export class IngestionService {
         )
         .limit(1);
       if (!current) throw new AppError('EVENT_NOT_FOUND');
-      if (current.status === 'RECEIVED' || current.status === 'PROCESSING') {
+      if (current.status === 'RECEIVED') throw new AppError('EVENT_NOT_REPLAYABLE');
+      // A `PROCESSING` row only exists before `processRawEventTx`'s terminal-status commit — either
+      // a genuinely in-flight attempt (always resolves in milliseconds; see
+      // `STUCK_PROCESSING_THRESHOLD_MS`'s own reasoning) or one whose owning request died before
+      // reaching that commit. Only the second case is reclaimed here; the reclaim itself is this
+      // same call immediately re-processing it (via the bump below) — there is no separate resting
+      // "dead" state to write, since nothing here leaves it unretried. An admin-triggered reclaim is
+      // flagged in the audit row (`reclaimedStuckProcessing`); an automatic one (triggered by a
+      // provider redelivery, `actorMembershipId: null`) still produces the usual structured
+      // ingest/outcome log line with the correlation id, just without that extra audit flag.
+      const stuckProcessing = current.status === 'PROCESSING';
+      if (
+        stuckProcessing &&
+        Date.now() - current.updatedAt.getTime() <= STUCK_PROCESSING_THRESHOLD_MS
+      ) {
         throw new AppError('EVENT_NOT_REPLAYABLE');
       }
       const [sourceRow] = await tx
@@ -769,7 +827,11 @@ export class IngestionService {
           entityType: 'canonical_lead_event',
           entityId: canonicalEventId,
           actor: { type: 'USER', membershipId: actorMembershipId },
-          metadata: { sourceId: sourceRow.id, priorStatus: current.status },
+          metadata: {
+            sourceId: sourceRow.id,
+            priorStatus: current.status,
+            ...(stuckProcessing ? { reclaimedStuckProcessing: true } : {}),
+          },
         });
       }
       return { source: sourceRow, rawEventId: current.rawEventId };

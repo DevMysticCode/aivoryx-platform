@@ -10,7 +10,11 @@ import { NotificationDeliveryService } from './notification-delivery.service.js'
 import { OutboxDispatcherService } from './outbox-dispatcher.service.js';
 import { RecipientResolver } from './recipient-resolver.js';
 import { NotificationsWorker } from './notifications.worker.js';
-import { NotificationsQueueLifecycle, notificationsQueueProvider } from './notifications.queue.js';
+import {
+  NOTIFICATIONS_QUEUE,
+  NotificationsQueueLifecycle,
+  notificationsQueueProvider,
+} from './notifications.queue.js';
 import { InAppChannelAdapter } from './channels/in-app.adapter.js';
 import { EmailChannelAdapter } from './channels/email.adapter.js';
 import { SmsChannelAdapter, WhatsAppChannelAdapter } from './channels/stub-channels.js';
@@ -42,6 +46,11 @@ import { SmsChannelAdapter, WhatsAppChannelAdapter } from './channels/stub-chann
     WhatsAppChannelAdapter,
     SmsChannelAdapter,
   ],
-  exports: [NotificationEngineService, OutboxDispatcherService, NotificationsWorker],
+  exports: [
+    NotificationEngineService,
+    OutboxDispatcherService,
+    NotificationsWorker,
+    NOTIFICATIONS_QUEUE,
+  ],
 })
 export class NotificationsModule {}

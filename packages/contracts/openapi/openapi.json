@@ -45,6 +45,698 @@
         ]
       }
     },
+    "/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "List my notifications.",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/unread-count": {
+      "get": {
+        "operationId": "notificationUnreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "My unread notification count.",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/{id}/read": {
+      "post": {
+        "operationId": "markNotificationRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Mark one notification read.",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/read-all": {
+      "post": {
+        "operationId": "markAllNotificationsRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAllReadResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Mark all my notifications read.",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/preferences": {
+      "get": {
+        "operationId": "getNotificationPreferences",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "My notification preferences.",
+        "tags": [
+          "notifications"
+        ]
+      },
+      "put": {
+        "operationId": "updateNotificationPreferences",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Update my notification preferences.",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/admin/notifications/rules": {
+      "get": {
+        "operationId": "listNotificationRules",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationRuleDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Effective notification rules.",
+        "tags": [
+          "notifications-admin"
+        ]
+      }
+    },
+    "/admin/notifications/rules/{key}": {
+      "patch": {
+        "operationId": "updateNotificationRule",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationRuleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationRuleDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Enable/disable a rule or narrow its channels.",
+        "tags": [
+          "notifications-admin"
+        ]
+      }
+    },
+    "/admin/notifications/templates": {
+      "get": {
+        "operationId": "listNotificationTemplates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationTemplateDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Effective templates.",
+        "tags": [
+          "notifications-admin"
+        ]
+      }
+    },
+    "/admin/notifications/templates/{key}": {
+      "get": {
+        "operationId": "getNotificationTemplate",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "One effective template.",
+        "tags": [
+          "notifications-admin"
+        ]
+      },
+      "put": {
+        "operationId": "updateNotificationTemplate",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Override a template.",
+        "tags": [
+          "notifications-admin"
+        ]
+      },
+      "delete": {
+        "operationId": "resetNotificationTemplate",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Reset a template to the system default.",
+        "tags": [
+          "notifications-admin"
+        ]
+      }
+    },
+    "/admin/notifications/deliveries": {
+      "get": {
+        "operationId": "listNotificationDeliveries",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "pending",
+                "processing",
+                "sent",
+                "failed",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDeliveryListDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Recent notification deliveries and failures.",
+        "tags": [
+          "notifications-admin"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "operationId": "login",
@@ -119,6 +811,70 @@
           }
         ],
         "summary": "Revoke the current session.",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/password-reset/request": {
+      "post": {
+        "operationId": "requestPasswordReset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestPasswordResetResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Request a password reset email. Always returns ok — never discloses account existence.",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/password-reset/confirm": {
+      "post": {
+        "operationId": "confirmPasswordReset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordResetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmPasswordResetResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Complete a password reset with the one-time token from the email. Revokes every existing session for the account.",
         "tags": [
           "auth"
         ]
@@ -1651,6 +2407,72 @@
           }
         ],
         "summary": "Commercial plan catalogue (Phase 14).",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/platform/tenants/{tenantId}/resume-provisioning": {
+      "post": {
+        "operationId": "resumePlatformTenantProvisioning",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeProvisioningRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeProvisioningResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Finish a workspace stuck in `provisioning` after a partial createTenant failure. Safe to call repeatedly — every step re-driven here is idempotent.",
         "tags": [
           "platform"
         ]
@@ -21003,698 +21825,6 @@
         ]
       }
     },
-    "/notifications": {
-      "get": {
-        "operationId": "listNotifications",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "type": "number"
-            }
-          },
-          {
-            "name": "unreadOnly",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationListDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "List my notifications.",
-        "tags": [
-          "notifications"
-        ]
-      }
-    },
-    "/notifications/unread-count": {
-      "get": {
-        "operationId": "notificationUnreadCount",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnreadCountDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "My unread notification count.",
-        "tags": [
-          "notifications"
-        ]
-      }
-    },
-    "/notifications/{id}/read": {
-      "post": {
-        "operationId": "markNotificationRead",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnreadCountDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Mark one notification read.",
-        "tags": [
-          "notifications"
-        ]
-      }
-    },
-    "/notifications/read-all": {
-      "post": {
-        "operationId": "markAllNotificationsRead",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MarkAllReadResultDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Mark all my notifications read.",
-        "tags": [
-          "notifications"
-        ]
-      }
-    },
-    "/notifications/preferences": {
-      "get": {
-        "operationId": "getNotificationPreferences",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationPreferencesDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "My notification preferences.",
-        "tags": [
-          "notifications"
-        ]
-      },
-      "put": {
-        "operationId": "updateNotificationPreferences",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateNotificationPreferencesDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationPreferencesDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Update my notification preferences.",
-        "tags": [
-          "notifications"
-        ]
-      }
-    },
-    "/admin/notifications/rules": {
-      "get": {
-        "operationId": "listNotificationRules",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationRuleDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Effective notification rules.",
-        "tags": [
-          "notifications-admin"
-        ]
-      }
-    },
-    "/admin/notifications/rules/{key}": {
-      "patch": {
-        "operationId": "updateNotificationRule",
-        "parameters": [
-          {
-            "name": "key",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateNotificationRuleDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationRuleDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Enable/disable a rule or narrow its channels.",
-        "tags": [
-          "notifications-admin"
-        ]
-      }
-    },
-    "/admin/notifications/templates": {
-      "get": {
-        "operationId": "listNotificationTemplates",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationTemplateDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Effective templates.",
-        "tags": [
-          "notifications-admin"
-        ]
-      }
-    },
-    "/admin/notifications/templates/{key}": {
-      "get": {
-        "operationId": "getNotificationTemplate",
-        "parameters": [
-          {
-            "name": "key",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationTemplateDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "One effective template.",
-        "tags": [
-          "notifications-admin"
-        ]
-      },
-      "put": {
-        "operationId": "updateNotificationTemplate",
-        "parameters": [
-          {
-            "name": "key",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateNotificationTemplateDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationTemplateDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Override a template.",
-        "tags": [
-          "notifications-admin"
-        ]
-      },
-      "delete": {
-        "operationId": "resetNotificationTemplate",
-        "parameters": [
-          {
-            "name": "key",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationTemplateDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Reset a template to the system default.",
-        "tags": [
-          "notifications-admin"
-        ]
-      }
-    },
-    "/admin/notifications/deliveries": {
-      "get": {
-        "operationId": "listNotificationDeliveries",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "type": "number"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "enum": [
-                "pending",
-                "processing",
-                "sent",
-                "failed",
-                "cancelled"
-              ],
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationDeliveryListDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "cookie": []
-          }
-        ],
-        "summary": "Recent notification deliveries and failures.",
-        "tags": [
-          "notifications-admin"
-        ]
-      }
-    },
     "/finance/invoices": {
       "get": {
         "operationId": "listInvoices",
@@ -23445,6 +23575,64 @@
           "redis"
         ]
       },
+      "QueueJobCountsDto": {
+        "type": "object",
+        "properties": {
+          "waiting": {
+            "type": "number"
+          },
+          "active": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number"
+          },
+          "delayed": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "waiting",
+          "active",
+          "failed",
+          "delayed"
+        ]
+      },
+      "QueueHealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error",
+              "disabled"
+            ],
+            "description": "'disabled' is a normal, intentional state — never a failure."
+          },
+          "latencyMs": {
+            "type": "number",
+            "example": 12
+          },
+          "counts": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QueueJobCountsDto"
+              }
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "status",
+          "latencyMs",
+          "counts"
+        ]
+      },
       "HealthReportDto": {
         "type": "object",
         "properties": {
@@ -23461,12 +23649,524 @@
           },
           "checks": {
             "$ref": "#/components/schemas/HealthChecksDto"
+          },
+          "queue": {
+            "description": "Informational only — never part of `status`. A backlog here never means the API cannot serve traffic.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QueueHealthDto"
+              }
+            ]
           }
         },
         "required": [
           "status",
           "correlationId",
-          "checks"
+          "checks",
+          "queue"
+        ]
+      },
+      "ApiErrorDetailDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string",
+            "example": "AIV-01J9Z8ABCDEF0123456789"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "correlationId"
+        ]
+      },
+      "ApiErrorDto": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiErrorDetailDto"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "NotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "info",
+              "success",
+              "warning",
+              "action_required"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "deepLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceEventType": {
+            "type": "string",
+            "nullable": true
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "deepLink",
+          "sourceEventType",
+          "read",
+          "createdAt",
+          "readAt"
+        ]
+      },
+      "NotificationListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "unread": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "unread",
+          "page",
+          "pageSize"
+        ]
+      },
+      "UnreadCountDto": {
+        "type": "object",
+        "properties": {
+          "unread": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "unread"
+        ]
+      },
+      "MarkAllReadResultDto": {
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "updated"
+        ]
+      },
+      "NotificationPreferencesDto": {
+        "type": "object",
+        "properties": {
+          "inAppEnabled": {
+            "type": "boolean"
+          },
+          "emailEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inAppEnabled",
+          "emailEnabled"
+        ]
+      },
+      "UpdateNotificationPreferencesDto": {
+        "type": "object",
+        "properties": {
+          "inAppEnabled": {
+            "type": "boolean"
+          },
+          "emailEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inAppEnabled",
+          "emailEnabled"
+        ]
+      },
+      "NotificationRuleDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "templateKey": {
+            "type": "string"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "in_app",
+                "email",
+                "whatsapp",
+                "sms"
+              ]
+            }
+          },
+          "availableChannels": {
+            "type": "array",
+            "description": "All channels the default supports.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "in_app",
+                "email",
+                "whatsapp",
+                "sms"
+              ]
+            }
+          },
+          "recipientStrategy": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ACTOR",
+              "ASSIGNED_USER",
+              "ROLE",
+              "CUSTOMER"
+            ]
+          },
+          "notificationType": {
+            "type": "string",
+            "enum": [
+              "info",
+              "success",
+              "warning",
+              "action_required"
+            ]
+          },
+          "suppressible": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "overridden": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "eventType",
+          "templateKey",
+          "channels",
+          "availableChannels",
+          "recipientStrategy",
+          "notificationType",
+          "suppressible",
+          "isActive",
+          "overridden",
+          "description"
+        ]
+      },
+      "UpdateNotificationRuleDto": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "in_app",
+                "email",
+                "whatsapp",
+                "sms"
+              ]
+            }
+          }
+        }
+      },
+      "NotificationTemplateChannelDto": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "in_app",
+              "email",
+              "whatsapp",
+              "sms"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "emailSubject": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailBody": {
+            "type": "string",
+            "nullable": true
+          },
+          "overridden": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "channel",
+          "title",
+          "body",
+          "emailSubject",
+          "emailBody",
+          "overridden"
+        ]
+      },
+      "NotificationTemplateDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationTemplateChannelDto"
+            }
+          },
+          "overridden": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "variables",
+          "channels",
+          "overridden"
+        ]
+      },
+      "UpdateNotificationTemplateDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "emailSubject": {
+            "type": "string"
+          },
+          "emailBody": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "body",
+          "emailSubject",
+          "emailBody"
+        ]
+      },
+      "NotificationDeliveryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notificationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "info",
+              "success",
+              "warning",
+              "action_required"
+            ]
+          },
+          "sourceEventType": {
+            "type": "string",
+            "nullable": true
+          },
+          "ruleKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "in_app",
+              "email",
+              "whatsapp",
+              "sms"
+            ]
+          },
+          "recipientRef": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "sent",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "attempts": {
+            "type": "number"
+          },
+          "maxAttempts": {
+            "type": "number"
+          },
+          "failureCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "failureMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerMessageId": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastAttemptAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "sentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "notificationId",
+          "title",
+          "type",
+          "sourceEventType",
+          "ruleKey",
+          "channel",
+          "recipientRef",
+          "provider",
+          "status",
+          "attempts",
+          "maxAttempts",
+          "failureCode",
+          "failureMessage",
+          "providerMessageId",
+          "lastAttemptAt",
+          "sentAt",
+          "createdAt"
+        ]
+      },
+      "NotificationDeliveryListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDeliveryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
         ]
       },
       "LoginRequestDto": {
@@ -23734,42 +24434,63 @@
           "tenantAutoSelected"
         ]
       },
-      "ApiErrorDetailDto": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "correlationId": {
-            "type": "string",
-            "example": "AIV-01J9Z8ABCDEF0123456789"
-          },
-          "details": {
-            "type": "object",
-            "additionalProperties": true
-          }
-        },
-        "required": [
-          "code",
-          "message",
-          "correlationId"
-        ]
-      },
-      "ApiErrorDto": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "$ref": "#/components/schemas/ApiErrorDetailDto"
-          }
-        },
-        "required": [
-          "error"
-        ]
-      },
       "LogoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "RequestPasswordResetDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@acme.test"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "RequestPasswordResetResponseDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true,
+            "description": "Always true, whether or not the email belongs to an account — the response never discloses account existence. If an account exists, a reset email was sent."
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "ConfirmPasswordResetDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The one-time token from the reset email link."
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ]
+      },
+      "ConfirmPasswordResetResponseDto": {
         "type": "object",
         "properties": {
           "ok": {
@@ -25144,6 +25865,56 @@
           },
           "invitation": {
             "$ref": "#/components/schemas/ProvisioningInvitationDto"
+          }
+        },
+        "required": [
+          "tenant",
+          "invitation"
+        ]
+      },
+      "ResumeProvisioningRequestDto": {
+        "type": "object",
+        "properties": {
+          "moduleKeys": {
+            "description": "Required only if modules were never provisioned for this tenant.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "planKey": {
+            "type": "string",
+            "description": "Required only if no subscription exists yet."
+          },
+          "adminEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@acme-field.test"
+          },
+          "adminName": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "moduleKeys",
+          "adminEmail"
+        ]
+      },
+      "ResumeProvisioningResponseDto": {
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "$ref": "#/components/schemas/PlatformTenantDetailDto"
+          },
+          "invitation": {
+            "nullable": true,
+            "description": "null when the admin had already accepted a prior invitation.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProvisioningInvitationDto"
+              }
+            ]
           }
         },
         "required": [
@@ -36063,474 +36834,6 @@
           "contentType",
           "fileSize",
           "createdAt"
-        ]
-      },
-      "NotificationDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "info",
-              "success",
-              "warning",
-              "action_required"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string"
-          },
-          "deepLink": {
-            "type": "string",
-            "nullable": true
-          },
-          "sourceEventType": {
-            "type": "string",
-            "nullable": true
-          },
-          "read": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "readAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "title",
-          "body",
-          "deepLink",
-          "sourceEventType",
-          "read",
-          "createdAt",
-          "readAt"
-        ]
-      },
-      "NotificationListDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationDto"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "unread": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "pageSize": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "items",
-          "total",
-          "unread",
-          "page",
-          "pageSize"
-        ]
-      },
-      "UnreadCountDto": {
-        "type": "object",
-        "properties": {
-          "unread": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "unread"
-        ]
-      },
-      "MarkAllReadResultDto": {
-        "type": "object",
-        "properties": {
-          "updated": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "updated"
-        ]
-      },
-      "NotificationPreferencesDto": {
-        "type": "object",
-        "properties": {
-          "inAppEnabled": {
-            "type": "boolean"
-          },
-          "emailEnabled": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "inAppEnabled",
-          "emailEnabled"
-        ]
-      },
-      "UpdateNotificationPreferencesDto": {
-        "type": "object",
-        "properties": {
-          "inAppEnabled": {
-            "type": "boolean"
-          },
-          "emailEnabled": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "inAppEnabled",
-          "emailEnabled"
-        ]
-      },
-      "NotificationRuleDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "eventType": {
-            "type": "string"
-          },
-          "templateKey": {
-            "type": "string"
-          },
-          "channels": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "in_app",
-                "email",
-                "whatsapp",
-                "sms"
-              ]
-            }
-          },
-          "availableChannels": {
-            "type": "array",
-            "description": "All channels the default supports.",
-            "items": {
-              "type": "string",
-              "enum": [
-                "in_app",
-                "email",
-                "whatsapp",
-                "sms"
-              ]
-            }
-          },
-          "recipientStrategy": {
-            "type": "string",
-            "enum": [
-              "USER",
-              "ACTOR",
-              "ASSIGNED_USER",
-              "ROLE",
-              "CUSTOMER"
-            ]
-          },
-          "notificationType": {
-            "type": "string",
-            "enum": [
-              "info",
-              "success",
-              "warning",
-              "action_required"
-            ]
-          },
-          "suppressible": {
-            "type": "boolean"
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "overridden": {
-            "type": "boolean"
-          },
-          "description": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "key",
-          "eventType",
-          "templateKey",
-          "channels",
-          "availableChannels",
-          "recipientStrategy",
-          "notificationType",
-          "suppressible",
-          "isActive",
-          "overridden",
-          "description"
-        ]
-      },
-      "UpdateNotificationRuleDto": {
-        "type": "object",
-        "properties": {
-          "isActive": {
-            "type": "boolean"
-          },
-          "channels": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "in_app",
-                "email",
-                "whatsapp",
-                "sms"
-              ]
-            }
-          }
-        }
-      },
-      "NotificationTemplateChannelDto": {
-        "type": "object",
-        "properties": {
-          "channel": {
-            "type": "string",
-            "enum": [
-              "in_app",
-              "email",
-              "whatsapp",
-              "sms"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string"
-          },
-          "emailSubject": {
-            "type": "string",
-            "nullable": true
-          },
-          "emailBody": {
-            "type": "string",
-            "nullable": true
-          },
-          "overridden": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "channel",
-          "title",
-          "body",
-          "emailSubject",
-          "emailBody",
-          "overridden"
-        ]
-      },
-      "NotificationTemplateDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "variables": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "channels": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationTemplateChannelDto"
-            }
-          },
-          "overridden": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "key",
-          "variables",
-          "channels",
-          "overridden"
-        ]
-      },
-      "UpdateNotificationTemplateDto": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string"
-          },
-          "emailSubject": {
-            "type": "string"
-          },
-          "emailBody": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "title",
-          "body",
-          "emailSubject",
-          "emailBody"
-        ]
-      },
-      "NotificationDeliveryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "notificationId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "info",
-              "success",
-              "warning",
-              "action_required"
-            ]
-          },
-          "sourceEventType": {
-            "type": "string",
-            "nullable": true
-          },
-          "ruleKey": {
-            "type": "string",
-            "nullable": true
-          },
-          "channel": {
-            "type": "string",
-            "enum": [
-              "in_app",
-              "email",
-              "whatsapp",
-              "sms"
-            ]
-          },
-          "recipientRef": {
-            "type": "string"
-          },
-          "provider": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "processing",
-              "sent",
-              "failed",
-              "cancelled"
-            ]
-          },
-          "attempts": {
-            "type": "number"
-          },
-          "maxAttempts": {
-            "type": "number"
-          },
-          "failureCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "failureMessage": {
-            "type": "string",
-            "nullable": true
-          },
-          "providerMessageId": {
-            "type": "string",
-            "nullable": true
-          },
-          "lastAttemptAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "sentAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "notificationId",
-          "title",
-          "type",
-          "sourceEventType",
-          "ruleKey",
-          "channel",
-          "recipientRef",
-          "provider",
-          "status",
-          "attempts",
-          "maxAttempts",
-          "failureCode",
-          "failureMessage",
-          "providerMessageId",
-          "lastAttemptAt",
-          "sentAt",
-          "createdAt"
-        ]
-      },
-      "NotificationDeliveryListDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationDeliveryDto"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "pageSize": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "items",
-          "total",
-          "page",
-          "pageSize"
         ]
       },
       "InvoiceDto": {

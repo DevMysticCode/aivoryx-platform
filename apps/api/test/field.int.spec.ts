@@ -289,6 +289,50 @@ describe.skipIf(!INTEGRATION_ENABLED)('Field operations', () => {
       expect(checkIns).toHaveLength(1);
     });
 
+    it('a concurrent reassignment cannot let the just-displaced agent still check in', async () => {
+      const cookie = await adminCookie();
+      const agentC = await fieldAgentCookie(cookie);
+      // a second field agent to reassign the visit to
+      await http
+        .post('/api/v1/field-agents')
+        .set('Cookie', cookie)
+        .send({ membershipId: fx.limited.membershipId });
+
+      for (let i = 0; i < 5; i++) {
+        const { visit } = await assignedVisit(cookie, agentC);
+
+        const [checkIn, reassign] = await Promise.all([
+          http
+            .post(`/api/v1/visits/${visit.id}/check-in`)
+            .set('Cookie', agentC)
+            .send({ lat: 12.972, lng: 77.595 }),
+          http
+            .post(`/api/v1/visits/${visit.id}/assign`)
+            .set('Cookie', cookie)
+            .send({ membershipId: fx.limited.membershipId }),
+        ]);
+        // reassign can legitimately lose (409 VISIT_INVALID_TRANSITION) if the
+        // check-in committed first and moved the visit to IN_PROGRESS — that
+        // ordering is fine. What must never happen: the check-in succeeds for
+        // agentC (plainMember) AFTER the visit has actually been reassigned to
+        // the other agent.
+        if (checkIn.status === 200 && reassign.status === 200) {
+          const after = await http.get(`/api/v1/visits/${visit.id}`).set('Cookie', cookie);
+          expect(after.body.assignee?.membershipId).toBe(fx.plainMember.membershipId);
+        } else if (checkIn.status !== 200) {
+          expect(checkIn.status).toBe(403);
+          expect(checkIn.body.error.code).toBe('VISIT_NOT_ASSIGNED_TO_YOU');
+        }
+      }
+
+      // fx.limited is a shared fixture other tests rely on being deactivated
+      // as a field agent (see "assigning a visit to a deactivated field agent
+      // is rejected") — restore that.
+      await http
+        .post(`/api/v1/field-agents/${fx.limited.membershipId}/deactivate`)
+        .set('Cookie', cookie);
+    });
+
     it('cannot check out before checking in', async () => {
       const cookie = await adminCookie();
       const agentC = await fieldAgentCookie(cookie);

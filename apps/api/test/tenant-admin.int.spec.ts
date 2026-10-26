@@ -652,6 +652,99 @@ describe.skipIf(!INTEGRATION_ENABLED)('tenant administration & user lifecycle', 
       expect(strip.body.error.code).toBe('TENANT_LAST_ADMIN');
     });
 
+    it('two concurrent suspensions of the two co-admins cannot both succeed — the tenant always keeps at least one active admin', async () => {
+      const cookie = await adminCookie(); // tenant A has exactly two admins: fx.admin, fx.secondAdmin
+      const pool = await rawPool();
+
+      // Run several times: the defect this guards against is a TOCTOU race
+      // (two transactions both reading "2 active admins" before either
+      // commits its suspend) — reproduced on 14/15 runs before the fix, so a
+      // single pass is not a reliable regression test on its own.
+      for (let i = 0; i < 3; i++) {
+        const [first, second] = await Promise.all([
+          http
+            .patch(`/api/v1/admin/members/${fx.admin.membershipId}`)
+            .set('Cookie', cookie)
+            .send({ status: 'suspended' }),
+          http
+            .patch(`/api/v1/admin/members/${fx.secondAdmin.membershipId}`)
+            .set('Cookie', cookie)
+            .send({ status: 'suspended' }),
+        ]);
+
+        const statuses = [first.status, second.status].sort();
+        // exactly one request must win (200) and the other must be rejected
+        // (409 TENANT_LAST_ADMIN) — both succeeding would strand the tenant
+        // with zero active administrators.
+        expect(statuses).toEqual([200, 409]);
+        const rejected = first.status === 409 ? first : second;
+        expect(rejected.body.error.code).toBe('TENANT_LAST_ADMIN');
+
+        const remainingActiveAdmins = await pool.query(
+          `select count(*)::int as n
+             from user_tenant_memberships m
+             join membership_roles mr on mr.membership_id = m.id
+             join roles r on r.id = mr.role_id and r.key = 'TENANT_ADMIN'
+            where m.tenant_id = $1 and m.status = 'active'`,
+          [fx.tenantA],
+        );
+        expect(remainingActiveAdmins.rows[0].n).toBeGreaterThanOrEqual(1);
+
+        // restore both to active directly for the next iteration — whichever
+        // admin's own suspend "won" may no longer have a usable session
+        await pool.query(
+          `update user_tenant_memberships set status = 'active' where id in ($1, $2)`,
+          [fx.admin.membershipId, fx.secondAdmin.membershipId],
+        );
+      }
+    });
+
+    it('the guard also holds across two different endpoints racing each other (suspend one admin, strip the role from the other)', async () => {
+      const cookie = await adminCookie();
+      const pool = await rawPool();
+
+      for (let i = 0; i < 3; i++) {
+        const [suspend, strip] = await Promise.all([
+          http
+            .patch(`/api/v1/admin/members/${fx.admin.membershipId}`)
+            .set('Cookie', cookie)
+            .send({ status: 'suspended' }),
+          http
+            .delete(`/api/v1/admin/members/${fx.secondAdmin.membershipId}/roles/TENANT_ADMIN`)
+            .set('Cookie', cookie),
+        ]);
+
+        const statuses = [suspend.status, strip.status].sort();
+        expect(statuses).toEqual([200, 409]);
+        const rejected = suspend.status === 409 ? suspend : strip;
+        expect(rejected.body.error.code).toBe('TENANT_LAST_ADMIN');
+
+        const remainingActiveAdmins = await pool.query(
+          `select count(*)::int as n
+             from user_tenant_memberships m
+             join membership_roles mr on mr.membership_id = m.id
+             join roles r on r.id = mr.role_id and r.key = 'TENANT_ADMIN'
+            where m.tenant_id = $1 and m.status = 'active'`,
+          [fx.tenantA],
+        );
+        expect(remainingActiveAdmins.rows[0].n).toBeGreaterThanOrEqual(1);
+
+        // restore: reactivate the membership, and re-grant the role if it was stripped
+        await pool.query(`update user_tenant_memberships set status = 'active' where id = $1`, [
+          fx.admin.membershipId,
+        ]);
+        const role = await pool.query(
+          `select id from roles where tenant_id = $1 and key = 'TENANT_ADMIN'`,
+          [fx.tenantA],
+        );
+        await pool.query(
+          `insert into membership_roles (membership_id, role_id, tenant_id) values ($1, $2, $3)
+           on conflict (membership_id, role_id) do nothing`,
+          [fx.secondAdmin.membershipId, role.rows[0].id, fx.tenantA],
+        );
+      }
+    });
+
     it('a second admin CAN be suspended while another active admin remains', async () => {
       const cookie = await adminCookie(); // tenant A has admin + secondAdmin
       const suspend = await http

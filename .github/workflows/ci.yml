@@ -139,6 +139,183 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  e2e-golden-paths:
+    name: e2e · golden-path journeys
+    runs-on: ubuntu-latest
+    needs: verify
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aivoryx
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d aivoryx"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    # Server-side env for THIS job's own API process only — an isolated, disposable service
+    # container on this runner, never the deployed Railway environment. `LOGIN_RATE_LIMIT_MAX`
+    # below is the one deliberate deviation from the production default (10/60s); it uses the
+    # exact value (1000) the backend's own integration-test harness already sets for the identical
+    # reason (`apps/api/test/support/env.ts`: "Many specs log in as the same fixture email
+    # repeatedly... would trip the real production login-throttle default"). It is READ, not
+    # changed, by `packages/config/src/server-env.ts`'s existing `LOGIN_RATE_LIMIT_MAX` schema
+    # (already bounded 1..1000, already meant to be set per-environment) — nothing here edits that
+    # schema, its default, or any file the production deployment reads, so it cannot leak into
+    # production: Railway's env vars are configured independently of this workflow file entirely.
+    env:
+      APP_ENV: test
+      NODE_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/aivoryx
+      REDIS_URL: redis://localhost:6379
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_APP_ENV: test
+      EMAIL_PROVIDER: fake
+      LOGIN_RATE_LIMIT_MAX: '1000'
+      E2E_BASE_URL: http://localhost:3000
+      E2E_ADMIN_EMAIL: admin@clans-demo.test
+      E2E_ADMIN_PASSWORD: Demo-Passw0rd!
+      E2E_FIELD_AGENT_EMAIL: agent@clans-demo.test
+      E2E_FIELD_AGENT_PASSWORD: Demo-Passw0rd!
+      E2E_AGENT_EMAIL: agent@clans-demo.test
+      E2E_AGENT_PASSWORD: Demo-Passw0rd!
+      E2E_MANAGER_EMAIL: manager@clans-demo.test
+      E2E_MANAGER_PASSWORD: Demo-Passw0rd!
+      E2E_PLATFORM_ADMIN_EMAIL: platform-admin@aivoryx.test
+      E2E_PLATFORM_ADMIN_PASSWORD: Demo-Passw0rd!
+      E2E_TENANT_B_ADMIN_EMAIL: admin@southbridge-demo.test
+      E2E_TENANT_B_ADMIN_PASSWORD: Demo-Passw0rd!
+      RUN_CRM_E2E: '1'
+      RUN_FIELD_E2E: '1'
+      RUN_COMMERCIAL_E2E: '1'
+      RUN_EXECUTION_E2E: '1'
+      RUN_HR_E2E: '1'
+      RUN_HR_CORE_E2E: '1'
+      RUN_CRM_FIELD_E2E: '1'
+      RUN_PLATFORM_E2E: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # This job runs on its own fresh runner (GitHub Actions jobs share nothing with `verify`'s
+      # runner), so it builds its own artifacts rather than attempting to share pnpm's
+      # workspace-symlinked node_modules/dist output across jobs — simpler and more reliable than
+      # cross-job artifact passing for this workspace layout, at the cost of one extra build.
+      - name: Build
+        run: pnpm build
+
+      - name: Run database migrations
+        run: pnpm db:migrate
+
+      - name: Seed the base permission catalogue
+        run: pnpm db:seed
+
+      # The repository's own existing demo-seed scripts, run in their documented dependency order
+      # (each script's own header comment states what it requires first). Deterministic: every
+      # script is idempotent/additive against a freshly migrated, otherwise-empty database, so this
+      # produces the same fixed set of demo tenants/users/records on every run.
+      - name: Seed deterministic demo data
+        run: |
+          pnpm --filter @aivoryx/api run seed:platform-demo
+          pnpm --filter @aivoryx/api run seed:field-demo
+          pnpm --filter @aivoryx/api run seed:supply-demo
+          pnpm --filter @aivoryx/api run seed:commercial-demo
+          pnpm --filter @aivoryx/api run seed:hr-demo
+          pnpm --filter @aivoryx/api run seed:execution-demo
+          pnpm --filter @aivoryx/api run seed:hr-core-demo
+          pnpm --filter @aivoryx/api run seed:crm-field-demo
+          pnpm --filter @aivoryx/api run seed:finance-demo
+
+      - name: Install Playwright browser
+        run: pnpm --filter @aivoryx/web exec playwright install --with-deps chromium
+
+      # Same pattern as `verify`'s own API-readiness step (a real health check, not a fixed sleep).
+      - name: Start the API
+        run: |
+          node apps/api/dist/main.js > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4000/api/v1/health/live > /dev/null; then
+              echo "API is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not become healthy in time"
+          cat api.log
+          exit 1
+
+      # The production-built web app, served the same way `playwright.config.ts`'s own `webServer`
+      # block would (`pnpm run start`) — started explicitly here (with `E2E_BASE_URL` set above) so
+      # this step's own readiness loop is authoritative, not a fixed sleep.
+      - name: Start the built web app
+        run: |
+          pnpm --filter @aivoryx/web run start --port 3000 > web.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/login > /dev/null; then
+              echo "web app is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "web app did not become ready in time"
+          cat web.log
+          exit 1
+
+      # Curated to the critical journeys this milestone named — platform provisioning/tenant
+      # admin, CRM lead lifecycle, Field visits, Quotations/booking, EPC execution, HR/Workforce,
+      # and the cross-module CRM-to-Field-to-Commercial chain. Deliberately NOT the entire opt-in
+      # E2E suite (dashboards, finance, supply, notifications, audit, login-session, ui2 remain
+      # manual/pre-merge, same as before this milestone) — this job does not duplicate the backend
+      # test suite in the browser, it proves the UI/API boundary for the flows that matter most.
+      - name: E2E — golden-path journeys
+        run: |
+          pnpm --filter @aivoryx/web exec playwright test \
+            platform-provisioning.spec.ts platform.spec.ts platform-experience.spec.ts \
+            crm.spec.ts field.spec.ts commercial.spec.ts execution.spec.ts \
+            hr.spec.ts hr-core.spec.ts crm-field-sales.spec.ts
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-golden-paths
+          path: apps/web/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload API/web server logs on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-server-logs
+          path: |
+            api.log
+            web.log
+          retention-days: 7
+          if-no-files-found: ignore
+
   secret-scan:
     name: secret scan (gitleaks)
     runs-on: ubuntu-latest

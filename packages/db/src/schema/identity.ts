@@ -213,6 +213,37 @@ export const sessions = pgTable(
   ],
 );
 
+/**
+ * Self-service password reset (Production Operations & Customer Launch
+ * Readiness milestone — account-recovery gap: there was previously no way
+ * for a tenant admin or any user who forgot their password to recover
+ * access). Same one-time-token convention as `tenant_invitations`: a 256-bit
+ * random token handed out once, only its SHA-256 hash stored. No RLS (same
+ * as `users`/`sessions` — a global, non-tenant-owned table).
+ */
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => newUuidV7()),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** hex SHA-256 of the one-time token; the token itself is never stored */
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (t) => [
+    uniqueIndex('password_reset_tokens_token_hash_uq').on(t.tokenHash),
+    index('password_reset_tokens_user_idx').on(t.userId),
+  ],
+);
+
 export type TenantRow = typeof tenants.$inferSelect;
 export type NewTenantRow = typeof tenants.$inferInsert;
 export type UserRow = typeof users.$inferSelect;
@@ -221,3 +252,5 @@ export type UserTenantMembershipRow = typeof userTenantMemberships.$inferSelect;
 export type NewUserTenantMembershipRow = typeof userTenantMemberships.$inferInsert;
 export type SessionRow = typeof sessions.$inferSelect;
 export type NewSessionRow = typeof sessions.$inferInsert;
+export type PasswordResetTokenRow = typeof passwordResetTokens.$inferSelect;
+export type NewPasswordResetTokenRow = typeof passwordResetTokens.$inferInsert;

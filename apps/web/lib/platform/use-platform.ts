@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { CreateTenantRequest } from '@aivoryx/contracts';
+import type { CreateTenantRequest, ResumeProvisioningRequest } from '@aivoryx/contracts';
 import * as api from '@/lib/api/platform';
 
 export const platformKeys = {
@@ -115,5 +115,20 @@ export function useTenantReadiness(tenantId: string) {
     queryKey: platformKeys.readiness(tenantId),
     queryFn: () => api.getTenantReadiness(tenantId),
     enabled: !!tenantId,
+  });
+}
+
+export function useResumeProvisioning(tenantId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ResumeProvisioningRequest) => api.resumeTenantProvisioning(tenantId, body),
+    onSuccess: ({ tenant }) => {
+      qc.setQueryData(platformKeys.tenant(tenantId), tenant);
+      return Promise.all([
+        qc.invalidateQueries({ queryKey: platformKeys.tenants }),
+        qc.invalidateQueries({ queryKey: platformKeys.overview }),
+        qc.invalidateQueries({ queryKey: platformKeys.readiness(tenantId) }),
+      ]);
+    },
   });
 }
