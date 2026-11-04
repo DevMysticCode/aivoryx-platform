@@ -1,6 +1,7 @@
 import type { QuotationDetailDto } from '../commercial/commercial.dto.js';
 import type { CreditNoteDto, InvoiceDetailDto, PaymentDetailDto } from '../finance/finance.dto.js';
 import type { DocParty, DocTotal, DocumentDefinition } from './document.types.js';
+import { formatMoney as money, formatDate, formatCalendarDate } from './format.js';
 
 /**
  * Structured-data builders (Phase 10, ADR 0039). Each turns a business DTO into
@@ -9,26 +10,9 @@ import type { DocParty, DocTotal, DocumentDefinition } from './document.types.js
  * already on the DTO; nothing is recomputed here.
  */
 
-function money(v: string | null | undefined, currency?: string): string {
-  const n = Number(v ?? 0);
-  const s = Number.isFinite(n)
-    ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : String(v ?? '0.00');
-  return currency ? `${currency} ${s}` : s;
-}
-
 function qty(v: string | null | undefined): string {
   if (v == null || v === '') return '';
   return v.includes('.') ? v.replace(/\.?0+$/, '') : v;
-}
-
-function date(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
 }
 
 function party(
@@ -46,8 +30,9 @@ function party(
 
 // ---- quotation ------------------------------------------------
 
-export function buildQuotationDocument(q: QuotationDetailDto): DocumentDefinition {
+export function buildQuotationDocument(q: QuotationDetailDto, tz?: string): DocumentDefinition {
   const rev = q.currentRevision;
+  const date = (iso: string | null | undefined) => formatDate(iso, tz);
   return {
     documentTitle: 'Quotation',
     documentNumber: q.number,
@@ -89,8 +74,12 @@ export function buildQuotationDocument(q: QuotationDetailDto): DocumentDefinitio
 
 // ---- invoice -------------------------------------------------
 
-export function buildInvoiceDocument(inv: InvoiceDetailDto): DocumentDefinition {
+export function buildInvoiceDocument(inv: InvoiceDetailDto, tz?: string): DocumentDefinition {
   const activeAllocs = inv.allocations.filter((a) => !a.reversed);
+  // issueDate/dueDate are plain calendar dates (no time component) — never timezone-shifted.
+  // Allocation createdAt is a true timestamp, so it DOES honor the tenant's timezone.
+  const date = formatCalendarDate;
+  const allocDate = (iso: string | null | undefined) => formatDate(iso, tz);
   const totals: DocTotal[] = [
     { label: 'Subtotal', value: money(inv.subtotal) },
     { label: 'Discount', value: `-${money(inv.discountTotal)}` },
@@ -140,7 +129,7 @@ export function buildInvoiceDocument(inv: InvoiceDetailDto): DocumentDefinition 
               heading: 'Payments received',
               lines: activeAllocs.map(
                 (a) =>
-                  `${a.paymentNumber} · ${date(a.createdAt)} · ${money(a.amount, inv.currency)}`,
+                  `${a.paymentNumber} · ${allocDate(a.createdAt)} · ${money(a.amount, inv.currency)}`,
               ),
             },
           ]
@@ -151,8 +140,10 @@ export function buildInvoiceDocument(inv: InvoiceDetailDto): DocumentDefinition 
 
 // ---- payment receipt --------------------------------------
 
+// paymentDate is a plain calendar date (no time component) — never timezone-shifted.
 export function buildReceiptDocument(p: PaymentDetailDto): DocumentDefinition {
   const active = p.allocations.filter((a) => !a.reversed);
+  const date = formatCalendarDate;
   return {
     documentTitle: 'Payment Receipt',
     documentNumber: p.number,
@@ -185,7 +176,9 @@ export function buildReceiptDocument(p: PaymentDetailDto): DocumentDefinition {
 
 // ---- credit note -----------------------------------------
 
+// issueDate is a plain calendar date (no time component) — never timezone-shifted.
 export function buildCreditNoteDocument(cn: CreditNoteDto): DocumentDefinition {
+  const date = formatCalendarDate;
   return {
     documentTitle: 'Credit Note',
     documentNumber: cn.number,

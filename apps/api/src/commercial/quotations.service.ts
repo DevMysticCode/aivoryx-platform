@@ -83,7 +83,8 @@ export class QuotationsService {
   /** Branded PDF of the quotation's current revision (Phase 10). */
   async renderPdf(scope: TenantScope, id: string): Promise<{ filename: string; body: Buffer }> {
     const detail = await this.get(scope, id);
-    return this.documents.render(scope, buildQuotationDocument(detail));
+    const locale = await this.documents.loadLocale(scope);
+    return this.documents.render(scope, buildQuotationDocument(detail, locale.timezone));
   }
 
   // ---- reads ----------------------------------------------------
@@ -244,6 +245,7 @@ export class QuotationsService {
   }
 
   async renderPrintable(scope: TenantScope, id: string): Promise<string> {
+    const locale = await this.documents.loadLocale(scope);
     return withTenantContext(getDb(), scope, async (tx) => {
       const detail = await this.loadDetail(tx, scope, id);
       const [tenant] = await tx
@@ -256,6 +258,7 @@ export class QuotationsService {
       return renderQuotationHtml({
         workspaceName: tenant?.name ?? 'Workspace',
         quotation: detail,
+        timezone: locale.timezone,
         customer: customer
           ? {
               name: customer.name,

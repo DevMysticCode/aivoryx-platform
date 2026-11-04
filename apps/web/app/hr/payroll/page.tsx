@@ -22,7 +22,7 @@ export default function PayrollPage() {
     periodStart: '',
     periodEnd: '',
     payDate: '',
-    currency: 'INR',
+    currency: '',
   });
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -69,6 +69,7 @@ export default function PayrollPage() {
             label="Currency"
             value={form.currency}
             onChange={(e) => set('currency', e.target.value)}
+            hint="Leave blank to use your workspace default."
           />
           <div className="flex items-end">
             <Button

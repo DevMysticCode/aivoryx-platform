@@ -1,6 +1,7 @@
 import type { DocumentDefinition } from '../documents/document.types.js';
 import { schema } from '@aivoryx/db';
 import { sum } from './money.js';
+import { formatMoney, formatCalendarDate } from '../documents/format.js';
 
 /**
  * Builds a generic {@link DocumentDefinition} for a payslip. It imports only the
@@ -41,8 +42,11 @@ export function buildPayslipDocument(data: {
 
   const meta = [
     { label: 'Payslip no.', value: `${period.name} · ${entry.employeeNumber}` },
-    { label: 'Pay period', value: `${period.periodStart} to ${period.periodEnd}` },
-    { label: 'Pay date', value: period.payDate ?? '—' },
+    {
+      label: 'Pay period',
+      value: `${formatCalendarDate(period.periodStart)} to ${formatCalendarDate(period.periodEnd)}`,
+    },
+    { label: 'Pay date', value: formatCalendarDate(period.payDate) },
     { label: 'Currency', value: entry.currency },
     { label: 'Payroll status', value: period.status },
   ];
@@ -58,7 +62,7 @@ export function buildPayslipDocument(data: {
       heading: 'Payment',
       lines: [
         `Method: ${payment.paymentMethod ?? '—'}`,
-        `Date: ${payment.paymentDate ?? '—'}`,
+        `Date: ${formatCalendarDate(payment.paymentDate)}`,
         payment.paymentReference ? `Reference: ${payment.paymentReference}` : `Reference: —`,
         `Paid to date: ${money(sum([entry.paidAmount]), entry.currency)}`,
       ],
@@ -85,10 +89,4 @@ export function buildPayslipDocument(data: {
   };
 }
 
-function money(v: string, currency: string): string {
-  const n = Number(v);
-  const formatted = Number.isFinite(n)
-    ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : v;
-  return `${currency} ${formatted}`;
-}
+const money = formatMoney;

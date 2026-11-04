@@ -1,5 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { schema, type Tx } from '@aivoryx/db';
+import { DEFAULT_TIMEZONE } from '@aivoryx/shared';
+import { formatDate, formatCalendarDate } from '../documents/format.js';
 
 /**
  * Safe template context builders (ADR 0037).
@@ -80,6 +82,8 @@ interface TenantContext {
   brandColor: string | null;
   /** tenant document / email footer line, or null */
   documentFooter: string | null;
+  /** tenant's configured IANA timezone, defaulted — for formatting true-instant dates below */
+  timezone: string;
 }
 
 /**
@@ -93,6 +97,7 @@ async function tenantContext(tx: Tx, tenantId: string): Promise<TenantContext> {
       displayName: schema.tenantCompanyProfiles.displayName,
       primaryColor: schema.tenantCompanyProfiles.primaryColor,
       documentFooter: schema.tenantCompanyProfiles.documentFooter,
+      timezone: schema.tenantCompanyProfiles.timezone,
     })
     .from(schema.tenants)
     .leftJoin(
@@ -107,6 +112,7 @@ async function tenantContext(tx: Tx, tenantId: string): Promise<TenantContext> {
     displayName: row?.displayName?.trim() || name,
     brandColor: row?.primaryColor ?? null,
     documentFooter: row?.documentFooter ?? null,
+    timezone: row?.timezone ?? DEFAULT_TIMEZONE,
   };
 }
 
@@ -308,7 +314,7 @@ export async function buildEventContext(
     return {
       context: {
         tenant,
-        visit: { id: v.id, scheduledAt: v.scheduledAt?.toISOString() ?? '' },
+        visit: { id: v.id, scheduledAt: formatDate(v.scheduledAt?.toISOString(), tenant.timezone) },
         lead: { name: owner.name },
       },
       refs: {
@@ -458,7 +464,7 @@ export async function buildEventContext(
           number: inv.number,
           currency: inv.currency,
           grandTotal: money(inv.grandTotal),
-          dueDate: inv.dueDate ?? 'on receipt',
+          dueDate: inv.dueDate ? formatCalendarDate(inv.dueDate) : 'on receipt',
           outstanding,
           daysOverdue: typeof payload.daysOverdue === 'number' ? payload.daysOverdue : 0,
         },
@@ -545,8 +551,8 @@ export async function buildEventContext(
         leave: {
           number: lr.number,
           typeName: lt?.name ?? 'Leave',
-          startDate: lr.startDate,
-          endDate: lr.endDate,
+          startDate: formatCalendarDate(lr.startDate),
+          endDate: formatCalendarDate(lr.endDate),
           totalDays: lr.totalDays,
           decisionReason: lr.decisionReason?.trim() || '—',
         },

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { UpdateCompanyProfileRequest } from '@aivoryx/contracts';
+import { IANA_TIMEZONES, ISO_CURRENCIES } from '@aivoryx/shared';
 import { Card, ErrorNote, Field, PageHeader, Skeleton } from '@/components/admin/ui';
 import { usePermissions } from '@/components/supply/supply-shell';
 import {
@@ -30,8 +31,28 @@ const TEXT_FIELDS: { key: keyof UpdateCompanyProfileRequest; label: string; hint
     hint: 'e.g. VAT, GST, ABN, EIN.',
   },
   { key: 'taxRegistrationNumber', label: 'Tax registration number' },
-  { key: 'timezone', label: 'Timezone', hint: 'IANA name, e.g. Europe/London.' },
-  { key: 'defaultCurrency', label: 'Default currency', hint: '3-letter ISO code, e.g. GBP.' },
+];
+
+/** Keys rendered as native `<select>` dropdowns instead of plain text inputs
+ *  (§TEXT_FIELDS), with the same draft/onChange wiring. */
+const SELECT_FIELDS: {
+  key: keyof UpdateCompanyProfileRequest;
+  label: string;
+  hint?: string;
+  options: readonly string[];
+}[] = [
+  {
+    key: 'timezone',
+    label: 'Timezone',
+    hint: 'Used for dates on documents and in notifications.',
+    options: IANA_TIMEZONES,
+  },
+  {
+    key: 'defaultCurrency',
+    label: 'Default currency',
+    hint: 'Used when a specific invoice, payslip or expense doesn’t set its own.',
+    options: ISO_CURRENCIES,
+  },
 ];
 
 export default function CompanySettingsPage() {
@@ -50,6 +71,8 @@ export default function CompanySettingsPage() {
     if (!data) return;
     const next: Draft = {};
     for (const { key } of TEXT_FIELDS) next[key] = (data[key as keyof typeof data] as string) ?? '';
+    for (const { key } of SELECT_FIELDS)
+      next[key] = (data[key as keyof typeof data] as string) ?? '';
     setDraft(next);
   }, [data]);
 
@@ -59,7 +82,7 @@ export default function CompanySettingsPage() {
     // field (e.g. `email` must be a valid address), so an empty string would be
     // rejected. `documentFooter` has no format rules, so an empty value there
     // is allowed through to clear it.
-    for (const { key } of TEXT_FIELDS) {
+    for (const { key } of [...TEXT_FIELDS, ...SELECT_FIELDS]) {
       const v = draft[key]?.trim() ?? '';
       if (v) body[key] = v;
     }
@@ -184,6 +207,25 @@ export default function CompanySettingsPage() {
                     disabled={!canEdit}
                     onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
                   />
+                ))}
+                {SELECT_FIELDS.map(({ key, label, hint, options }) => (
+                  <label key={key} className="block space-y-1.5">
+                    <span className="text-sm font-medium">{label}</span>
+                    <select
+                      value={draft[key] ?? ''}
+                      disabled={!canEdit}
+                      onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
+                      className="h-9 w-full rounded-md border border-input bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Not set</option>
+                      {options.map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                    </select>
+                    {hint ? <span className="block text-xs text-subtle">{hint}</span> : null}
+                  </label>
                 ))}
               </div>
             </Card>

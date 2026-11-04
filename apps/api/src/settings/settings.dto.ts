@@ -8,10 +8,10 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { THEME_PRESET_KEYS } from '@aivoryx/shared';
+import { THEME_PRESET_KEYS, ISO_CURRENCIES } from '@aivoryx/shared';
+import { IsIanaTimezone } from './locale-validators.js';
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
-const ISO_CURRENCY = /^[A-Z]{3}$/;
 export const DOCUMENT_LOGO_MODES = ['company', 'separate'] as const;
 
 // ---- responses -------------------------------------------------
@@ -170,12 +170,11 @@ export class UpdateCompanyProfileDto {
   documentFooter?: string;
   @ApiProperty({ required: false, example: 'Asia/Kolkata' })
   @IsOptional()
-  @IsString()
-  @MaxLength(60)
+  @IsIanaTimezone()
   timezone?: string;
   @ApiProperty({ required: false, example: 'INR' })
   @IsOptional()
-  @Matches(ISO_CURRENCY, { message: 'defaultCurrency must be a 3-letter ISO code' })
+  @IsIn(ISO_CURRENCIES, { message: 'defaultCurrency must be a valid ISO-4217 currency code' })
   defaultCurrency?: string;
   @ApiProperty({ required: false, example: '#1E40AF' })
   @IsOptional()

@@ -1,17 +1,8 @@
 'use client';
 
 import { useFinanceOverview } from '@/lib/finance/use-finance';
+import { formatCurrency as money } from '@/lib/format';
 import { WidgetCard, WidgetError, WidgetSkeleton, WidgetStat } from './widget-card';
-
-function money(currency: string, amount: string): string {
-  const n = Number(amount);
-  if (Number.isNaN(n)) return `${currency} ${amount}`;
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 export function FinanceOverviewWidget() {
   const q = useFinanceOverview();

@@ -5,10 +5,17 @@ import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
 import { DocumentRenderService } from '../documents/document-render.service.js';
+import { CompanyProfileService } from '../settings/company-profile.service.js';
 import { canTransitionPayroll, isPayrollLocked, type PayrollPeriodStatus } from './lifecycles.js';
 import { computePayrollTotals, sum, type PayComponent } from './money.js';
 import { buildPayslipDocument } from './payslip.builder.js';
-import { HrScope, isUniqueViolation, pageBounds, type Paged } from './common.js';
+import {
+  HrScope,
+  isUniqueViolation,
+  pageBounds,
+  resolveDefaultCurrency,
+  type Paged,
+} from './common.js';
 import type {
   CreatePayrollPeriodDto,
   PayrollEntryDto,
@@ -45,6 +52,7 @@ export class PayrollService {
     private readonly outbox: OutboxService,
     private readonly audit: AuditService,
     private readonly documents: DocumentRenderService,
+    private readonly profiles: CompanyProfileService,
   ) {}
 
   // ---- periods ----------------------------------------
@@ -96,7 +104,9 @@ export class PayrollService {
             periodStart: body.periodStart.slice(0, 10),
             periodEnd: body.periodEnd.slice(0, 10),
             payDate: body.payDate?.slice(0, 10) ?? null,
-            currency: (body.currency ?? 'INR').toUpperCase(),
+            currency: (
+              body.currency ?? (await resolveDefaultCurrency(tx, scope.tenantId, this.profiles))
+            ).toUpperCase(),
             status: 'DRAFT',
             createdByMembershipId: scope.actorMembershipId,
           })

@@ -1,7 +1,8 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { schema, type Tx } from '@aivoryx/db';
-import { AppError } from '@aivoryx/shared';
+import { AppError, DEFAULT_CURRENCY } from '@aivoryx/shared';
 import type { SecurityContext } from '../security/security-context.js';
+import type { CompanyProfileService } from '../settings/company-profile.service.js';
 
 const { hrCounters, employees } = schema;
 
@@ -48,6 +49,19 @@ export function isCheckViolation(err: unknown): boolean {
 }
 export function isFkViolation(err: unknown): boolean {
   return typeof err === 'object' && err !== null && (err as { code?: string }).code === '23503';
+}
+
+/** The tenant's configured default currency, falling back to INR for tenants
+ *  that have never set one — the only place that literal should appear. HR
+ *  keeps its own copy rather than importing Finance's (HR is a bounded domain,
+ *  see the module note above), kept in sync by hand if the logic ever changes. */
+export async function resolveDefaultCurrency(
+  tx: Tx,
+  tenantId: string,
+  profiles: CompanyProfileService,
+): Promise<string> {
+  const profile = await profiles.loadProfile(tx, tenantId);
+  return profile?.defaultCurrency ?? DEFAULT_CURRENCY;
 }
 
 // ---- tenant-scoped HR numbering (mirrors finance/numbering) --------

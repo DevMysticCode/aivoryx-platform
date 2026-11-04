@@ -1,4 +1,5 @@
 import type { QuotationDetailDto } from './commercial.dto.js';
+import { formatMoney, formatDate } from '../documents/format.js';
 
 /**
  * A self-contained, print-friendly quotation document (Phase 6, ADR 0035).
@@ -30,9 +31,7 @@ function esc(value: unknown): string {
 function fmtMoney(value: string | null | undefined): string {
   if (value == null || value === '') return '0.00';
   const n = Number(value);
-  return Number.isNaN(n)
-    ? esc(value)
-    : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return Number.isNaN(n) ? esc(value) : formatMoney(value);
 }
 
 function fmtQty(value: string | null | undefined): string {
@@ -40,21 +39,14 @@ function fmtQty(value: string | null | undefined): string {
   return value.includes('.') ? value.replace(/\.?0+$/, '') : value;
 }
 
-function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
 export function renderQuotationHtml(input: {
   workspaceName: string;
   quotation: QuotationDetailDto;
   customer: PrintCustomer;
+  timezone?: string;
 }): string {
-  const { workspaceName, quotation: q, customer } = input;
+  const { workspaceName, quotation: q, customer, timezone } = input;
+  const fmtDate = (iso: string | null | undefined) => formatDate(iso, timezone);
   const rev = q.currentRevision;
   const custLines = [
     customer.addressLine,

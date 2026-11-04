@@ -3,7 +3,8 @@ import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { getDb, schema, withTenantContext } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { AuditService, userActor } from '../audit/audit.service.js';
-import { HrScope, pageBounds, type Paged } from './common.js';
+import { CompanyProfileService } from '../settings/company-profile.service.js';
+import { HrScope, pageBounds, resolveDefaultCurrency, type Paged } from './common.js';
 import type { CreateIncentiveDto, IncentiveDto } from './hr.dto.js';
 
 const { incentives, employees } = schema;
@@ -17,7 +18,10 @@ const { incentives, employees } = schema;
  */
 @Injectable()
 export class IncentivesService {
-  constructor(private readonly audit: AuditService) {}
+  constructor(
+    private readonly audit: AuditService,
+    private readonly profiles: CompanyProfileService,
+  ) {}
 
   list(
     scope: HrScope,
@@ -75,7 +79,9 @@ export class IncentivesService {
           tenantId: scope.tenantId,
           employeeId: body.employeeId,
           amount: body.amount,
-          currency: (body.currency ?? 'INR').toUpperCase(),
+          currency: (
+            body.currency ?? (await resolveDefaultCurrency(tx, scope.tenantId, this.profiles))
+          ).toUpperCase(),
           type: body.type.trim(),
           reason: body.reason ?? null,
           sourceRef: body.sourceRef ?? null,

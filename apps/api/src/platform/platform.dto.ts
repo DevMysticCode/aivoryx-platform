@@ -13,7 +13,8 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { TENANT_STATUSES, type ErrorResponseBody } from '@aivoryx/shared';
+import { TENANT_STATUSES, ISO_CURRENCIES, type ErrorResponseBody } from '@aivoryx/shared';
+import { IsIanaTimezone } from '../settings/locale-validators.js';
 
 export const PLATFORM_TENANT_SORT_KEYS = ['name', 'members', 'modules', 'created'] as const;
 export type PlatformTenantSortKey = (typeof PLATFORM_TENANT_SORT_KEYS)[number];
@@ -200,16 +201,14 @@ export class CreateTenantRequestDto {
   @MaxLength(200)
   primaryContactName?: string;
 
-  @ApiProperty({ required: false, maxLength: 60, example: 'Asia/Kolkata' })
+  @ApiProperty({ required: false, example: 'Asia/Kolkata' })
   @IsOptional()
-  @IsString()
-  @MaxLength(60)
+  @IsIanaTimezone()
   timezone?: string;
 
-  @ApiProperty({ required: false, maxLength: 10, example: 'INR' })
+  @ApiProperty({ required: false, example: 'INR' })
   @IsOptional()
-  @IsString()
-  @MaxLength(10)
+  @IsIn(ISO_CURRENCIES, { message: 'currency must be a valid ISO-4217 currency code' })
   currency?: string;
 
   @ApiProperty({ example: 'SOLAR_EPC' })

@@ -40,6 +40,8 @@ const baseBranding = (over: Partial<DocumentBranding> = {}): DocumentBranding =>
   showCustomerLogo: false,
   documentFooter: null,
   logo: null,
+  timezone: 'UTC',
+  defaultCurrency: 'INR',
   ...over,
 });
 

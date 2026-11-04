@@ -3,7 +3,8 @@ import { and, desc, eq } from 'drizzle-orm';
 import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { AuditService, userActor } from '../audit/audit.service.js';
-import { HrScope } from './common.js';
+import { CompanyProfileService } from '../settings/company-profile.service.js';
+import { HrScope, resolveDefaultCurrency } from './common.js';
 import { assertEmployeeVisible } from './data-scope.js';
 import type { CompensationDto, CreateCompensationDto } from './hr.dto.js';
 
@@ -17,7 +18,10 @@ const { compensationProfiles, compensationComponents, employmentHistory, employe
  */
 @Injectable()
 export class CompensationService {
-  constructor(private readonly audit: AuditService) {}
+  constructor(
+    private readonly audit: AuditService,
+    private readonly profiles: CompanyProfileService,
+  ) {}
 
   /** All compensation profiles for an employee, newest first. */
   history(scope: HrScope, employeeId: string): Promise<CompensationDto[]> {
@@ -85,7 +89,9 @@ export class CompensationService {
           employeeId,
           effectiveDate: body.effectiveDate.slice(0, 10),
           payFrequency: (body.payFrequency as 'MONTHLY') ?? 'MONTHLY',
-          currency: (body.currency ?? 'INR').toUpperCase(),
+          currency: (
+            body.currency ?? (await resolveDefaultCurrency(tx, scope.tenantId, this.profiles))
+          ).toUpperCase(),
           baseSalary: body.baseSalary,
           status: 'ACTIVE',
           notes: body.notes ?? null,
