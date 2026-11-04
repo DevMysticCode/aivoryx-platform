@@ -4,6 +4,7 @@ import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
+import { CompanyProfileService } from '../settings/company-profile.service.js';
 import {
   canTransitionExpense,
   isExpenseAmountLocked,
@@ -16,6 +17,7 @@ import {
   isUniqueViolation,
   nextHrNumber,
   pageBounds,
+  resolveDefaultCurrency,
   resolveMyEmployeeId,
   type Paged,
 } from './common.js';
@@ -44,6 +46,7 @@ export class ExpensesService {
   constructor(
     private readonly outbox: OutboxService,
     private readonly audit: AuditService,
+    private readonly profiles: CompanyProfileService,
   ) {}
 
   // ---- categories (hr.expense.manage) --------------------
@@ -514,7 +517,9 @@ export class ExpensesService {
       .limit(1);
     if (!cat) throw new AppError('HR_EXPENSE_CATEGORY_NOT_FOUND');
 
-    const currency = (body.currency ?? 'INR').toUpperCase();
+    const currency = (
+      body.currency ?? (await resolveDefaultCurrency(tx, scope.tenantId, this.profiles))
+    ).toUpperCase();
     const isMileage = !!cat.defaultMileageRate && !!body.distanceKm;
     const reimbursementAmount = isMileage
       ? mileageAmount(body.distanceKm!, cat.defaultMileageRate!)

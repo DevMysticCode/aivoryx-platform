@@ -4,10 +4,17 @@ import { getDb, schema, withTenantContext, type Tx } from '@aivoryx/db';
 import { AppError } from '@aivoryx/shared';
 import { OutboxService } from '../admin/outbox.service.js';
 import { DocumentRenderService } from '../documents/document-render.service.js';
+import { CompanyProfileService } from '../settings/company-profile.service.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
 import { buildInvoiceDocument } from '../documents/builders.js';
 import { pageBounds, type Paged, type TenantScope } from './common.js';
-import { guardMoney, isCheckViolation, isUniqueViolation, normaliseCurrency } from './common.js';
+import {
+  guardMoney,
+  isCheckViolation,
+  isUniqueViolation,
+  normaliseCurrency,
+  resolveDefaultCurrency,
+} from './common.js';
 import {
   assertNonNegativeMoney,
   dec,
@@ -73,6 +80,7 @@ export class InvoicesService {
   constructor(
     private readonly outbox: OutboxService,
     private readonly documents: DocumentRenderService,
+    private readonly profiles: CompanyProfileService,
     private readonly audit: AuditService,
   ) {}
 
@@ -171,6 +179,7 @@ export class InvoicesService {
   }
 
   async renderPrintable(scope: TenantScope, id: string): Promise<string> {
+    const locale = await this.documents.loadLocale(scope);
     return withTenantContext(getDb(), scope, async (tx) => {
       const detail = await this.detail(tx, scope, id);
       const [tenant] = await tx
@@ -186,6 +195,7 @@ export class InvoicesService {
       return renderInvoiceDoc(detail, {
         businessName: tenant?.name ?? 'Aivoryx',
         customer: cust ?? null,
+        timezone: locale.timezone,
       });
     });
   }
@@ -193,7 +203,8 @@ export class InvoicesService {
   /** Branded PDF of the invoice (Phase 10). Tenant-scoped load + tenant branding. */
   async renderPdf(scope: TenantScope, id: string): Promise<{ filename: string; body: Buffer }> {
     const detail = await this.get(scope, id);
-    return this.documents.render(scope, buildInvoiceDocument(detail));
+    const locale = await this.documents.loadLocale(scope);
+    return this.documents.render(scope, buildInvoiceDocument(detail, locale.timezone));
   }
 
   // ---- writes ---------------------------------------------------
@@ -361,7 +372,7 @@ export class InvoicesService {
               quotationId: q.id,
               source: 'quotation',
               status: 'DRAFT',
-              currency: 'INR',
+              currency: await resolveDefaultCurrency(tx, scope.tenantId, this.profiles),
               dueDate: body.dueDate ?? null,
               subtotal: totals.subtotal,
               discountTotal: totals.discountTotal,
@@ -636,7 +647,9 @@ export class InvoicesService {
     return withTenantContext(getDb(), scope, async (tx) => {
       await this.assertCustomer(tx, scope, customerId);
       const summaries = await this.summaryRows(tx, scope, [eq(invoices.customerId, customerId)]);
-      const summary = summaries[0] ?? this.emptySummary('INR');
+      const summary =
+        summaries[0] ??
+        this.emptySummary(await resolveDefaultCurrency(tx, scope.tenantId, this.profiles));
 
       const recentInvoices = await tx
         .select({ inv: invoices })
@@ -665,7 +678,10 @@ export class InvoicesService {
   ): Promise<FinancialSummaryDto> {
     return withTenantContext(getDb(), scope, async (tx) => {
       const rows = await this.summaryRows(tx, scope, [eq(invoices.projectId, projectId)]);
-      return rows[0] ?? this.emptySummary('INR');
+      return (
+        rows[0] ??
+        this.emptySummary(await resolveDefaultCurrency(tx, scope.tenantId, this.profiles))
+      );
     });
   }
 

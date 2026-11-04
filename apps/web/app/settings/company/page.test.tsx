@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { CompanyProfile } from '@aivoryx/contracts';
+import { IANA_TIMEZONES, ISO_CURRENCIES } from '@aivoryx/shared';
 
 const profile = (overrides: Partial<CompanyProfile> = {}): CompanyProfile =>
   ({
@@ -90,6 +91,35 @@ describe('Company settings page', () => {
     fireEvent.click(screen.getByText('Save changes'));
     expect(hooks.save.mutate).toHaveBeenCalledWith(
       expect.objectContaining({ legalName: 'Acme Renamed Ltd' }),
+    );
+  });
+
+  it('renders timezone and default currency as real dropdowns, not free text, and submits the chosen values', () => {
+    perms.current = ['settings.company.read', 'settings.company.update'];
+    hooks.profile.data = profile();
+    render(<CompanySettingsPage />);
+
+    const timezoneSelect = screen.getByText('Timezone').closest('label')!.querySelector('select')!;
+    const currencySelect = screen
+      .getByText('Default currency')
+      .closest('label')!
+      .querySelector('select')!;
+    expect(timezoneSelect).toBeTruthy();
+    expect(currencySelect).toBeTruthy();
+    // +1 for the "Not set" placeholder option
+    expect(timezoneSelect.options).toHaveLength(IANA_TIMEZONES.length + 1);
+    expect(currencySelect.options).toHaveLength(ISO_CURRENCIES.length + 1);
+
+    // Picks a real option from the rendered list itself, rather than a literal
+    // like "UTC" or "Asia/Kolkata" — neither is a canonical zone name under
+    // `Intl.supportedValuesOf('timeZone')`, so neither exists as an <option>
+    // here even though both are accepted elsewhere for actual date formatting.
+    const timezoneValue = IANA_TIMEZONES[0]!;
+    fireEvent.change(timezoneSelect, { target: { value: timezoneValue } });
+    fireEvent.change(currencySelect, { target: { value: 'EUR' } });
+    fireEvent.click(screen.getByText('Save changes'));
+    expect(hooks.save.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ timezone: timezoneValue, defaultCurrency: 'EUR' }),
     );
   });
 

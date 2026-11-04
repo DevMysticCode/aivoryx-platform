@@ -6,6 +6,7 @@ import { OBJECT_STORAGE, type ObjectStorageService } from '../storage/object-sto
 import { readCustomerLogo } from '../commercial/customer-logo.service.js';
 import { DocumentPdfService } from './document-pdf.service.js';
 import { documentFilename, type DocumentDefinition } from './document.types.js';
+import type { FormatLocale } from './format.js';
 
 /**
  * The single entry point business modules use to produce a branded PDF
@@ -21,6 +22,13 @@ export class DocumentRenderService {
     private readonly profiles: CompanyProfileService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorageService,
   ) {}
+
+  /** The tenant's timezone/currency — call this to build a `DocumentDefinition`
+   *  with tenant-aware dates/money BEFORE calling `render()`, since `def` must
+   *  already be fully formatted by the time it reaches here. */
+  async loadLocale(scope: TenantScope): Promise<FormatLocale> {
+    return withTenantContext(getDb(), scope, (tx) => this.profiles.loadLocale(tx, scope.tenantId));
+  }
 
   /** Render `def` as a PDF using the active tenant's branding. */
   async render(

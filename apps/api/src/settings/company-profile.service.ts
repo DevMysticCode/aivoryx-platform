@@ -7,6 +7,8 @@ import {
   documentAccent,
   isThemePresetKey,
   resolveThemeColors,
+  DEFAULT_TIMEZONE,
+  DEFAULT_CURRENCY,
 } from '@aivoryx/shared';
 import type { TenantScope } from '../supply/common.js';
 import { AuditService, userActor } from '../audit/audit.service.js';
@@ -29,6 +31,10 @@ export interface DocumentBranding {
   documentFooter: string | null;
   /** the effective logo: the document-specific one when mode is `separate` and it exists */
   logo: { body: Buffer; contentType: string } | null;
+  /** tenant's configured IANA timezone, defaulted — never null, nothing read this before it existed */
+  timezone: string;
+  /** tenant's configured ISO-4217 default currency, defaulted */
+  defaultCurrency: string;
 }
 
 /** Which asset kinds to try (in order) for a document logo. Pure - unit tested. */
@@ -278,6 +284,18 @@ export class CompanyProfileService {
       showCustomerLogo: p?.documentShowCustomerLogo ?? false,
       documentFooter: p?.documentFooter ?? null,
       logo: logo && /^image\/(png|jpeg|webp)$/.test(logo.contentType) ? logo : null,
+      timezone: p?.timezone ?? DEFAULT_TIMEZONE,
+      defaultCurrency: p?.defaultCurrency ?? DEFAULT_CURRENCY,
+    };
+  }
+
+  /** Just the locale a document/notification needs to format dates and money —
+   *  cheaper than `getDocumentBranding` when the logo/address block isn't needed. */
+  async loadLocale(tx: Tx, tenantId: string): Promise<{ timezone: string; currency: string }> {
+    const p = await this.loadProfile(tx, tenantId);
+    return {
+      timezone: p?.timezone ?? DEFAULT_TIMEZONE,
+      currency: p?.defaultCurrency ?? DEFAULT_CURRENCY,
     };
   }
 

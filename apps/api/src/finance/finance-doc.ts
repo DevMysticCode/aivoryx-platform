@@ -1,4 +1,5 @@
 import type { InvoiceDetailDto, PaymentDetailDto } from './finance.dto.js';
+import { formatMoney, formatDate, formatCalendarDate } from '../documents/format.js';
 
 /**
  * Self-contained, print-friendly finance documents (Phase 9, ADR 0038).
@@ -30,23 +31,12 @@ function esc(value: unknown): string {
 function fmtMoney(value: string | null | undefined): string {
   if (value == null || value === '') return '0.00';
   const n = Number(value);
-  return Number.isNaN(n)
-    ? esc(value)
-    : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return Number.isNaN(n) ? esc(value) : formatMoney(value);
 }
 
 function fmtQty(value: string | null | undefined): string {
   if (value == null || value === '') return '';
   return value.includes('.') ? value.replace(/\.?0+$/, '') : value;
-}
-
-function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
 }
 
 function addressBlock(p: DocParty | null): string {
@@ -93,8 +83,12 @@ function page(title: string, inner: string): string {
 
 export function renderInvoiceDoc(
   inv: InvoiceDetailDto,
-  ctx: { businessName: string; customer: DocParty | null },
+  ctx: { businessName: string; customer: DocParty | null; timezone?: string },
 ): string {
+  // issueDate/dueDate are plain calendar dates; the allocation date below is a
+  // true timestamp, so only that one honors the tenant's timezone.
+  const fmtDate = formatCalendarDate;
+  const fmtAllocDate = (iso: string | null | undefined) => formatDate(iso, ctx.timezone);
   const lineRows = inv.lines
     .map(
       (l) => `<tr>
@@ -143,7 +137,7 @@ export function renderInvoiceDoc(
             .filter((a) => !a.reversed)
             .map(
               (a) =>
-                `<tr><td>${esc(a.paymentNumber)}</td><td class="num">${fmtMoney(a.amount)}</td><td>${fmtDate(a.createdAt)}</td></tr>`,
+                `<tr><td>${esc(a.paymentNumber)}</td><td class="num">${fmtMoney(a.amount)}</td><td>${fmtAllocDate(a.createdAt)}</td></tr>`,
             )
             .join('')}</tbody></table>`
         : ''
@@ -153,10 +147,12 @@ export function renderInvoiceDoc(
   return page(`Invoice ${inv.number}`, inner);
 }
 
+// paymentDate is a plain calendar date (no time component) — never timezone-shifted.
 export function renderReceiptDoc(
   pay: PaymentDetailDto,
   ctx: { businessName: string; customer: DocParty | null },
 ): string {
+  const fmtDate = formatCalendarDate;
   const allocRows = pay.allocations
     .filter((a) => !a.reversed)
     .map(

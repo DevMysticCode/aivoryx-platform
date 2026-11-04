@@ -87,3 +87,11 @@ export {
   type Surface,
   type TenantBrandingLike,
 } from './branding/resolve.js';
+export {
+  IANA_TIMEZONES,
+  ISO_CURRENCIES,
+  isIanaTimezone,
+  isIsoCurrency,
+  DEFAULT_TIMEZONE,
+  DEFAULT_CURRENCY,
+} from './i18n/locale.js';
