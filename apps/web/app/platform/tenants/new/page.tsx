@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { cn } from '@aivoryx/ui';
 import type { Solution } from '@aivoryx/contracts';
+import { IANA_TIMEZONES, ISO_CURRENCIES } from '@aivoryx/shared';
 import { PageHeader } from '@/components/admin/ui';
 import { ErrorBlock, LoadingBlock } from '@/components/ui/kit';
 import {
@@ -151,21 +152,33 @@ export default function CreateTenantPage() {
             </label>
             <label className="space-y-1 text-sm">
               <span className="font-medium">Timezone</span>
-              <input
+              <select
                 value={form.timezone}
                 onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))}
-                placeholder="Asia/Kolkata"
                 className="h-9 w-full rounded-md border bg-transparent px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
+              >
+                <option value="">Not set</option>
+                {IANA_TIMEZONES.map((tz) => (
+                  <option key={tz} value={tz}>
+                    {tz}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="space-y-1 text-sm">
               <span className="font-medium">Currency</span>
-              <input
+              <select
                 value={form.currency}
                 onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
-                placeholder="INR"
                 className="h-9 w-full rounded-md border bg-transparent px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
+              >
+                <option value="">Not set</option>
+                {ISO_CURRENCIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="space-y-1 text-sm">
               <span className="font-medium">
